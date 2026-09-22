@@ -1,27 +1,29 @@
 # Modelo de dominio UML
 
-[`modelo-dominio.puml`](modelo-dominio.puml) es el diagrama de clases conceptual del sistema. Está alineado con el [análisis de requisitos](../../requirements/README.md) vigente; no representa clases implementadas, tablas de PostgreSQL, DTO ni contratos de API. Las [vistas de Structurizr](../structurizr/README.md) todavía describen el modelo estratégico inicial y deberán actualizarse por separado.
+[`modelo-dominio.puml`](modelo-dominio.puml) es el diagrama de clases conceptual del sistema. Está alineado con el [análisis de requisitos](../../requirements/README.md) vigente; no representa clases implementadas, tablas de PostgreSQL, DTO ni contratos de API. Las [vistas de Structurizr](../structurizr/README.md) describen los límites estratégicos; la incorporación de apelaciones en esas vistas se realizará por separado.
 
 ## Límites y agregados
 
 | Contexto o área | Agregados y raíces | Responsabilidad representada |
 | --- | --- | --- |
-| Usuarios / `users` — soporte | `SolicitudRegistro`; `Usuario` | Separa la solicitud y sus evidencias de la identidad aprobada. Mantiene tipo institucional, vinculación, confianza, sanciones e habilitación para préstamos. |
+| Usuarios / `users` — soporte | `SolicitudRegistro`; `Usuario` | Separa la solicitud y sus evidencias de la identidad institucional aprobada. Mantiene el tipo de usuario y su vinculación vigente. |
 | Inventario / `inventory` — soporte | `CategoriaRecurso`; `Recurso`; `Ejemplar` | Define el plazo por categoría, el catálogo de recursos y cada unidad física prestable con sus observaciones. |
 | Préstamos / `loans` — central | `Prestamo` | Registra el intervalo temporal en el que un ejemplar queda ocupado por un usuario, incluyendo préstamos inmediatos o planificados. |
+| Confianza / `trust` — soporte | `PerfilConfianza`; `Sancion`; `Apelacion` | Mantiene porcentaje y nivel, aplica sanciones, evalúa restricciones y conserva la revisión histórica de sanciones apeladas. |
 | Autenticación / `auth` — genérico de apoyo | `CuentaAcceso` | Vincula una identidad de usuario con su rol de acceso sin mezclar permisos con la clasificación institucional. |
 | Reglas y términos — límite por validar | `ReglaUso`; `VersionRegla`; `Incumplimiento`; `VersionTerminos`; `AceptacionTerminos` | Modela reglas versionadas, penalizaciones históricas y aceptación de términos. No se afirma todavía que esta área sea un bounded context independiente. |
 
-Los agregados se mantienen pequeños y las relaciones entre ellos se expresan mediante identificadores. Las composiciones solo aparecen donde un objeto forma parte del ciclo de vida de su agregado: evidencias de una solicitud, porcentaje de confianza del usuario como valor, sanciones históricas del usuario, observaciones de un ejemplar y devolución de un préstamo.
+Los agregados se mantienen pequeños y las relaciones entre ellos se expresan mediante identificadores. Las composiciones solo aparecen donde un objeto forma parte del ciclo de vida de su agregado: evidencias de una solicitud, porcentaje del perfil de confianza, observaciones de un ejemplar y devolución de un préstamo.
 
 ## Usuarios, confianza y acceso
 
 - `SolicitudRegistro` conserva el tipo de usuario, el identificador institucional cuando corresponda, la fecha, el estado y cero o más evidencias de vinculación. La dependencia punteada indica que una solicitud aprobada puede originar un usuario; no representa una asociación persistente entre ambos agregados. El procedimiento de verificación sigue pendiente.
 - `Usuario` es la raíz que conserva la identidad institucional ya habilitada. `TipoUsuario` distingue `ESTUDIANTE`, `DOCENTE` y `ADMINISTRATIVO`.
-- `PorcentajeConfianza` es un Value Object del agregado `Usuario` porque protege la invariante del intervalo cerrado de 0 a 100. El nivel se deriva del porcentaje y solo se representan cuatro identificadores provisionales (`NIVEL_1` a `NIVEL_4`); sus nombres y umbrales definitivos no están definidos.
-- `Sancion` es una entidad del agregado `Usuario`. Conserva si la penalización está activa o finalizada, sus fechas de inicio y fin, la referencia opcional al incumplimiento, la regla y la versión de regla que la originaron, y el cambio de confianza mediante `confianzaAnterior` y `confianzaPosterior`. La colección de sanciones funciona como historial; no se define un modelo separado `HistorialSanciones` ni se sobrescriben sanciones finalizadas.
-- `/penalizadoActualmente` y `/habilitadoParaPrestamos` son valores derivados. La habilitación considera vinculación vigente, confianza, sanciones activas y restricciones o consecuencias aplicables. El modelo no inventa una fórmula ni restricciones concretas.
-- `CuentaAcceso` mantiene una correspondencia conceptual uno a uno con `Usuario`. Su estado `/habilitada` requiere una solicitud aprobada y vinculación vigente con la EPCC; no sustituye `/habilitadoParaPrestamos`, que además considera confianza y restricciones del dominio. `TipoUsuario.ADMINISTRATIVO` describe la relación de una persona con la EPCC; `RolAcceso.ADMINISTRADOR` concede permisos dentro del sistema. Son conceptos distintos. La fórmula de habilitación, las credenciales y el proveedor de autenticación permanecen pendientes.
+- `PerfilConfianza` pertenece al bounded context Confianza y referencia a `Usuario` mediante `usuarioId`; no duplica su identidad institucional. `PorcentajeConfianza` protege la invariante del intervalo cerrado de 0 a 100. El nivel se deriva del porcentaje y solo se representan cuatro identificadores provisionales (`NIVEL_1` a `NIVEL_4`); sus nombres y umbrales definitivos no están definidos.
+- `Sancion` es una raíz de agregado porque posee ciclo de vida e historial propios y puede ser referenciada por apelaciones. Conserva el usuario, el incumplimiento, la regla y versión aplicadas, la cuenta del operador, el intervalo, el estado y el cambio de confianza mediante `confianzaAnterior` y `confianzaPosterior`. Sus estados son `ACTIVA`, `FINALIZADA` y `ABSUELTA`.
+- `Apelacion` es una raíz del mismo bounded context Confianza. Referencia por ID a la sanción y al usuario, registra motivo y fecha de solicitud, y conserva el resultado, la fecha, el administrador y el fundamento de la resolución. La colección de apelaciones constituye el historial; no se introduce un agregado artificial `HistorialApelaciones`.
+- Apelaciones no se separa como bounded context: por ahora su lenguaje y ciclo de vida dependen de Sanción. Una separación futura solo tendría sentido si aparecieran procesos independientes, etapas, políticas o integraciones propias.
+- `CuentaAcceso` mantiene una correspondencia conceptual uno a uno con `Usuario`. Su estado `/habilitada` requiere una solicitud aprobada y vinculación vigente con la EPCC; no sustituye la decisión de elegibilidad para préstamos, que además considera confianza y restricciones del dominio. `TipoUsuario.ADMINISTRATIVO` describe la relación de una persona con la EPCC; `RolAcceso.ADMINISTRADOR` concede permisos dentro del sistema. Son conceptos distintos. La fórmula de habilitación, las credenciales y el proveedor de autenticación permanecen pendientes.
 
 ## Inventario y préstamos
 
@@ -39,7 +41,9 @@ Los agregados se mantienen pequeños y las relaciones entre ellos se expresan me
 - `ReglaUso` se asocia por identificador con una o más raíces `VersionRegla` y conserva `versionVigenteId`. Cada versión registra `reglaId`, título, descripción, porcentaje de penalización, consecuencia y estado, y es inmutable una vez histórica. `VersionRegla` es un agregado independiente porque otros agregados, en particular `Incumplimiento`, deben referenciar directamente la versión histórica sin atravesar ni cargar `ReglaUso`. Modificar una regla genera una versión que no altera las anteriores.
 - `Incumplimiento` referencia al usuario, la regla y la versión exacta infringida. También conserva `penalizacionAplicada`, por lo que una modificación posterior no cambia el descuento histórico.
 - `Sancion` representa la penalización aplicada al usuario y su duración. Cuando proviene de una regla incumplida, conserva referencias por identificador al incumplimiento, la regla y la versión usada para no depender de cambios posteriores.
+- La versión de regla conserva la duración de la restricción de préstamo para estudiantes. Las fechas de la sanción son la instantánea aplicada; modificar después esa duración no altera sanciones existentes.
 - Registrar el incumplimiento, aplicar la sanción y actualizar el porcentaje de confianza debe ser una operación consistente. El mecanismo técnico de coordinación se definirá durante el diseño de implementación.
+- Una sanción activa puede ser apelada por el usuario afectado. Solo un administrador resuelve la apelación; si la acepta, la sanción queda `ABSUELTA` y deja de bloquear préstamos. El efecto de esa absolución sobre el porcentaje de confianza permanece pendiente.
 - `VersionTerminos` y `AceptacionTerminos` permiten saber qué versión aceptó cada usuario y cuándo. No se relaciona una versión de términos con versiones de reglas porque la composición de los términos sigue pendiente.
 - La consecuencia se conserva como información conceptual de la regla. Su representación y ejecución automática aún no están definidas.
 
@@ -52,6 +56,7 @@ El diagrama NO define todavía:
 - restricciones concretas por nivel de confianza o tipo de usuario;
 - límite de préstamos simultáneos para estudiantes;
 - mecanismos para aumentar la confianza;
+- efecto de una apelación aceptada sobre el porcentaje de confianza;
 - procedimiento de verificación de la vinculación con la EPCC;
 - credenciales o proveedor de autenticación;
 - consecuencias ejecutables y restricciones concretas asociadas a una sanción activa;

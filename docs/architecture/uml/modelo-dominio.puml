@@ -225,60 +225,7 @@ package "Usuarios · users\n<<Bounded Context · soporte>>" as BCUsuarios #E8F1F
             tipoUsuario : TipoUsuario
             identificadorInstitucional : String [0..1]
             vinculacionVigente : Boolean
-
-            confianza : PorcentajeConfianza
-            /nivelConfianza : NivelConfianza
-
-            /penalizadoActualmente : Boolean
-            /habilitadoParaPrestamos : Boolean
         }
-
-
-        class PorcentajeConfianza <<Value Object>> {
-            valor : Decimal
-
-            {invariant} 0 <= valor <= 100
-        }
-
-
-        class "Sanción" as Sancion <<Entity>> {
-            sancionId : SancionId
-            usuarioId : UsuarioId
-
-            incumplimientoId : IncumplimientoId [0..1]
-            reglaId : ReglaUsoId [0..1]
-            versionReglaId : VersionReglaId [0..1]
-
-            estado : EstadoSancion
-
-            fechaInicio : FechaHora
-            fechaFin : FechaHora
-
-            confianzaAnterior : PorcentajeConfianza
-            confianzaPosterior : PorcentajeConfianza
-
-            /cambioConfianza : Decimal
-        }
-
-
-        enum EstadoSancion {
-            ACTIVA
-            FINALIZADA
-        }
-
-
-        Usuario "1" *-- "1\nconfianza" PorcentajeConfianza
-
-        Usuario "1" *-- "0..*\nsanciones" Sancion
-
-        Sancion ..> EstadoSancion : estado
-
-
-        Usuario -[hidden]right-> PorcentajeConfianza
-
-        PorcentajeConfianza -[hidden]down-> Sancion
-
-        Sancion -[hidden]right-> EstadoSancion
     }
 
 
@@ -296,14 +243,6 @@ package "Usuarios · users\n<<Bounded Context · soporte>>" as BCUsuarios #E8F1F
     }
 
 
-    enum NivelConfianza {
-        NIVEL_1
-        NIVEL_2
-        NIVEL_3
-        NIVEL_4
-    }
-
-
     SolicitudRegistro ..> TipoUsuario : tipo
 
     SolicitudRegistro ..> EstadoSolicitud : estado
@@ -312,17 +251,142 @@ package "Usuarios · users\n<<Bounded Context · soporte>>" as BCUsuarios #E8F1F
 
     Usuario ..> TipoUsuario : tipo
 
-    Usuario ..> NivelConfianza : nivel
+
+    AgSolicitud -[hidden]down-> AgUsuario
+}
+
+
+' =========================================================
+' BOUNDED CONTEXT: CONFIANZA
+' =========================================================
+
+package "Confianza · trust\n<<Bounded Context · soporte>>" as BCConfianza #E2F3E8 {
+
+    package "Perfil de confianza\n<<Aggregate>>" as AgPerfilConfianza #F4FBF6 {
+
+        class PerfilConfianza <<Aggregate Root · Entity>> {
+            perfilConfianzaId : PerfilConfianzaId
+            usuarioId : UsuarioId
+            porcentaje : PorcentajeConfianza
+            /nivel : NivelConfianza
+            /restringidoParaPrestamos : Boolean
+        }
+
+
+        class PorcentajeConfianza <<Value Object>> {
+            valor : Decimal
+
+            {invariant} 0 <= valor <= 100
+        }
+
+
+        enum NivelConfianza {
+            NIVEL_1
+            NIVEL_2
+            NIVEL_3
+            NIVEL_4
+        }
+
+
+        PerfilConfianza "1" *-- "1\nporcentaje" PorcentajeConfianza
+
+        PerfilConfianza ..> NivelConfianza : nivel derivado
+
+
+        PerfilConfianza -[hidden]right-> PorcentajeConfianza
+
+        PorcentajeConfianza -[hidden]right-> NivelConfianza
+    }
+
+
+    package "Sanción\n<<Aggregate>>" as AgSancion #F4FBF6 {
+
+        class "Sanción" as Sancion <<Aggregate Root · Entity>> {
+            sancionId : SancionId
+            usuarioId : UsuarioId
+
+            incumplimientoId : IncumplimientoId
+            reglaId : ReglaUsoId
+            versionReglaId : VersionReglaId
+            impuestaPorCuentaId : CuentaAccesoId
+
+            fechaInicio : FechaHora
+            fechaFin : FechaHora
+            estado : EstadoSancion
+
+            confianzaAnterior : PorcentajeConfianza
+            confianzaPosterior : PorcentajeConfianza
+            /cambioConfianza : Decimal
+        }
+
+
+        enum EstadoSancion {
+            ACTIVA
+            FINALIZADA
+            ABSUELTA
+        }
+
+
+        Sancion ..> EstadoSancion : estado
+
+
+        Sancion -[hidden]right-> EstadoSancion
+    }
+
+
+    package "Apelación\n<<Aggregate>>" as AgApelacion #F4FBF6 {
+
+        class "Apelación" as Apelacion <<Aggregate Root · Entity>> {
+            apelacionId : ApelacionId
+            sancionId : SancionId
+            usuarioId : UsuarioId
+
+            fechaSolicitud : FechaHora
+            motivo : String
+            estado : EstadoApelacion
+
+            fechaResolucion : FechaHora [0..1]
+            resueltaPorCuentaId : CuentaAccesoId [0..1]
+            fundamentoResolucion : String [0..1]
+        }
+
+
+        enum EstadoApelacion {
+            PENDIENTE
+            ACEPTADA
+            RECHAZADA
+        }
+
+
+        Apelacion ..> EstadoApelacion : resultado
+
+
+        Apelacion -[hidden]right-> EstadoApelacion
+    }
+
+
+    PerfilConfianza "1" --> "0..*\nsanciones por usuarioId" Sancion
+
+    Sancion "1" <-- "0..*\napelaciones por sancionId" Apelacion
 
 
     note bottom of Sancion
-        Las sanciones constituyen el historial
-        de penalizaciones del usuario y conservan
-        el cambio de confianza aplicado.
+        Una sanción activa de restricción impide préstamos al estudiante
+        durante el intervalo registrado. Conserva la regla,
+        su versión y el cambio de confianza aplicados.
     end note
 
 
-    AgSolicitud -[hidden]down-> AgUsuario
+    note bottom of Apelacion
+        Solo una sanción activa puede apelarse.
+        El historial conserva cada solicitud y su resultado;
+        una apelación aceptada deja la sanción ABSUELTA.
+    end note
+
+
+    AgPerfilConfianza -[hidden]down-> AgSancion
+
+    AgSancion -[hidden]down-> AgApelacion
 }
 
 
@@ -357,6 +421,7 @@ package "Reglas y términos\n<<Área de dominio · límite por validar>>" as Are
 
             penalizacionPorcentual : Decimal
             consecuencia : String
+            duracionRestriccionEstudiante : Duracion
 
             estado : EstadoRegla
 
@@ -489,9 +554,15 @@ BCPrestamos ..> BCInventario : consulta\n disponibilidad
 
 BCPrestamos ..> BCUsuarios : identifica\n usuario
 
+BCPrestamos ..> BCConfianza : consulta habilitación\n y sanciones activas
+
 BCAuth ..> BCUsuarios : identidad\n y acceso
 
-AreaReglas ..> BCUsuarios : reglas, confianza\n y sanciones
+AreaReglas ..> BCConfianza : origina cambios de confianza\n y sanciones
+
+BCConfianza ..> BCUsuarios : referencia usuarioId
+
+BCConfianza ..> BCAuth : referencia operador\n y administrador
 
 
 ' =========================================================
@@ -502,10 +573,11 @@ BCInventario -[hidden]right-> BCPrestamos
 
 BCPrestamos -[hidden]right-> BCUsuarios
 
+BCUsuarios -[hidden]down-> BCConfianza
 
 BCPrestamos -[hidden]down-> BCAuth
 
-BCUsuarios -[hidden]down-> AreaReglas
+BCConfianza -[hidden]right-> AreaReglas
 
 
 BCAuth -[hidden]right-> AreaReglas
@@ -526,6 +598,8 @@ legend bottom
 
 Las referencias entre bounded contexts se realizan por identificador.
 Los atributos derivados se indican mediante /.
+Apelaciones permanece dentro de Confianza porque revisa el ciclo de vida
+de una sanción; no se justifica todavía un bounded context independiente.
 
 endlegend
 
