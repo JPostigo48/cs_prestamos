@@ -1,0 +1,54 @@
+@startuml ArquitecturaModular
+
+title Arquitectura modular por capas — mapa de planificación
+top to bottom direction
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 15
+skinparam rectangleBorderColor #64748B
+skinparam rectangleBackgroundColor #FFFFFF
+skinparam ArrowColor #64748B
+skinparam ArrowFontSize 12
+skinparam legendBackgroundColor #F8FAFC
+skinparam legendBorderColor #CBD5E1
+skinparam legendFontSize 13
+skinparam ranksep 35
+
+rectangle "**Frontend**\nVue.js + TypeScript" as Frontend #EFF6FF
+
+' La tabla mantiene una geometría común: las relaciones no pueden desplazar sus celdas.
+rectangle Backend [
+<size:18><b>Backend</b></size>
+Node.js + TypeScript · diseño propuesto, no implementación
+
+|<#E2E8F0> \n  **CAPAS / MÓDULOS**  \n |<#F3E8FF> \n  **Autenticación (auth)**  \n |<#E8F1FA> \n  **Usuarios (users)**  \n |<#E8F1FA> \n  **Inventario (inventory)**  \n |<#FFF2CC> \n  **Préstamos (loans)**  \n  **Dominio central**  \n |<#F1F5F9> \n  **Reglas y Términos**  \n |<#E2F3E8> \n  **Confianza (trust)**  \n |
+|<#E2E8F0> \n  **CAPA 4**  \n  **PRESENTACIÓN**  \n  HTTP · DTO entrada / salida  \n  Validación estructural  \n |<#FAF5FF> \n  Controladores de acceso  \n  DTO de entrada / salida  \n  Validación estructural  \n |<#F8FBFE> \n  Controladores de usuarios  \n  y solicitudes de registro  \n  DTO y validación estructural  \n |<#F8FBFE> \n  Controladores de inventario  \n  DTO de catálogo y ejemplares  \n  Validación estructural  \n |<#FFFBEB> \n  Controladores de préstamos  \n  y devoluciones  \n  DTO y validación estructural  \n |<#F8FAFC> \n  Controladores de reglas,  \n  términos e incumplimientos  \n  DTO y validación estructural  \n |<#F4FBF6> \n  Controladores de confianza,  \n  sanciones y apelaciones  \n  DTO y validación estructural  \n |
+|<#E2E8F0> \n  **CAPA 3**  \n  **APLICACIÓN**  \n  Casos de uso  \n  Coordinación / puertos  \n |<#FAF5FF> \n  Autenticar cuenta  \n  Verificar identidad y permisos  \n  Consultar acceso habilitado  \n  Coordinar puertos de acceso  \n |<#F8FBFE> \n  Solicitar registro  \n  Aprobar / rechazar solicitud  \n  Verificar vinculación EPCC  \n  Consultar habilitación  \n |<#F8FBFE> \n  Registrar recurso y ejemplar  \n  Clasificar por categoría  \n  Consultar disponibilidad  \n  Registrar observaciones  \n |<#FFFBEB> \n  Crear préstamo por intervalo  \n  Comprobar usuario y ejemplar  \n  Registrar devolución  \n  Consultar activos e historial  \n |<#F8FAFC> \n  Gestionar / versionar reglas  \n  Activar / desactivar reglas  \n  Registrar incumplimiento  \n  Consultar / aceptar términos  \n |<#F4FBF6> \n  Consultar nivel y restricciones  \n  Aplicar sanción y penalización  \n  Presentar / resolver apelación  \n  Consultar historial  \n |
+|<#E2E8F0> \n  **CAPA 2**  \n  **DOMINIO**  \n  Reglas / contratos interiores  \n |<#FAF5FF> \n  CuentaAcceso  \n  RolAcceso  \n  USUARIO / OPERADOR /  \n  ADMINISTRADOR  \n  Contrato de repositorio  \n |<#F8FBFE> \n  Usuario · SolicitudRegistro  \n  EvidenciaVinculacion  \n  TipoUsuario · EstadoSolicitud  \n  ESTUDIANTE / DOCENTE /  \n  ADMINISTRATIVO · contratos  \n |<#F8FBFE> \n  CategoriaRecurso · Recurso  \n  Ejemplar · EstadoEjemplar  \n  ObservacionEjemplar  \n  Plazo máximo por categoría  \n  Disponibilidad · contratos  \n |<#FFFBEB> \n  Prestamo · Devolucion  \n  Intervalo fechaInicio–fechaFin  \n  EstadoPrestamo: PLANIFICADO,  \n  ACTIVO, FINALIZADO  \n  No superposición · contratos  \n |<#F8FAFC> \n  ReglaUso · VersionRegla  \n  EstadoRegla · Incumplimiento  \n  VersionTerminos  \n  AceptacionTerminos  \n  Historial inmutable · contratos  \n |<#F4FBF6> \n  PerfilConfianza · Sancion  \n  Apelacion · estados  \n  PorcentajeConfianza: 0..100  \n  NivelConfianza: cuatro niveles  \n  Restricciones · contratos  \n |
+|<#E2E8F0> \n  **CAPA 1**  \n  **INFRAESTRUCTURA**  \n  Implementar repositorios  \n  Adaptadores técnicos  \n |<#FAF5FF> \n  Repositorio de cuentas  \n  Persistencia PostgreSQL  \n  Adaptadores de autenticación  \n  Credenciales: diseño pendiente  \n |<#F8FBFE> \n  Repositorios de usuarios  \n  y solicitudes de registro  \n  Persistencia PostgreSQL  \n  Evidencias: soporte por definir  \n |<#F8FBFE> \n  Repositorios de categorías,  \n  recursos y ejemplares  \n  Persistencia PostgreSQL  \n  Observaciones persistidas  \n |<#FFFBEB> \n  Repositorio de préstamos  \n  Persistencia PostgreSQL  \n  Coordinación transaccional  \n  Consistencia de intervalos  \n |<#F8FAFC> \n  Repositorios de reglas,  \n  versiones y términos  \n  Persistencia PostgreSQL  \n  Incumplimientos y aceptaciones  \n |<#F4FBF6> \n  Repositorios de perfiles,  \n  sanciones y apelaciones  \n  Persistencia PostgreSQL  \n  Historial de sanciones  \n  y resoluciones  \n |
+]
+
+database "PostgreSQL" as PostgreSQL #E8F1FA
+
+Frontend -down-> Backend : HTTP · entrada por Presentación
+Backend -down-> PostgreSQL : Persistencia · desde Infraestructura
+
+legend bottom
+**Lectura:** columnas = módulos; filas = capas. Cada columna delimita una unidad de planificación y trabajo.
+**Dependencias de código:** Presentación → Aplicación → Dominio. Infraestructura implementa contratos interiores.
+La posición inferior de Infraestructura NO indica que el Dominio dependa de ella. Las flechas externas representan comunicación.
+
+**Invariantes:** ningún ejemplar admite intervalos activos o planificados superpuestos; un recurso está disponible con ≥ 1 ejemplar DISPONIBLE.
+Préstamos exige un usuario habilitado. Sanción conserva confianza anterior/posterior y fechas de inicio/fin: ACTIVA, FINALIZADA o ABSUELTA.
+Reglas: penalización y consecuencia configurables. Incumplimiento conserva versión y penalización aplicadas; el historial no se reescribe.
+Apelaciones conserva sanción, usuario y resultado; solo un administrador resuelve.
+
+**Límites y pendientes:** Confianza es un contexto separado según el modelo actual; Reglas y Términos mantiene su límite DDD por validar.
+Pendientes: confianza inicial, rangos de niveles, restricciones concretas y efecto de absolver sobre la confianza; mecanismo de autenticación.
+**Shared/Common**, si resulta necesario, será técnico: tipos base, errores y configuración; sin IDs ni objetos de valor propios de un dominio.
+Las colaboraciones entre contextos se documentan en Structurizr; esta matriz no es un diagrama de dependencias ni un modelo de clases.
+endlegend
+
+@enduml
