@@ -63,3 +63,17 @@ Los requisitos funcionales se organizan según los dominios o módulos identific
 - **RF-45.** El sistema debe considerar las consecuencias y restricciones vigentes al determinar si un usuario puede realizar un nuevo préstamo.
 - **RF-46.** El sistema debe conservar un historial de modificaciones o versiones de las reglas.
 - **RF-47.** El sistema debe registrar qué versión de los términos y condiciones fue aceptada por cada usuario.
+
+## Sanciones y apelaciones
+
+- **RF-48.** El sistema debe registrar una sanción cuando un operador determine el incumplimiento de una regla por parte de un usuario, asociándola con el usuario, el incumplimiento y la versión de la regla que la originó.
+- **RF-49.** Cada sanción debe conservar su fecha de inicio, fecha de fin, estado, operador responsable y el cambio de confianza aplicado.
+- **RF-50.** Mientras una sanción de restricción de préstamo se encuentre activa, el sistema debe impedir que el estudiante sancionado solicite nuevos préstamos durante el intervalo definido.
+- **RF-51.** La duración de la restricción de préstamo debe obtenerse de la versión de la regla aplicable y quedar registrada en las fechas de la sanción.
+- **RF-52.** El sistema debe permitir que un usuario presente una apelación contra una sanción activa asociada a su cuenta, indicando el motivo de la solicitud.
+- **RF-53.** El sistema debe permitir que un administrador acepte o rechace una apelación pendiente y registre el fundamento de su decisión.
+- **RF-54.** Cuando una apelación sea aceptada, la sanción correspondiente debe quedar absuelta y dejar de impedir nuevos préstamos.
+- **RF-55.** El sistema debe conservar el historial de apelaciones, incluyendo el usuario, la sanción apelada, las fechas, el resultado y el administrador que resolvió cada solicitud.
+- **RF-56.** Las sanciones y apelaciones resueltas no deben sobrescribirse ni eliminarse del historial por cambios posteriores en una regla o por nuevas decisiones sobre el mismo usuario.
+
+El tratamiento del porcentaje de confianza después de aceptar una apelación está pendiente de definición; no debe asumirse una restitución automática hasta que esa regla sea acordada.

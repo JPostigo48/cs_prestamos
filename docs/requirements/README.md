@@ -9,7 +9,7 @@ Esta carpeta es la fuente principal del análisis de requisitos actual del siste
 | [Requisitos funcionales](functional.md) | Capacidades previstas, organizadas por dominio o módulo. |
 | [Requisitos no funcionales](non-functional.md) | Atributos de calidad, capacidad y consistencia esperados. |
 | [Reglas de negocio](business-rules.md) | Restricciones y condiciones que rigen el dominio. |
-| [Modelo de confianza](trust-model.md) | Conceptos, límites conocidos y decisiones pendientes del porcentaje y los niveles de confianza. |
+| [Modelo de confianza](trust-model.md) | Porcentaje, niveles, sanciones, apelaciones y decisiones pendientes de la confianza del usuario. |
 | [Términos y condiciones](terms-and-conditions.md) | Gestión dinámica, versionado y aceptación de las reglas de uso. |
 
 Cada documento mantiene una responsabilidad específica. Cuando un requisito necesita desarrollo conceptual, se referencia el documento correspondiente en lugar de duplicar su contenido.

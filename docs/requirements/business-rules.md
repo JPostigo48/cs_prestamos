@@ -45,3 +45,19 @@ Los valores y restricciones todavía no definidos se detallan en el [modelo de c
 | RN-20 | Las reglas y términos deben poder modificarse dinámicamente por administradores sin requerir cambios de código. |
 
 La información mínima de las reglas, su vigencia y su historial se describen en [términos y condiciones](terms-and-conditions.md).
+
+## Sanciones y apelaciones
+
+| ID | Regla |
+| --- | --- |
+| RN-21 | Cada incumplimiento aplicable a un estudiante debe utilizar la duración de restricción de préstamo definida en la versión de la regla vigente al momento del incumplimiento. |
+| RN-22 | Una sanción debe conservar el usuario sancionado, el incumplimiento y la versión de regla que la originaron, el operador responsable, su intervalo de vigencia y el cambio de confianza aplicado. |
+| RN-23 | Mientras una sanción de restricción de préstamo se encuentre activa, el estudiante sancionado no puede solicitar nuevos préstamos. |
+| RN-24 | Solo el usuario afectado puede apelar una sanción asociada a su cuenta y la sanción debe encontrarse activa al momento de presentar la apelación. |
+| RN-25 | Solo una cuenta con rol de administrador puede resolver una apelación. |
+| RN-26 | Una apelación aceptada absuelve la sanción y elimina su efecto de bloqueo para nuevos préstamos; una apelación rechazada mantiene la sanción vigente hasta su finalización. |
+| RN-27 | Las sanciones y apelaciones conforman historiales: sus registros resueltos no se sobrescriben ni se eliminan al finalizar su vigencia. |
+| RN-28 | Los cambios posteriores en una regla no deben modificar retroactivamente la duración, el cambio de confianza ni las referencias conservadas por una sanción existente. |
+| RN-29 | Cada apelación debe conservar la sanción y el usuario relacionados, el motivo, las fechas, el resultado y el administrador que tomó la decisión. |
+
+El efecto de una apelación aceptada sobre el porcentaje de confianza permanece pendiente de definición en el [modelo de confianza](trust-model.md).
