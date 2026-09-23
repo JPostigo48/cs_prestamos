@@ -1,43 +1,49 @@
-workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de gestión de préstamos universitarios; no representa una implementación ni un despliegue." {
+workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de gestión de préstamos universitarios. Vista táctica de bounded contexts, agregados y conceptos clave — no representa una implementación ni un despliegue." {
+
     model {
+
+        # ============================================================
+        # BOUNDED CONTEXTS (vista estratégica)
+        # ============================================================
+
         prestamos = element "Préstamos (loans)" "Bounded Context · central" "Registra préstamos y devoluciones; coordina las condiciones para ocupar un ejemplar." {
             tags "BoundedContext,Central"
         }
 
-        inventario = element "Inventario (inventory)" "Bounded Context · soporte" "Gestiona recursos, ejemplares físicos y disponibilidad." {
+        inventario = element "Inventario (inventory)" "Bounded Context · soporte" "Gestiona recursos, ejemplares físicos y su disponibilidad." {
             tags "BoundedContext,Soporte"
         }
 
-        usuarios = element "Usuarios (users)" "Bounded Context · soporte" "Gestiona solicitudes, vinculación institucional y estado del usuario." {
+        usuarios = element "Usuarios (users)" "Bounded Context · soporte" "Gestiona solicitudes de registro, identidad institucional, confianza y sanciones del usuario." {
             tags "BoundedContext,Soporte"
         }
 
-        confianza = element "Confianza" "Responsabilidad de dominio · soporte" "Evalúa porcentaje, nivel, sanciones y restricciones. Su límite queda pendiente de consolidación con Usuarios." {
-            tags "BoundedContext,Soporte,Pendiente"
-        }
-
-        reglas = element "Reglas y Términos" "Bounded Context · soporte" "Administra reglas vigentes, versiones, incumplimientos y términos aceptados." {
-            tags "BoundedContext,Soporte"
+        reglas = element "Reglas y Términos" "Área de dominio · límite por validar" "Administra reglas vigentes, versiones, incumplimientos, apelaciones y términos aceptados." {
+            tags "BoundedContext,AreaDominio"
         }
 
         autenticacion = element "Autenticación (auth)" "Bounded Context · genérico de apoyo" "Proporciona identidad autenticada, rol y control de acceso." {
             tags "BoundedContext,Generico"
         }
 
-        // Elementos internos: Préstamos
+
+        # ============================================================
+        # PRÉSTAMOS · elementos internos
+        # ============================================================
+
         aggPrestamo = element "Agregado Préstamo" "Aggregate" "Límite de consistencia del préstamo y su devolución." {
-            tags "Aggregate,Central"
+            tags "Aggregate"
         }
-        rootPrestamo = element "Préstamo" "Aggregate Root" "Referencia usuarioId y ejemplarId. Controla el intervalo del préstamo." {
-            tags "AggregateRoot,Central"
+        rootPrestamo = element "Préstamo" "Aggregate Root" "Referencia usuarioId y ejemplarId; controla el intervalo del préstamo." {
+            tags "AggregateRoot"
         }
         estadoPrestamo = element "EstadoPrestamo" "Enumeración" "PLANIFICADO, ACTIVO o FINALIZADO." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
-        devolucionPrestamo = element "Devolución" "Value Object" "Pertenece al agregado Préstamo y finaliza el préstamo." {
-            tags "Concepto"
+        devolucionPrestamo = element "Devolución" "Value Object" "Cierra el préstamo; fecha >= fechaInicio del préstamo." {
+            tags "ValueObject"
         }
-        intervaloPrestamo = element "fechaInicio - fechaFin" "Concepto" "Intervalo temporal en el que el ejemplar queda ocupado." {
+        intervaloPrestamo = element "fechaInicio – fechaFin" "Concepto" "Intervalo temporal en el que el ejemplar queda ocupado." {
             tags "Concepto"
         }
         refUsuarioPrestamo = element "usuarioId (préstamo)" "Referencia externa" "Referencia a Usuario; no carga el agregado Usuarios." {
@@ -50,7 +56,11 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
             tags "Invariante"
         }
 
-        // Elementos internos: Inventario
+
+        # ============================================================
+        # INVENTARIO · elementos internos
+        # ============================================================
+
         aggCategoria = element "Agregado Categoría de Recurso" "Aggregate" "Clasifica recursos y define el tiempo máximo de préstamo." {
             tags "Aggregate"
         }
@@ -69,7 +79,7 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         refCategoriaRecurso = element "categoriaId" "Referencia interna" "Referencia del recurso a su categoría." {
             tags "ExternalRef"
         }
-        disponibilidadRecurso = element "Disponibilidad derivada" "Concepto" "Existe al menos un ejemplar disponible." {
+        disponibilidadRecurso = element "Disponibilidad derivada" "Atributo derivado" "Existe al menos un ejemplar en estado DISPONIBLE." {
             tags "Invariante"
         }
         aggEjemplar = element "Agregado Ejemplar" "Aggregate" "Unidad física prestable de un recurso." {
@@ -79,27 +89,31 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
             tags "AggregateRoot"
         }
         estadoEjemplar = element "EstadoEjemplar" "Enumeración" "DISPONIBLE, PRESTADO o NO_DISPONIBLE." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
-        observacionesEjemplar = element "ObservacionEjemplar" "Entidad interna" "Registra observaciones o incidencias del ejemplar." {
-            tags "Concepto"
+        observacionEjemplar = element "ObservacionEjemplar" "Entity" "Registra observaciones o incidencias del ejemplar (0..*)." {
+            tags "Entity"
         }
 
-        // Elementos internos: Usuarios
+
+        # ============================================================
+        # USUARIOS · elementos internos (incluye confianza y sanciones)
+        # ============================================================
+
         aggSolicitudRegistro = element "Agregado Solicitud de Registro" "Aggregate" "Gestiona la solicitud antes de habilitar una cuenta." {
             tags "Aggregate"
         }
         rootSolicitudRegistro = element "SolicitudRegistro" "Aggregate Root" "Solicitud pendiente, aprobada o rechazada." {
             tags "AggregateRoot"
         }
-        evidenciasVinculacion = element "EvidenciaVinculacion" "Value Object" "Información para verificar vinculación vigente con la EPCC." {
-            tags "Concepto"
+        evidenciasVinculacion = element "EvidenciaVinculacion" "Value Object" "Información para verificar vinculación institucional vigente." {
+            tags "ValueObject"
         }
         estadoSolicitud = element "EstadoSolicitud" "Enumeración" "PENDIENTE, APROBADA o RECHAZADA." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
         tipoUsuario = element "TipoUsuario" "Enumeración" "ESTUDIANTE, DOCENTE o ADMINISTRATIVO." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
         aggUsuario = element "Agregado Usuario" "Aggregate" "Identidad institucional, vinculación, confianza y sanciones." {
             tags "Aggregate"
@@ -108,241 +122,294 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
             tags "AggregateRoot"
         }
         porcentajeConfianza = element "PorcentajeConfianza" "Value Object" "Valor entre 0 y 100 asociado al usuario." {
+            tags "ValueObject"
+        }
+        nivelConfianza = element "NivelConfianza" "Atributo derivado" "Cuatro niveles derivados del porcentaje; umbrales pendientes de definir." {
             tags "Concepto"
         }
-        nivelConfianza = element "NivelConfianza" "Concepto derivado" "Nivel derivado del porcentaje. Umbrales pendientes." {
-            tags "Concepto"
-        }
-        sancionesUsuario = element "Sanciones" "Entidad interna" "Historial de penalizaciones. Conserva confianzaAnterior y confianzaPosterior." {
-            tags "Concepto"
+        sancionesUsuario = element "Sanción" "Entity" "Historial de penalizaciones; conserva confianzaAnterior y confianzaPosterior (0..*)." {
+            tags "Entity"
         }
         estadoSancion = element "EstadoSancion" "Enumeración" "ACTIVA o FINALIZADA." {
+            tags "Enumeracion"
+        }
+        restriccionesUsuario = element "Restricciones por confianza" "Política de dominio" "Condiciones aplicables según el nivel de confianza o una sanción activa; detalle pendiente de definir." {
             tags "Concepto"
         }
+        cambioConfianzaPorIncumplimiento = element "Cambio de confianza por incumplimiento" "Política de dominio" "Aplica la penalización de la versión de regla infringida y origina la sanción correspondiente." {
+            tags "Concepto"
+        }
+        confianzaConsolidada = element "Confianza consolidada en Usuarios" "Aclaración" "La evaluación de confianza y sus restricciones derivadas se modelan dentro de Usuarios; no constituyen un bounded context separado." {
+            tags "Aclaracion"
+        }
 
-        // Elementos internos: Reglas y Términos
-        rootReglaUso = element "ReglaUso" "Aggregate Root" "Identidad estable de una regla de uso." {
+
+        # ============================================================
+        # REGLAS Y TÉRMINOS · elementos internos (incluye apelaciones)
+        # ============================================================
+
+        aggReglaUso = element "Agregado Regla de Uso" "Aggregate" "Identidad estable de una regla de uso." {
+            tags "Aggregate"
+        }
+        rootReglaUso = element "ReglaUso" "Aggregate Root" "Mantiene la referencia a su versión vigente." {
             tags "AggregateRoot"
         }
-        versionRegla = element "VersionRegla" "Aggregate" "Versión histórica de una regla; conserva contenido y penalización." {
+        versionVigente = element "versionVigenteId" "Referencia interna" "Identifica la versión actualmente vigente de una regla." {
+            tags "ExternalRef"
+        }
+        aggVersionRegla = element "Agregado Versión de Regla" "Aggregate" "Versión histórica e inmutable de una regla." {
             tags "Aggregate"
         }
-        versionVigente = element "versionVigenteId" "Referencia" "Identifica la versión actualmente vigente de una regla." {
-            tags "ExternalRef"
+        rootVersionRegla = element "VersionRegla" "Aggregate Root" "Conserva contenido, penalización porcentual y consecuencia." {
+            tags "AggregateRoot"
         }
         estadoRegla = element "EstadoRegla" "Enumeración" "ACTIVA o INACTIVA." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
-        incumplimientos = element "Incumplimiento" "Aggregate" "Conserva la versión infringida y la penalización aplicada." {
+        aggIncumplimiento = element "Agregado Incumplimiento" "Aggregate" "Registro histórico e inmutable de una infracción." {
             tags "Aggregate"
         }
-        versionesTerminos = element "VersionTerminos" "Aggregate" "Versión concreta de términos y condiciones." {
-            tags "Aggregate"
+        rootIncumplimiento = element "Incumplimiento" "Aggregate Root" "Conserva la versión infringida y la penalización realmente aplicada." {
+            tags "AggregateRoot"
         }
-        aceptacionesTerminos = element "AceptacionTerminos" "Aggregate" "Aceptación de una versión concreta por usuarioId." {
-            tags "Aggregate"
-        }
-        invHistorialReglas = element "Invariante: historial estable" "Regla de dominio" "Cambios posteriores de reglas no alteran incumplimientos históricos." {
+        invHistorialReglas = element "Invariante: historial estable" "Regla de dominio" "Cambios posteriores de reglas no alteran incumplimientos ya registrados." {
             tags "Invariante"
         }
-        refUsuarioReglas = element "usuarioId (reglas)" "Referencia externa" "Referencia al usuario asociado al incumplimiento o aceptación." {
+        aggApelacion = element "Agregado Apelación" "Aggregate" "Impugnación de un incumplimiento por parte del usuario sancionado." {
+            tags "Aggregate"
+        }
+        rootApelacion = element "Apelación" "Aggregate Root" "Motivo, fecha, estado y resolución de la impugnación." {
+            tags "AggregateRoot"
+        }
+        estadoApelacion = element "EstadoApelacion" "Enumeración" "PENDIENTE, ACEPTADA o RECHAZADA." {
+            tags "Enumeracion"
+        }
+        invApelacionUnica = element "Invariante: apelación única" "Regla de dominio" "Un incumplimiento admite como máximo una apelación activa; si es ACEPTADA revierte la penalización aplicada (mecanismo de reversión de confianza pendiente de definir)." {
+            tags "Invariante"
+        }
+        notaHistorialIncumplimientos = element "Historial de incumplimientos" "Aclaración" "Conserva la versión de la regla infringida y la penalización realmente aplicada, incluso si la regla cambia después." {
+            tags "Aclaracion"
+        }
+        refUsuarioReglas = element "usuarioId (reglas)" "Referencia externa" "Referencia al usuario asociado al incumplimiento, la apelación o la aceptación." {
             tags "ExternalRef"
         }
+        aggVersionTerminos = element "Agregado Versión de Términos" "Aggregate" "Versión concreta y numerada de términos y condiciones." {
+            tags "Aggregate"
+        }
+        rootVersionTerminos = element "VersionTerminos" "Aggregate Root" "Versión de términos identificada por número." {
+            tags "AggregateRoot"
+        }
+        aggAceptacionTerminos = element "Agregado Aceptación de Términos" "Aggregate" "Registro de aceptación de una versión concreta." {
+            tags "Aggregate"
+        }
+        rootAceptacionTerminos = element "AceptaciónTérminos" "Aggregate Root" "Aceptación de una versión de términos por un usuario." {
+            tags "AggregateRoot"
+        }
 
-        // Elementos internos: Autenticación
+
+        # ============================================================
+        # AUTENTICACIÓN · elementos internos
+        # ============================================================
+
+        aggCuentaAcceso = element "Agregado Cuenta de Acceso" "Aggregate" "Credenciales y control de acceso asociados a un usuario." {
+            tags "Aggregate"
+        }
         rootCuentaAcceso = element "CuentaAcceso" "Aggregate Root" "Cuenta asociada a usuarioId." {
             tags "AggregateRoot"
         }
         rolesAcceso = element "RolAcceso" "Enumeración" "USUARIO, OPERADOR o ADMINISTRADOR." {
-            tags "Concepto"
+            tags "Enumeracion"
         }
         refUsuarioAuth = element "usuarioId (autenticación)" "Referencia externa" "Vincula la cuenta con Usuario." {
             tags "ExternalRef"
         }
-        tipoUsuarioReferencia = element "TipoUsuario pertenece a Usuarios" "Aclaración" "Estudiante, docente o administrativo describe la vinculación institucional, no permisos." {
-            tags "ExternalRef"
+        tipoUsuarioReferencia = element "TipoUsuario pertenece a Usuarios" "Aclaración" "Estudiante, docente o administrativo describe la vinculación institucional, no un permiso de acceso." {
+            tags "Aclaracion"
         }
-        rolNoTipo = element "RolAcceso no es TipoUsuario" "Invariante conceptual" "Administrador es un rol de acceso; administrativo es un tipo institucional." {
+        rolNoTipo = element "RolAcceso no es TipoUsuario" "Invariante conceptual" "Administrador es un rol de acceso; administrativo es un tipo institucional. No deben confundirse." {
             tags "Invariante"
         }
 
-        // Elementos internos: Confianza
-        evaluacionConfianza = element "Evaluación de confianza" "Política de dominio" "Evalúa el estado de confianza por usuarioId." {
-            tags "Aggregate"
-        }
-        refUsuarioConfianza = element "Usuario (usuarioId)" "Referencia externa" "La confianza se asocia al usuario sin duplicar el agregado Usuario." {
-            tags "ExternalRef"
-        }
-        porcentajeConfianzaCtx = element "Porcentaje de confianza" "Concepto" "Valor 0..100. Porcentaje inicial pendiente." {
-            tags "Concepto"
-        }
-        nivelConfianzaCtx = element "Nivel de confianza" "Concepto derivado" "Cuatro niveles derivados; límites pendientes." {
-            tags "Concepto"
-        }
-        sancionesActivas = element "Sanciones activas" "Concepto" "Penalizaciones vigentes que pueden impedir operaciones." {
-            tags "Concepto"
-        }
-        restriccionesConfianza = element "Restricciones derivadas" "Política de dominio" "Condiciones aplicables por nivel o sanción; detalle pendiente." {
-            tags "Concepto"
-        }
-        cambioPorIncumplimiento = element "Cambio por incumplimiento" "Política de dominio" "Aplica el descuento configurado y conserva el cambio histórico." {
-            tags "Concepto"
-        }
-        refReglasConfianza = element "Reglas e incumplimientos" "Referencia externa" "Fuente de penalizaciones y restricciones vigentes." {
-            tags "ExternalRef"
-        }
-        limiteConfianza = element "Límite pendiente" "Aclaración" "Confianza se separa en Structurizr para explicar responsabilidades; su consolidación con Usuarios sigue pendiente." {
-            tags "Invariante,Pendiente"
-        }
 
-        // Relaciones entre contextos
-        prestamos -> usuarios "verifica estado del usuario"
-        prestamos -> inventario "consulta disponibilidad y ocupa ejemplares"
-        prestamos -> confianza "consulta restricciones de confianza"
-        prestamos -> autenticacion "requiere identidad y permisos"
-        reglas -> confianza "incumplimientos afectan confianza"
-        confianza -> usuarios "se asocia por usuarioId"
-        autenticacion -> usuarios "vincula cuenta con usuario"
-        usuarios -> confianza "solicita evaluación de habilitación"
-        confianza -> reglas "consulta reglas vigentes"
+        # ============================================================
+        # RELACIONES ESTRATÉGICAS (entre bounded contexts)
+        # ============================================================
 
-        // Préstamos
+        prestamos -> usuarios "verifica estado y confianza del usuario" "" "Estrategica"
+        prestamos -> inventario "consulta disponibilidad y ocupa ejemplares" "" "Estrategica"
+        prestamos -> autenticacion "requiere identidad y permisos" "" "Estrategica"
+        reglas -> usuarios "incumplimientos y apelaciones afectan la confianza" "" "Estrategica"
+        usuarios -> reglas "consulta reglas vigentes para restricciones por confianza" "" "Estrategica"
+        autenticacion -> usuarios "vincula cuenta con usuario" "" "Estrategica"
+
+
+        # ============================================================
+        # PRÉSTAMOS · relaciones internas
+        # ============================================================
+
         prestamos -> aggPrestamo "contiene"
         aggPrestamo -> rootPrestamo "raíz"
-        rootPrestamo -> estadoPrestamo "estado"
+        rootPrestamo -> estadoPrestamo "estado" "" "Derivacion"
         rootPrestamo -> intervaloPrestamo "usa"
-        rootPrestamo -> refUsuarioPrestamo "usuarioId"
-        rootPrestamo -> refEjemplarPrestamo "ejemplarId"
+        rootPrestamo -> refUsuarioPrestamo "usuarioId" "" "Derivacion"
+        rootPrestamo -> refEjemplarPrestamo "ejemplarId" "" "Derivacion"
         rootPrestamo -> invIntervaloEjemplar "cumple"
         rootPrestamo -> devolucionPrestamo "contiene 0..1"
 
-        // Inventario
+
+        # ============================================================
+        # INVENTARIO · relaciones internas
+        # ============================================================
+
         inventario -> aggCategoria "contiene"
         inventario -> aggRecurso "contiene"
         inventario -> aggEjemplar "contiene"
         aggCategoria -> rootCategoria "raíz"
         rootCategoria -> tiempoMaximoPrestamo "define"
         aggRecurso -> rootRecurso "raíz"
-        rootRecurso -> refCategoriaRecurso "referencia"
+        rootRecurso -> refCategoriaRecurso "referencia" "" "Derivacion"
         rootCategoria -> rootRecurso "1 a muchos"
-        rootRecurso -> disponibilidadRecurso "deriva"
+        rootRecurso -> disponibilidadRecurso "deriva" "" "Derivacion"
         aggEjemplar -> rootEjemplar "raíz"
         rootRecurso -> rootEjemplar "1 a muchos"
         rootEjemplar -> rootRecurso "pertenece a"
-        rootEjemplar -> estadoEjemplar "estado"
-        rootEjemplar -> observacionesEjemplar "observaciones"
-        estadoEjemplar -> disponibilidadRecurso "al menos uno DISPONIBLE"
+        rootEjemplar -> estadoEjemplar "estado" "" "Derivacion"
+        rootEjemplar -> observacionEjemplar "observaciones"
+        estadoEjemplar -> disponibilidadRecurso "al menos uno DISPONIBLE" "" "Derivacion"
 
-        // Usuarios
+
+        # ============================================================
+        # USUARIOS · relaciones internas
+        # ============================================================
+
         usuarios -> aggSolicitudRegistro "contiene"
         usuarios -> aggUsuario "contiene"
         aggSolicitudRegistro -> rootSolicitudRegistro "raíz"
         rootSolicitudRegistro -> evidenciasVinculacion "incluye"
-        rootSolicitudRegistro -> estadoSolicitud "estado"
-        rootSolicitudRegistro -> tipoUsuario "tipoUsuario"
+        rootSolicitudRegistro -> estadoSolicitud "estado" "" "Derivacion"
+        rootSolicitudRegistro -> tipoUsuario "tipoUsuario" "" "Derivacion"
         rootSolicitudRegistro -> rootUsuario "aprobada origina"
         aggUsuario -> rootUsuario "raíz"
-        rootUsuario -> tipoUsuario "tipoUsuario"
+        rootUsuario -> tipoUsuario "tipoUsuario" "" "Derivacion"
         rootUsuario -> porcentajeConfianza "posee"
-        porcentajeConfianza -> nivelConfianza "deriva"
+        porcentajeConfianza -> nivelConfianza "deriva" "" "Derivacion"
+        nivelConfianza -> restriccionesUsuario "condiciona"
         rootUsuario -> sancionesUsuario "0..*"
-        sancionesUsuario -> estadoSancion "estado"
+        sancionesUsuario -> estadoSancion "estado" "" "Derivacion"
+        sancionesUsuario -> cambioConfianzaPorIncumplimiento "registra"
+        cambioConfianzaPorIncumplimiento -> porcentajeConfianza "actualiza"
+        confianzaConsolidada -> aggUsuario "aclara"
 
-        // Reglas y términos
-        reglas -> rootReglaUso "contiene"
-        reglas -> versionRegla "contiene"
-        reglas -> incumplimientos "contiene"
-        reglas -> versionesTerminos "contiene"
-        reglas -> aceptacionesTerminos "contiene"
-        rootReglaUso -> versionRegla "posee versiones"
-        rootReglaUso -> versionVigente "versión vigente"
-        versionRegla -> estadoRegla "estado"
-        incumplimientos -> versionRegla "versionReglaId"
-        incumplimientos -> invHistorialReglas "cumple"
-        versionRegla -> invHistorialReglas "histórica"
-        incumplimientos -> refUsuarioReglas "usuarioId"
-        aceptacionesTerminos -> versionesTerminos "versionTerminosId"
-        aceptacionesTerminos -> refUsuarioReglas "usuarioId"
 
-        // Autenticación
-        autenticacion -> rootCuentaAcceso "contiene"
-        rootCuentaAcceso -> rolesAcceso "rol"
-        rootCuentaAcceso -> refUsuarioAuth "usuarioId"
-        rolesAcceso -> rolNoTipo "no equivale"
-        tipoUsuarioReferencia -> rolNoTipo "contrasta"
+        # ============================================================
+        # REGLAS Y TÉRMINOS · relaciones internas
+        # ============================================================
 
-        // Confianza
-        confianza -> evaluacionConfianza "contiene"
-        evaluacionConfianza -> refUsuarioConfianza "usuarioId"
-        evaluacionConfianza -> porcentajeConfianzaCtx "lee"
-        porcentajeConfianzaCtx -> nivelConfianzaCtx "deriva"
-        evaluacionConfianza -> sancionesActivas "consulta"
-        evaluacionConfianza -> restriccionesConfianza "aplica"
-        cambioPorIncumplimiento -> porcentajeConfianzaCtx "actualiza"
-        cambioPorIncumplimiento -> sancionesActivas "puede generar"
-        cambioPorIncumplimiento -> refReglasConfianza "usa penalización"
-        restriccionesConfianza -> refReglasConfianza "usa reglas vigentes"
-        confianza -> limiteConfianza "aclaración"
+        reglas -> aggReglaUso "contiene"
+        reglas -> aggVersionRegla "contiene"
+        reglas -> aggIncumplimiento "contiene"
+        reglas -> aggApelacion "contiene"
+        reglas -> aggVersionTerminos "contiene"
+        reglas -> aggAceptacionTerminos "contiene"
+
+        aggReglaUso -> rootReglaUso "raíz"
+        rootReglaUso -> versionVigente "referencia" "" "Derivacion"
+        aggVersionRegla -> rootVersionRegla "raíz"
+        rootReglaUso -> rootVersionRegla "posee versiones"
+        rootVersionRegla -> rootReglaUso "pertenece a"
+        rootVersionRegla -> estadoRegla "estado" "" "Derivacion"
+
+        aggIncumplimiento -> rootIncumplimiento "raíz"
+        rootIncumplimiento -> rootVersionRegla "versión infringida"
+        rootIncumplimiento -> invHistorialReglas "cumple"
+        rootVersionRegla -> invHistorialReglas "histórica"
+        rootIncumplimiento -> refUsuarioReglas "usuarioId" "" "Derivacion"
+        notaHistorialIncumplimientos -> rootIncumplimiento "aclara"
+
+        aggApelacion -> rootApelacion "raíz"
+        rootApelacion -> rootIncumplimiento "apela (0..1 por incumplimiento)"
+        rootApelacion -> estadoApelacion "estado" "" "Derivacion"
+        rootApelacion -> invApelacionUnica "cumple"
+        rootApelacion -> refUsuarioReglas "usuarioId" "" "Derivacion"
+
+        aggVersionTerminos -> rootVersionTerminos "raíz"
+        aggAceptacionTerminos -> rootAceptacionTerminos "raíz"
+        rootAceptacionTerminos -> rootVersionTerminos "versión aceptada"
+        rootAceptacionTerminos -> refUsuarioReglas "usuarioId" "" "Derivacion"
+
+
+        # ============================================================
+        # AUTENTICACIÓN · relaciones internas
+        # ============================================================
+
+        autenticacion -> aggCuentaAcceso "contiene"
+        aggCuentaAcceso -> rootCuentaAcceso "raíz"
+        rootCuentaAcceso -> rolesAcceso "rol" "" "Derivacion"
+        rootCuentaAcceso -> refUsuarioAuth "usuarioId" "" "Derivacion"
+        rolesAcceso -> rolNoTipo "no equivale" "" "Derivacion"
+        tipoUsuarioReferencia -> rolNoTipo "contrasta" "" "Derivacion"
     }
 
     views {
-        custom "MapaContextosDDD" {
+
+        custom "01_MapaContextosDDD" {
             title "Mapa general de contextos DDD — préstamos universitarios"
             description "Vista estratégica principal del dominio. Muestra solo bounded contexts y dependencias principales."
-            include prestamos inventario usuarios confianza reglas autenticacion
+            include prestamos inventario usuarios reglas autenticacion
             autoLayout lr 360 240
         }
 
-        custom "InteraccionContextosDDD" {
+        custom "02_InteraccionContextosDDD" {
             title "Interacción entre contextos — préstamos universitarios"
             description "Colaboración conceptual entre bounded contexts. No muestra agregados ni entidades internas."
-            include prestamos inventario usuarios confianza reglas autenticacion
+            include prestamos inventario usuarios reglas autenticacion
             autoLayout lr 360 260
         }
 
-        custom "InternaPrestamos" {
+        custom "03_InternaPrestamos" {
             title "Préstamos — vista interna"
-            description "Límite interno del contexto Préstamos: agregado, raíz, estado, intervalo, devolución y referencias externas por ID."
+            description "Agregado, raíz, estado, intervalo, devolución y referencias externas por identificador."
             include prestamos aggPrestamo rootPrestamo estadoPrestamo devolucionPrestamo intervaloPrestamo refUsuarioPrestamo refEjemplarPrestamo invIntervaloEjemplar
             autoLayout lr 320 220
         }
 
-        custom "InternaInventario" {
+        custom "04_InternaInventario" {
             title "Inventario — vista interna"
             description "Categorías, recursos y ejemplares físicos. La disponibilidad del recurso se deriva de sus ejemplares."
-            include inventario aggCategoria rootCategoria tiempoMaximoPrestamo aggRecurso rootRecurso refCategoriaRecurso disponibilidadRecurso aggEjemplar rootEjemplar estadoEjemplar observacionesEjemplar
+            include inventario aggCategoria rootCategoria tiempoMaximoPrestamo aggRecurso rootRecurso refCategoriaRecurso disponibilidadRecurso aggEjemplar rootEjemplar estadoEjemplar observacionEjemplar
             autoLayout lr 320 220
         }
 
-        custom "InternaUsuarios" {
+        custom "05_InternaUsuarios" {
             title "Usuarios — vista interna"
-            description "Solicitudes, evidencias, usuario institucional, confianza asociada y sanciones como historial de penalizaciones."
-            include usuarios aggSolicitudRegistro rootSolicitudRegistro evidenciasVinculacion estadoSolicitud tipoUsuario aggUsuario rootUsuario porcentajeConfianza nivelConfianza sancionesUsuario estadoSancion
+            description "Solicitudes, evidencias, usuario institucional, confianza y sanciones. La confianza se modela aquí y no como contexto aparte."
+            include usuarios aggSolicitudRegistro rootSolicitudRegistro evidenciasVinculacion estadoSolicitud tipoUsuario aggUsuario rootUsuario porcentajeConfianza nivelConfianza restriccionesUsuario sancionesUsuario estadoSancion cambioConfianzaPorIncumplimiento confianzaConsolidada
             autoLayout lr 320 220
         }
 
-        custom "InternaReglasTerminos" {
+        custom "06_InternaReglasTerminos" {
             title "Reglas y Términos — vista interna"
-            description "Reglas versionadas, incumplimientos históricos, términos y aceptaciones por versión concreta."
-            include reglas rootReglaUso versionRegla versionVigente estadoRegla incumplimientos versionesTerminos aceptacionesTerminos invHistorialReglas refUsuarioReglas
+            description "Reglas versionadas, incumplimientos históricos, apelaciones, términos y aceptaciones por versión concreta."
+            include reglas aggReglaUso rootReglaUso versionVigente aggVersionRegla rootVersionRegla estadoRegla aggIncumplimiento rootIncumplimiento invHistorialReglas notaHistorialIncumplimientos aggApelacion rootApelacion estadoApelacion invApelacionUnica refUsuarioReglas aggVersionTerminos rootVersionTerminos aggAceptacionTerminos rootAceptacionTerminos
             autoLayout lr 320 220
         }
 
-        custom "InternaAutenticacion" {
+        custom "07_InternaApelaciones" {
+            title "Apelaciones — foco"
+            description "Detalle de la impugnación de un incumplimiento: una apelación activa como máximo, con efecto reversible sobre la penalización."
+            include aggIncumplimiento rootIncumplimiento aggApelacion rootApelacion estadoApelacion invApelacionUnica refUsuarioReglas
+            autoLayout lr 320 220
+        }
+
+        custom "08_InternaAutenticacion" {
             title "Autenticación — vista interna"
             description "Cuenta de acceso, rol y referencia a usuarioId. RolAcceso no equivale a TipoUsuario."
-            include autenticacion rootCuentaAcceso rolesAcceso refUsuarioAuth tipoUsuarioReferencia rolNoTipo
-            autoLayout lr 320 220
-        }
-
-        custom "InternaConfianza" {
-            title "Confianza — vista interna"
-            description "Responsabilidad conceptual de evaluación de confianza, restricciones y cambios por incumplimientos sin duplicar entidades de Usuarios."
-            include confianza evaluacionConfianza refUsuarioConfianza porcentajeConfianzaCtx nivelConfianzaCtx sancionesActivas restriccionesConfianza cambioPorIncumplimiento refReglasConfianza limiteConfianza
+            include autenticacion aggCuentaAcceso rootCuentaAcceso rolesAcceso refUsuarioAuth tipoUsuarioReferencia rolNoTipo
             autoLayout lr 320 220
         }
 
         styles {
+
             element "Element" {
                 shape RoundedBox
                 background #334155
@@ -351,6 +418,9 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
                 width 360
                 height 150
             }
+
+            # --- Bounded contexts ---------------------------------------
+
             element "BoundedContext" {
                 shape RoundedBox
                 background #334155
@@ -374,7 +444,16 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
                 background #6b21a8
                 stroke #581c87
             }
+            element "AreaDominio" {
+                background #92400e
+                stroke #78350f
+                strokeWidth 4
+            }
+
+            # --- Bloques tácticos (patrón DDD) --------------------------
+
             element "Aggregate" {
+                shape RoundedBox
                 background #fef3c7
                 color #422006
                 stroke #ca8a04
@@ -383,12 +462,39 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
                 height 145
             }
             element "AggregateRoot" {
+                shape RoundedBox
                 background #f97316
                 color #ffffff
                 stroke #9a3412
                 strokeWidth 4
                 width 340
                 height 135
+            }
+            element "Entity" {
+                shape RoundedBox
+                background #38bdf8
+                color #082f49
+                stroke #0369a1
+                strokeWidth 3
+                width 340
+                height 130
+            }
+            element "ValueObject" {
+                shape RoundedBox
+                background #a78bfa
+                color #2e1065
+                stroke #6d28d9
+                strokeWidth 3
+                width 330
+                height 125
+            }
+            element "Enumeracion" {
+                shape Ellipse
+                background #cbd5e1
+                color #0f172a
+                stroke #64748b
+                width 300
+                height 130
             }
             element "Concepto" {
                 background #e2e8f0
@@ -402,6 +508,7 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
                 background #f8fafc
                 color #334155
                 stroke #94a3b8
+                border dashed
                 width 330
                 height 120
             }
@@ -414,13 +521,34 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
                 width 380
                 height 140
             }
-            element "Pendiente" {
-                stroke #f59e0b
+            element "Aclaracion" {
+                shape Box
+                background #f8fafc
+                color #334155
+                stroke #94a3b8
+                border dashed
+                width 380
+                height 130
             }
+
+            # --- Relaciones ----------------------------------------------
+
             relationship "Relationship" {
                 color #475569
                 fontSize 20
                 thickness 2
+            }
+            relationship "Estrategica" {
+                color #0ea5e9
+                fontSize 20
+                thickness 4
+                style dashed
+            }
+            relationship "Derivacion" {
+                color #94a3b8
+                fontSize 18
+                thickness 2
+                style dotted
             }
         }
     }

@@ -1,0 +1,3673 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.aceptaciones_terminos",
+    "label": "Create table \"aceptaciones_terminos\"",
+    "summary": "Creates table \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"aceptaciones_terminos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"aceptaciones_terminos\"",
+        "sql": "CREATE TABLE \"public\".\"aceptaciones_terminos\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"fecha\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  \"versionTerminosId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"aceptaciones_terminos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.apelaciones",
+    "label": "Create table \"apelaciones\"",
+    "summary": "Creates table \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"apelaciones\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"apelaciones\"",
+        "sql": "CREATE TABLE \"public\".\"apelaciones\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"estado\" text DEFAULT 'PENDIENTE' NOT NULL,\n  \"fecha\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"fechaResolucion\" timestamptz(3),\n  \"id\" uuid NOT NULL,\n  \"incumplimientoId\" uuid NOT NULL,\n  \"motivo\" text NOT NULL,\n  \"resolucion\" text,\n  \"resueltaPorCuentaId\" uuid,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"apelaciones_estado_check_2419a1ff\" CHECK (\"estado\" IN ('PENDIENTE', 'ACEPTADA', 'RECHAZADA'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"apelaciones\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.categorias_recurso",
+    "label": "Create table \"categorias_recurso\"",
+    "summary": "Creates table \"categorias_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "categorias_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"categorias_recurso\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"categorias_recurso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"categorias_recurso\"",
+        "sql": "CREATE TABLE \"public\".\"categorias_recurso\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"nombre\" character varying(120) NOT NULL,\n  \"tiempoMaximoPrestamoDias\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"categorias_recurso\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"categorias_recurso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.cuentas_acceso",
+    "label": "Create table \"cuentas_acceso\"",
+    "summary": "Creates table \"cuentas_acceso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "cuentas_acceso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"cuentas_acceso\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"cuentas_acceso\"",
+        "sql": "CREATE TABLE \"public\".\"cuentas_acceso\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"email\" character varying(254) NOT NULL,\n  \"habilitada\" bool DEFAULT true NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"passwordHash\" character varying(255) NOT NULL,\n  \"rol\" text DEFAULT 'USUARIO' NOT NULL,\n  \"ultimoAcceso\" timestamptz(3),\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"cuentas_acceso_rol_check_cef7fc7b\" CHECK (\"rol\" IN ('USUARIO', 'OPERADOR', 'ADMINISTRADOR'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"cuentas_acceso\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.devoluciones",
+    "label": "Create table \"devoluciones\"",
+    "summary": "Creates table \"devoluciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "devoluciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"devoluciones\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"devoluciones\"",
+        "sql": "CREATE TABLE \"public\".\"devoluciones\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"fecha\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"observacion\" text,\n  \"prestamoId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"devoluciones\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.ejemplares",
+    "label": "Create table \"ejemplares\"",
+    "summary": "Creates table \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ejemplares\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ejemplares\"",
+        "sql": "CREATE TABLE \"public\".\"ejemplares\" (\n  \"codigoInventario\" character varying(80) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"estado\" text DEFAULT 'DISPONIBLE' NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"recursoId\" uuid NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ejemplares_estado_check_dcc20e51\" CHECK (\"estado\" IN ('DISPONIBLE', 'PRESTADO', 'NO_DISPONIBLE'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ejemplares\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.evidencias_vinculacion",
+    "label": "Create table \"evidencias_vinculacion\"",
+    "summary": "Creates table \"evidencias_vinculacion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "evidencias_vinculacion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"evidencias_vinculacion\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_vinculacion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"evidencias_vinculacion\"",
+        "sql": "CREATE TABLE \"public\".\"evidencias_vinculacion\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"informacion\" text NOT NULL,\n  \"solicitudRegistroId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"evidencias_vinculacion\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_vinculacion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.incumplimientos",
+    "label": "Create table \"incumplimientos\"",
+    "summary": "Creates table \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"incumplimientos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"incumplimientos\"",
+        "sql": "CREATE TABLE \"public\".\"incumplimientos\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"fecha\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"penalizacionAplicada\" numeric(5,2) NOT NULL,\n  \"reglaId\" uuid NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  \"versionReglaId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"incumplimientos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.observaciones_ejemplar",
+    "label": "Create table \"observaciones_ejemplar\"",
+    "summary": "Creates table \"observaciones_ejemplar\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "observaciones_ejemplar"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"observaciones_ejemplar\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"observaciones_ejemplar\"",
+        "sql": "CREATE TABLE \"public\".\"observaciones_ejemplar\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"descripcion\" text NOT NULL,\n  \"ejemplarId\" uuid NOT NULL,\n  \"fecha\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"observaciones_ejemplar\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.prestamos",
+    "label": "Create table \"prestamos\"",
+    "summary": "Creates table \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"prestamos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"prestamos\"",
+        "sql": "CREATE TABLE \"public\".\"prestamos\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"ejemplarId\" uuid NOT NULL,\n  \"estado\" text DEFAULT 'PLANIFICADO' NOT NULL,\n  \"fechaFin\" timestamptz(3) NOT NULL,\n  \"fechaInicio\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"prestamos_estado_check_005a5bcd\" CHECK (\"estado\" IN ('PLANIFICADO', 'ACTIVO', 'FINALIZADO'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"prestamos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.recursos",
+    "label": "Create table \"recursos\"",
+    "summary": "Creates table \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"recursos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"recursos\"",
+        "sql": "CREATE TABLE \"public\".\"recursos\" (\n  \"categoriaId\" uuid NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"descripcion\" text,\n  \"id\" uuid NOT NULL,\n  \"nombre\" character varying(180) NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"recursos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.reglas_uso",
+    "label": "Create table \"reglas_uso\"",
+    "summary": "Creates table \"reglas_uso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "reglas_uso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"reglas_uso\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"reglas_uso\"",
+        "sql": "CREATE TABLE \"public\".\"reglas_uso\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"versionVigenteId\" uuid,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"reglas_uso\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.sanciones",
+    "label": "Create table \"sanciones\"",
+    "summary": "Creates table \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"sanciones\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"sanciones\"",
+        "sql": "CREATE TABLE \"public\".\"sanciones\" (\n  \"confianzaAnterior\" numeric(5,2) NOT NULL,\n  \"confianzaPosterior\" numeric(5,2) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"estado\" text DEFAULT 'ACTIVA' NOT NULL,\n  \"fechaFin\" timestamptz(3),\n  \"fechaInicio\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"incumplimientoId\" uuid,\n  \"reglaId\" uuid,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  \"versionReglaId\" uuid,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"sanciones_estado_check_5348962d\" CHECK (\"estado\" IN ('ACTIVA', 'FINALIZADA'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"sanciones\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.solicitudes_registro",
+    "label": "Create table \"solicitudes_registro\"",
+    "summary": "Creates table \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"solicitudes_registro\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"solicitudes_registro\"",
+        "sql": "CREATE TABLE \"public\".\"solicitudes_registro\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"estado\" text DEFAULT 'PENDIENTE' NOT NULL,\n  \"fechaSolicitud\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"identificadorInstitucional\" character varying(80),\n  \"tipoUsuario\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioAprobadoId\" uuid,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"solicitudes_registro_estado_check_e1c39414\" CHECK (\"estado\" IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')),\n  CONSTRAINT \"solicitudes_registro_tipoUsuario_check_70fac5a9\" CHECK (\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"solicitudes_registro\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.usuarios",
+    "label": "Create table \"usuarios\"",
+    "summary": "Creates table \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"usuarios\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"usuarios\"",
+        "sql": "CREATE TABLE \"public\".\"usuarios\" (\n  \"confianza\" numeric(5,2) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"identificadorInstitucional\" character varying(80),\n  \"nombre\" character varying(180) NOT NULL,\n  \"tipoUsuario\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"vinculacionVigente\" bool DEFAULT true NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"usuarios_tipoUsuario_check_70fac5a9\" CHECK (\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"usuarios\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.versiones_regla",
+    "label": "Create table \"versiones_regla\"",
+    "summary": "Creates table \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"versiones_regla\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"versiones_regla\"",
+        "sql": "CREATE TABLE \"public\".\"versiones_regla\" (\n  \"consecuencia\" text NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"descripcion\" text NOT NULL,\n  \"estado\" text DEFAULT 'ACTIVA' NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"numero\" int4 NOT NULL,\n  \"penalizacionPorcentual\" numeric(5,2) NOT NULL,\n  \"reglaId\" uuid NOT NULL,\n  \"titulo\" character varying(180) NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"versiones_regla_estado_check_1cb87e59\" CHECK (\"estado\" IN ('ACTIVA', 'INACTIVA'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"versiones_regla\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.versiones_terminos",
+    "label": "Create table \"versiones_terminos\"",
+    "summary": "Creates table \"versiones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "versiones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"versiones_terminos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"versiones_terminos\"",
+        "sql": "CREATE TABLE \"public\".\"versiones_terminos\" (\n  \"contenido\" text,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"numero\" int4 NOT NULL,\n  \"titulo\" character varying(180),\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"versiones_terminos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.aceptaciones_terminos.aceptaciones_terminos_usuarioId_versionTerminosId_key",
+    "label": "Add unique constraint on \"aceptaciones_terminos\" (usuarioId, versionTerminosId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "aceptaciones_terminos_usuarioId_versionTerminosId_key",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"aceptaciones_terminos_usuarioId_versionTerminosId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_usuarioId_versionTerminosId_key",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"aceptaciones_terminos_usuarioId_versionTerminosId_key\"",
+        "sql": "ALTER TABLE \"public\".\"aceptaciones_terminos\" ADD CONSTRAINT \"aceptaciones_terminos_usuarioId_versionTerminosId_key\" UNIQUE (\"usuarioId\", \"versionTerminosId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"aceptaciones_terminos_usuarioId_versionTerminosId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_usuarioId_versionTerminosId_key",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.apelaciones.apelaciones_incumplimientoId_key",
+    "label": "Add unique constraint on \"apelaciones\" (incumplimientoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "apelaciones_incumplimientoId_key",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"apelaciones_incumplimientoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_incumplimientoId_key",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"apelaciones_incumplimientoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\" ADD CONSTRAINT \"apelaciones_incumplimientoId_key\" UNIQUE (\"incumplimientoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"apelaciones_incumplimientoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_incumplimientoId_key",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.categorias_recurso.categorias_recurso_nombre_key",
+    "label": "Add unique constraint on \"categorias_recurso\" (nombre)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "categorias_recurso_nombre_key",
+        "table": "categorias_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"categorias_recurso_nombre_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "categorias_recurso_nombre_key",
+          "public",
+          "\"public\".\"categorias_recurso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"categorias_recurso_nombre_key\"",
+        "sql": "ALTER TABLE \"public\".\"categorias_recurso\" ADD CONSTRAINT \"categorias_recurso_nombre_key\" UNIQUE (\"nombre\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"categorias_recurso_nombre_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "categorias_recurso_nombre_key",
+          "public",
+          "\"public\".\"categorias_recurso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.cuentas_acceso.cuentas_acceso_usuarioId_key",
+    "label": "Add unique constraint on \"cuentas_acceso\" (usuarioId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "cuentas_acceso_usuarioId_key",
+        "table": "cuentas_acceso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"cuentas_acceso_usuarioId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_usuarioId_key",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"cuentas_acceso_usuarioId_key\"",
+        "sql": "ALTER TABLE \"public\".\"cuentas_acceso\" ADD CONSTRAINT \"cuentas_acceso_usuarioId_key\" UNIQUE (\"usuarioId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"cuentas_acceso_usuarioId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_usuarioId_key",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.cuentas_acceso.cuentas_acceso_email_key",
+    "label": "Add unique constraint on \"cuentas_acceso\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "cuentas_acceso_email_key",
+        "table": "cuentas_acceso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"cuentas_acceso_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_email_key",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"cuentas_acceso_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"cuentas_acceso\" ADD CONSTRAINT \"cuentas_acceso_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"cuentas_acceso_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_email_key",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.devoluciones.devoluciones_prestamoId_key",
+    "label": "Add unique constraint on \"devoluciones\" (prestamoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "devoluciones_prestamoId_key",
+        "table": "devoluciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"devoluciones_prestamoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "devoluciones_prestamoId_key",
+          "public",
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"devoluciones_prestamoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"devoluciones\" ADD CONSTRAINT \"devoluciones_prestamoId_key\" UNIQUE (\"prestamoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"devoluciones_prestamoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "devoluciones_prestamoId_key",
+          "public",
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.ejemplares.ejemplares_codigoInventario_key",
+    "label": "Add unique constraint on \"ejemplares\" (codigoInventario)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "ejemplares_codigoInventario_key",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"ejemplares_codigoInventario_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_codigoInventario_key",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"ejemplares_codigoInventario_key\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" ADD CONSTRAINT \"ejemplares_codigoInventario_key\" UNIQUE (\"codigoInventario\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"ejemplares_codigoInventario_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_codigoInventario_key",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.reglas_uso.reglas_uso_versionVigenteId_key",
+    "label": "Add unique constraint on \"reglas_uso\" (versionVigenteId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "reglas_uso_versionVigenteId_key",
+        "table": "reglas_uso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reglas_uso_versionVigenteId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reglas_uso_versionVigenteId_key",
+          "public",
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"reglas_uso_versionVigenteId_key\"",
+        "sql": "ALTER TABLE \"public\".\"reglas_uso\" ADD CONSTRAINT \"reglas_uso_versionVigenteId_key\" UNIQUE (\"versionVigenteId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reglas_uso_versionVigenteId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reglas_uso_versionVigenteId_key",
+          "public",
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.sanciones.sanciones_incumplimientoId_key",
+    "label": "Add unique constraint on \"sanciones\" (incumplimientoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "sanciones_incumplimientoId_key",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sanciones_incumplimientoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_incumplimientoId_key",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"sanciones_incumplimientoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\" ADD CONSTRAINT \"sanciones_incumplimientoId_key\" UNIQUE (\"incumplimientoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sanciones_incumplimientoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_incumplimientoId_key",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.usuarios.usuarios_identificadorInstitucional_key",
+    "label": "Add unique constraint on \"usuarios\" (identificadorInstitucional)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "usuarios_identificadorInstitucional_key",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"usuarios_identificadorInstitucional_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_identificadorInstitucional_key",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"usuarios_identificadorInstitucional_key\"",
+        "sql": "ALTER TABLE \"public\".\"usuarios\" ADD CONSTRAINT \"usuarios_identificadorInstitucional_key\" UNIQUE (\"identificadorInstitucional\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"usuarios_identificadorInstitucional_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_identificadorInstitucional_key",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.versiones_regla.versiones_regla_reglaId_numero_key",
+    "label": "Add unique constraint on \"versiones_regla\" (reglaId, numero)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "versiones_regla_reglaId_numero_key",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"versiones_regla_reglaId_numero_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_reglaId_numero_key",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"versiones_regla_reglaId_numero_key\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_regla\" ADD CONSTRAINT \"versiones_regla_reglaId_numero_key\" UNIQUE (\"reglaId\", \"numero\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"versiones_regla_reglaId_numero_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_reglaId_numero_key",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.versiones_terminos.versiones_terminos_numero_key",
+    "label": "Add unique constraint on \"versiones_terminos\" (numero)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "versiones_terminos_numero_key",
+        "table": "versiones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"versiones_terminos_numero_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_terminos_numero_key",
+          "public",
+          "\"public\".\"versiones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"versiones_terminos_numero_key\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_terminos\" ADD CONSTRAINT \"versiones_terminos_numero_key\" UNIQUE (\"numero\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"versiones_terminos_numero_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_terminos_numero_key",
+          "public",
+          "\"public\".\"versiones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.aceptaciones_terminos.aceptaciones_terminos_usuarioId_fecha_idx_c02c2249",
+    "label": "Create index \"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\" on \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "aceptaciones_terminos_usuarioId_fecha_idx_c02c2249",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\"",
+        "sql": "CREATE INDEX \"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\" ON \"public\".\"aceptaciones_terminos\" (\"usuarioId\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.aceptaciones_terminos.aceptaciones_terminos_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"aceptaciones_terminos_usuarioId_idx_5f01c7d6\" on \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "aceptaciones_terminos_usuarioId_idx_5f01c7d6",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"aceptaciones_terminos_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"aceptaciones_terminos_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"aceptaciones_terminos_usuarioId_idx_5f01c7d6\" ON \"public\".\"aceptaciones_terminos\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"aceptaciones_terminos_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.aceptaciones_terminos.aceptaciones_terminos_versionTerminosId_idx_37ad6954",
+    "label": "Create index \"aceptaciones_terminos_versionTerminosId_idx_37ad6954\" on \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "aceptaciones_terminos_versionTerminosId_idx_37ad6954",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"aceptaciones_terminos_versionTerminosId_idx_37ad6954\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_versionTerminosId_idx_37ad6954\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"aceptaciones_terminos_versionTerminosId_idx_37ad6954\"",
+        "sql": "CREATE INDEX \"aceptaciones_terminos_versionTerminosId_idx_37ad6954\" ON \"public\".\"aceptaciones_terminos\" (\"versionTerminosId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"aceptaciones_terminos_versionTerminosId_idx_37ad6954\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"aceptaciones_terminos_versionTerminosId_idx_37ad6954\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.apelaciones.apelaciones_estado_fecha_idx_14aede9c",
+    "label": "Create index \"apelaciones_estado_fecha_idx_14aede9c\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "apelaciones_estado_fecha_idx_14aede9c",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"apelaciones_estado_fecha_idx_14aede9c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_estado_fecha_idx_14aede9c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"apelaciones_estado_fecha_idx_14aede9c\"",
+        "sql": "CREATE INDEX \"apelaciones_estado_fecha_idx_14aede9c\" ON \"public\".\"apelaciones\" (\"estado\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"apelaciones_estado_fecha_idx_14aede9c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_estado_fecha_idx_14aede9c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.apelaciones.apelaciones_resueltaPorCuentaId_idx_eefb237e",
+    "label": "Create index \"apelaciones_resueltaPorCuentaId_idx_eefb237e\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "apelaciones_resueltaPorCuentaId_idx_eefb237e",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"apelaciones_resueltaPorCuentaId_idx_eefb237e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_resueltaPorCuentaId_idx_eefb237e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"apelaciones_resueltaPorCuentaId_idx_eefb237e\"",
+        "sql": "CREATE INDEX \"apelaciones_resueltaPorCuentaId_idx_eefb237e\" ON \"public\".\"apelaciones\" (\"resueltaPorCuentaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"apelaciones_resueltaPorCuentaId_idx_eefb237e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_resueltaPorCuentaId_idx_eefb237e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.apelaciones.apelaciones_usuarioId_estado_idx_e25db20e",
+    "label": "Create index \"apelaciones_usuarioId_estado_idx_e25db20e\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "apelaciones_usuarioId_estado_idx_e25db20e",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"apelaciones_usuarioId_estado_idx_e25db20e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"apelaciones_usuarioId_estado_idx_e25db20e\"",
+        "sql": "CREATE INDEX \"apelaciones_usuarioId_estado_idx_e25db20e\" ON \"public\".\"apelaciones\" (\"usuarioId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"apelaciones_usuarioId_estado_idx_e25db20e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.apelaciones.apelaciones_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"apelaciones_usuarioId_idx_5f01c7d6\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "apelaciones_usuarioId_idx_5f01c7d6",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"apelaciones_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"apelaciones_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"apelaciones_usuarioId_idx_5f01c7d6\" ON \"public\".\"apelaciones\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"apelaciones_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"apelaciones_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.cuentas_acceso.cuentas_acceso_rol_habilitada_idx_493fb567",
+    "label": "Create index \"cuentas_acceso_rol_habilitada_idx_493fb567\" on \"cuentas_acceso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "cuentas_acceso_rol_habilitada_idx_493fb567",
+        "table": "cuentas_acceso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"cuentas_acceso_rol_habilitada_idx_493fb567\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cuentas_acceso_rol_habilitada_idx_493fb567\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"cuentas_acceso_rol_habilitada_idx_493fb567\"",
+        "sql": "CREATE INDEX \"cuentas_acceso_rol_habilitada_idx_493fb567\" ON \"public\".\"cuentas_acceso\" (\"rol\", \"habilitada\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"cuentas_acceso_rol_habilitada_idx_493fb567\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cuentas_acceso_rol_habilitada_idx_493fb567\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ejemplares.ejemplares_estado_idx_c74e5888",
+    "label": "Create index \"ejemplares_estado_idx_c74e5888\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ejemplares_estado_idx_c74e5888",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ejemplares_estado_idx_c74e5888\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_estado_idx_c74e5888\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ejemplares_estado_idx_c74e5888\"",
+        "sql": "CREATE INDEX \"ejemplares_estado_idx_c74e5888\" ON \"public\".\"ejemplares\" (\"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ejemplares_estado_idx_c74e5888\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_estado_idx_c74e5888\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ejemplares.ejemplares_recursoId_estado_idx_7662cf35",
+    "label": "Create index \"ejemplares_recursoId_estado_idx_7662cf35\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ejemplares_recursoId_estado_idx_7662cf35",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ejemplares_recursoId_estado_idx_7662cf35\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_recursoId_estado_idx_7662cf35\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ejemplares_recursoId_estado_idx_7662cf35\"",
+        "sql": "CREATE INDEX \"ejemplares_recursoId_estado_idx_7662cf35\" ON \"public\".\"ejemplares\" (\"recursoId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ejemplares_recursoId_estado_idx_7662cf35\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_recursoId_estado_idx_7662cf35\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ejemplares.ejemplares_recursoId_idx_24de29ee",
+    "label": "Create index \"ejemplares_recursoId_idx_24de29ee\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ejemplares_recursoId_idx_24de29ee",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ejemplares_recursoId_idx_24de29ee\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_recursoId_idx_24de29ee\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ejemplares_recursoId_idx_24de29ee\"",
+        "sql": "CREATE INDEX \"ejemplares_recursoId_idx_24de29ee\" ON \"public\".\"ejemplares\" (\"recursoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ejemplares_recursoId_idx_24de29ee\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ejemplares_recursoId_idx_24de29ee\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.evidencias_vinculacion.evidencias_vinculacion_solicitudRegistroId_idx_583e08f8",
+    "label": "Create index \"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\" on \"evidencias_vinculacion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "evidencias_vinculacion_solicitudRegistroId_idx_583e08f8",
+        "table": "evidencias_vinculacion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\"",
+        "sql": "CREATE INDEX \"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\" ON \"public\".\"evidencias_vinculacion\" (\"solicitudRegistroId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_vinculacion_solicitudRegistroId_idx_583e08f8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_reglaId_idx_b6d54101",
+    "label": "Create index \"incumplimientos_reglaId_idx_b6d54101\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_reglaId_idx_b6d54101",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_reglaId_idx_b6d54101\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_reglaId_idx_b6d54101\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_reglaId_idx_b6d54101\"",
+        "sql": "CREATE INDEX \"incumplimientos_reglaId_idx_b6d54101\" ON \"public\".\"incumplimientos\" (\"reglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_reglaId_idx_b6d54101\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_reglaId_idx_b6d54101\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_reglaId_versionReglaId_idx_6f818c35",
+    "label": "Create index \"incumplimientos_reglaId_versionReglaId_idx_6f818c35\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_reglaId_versionReglaId_idx_6f818c35",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_reglaId_versionReglaId_idx_6f818c35\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_reglaId_versionReglaId_idx_6f818c35\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_reglaId_versionReglaId_idx_6f818c35\"",
+        "sql": "CREATE INDEX \"incumplimientos_reglaId_versionReglaId_idx_6f818c35\" ON \"public\".\"incumplimientos\" (\"reglaId\", \"versionReglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_reglaId_versionReglaId_idx_6f818c35\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_reglaId_versionReglaId_idx_6f818c35\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_usuarioId_fecha_idx_c02c2249",
+    "label": "Create index \"incumplimientos_usuarioId_fecha_idx_c02c2249\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_usuarioId_fecha_idx_c02c2249",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_usuarioId_fecha_idx_c02c2249\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_usuarioId_fecha_idx_c02c2249\"",
+        "sql": "CREATE INDEX \"incumplimientos_usuarioId_fecha_idx_c02c2249\" ON \"public\".\"incumplimientos\" (\"usuarioId\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_usuarioId_fecha_idx_c02c2249\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"incumplimientos_usuarioId_idx_5f01c7d6\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_usuarioId_idx_5f01c7d6",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"incumplimientos_usuarioId_idx_5f01c7d6\" ON \"public\".\"incumplimientos\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_versionReglaId_idx_e53cdbcf",
+    "label": "Create index \"incumplimientos_versionReglaId_idx_e53cdbcf\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_versionReglaId_idx_e53cdbcf",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_versionReglaId_idx_e53cdbcf\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_versionReglaId_idx_e53cdbcf\"",
+        "sql": "CREATE INDEX \"incumplimientos_versionReglaId_idx_e53cdbcf\" ON \"public\".\"incumplimientos\" (\"versionReglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_versionReglaId_idx_e53cdbcf\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.observaciones_ejemplar.observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe",
+    "label": "Create index \"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\" on \"observaciones_ejemplar\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe",
+        "table": "observaciones_ejemplar"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\"",
+        "sql": "CREATE INDEX \"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\" ON \"public\".\"observaciones_ejemplar\" (\"ejemplarId\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar_ejemplarId_fecha_idx_f07accfe\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.observaciones_ejemplar.observaciones_ejemplar_ejemplarId_idx_3f5f7f14",
+    "label": "Create index \"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\" on \"observaciones_ejemplar\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "observaciones_ejemplar_ejemplarId_idx_3f5f7f14",
+        "table": "observaciones_ejemplar"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\"",
+        "sql": "CREATE INDEX \"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\" ON \"public\".\"observaciones_ejemplar\" (\"ejemplarId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"observaciones_ejemplar_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prestamos.prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0",
+    "label": "Create index \"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\"",
+        "sql": "CREATE INDEX \"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\" ON \"public\".\"prestamos\" (\"ejemplarId\", \"estado\", \"fechaInicio\", \"fechaFin\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_ejemplarId_estado_fechaInicio_fechaFin_idx_bf9856f0\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prestamos.prestamos_ejemplarId_idx_3f5f7f14",
+    "label": "Create index \"prestamos_ejemplarId_idx_3f5f7f14\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prestamos_ejemplarId_idx_3f5f7f14",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prestamos_ejemplarId_idx_3f5f7f14\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prestamos_ejemplarId_idx_3f5f7f14\"",
+        "sql": "CREATE INDEX \"prestamos_ejemplarId_idx_3f5f7f14\" ON \"public\".\"prestamos\" (\"ejemplarId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prestamos_ejemplarId_idx_3f5f7f14\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prestamos.prestamos_fechaFin_estado_idx_e1e0a96c",
+    "label": "Create index \"prestamos_fechaFin_estado_idx_e1e0a96c\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prestamos_fechaFin_estado_idx_e1e0a96c",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prestamos_fechaFin_estado_idx_e1e0a96c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_fechaFin_estado_idx_e1e0a96c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prestamos_fechaFin_estado_idx_e1e0a96c\"",
+        "sql": "CREATE INDEX \"prestamos_fechaFin_estado_idx_e1e0a96c\" ON \"public\".\"prestamos\" (\"fechaFin\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prestamos_fechaFin_estado_idx_e1e0a96c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_fechaFin_estado_idx_e1e0a96c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prestamos.prestamos_usuarioId_estado_idx_e25db20e",
+    "label": "Create index \"prestamos_usuarioId_estado_idx_e25db20e\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prestamos_usuarioId_estado_idx_e25db20e",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prestamos_usuarioId_estado_idx_e25db20e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prestamos_usuarioId_estado_idx_e25db20e\"",
+        "sql": "CREATE INDEX \"prestamos_usuarioId_estado_idx_e25db20e\" ON \"public\".\"prestamos\" (\"usuarioId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prestamos_usuarioId_estado_idx_e25db20e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prestamos.prestamos_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"prestamos_usuarioId_idx_5f01c7d6\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prestamos_usuarioId_idx_5f01c7d6",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prestamos_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prestamos_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"prestamos_usuarioId_idx_5f01c7d6\" ON \"public\".\"prestamos\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prestamos_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prestamos_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.recursos.recursos_categoriaId_idx_63b46427",
+    "label": "Create index \"recursos_categoriaId_idx_63b46427\" on \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "recursos_categoriaId_idx_63b46427",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"recursos_categoriaId_idx_63b46427\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos_categoriaId_idx_63b46427\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"recursos_categoriaId_idx_63b46427\"",
+        "sql": "CREATE INDEX \"recursos_categoriaId_idx_63b46427\" ON \"public\".\"recursos\" (\"categoriaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"recursos_categoriaId_idx_63b46427\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos_categoriaId_idx_63b46427\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.recursos.recursos_nombre_idx_bdfaa3b5",
+    "label": "Create index \"recursos_nombre_idx_bdfaa3b5\" on \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "recursos_nombre_idx_bdfaa3b5",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"recursos_nombre_idx_bdfaa3b5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos_nombre_idx_bdfaa3b5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"recursos_nombre_idx_bdfaa3b5\"",
+        "sql": "CREATE INDEX \"recursos_nombre_idx_bdfaa3b5\" ON \"public\".\"recursos\" (\"nombre\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"recursos_nombre_idx_bdfaa3b5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"recursos_nombre_idx_bdfaa3b5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sanciones.sanciones_estado_fechaFin_idx_eb91b5fc",
+    "label": "Create index \"sanciones_estado_fechaFin_idx_eb91b5fc\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sanciones_estado_fechaFin_idx_eb91b5fc",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sanciones_estado_fechaFin_idx_eb91b5fc\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_estado_fechaFin_idx_eb91b5fc\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sanciones_estado_fechaFin_idx_eb91b5fc\"",
+        "sql": "CREATE INDEX \"sanciones_estado_fechaFin_idx_eb91b5fc\" ON \"public\".\"sanciones\" (\"estado\", \"fechaFin\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sanciones_estado_fechaFin_idx_eb91b5fc\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_estado_fechaFin_idx_eb91b5fc\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sanciones.sanciones_reglaId_idx_b6d54101",
+    "label": "Create index \"sanciones_reglaId_idx_b6d54101\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sanciones_reglaId_idx_b6d54101",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sanciones_reglaId_idx_b6d54101\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_reglaId_idx_b6d54101\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sanciones_reglaId_idx_b6d54101\"",
+        "sql": "CREATE INDEX \"sanciones_reglaId_idx_b6d54101\" ON \"public\".\"sanciones\" (\"reglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sanciones_reglaId_idx_b6d54101\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_reglaId_idx_b6d54101\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sanciones.sanciones_usuarioId_estado_idx_e25db20e",
+    "label": "Create index \"sanciones_usuarioId_estado_idx_e25db20e\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sanciones_usuarioId_estado_idx_e25db20e",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sanciones_usuarioId_estado_idx_e25db20e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sanciones_usuarioId_estado_idx_e25db20e\"",
+        "sql": "CREATE INDEX \"sanciones_usuarioId_estado_idx_e25db20e\" ON \"public\".\"sanciones\" (\"usuarioId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sanciones_usuarioId_estado_idx_e25db20e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sanciones.sanciones_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"sanciones_usuarioId_idx_5f01c7d6\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sanciones_usuarioId_idx_5f01c7d6",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sanciones_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sanciones_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"sanciones_usuarioId_idx_5f01c7d6\" ON \"public\".\"sanciones\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sanciones_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sanciones.sanciones_versionReglaId_idx_e53cdbcf",
+    "label": "Create index \"sanciones_versionReglaId_idx_e53cdbcf\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sanciones_versionReglaId_idx_e53cdbcf",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sanciones_versionReglaId_idx_e53cdbcf\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sanciones_versionReglaId_idx_e53cdbcf\"",
+        "sql": "CREATE INDEX \"sanciones_versionReglaId_idx_e53cdbcf\" ON \"public\".\"sanciones\" (\"versionReglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sanciones_versionReglaId_idx_e53cdbcf\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sanciones_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b",
+    "label": "Create index \"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\"",
+        "sql": "CREATE INDEX \"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\" ON \"public\".\"solicitudes_registro\" (\"estado\", \"fechaSolicitud\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_estado_fechaSolicitud_idx_f51fd43b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_registro_identificadorInstitucional_idx_5f85242c",
+    "label": "Create index \"solicitudes_registro_identificadorInstitucional_idx_5f85242c\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_registro_identificadorInstitucional_idx_5f85242c",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_registro_identificadorInstitucional_idx_5f85242c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_identificadorInstitucional_idx_5f85242c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_registro_identificadorInstitucional_idx_5f85242c\"",
+        "sql": "CREATE INDEX \"solicitudes_registro_identificadorInstitucional_idx_5f85242c\" ON \"public\".\"solicitudes_registro\" (\"identificadorInstitucional\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_registro_identificadorInstitucional_idx_5f85242c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_identificadorInstitucional_idx_5f85242c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6",
+    "label": "Create index \"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\"",
+        "sql": "CREATE INDEX \"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\" ON \"public\".\"solicitudes_registro\" (\"usuarioAprobadoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.usuarios.usuarios_tipoUsuario_idx_c9896586",
+    "label": "Create index \"usuarios_tipoUsuario_idx_c9896586\" on \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "usuarios_tipoUsuario_idx_c9896586",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"usuarios_tipoUsuario_idx_c9896586\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios_tipoUsuario_idx_c9896586\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"usuarios_tipoUsuario_idx_c9896586\"",
+        "sql": "CREATE INDEX \"usuarios_tipoUsuario_idx_c9896586\" ON \"public\".\"usuarios\" (\"tipoUsuario\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"usuarios_tipoUsuario_idx_c9896586\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios_tipoUsuario_idx_c9896586\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.usuarios.usuarios_vinculacionVigente_idx_c0f1be4e",
+    "label": "Create index \"usuarios_vinculacionVigente_idx_c0f1be4e\" on \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "usuarios_vinculacionVigente_idx_c0f1be4e",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"usuarios_vinculacionVigente_idx_c0f1be4e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios_vinculacionVigente_idx_c0f1be4e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"usuarios_vinculacionVigente_idx_c0f1be4e\"",
+        "sql": "CREATE INDEX \"usuarios_vinculacionVigente_idx_c0f1be4e\" ON \"public\".\"usuarios\" (\"vinculacionVigente\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"usuarios_vinculacionVigente_idx_c0f1be4e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuarios_vinculacionVigente_idx_c0f1be4e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.versiones_regla.versiones_regla_estado_idx_c74e5888",
+    "label": "Create index \"versiones_regla_estado_idx_c74e5888\" on \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "versiones_regla_estado_idx_c74e5888",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"versiones_regla_estado_idx_c74e5888\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_estado_idx_c74e5888\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"versiones_regla_estado_idx_c74e5888\"",
+        "sql": "CREATE INDEX \"versiones_regla_estado_idx_c74e5888\" ON \"public\".\"versiones_regla\" (\"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"versiones_regla_estado_idx_c74e5888\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_estado_idx_c74e5888\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.versiones_regla.versiones_regla_reglaId_estado_idx_3769a545",
+    "label": "Create index \"versiones_regla_reglaId_estado_idx_3769a545\" on \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "versiones_regla_reglaId_estado_idx_3769a545",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"versiones_regla_reglaId_estado_idx_3769a545\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_reglaId_estado_idx_3769a545\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"versiones_regla_reglaId_estado_idx_3769a545\"",
+        "sql": "CREATE INDEX \"versiones_regla_reglaId_estado_idx_3769a545\" ON \"public\".\"versiones_regla\" (\"reglaId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"versiones_regla_reglaId_estado_idx_3769a545\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_reglaId_estado_idx_3769a545\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.versiones_regla.versiones_regla_reglaId_idx_b6d54101",
+    "label": "Create index \"versiones_regla_reglaId_idx_b6d54101\" on \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "versiones_regla_reglaId_idx_b6d54101",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"versiones_regla_reglaId_idx_b6d54101\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_reglaId_idx_b6d54101\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"versiones_regla_reglaId_idx_b6d54101\"",
+        "sql": "CREATE INDEX \"versiones_regla_reglaId_idx_b6d54101\" ON \"public\".\"versiones_regla\" (\"reglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"versiones_regla_reglaId_idx_b6d54101\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"versiones_regla_reglaId_idx_b6d54101\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.aceptaciones_terminos.aceptaciones_terminos_usuarioId_fkey",
+    "label": "Add foreign key \"aceptaciones_terminos_usuarioId_fkey\" on \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "aceptaciones_terminos_usuarioId_fkey",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"aceptaciones_terminos_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_usuarioId_fkey",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"aceptaciones_terminos_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"aceptaciones_terminos\"\nADD CONSTRAINT \"aceptaciones_terminos_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"aceptaciones_terminos_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_usuarioId_fkey",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.aceptaciones_terminos.aceptaciones_terminos_versionTerminosId_fkey",
+    "label": "Add foreign key \"aceptaciones_terminos_versionTerminosId_fkey\" on \"aceptaciones_terminos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "aceptaciones_terminos_versionTerminosId_fkey",
+        "table": "aceptaciones_terminos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"aceptaciones_terminos_versionTerminosId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_versionTerminosId_fkey",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"aceptaciones_terminos_versionTerminosId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"aceptaciones_terminos\"\nADD CONSTRAINT \"aceptaciones_terminos_versionTerminosId_fkey\"\nFOREIGN KEY (\"versionTerminosId\")\nREFERENCES \"public\".\"versiones_terminos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"aceptaciones_terminos_versionTerminosId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "aceptaciones_terminos_versionTerminosId_fkey",
+          "public",
+          "\"public\".\"aceptaciones_terminos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.apelaciones.apelaciones_incumplimientoId_fkey",
+    "label": "Add foreign key \"apelaciones_incumplimientoId_fkey\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "apelaciones_incumplimientoId_fkey",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"apelaciones_incumplimientoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"apelaciones_incumplimientoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\"\nADD CONSTRAINT \"apelaciones_incumplimientoId_fkey\"\nFOREIGN KEY (\"incumplimientoId\")\nREFERENCES \"public\".\"incumplimientos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"apelaciones_incumplimientoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.apelaciones.apelaciones_usuarioId_fkey",
+    "label": "Add foreign key \"apelaciones_usuarioId_fkey\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "apelaciones_usuarioId_fkey",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"apelaciones_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_usuarioId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"apelaciones_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\"\nADD CONSTRAINT \"apelaciones_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"apelaciones_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_usuarioId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.apelaciones.apelaciones_resueltaPorCuentaId_fkey",
+    "label": "Add foreign key \"apelaciones_resueltaPorCuentaId_fkey\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "apelaciones_resueltaPorCuentaId_fkey",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"apelaciones_resueltaPorCuentaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_resueltaPorCuentaId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"apelaciones_resueltaPorCuentaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\"\nADD CONSTRAINT \"apelaciones_resueltaPorCuentaId_fkey\"\nFOREIGN KEY (\"resueltaPorCuentaId\")\nREFERENCES \"public\".\"cuentas_acceso\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"apelaciones_resueltaPorCuentaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_resueltaPorCuentaId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.cuentas_acceso.cuentas_acceso_usuarioId_fkey",
+    "label": "Add foreign key \"cuentas_acceso_usuarioId_fkey\" on \"cuentas_acceso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "cuentas_acceso_usuarioId_fkey",
+        "table": "cuentas_acceso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"cuentas_acceso_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_usuarioId_fkey",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"cuentas_acceso_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"cuentas_acceso\"\nADD CONSTRAINT \"cuentas_acceso_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"cuentas_acceso_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cuentas_acceso_usuarioId_fkey",
+          "public",
+          "\"public\".\"cuentas_acceso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.devoluciones.devoluciones_prestamoId_fkey",
+    "label": "Add foreign key \"devoluciones_prestamoId_fkey\" on \"devoluciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "devoluciones_prestamoId_fkey",
+        "table": "devoluciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"devoluciones_prestamoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "devoluciones_prestamoId_fkey",
+          "public",
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"devoluciones_prestamoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"devoluciones\"\nADD CONSTRAINT \"devoluciones_prestamoId_fkey\"\nFOREIGN KEY (\"prestamoId\")\nREFERENCES \"public\".\"prestamos\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"devoluciones_prestamoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "devoluciones_prestamoId_fkey",
+          "public",
+          "\"public\".\"devoluciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ejemplares.ejemplares_recursoId_fkey",
+    "label": "Add foreign key \"ejemplares_recursoId_fkey\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ejemplares_recursoId_fkey",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ejemplares_recursoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_recursoId_fkey",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ejemplares_recursoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\"\nADD CONSTRAINT \"ejemplares_recursoId_fkey\"\nFOREIGN KEY (\"recursoId\")\nREFERENCES \"public\".\"recursos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ejemplares_recursoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_recursoId_fkey",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.evidencias_vinculacion.evidencias_vinculacion_solicitudRegistroId_fkey",
+    "label": "Add foreign key \"evidencias_vinculacion_solicitudRegistroId_fkey\" on \"evidencias_vinculacion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "evidencias_vinculacion_solicitudRegistroId_fkey",
+        "table": "evidencias_vinculacion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"evidencias_vinculacion_solicitudRegistroId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_vinculacion_solicitudRegistroId_fkey",
+          "public",
+          "\"public\".\"evidencias_vinculacion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"evidencias_vinculacion_solicitudRegistroId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"evidencias_vinculacion\"\nADD CONSTRAINT \"evidencias_vinculacion_solicitudRegistroId_fkey\"\nFOREIGN KEY (\"solicitudRegistroId\")\nREFERENCES \"public\".\"solicitudes_registro\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"evidencias_vinculacion_solicitudRegistroId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_vinculacion_solicitudRegistroId_fkey",
+          "public",
+          "\"public\".\"evidencias_vinculacion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_usuarioId_fkey",
+    "label": "Add foreign key \"incumplimientos_usuarioId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_usuarioId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_usuarioId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_usuarioId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_reglaId_fkey",
+    "label": "Add foreign key \"incumplimientos_reglaId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_reglaId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_reglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reglaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_reglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_reglaId_fkey\"\nFOREIGN KEY (\"reglaId\")\nREFERENCES \"public\".\"reglas_uso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_reglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reglaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_versionReglaId_fkey",
+    "label": "Add foreign key \"incumplimientos_versionReglaId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_versionReglaId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_versionReglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_versionReglaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_versionReglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_versionReglaId_fkey\"\nFOREIGN KEY (\"versionReglaId\")\nREFERENCES \"public\".\"versiones_regla\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_versionReglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_versionReglaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.observaciones_ejemplar.observaciones_ejemplar_ejemplarId_fkey",
+    "label": "Add foreign key \"observaciones_ejemplar_ejemplarId_fkey\" on \"observaciones_ejemplar\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "observaciones_ejemplar_ejemplarId_fkey",
+        "table": "observaciones_ejemplar"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"observaciones_ejemplar_ejemplarId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "observaciones_ejemplar_ejemplarId_fkey",
+          "public",
+          "\"public\".\"observaciones_ejemplar\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"observaciones_ejemplar_ejemplarId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"observaciones_ejemplar\"\nADD CONSTRAINT \"observaciones_ejemplar_ejemplarId_fkey\"\nFOREIGN KEY (\"ejemplarId\")\nREFERENCES \"public\".\"ejemplares\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"observaciones_ejemplar_ejemplarId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "observaciones_ejemplar_ejemplarId_fkey",
+          "public",
+          "\"public\".\"observaciones_ejemplar\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.prestamos.prestamos_usuarioId_fkey",
+    "label": "Add foreign key \"prestamos_usuarioId_fkey\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "prestamos_usuarioId_fkey",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"prestamos_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_usuarioId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"prestamos_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\"\nADD CONSTRAINT \"prestamos_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"prestamos_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_usuarioId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.prestamos.prestamos_ejemplarId_fkey",
+    "label": "Add foreign key \"prestamos_ejemplarId_fkey\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "prestamos_ejemplarId_fkey",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"prestamos_ejemplarId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_ejemplarId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"prestamos_ejemplarId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\"\nADD CONSTRAINT \"prestamos_ejemplarId_fkey\"\nFOREIGN KEY (\"ejemplarId\")\nREFERENCES \"public\".\"ejemplares\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"prestamos_ejemplarId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_ejemplarId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.recursos.recursos_categoriaId_fkey",
+    "label": "Add foreign key \"recursos_categoriaId_fkey\" on \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "recursos_categoriaId_fkey",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"recursos_categoriaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_categoriaId_fkey",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"recursos_categoriaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"recursos\"\nADD CONSTRAINT \"recursos_categoriaId_fkey\"\nFOREIGN KEY (\"categoriaId\")\nREFERENCES \"public\".\"categorias_recurso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"recursos_categoriaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_categoriaId_fkey",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.reglas_uso.reglas_uso_versionVigenteId_fkey",
+    "label": "Add foreign key \"reglas_uso_versionVigenteId_fkey\" on \"reglas_uso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "reglas_uso_versionVigenteId_fkey",
+        "table": "reglas_uso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"reglas_uso_versionVigenteId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reglas_uso_versionVigenteId_fkey",
+          "public",
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"reglas_uso_versionVigenteId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"reglas_uso\"\nADD CONSTRAINT \"reglas_uso_versionVigenteId_fkey\"\nFOREIGN KEY (\"versionVigenteId\")\nREFERENCES \"public\".\"versiones_regla\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"reglas_uso_versionVigenteId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reglas_uso_versionVigenteId_fkey",
+          "public",
+          "\"public\".\"reglas_uso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.sanciones.sanciones_usuarioId_fkey",
+    "label": "Add foreign key \"sanciones_usuarioId_fkey\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "sanciones_usuarioId_fkey",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"sanciones_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_usuarioId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"sanciones_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\"\nADD CONSTRAINT \"sanciones_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"sanciones_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_usuarioId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.sanciones.sanciones_incumplimientoId_fkey",
+    "label": "Add foreign key \"sanciones_incumplimientoId_fkey\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "sanciones_incumplimientoId_fkey",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"sanciones_incumplimientoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"sanciones_incumplimientoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\"\nADD CONSTRAINT \"sanciones_incumplimientoId_fkey\"\nFOREIGN KEY (\"incumplimientoId\")\nREFERENCES \"public\".\"incumplimientos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"sanciones_incumplimientoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.sanciones.sanciones_reglaId_fkey",
+    "label": "Add foreign key \"sanciones_reglaId_fkey\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "sanciones_reglaId_fkey",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"sanciones_reglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_reglaId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"sanciones_reglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\"\nADD CONSTRAINT \"sanciones_reglaId_fkey\"\nFOREIGN KEY (\"reglaId\")\nREFERENCES \"public\".\"reglas_uso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"sanciones_reglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_reglaId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.sanciones.sanciones_versionReglaId_fkey",
+    "label": "Add foreign key \"sanciones_versionReglaId_fkey\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "sanciones_versionReglaId_fkey",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"sanciones_versionReglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_versionReglaId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"sanciones_versionReglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\"\nADD CONSTRAINT \"sanciones_versionReglaId_fkey\"\nFOREIGN KEY (\"versionReglaId\")\nREFERENCES \"public\".\"versiones_regla\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"sanciones_versionReglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_versionReglaId_fkey",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.solicitudes_registro.solicitudes_registro_usuarioAprobadoId_fkey",
+    "label": "Add foreign key \"solicitudes_registro_usuarioAprobadoId_fkey\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "solicitudes_registro_usuarioAprobadoId_fkey",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"solicitudes_registro_usuarioAprobadoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_usuarioAprobadoId_fkey",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"solicitudes_registro_usuarioAprobadoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\"\nADD CONSTRAINT \"solicitudes_registro_usuarioAprobadoId_fkey\"\nFOREIGN KEY (\"usuarioAprobadoId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"solicitudes_registro_usuarioAprobadoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_usuarioAprobadoId_fkey",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.versiones_regla.versiones_regla_reglaId_fkey",
+    "label": "Add foreign key \"versiones_regla_reglaId_fkey\" on \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "versiones_regla_reglaId_fkey",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"versiones_regla_reglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_reglaId_fkey",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"versiones_regla_reglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_regla\"\nADD CONSTRAINT \"versiones_regla_reglaId_fkey\"\nFOREIGN KEY (\"reglaId\")\nREFERENCES \"public\".\"reglas_uso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"versiones_regla_reglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_reglaId_fkey",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ]
+  }
+]

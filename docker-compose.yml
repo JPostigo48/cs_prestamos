@@ -1,0 +1,18 @@
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: biblioteca-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ClaveSecreta123
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # CAMBIO CLAVE: Remaniobramos el punto de montaje a la raíz de la librería de postgres
+      - biblioteca_postgres_data:/var/lib/postgresql
+
+volumes:
+  biblioteca_postgres_data:
+
