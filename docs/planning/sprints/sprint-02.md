@@ -17,7 +17,7 @@ A partir de este sprint se evita una división estrictamente por tecnología. Ca
 ## Alcance
 
 - Revisar el esquema PostgreSQL/Prisma existente e integrar con persistencia real los repositorios de los módulos aún incompletos; Inventario ya dispone de ella.
-- Integrar la base Vue.js + TypeScript y adaptar o reemplazar el prototipo de login de `aporte-login` según el diseño Figma revisado, sin integrar directamente una segunda aplicación JavaScript.
+- Integrar la base Vue.js + TypeScript y adaptar o reemplazar el prototipo de login ya incorporado desde `aporte-login` según el diseño Figma revisado, sin mantener una segunda aplicación JavaScript.
 - Solicitud de registro de usuarios con evidencia de vinculación, tipo de usuario y aprobación o rechazo.
 - Consulta de habilitación del usuario para realizar préstamos.
 - Autenticación de usuarios registrados, con interfaz propia y navegación según sesión.
@@ -134,7 +134,7 @@ Debe poder demostrarse el recorrido completo:
 
 **Responsabilidad:** frontend general y autenticación.
 
-**Rama propuesta:** `feat/auth-ui`. El prototipo previo está en `aporte-login` y debe revisarse con Luis antes de integrarlo.
+**Rama propuesta:** `feat/auth-ui`. El prototipo previo, incorporado desde `aporte-login` en `frontend/`, debe revisarse con Luis antes de adaptarlo a la base común.
 
 **Tareas:**
 
@@ -184,7 +184,7 @@ La protección de rutas en el frontend es visual: no sustituye la restricción d
 | Dependencia | Quién la produce | Quién la consume | Observación |
 | --- | --- | --- | --- |
 | Sprint 1 cerrado y `v0.1.0` publicada | Todo el equipo | Todo el equipo | Precondición del sprint. |
-| Prototipo `aporte-login` evaluado y diseño Figma accesible | Mauricio y Luis | Mauricio y Luis | Decidir antes de construir el login definitivo; la rama no equivale a frontend integrado. |
+| Prototipo de `aporte-login` evaluado y diseño Figma accesible | Mauricio y Luis | Mauricio y Luis | Decidir antes de construir el login definitivo; incorporar el prototipo no equivale a tener el frontend integrado funcionalmente. |
 | Esquema consolidado y repositorios reales | Ronald | Juan Carlos | Bloquea la integración de los casos de uso con datos reales. |
 | Contratos de API consolidados | Juan Carlos | Mauricio y Luis | Necesarios antes de sustituir los mocks en el frontend. |
 | Mecanismo de autenticación decidido (`AUTH-01`) | Juan Carlos | Mauricio | Bloquea `AUTH-04` y `AUTH-05`. Debe decidirse al inicio del sprint. |

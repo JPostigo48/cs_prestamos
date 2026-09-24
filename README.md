@@ -14,7 +14,7 @@ El repositorio ya cuenta con una base técnica ejecutable del backend:
 - PostgreSQL reproducible mediante [`docker-compose.yml`](docker-compose.yml);
 - build, lint y pruebas configurados en [`backend/package.json`](backend/package.json).
 
-La aplicación frontend todavía no está integrada como proyecto ejecutable en el repositorio. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
+El repositorio contiene un prototipo de inicio de sesión en [`frontend/`](frontend/), realizado con Vue CLI y JavaScript. Todavía no está adaptado al frontend objetivo con Vue.js y TypeScript ni integrado con el backend. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
 
 ## Alcance planificado
 

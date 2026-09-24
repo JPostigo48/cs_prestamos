@@ -35,7 +35,7 @@ Análisis de requisitos y reglas, modelo de dominio, contextos DDD, arquitectura
 
 **Versión objetivo:** `v0.1.0` · [Detalle](sprints/sprint-01.md)
 
-Avance integrado en `develop`: PostgreSQL mediante Docker Compose, contrato Prisma con modelos del dominio, migración y datos iniciales; backend Nest con carpetas modulares por capas y módulo Inventario con persistencia y endpoints propios. Juan Carlos organizó los demás módulos y sus contratos, pero sus casos de uso y endpoints siguen pendientes. Fuera de `develop`, Mauricio reporta en Figma diseños web y móvil para usuario, operador y administrador; Luis desarrolló un prototipo de login en `aporte-login`. Falta evaluar su adaptación al frontend Vue.js + TypeScript objetivo e integrar el frontend común. Estos avances no equivalen al cierre del sprint.
+Avance integrado en `develop`: PostgreSQL mediante Docker Compose, contrato Prisma con modelos del dominio, migración y datos iniciales; backend Nest con carpetas modulares por capas y módulo Inventario con persistencia y endpoints propios. Juan Carlos organizó los demás módulos y sus contratos, pero sus casos de uso y endpoints siguen pendientes. También se incorporó el prototipo de login de Luis desde `aporte-login`, ubicado en `frontend/`. Mauricio reporta en Figma diseños web y móvil para usuario, operador y administrador, todavía fuera del repositorio. Falta adaptar el prototipo al frontend Vue.js + TypeScript objetivo e integrar el frontend común. Estos avances no equivalen al cierre del sprint.
 
 ## Sprint 2 — Primer flujo funcional
 

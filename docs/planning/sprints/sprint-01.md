@@ -18,7 +18,7 @@ Este sprint **no** busca completar la lógica del sistema. Busca que cada integr
 
 `develop` ya contiene PostgreSQL mediante Docker Compose, el contrato Prisma para las entidades modeladas, una migración inicial, seeds y un backend Nest con Inventario funcional conectado a persistencia. Los demás módulos (`auth`, `users`, `loans`, `rules`) cuentan con carpetas y contratos preliminares; esto no significa que sus casos de uso y endpoints estén implementados. La versión objetivo del frontend aún no está integrada.
 
-Ronald avanzó la base de datos y la base Nest en los commits de `christmas`. Juan Carlos reorganizó las carpetas del backend por módulos y capas, y preparó contratos y puntos de partida para los endpoints, sin dar por implementados los módulos restantes. Mauricio informa que completó en Figma las maquetas web y móvil para los roles usuario, operador y administrador; se trata de un avance externo al repositorio, todavía sin enlace o entrega versionada aquí. Luis publicó en la rama remota `aporte-login` un prototipo de interfaz de login bajo `front-end/`; usa Vue CLI y JavaScript, por lo que aún debe evaluarse su adaptación al frontend objetivo en Vue.js + TypeScript. Esa rama no está integrada en `develop`.
+Ronald avanzó la base de datos y la base Nest en los commits de `christmas`. Juan Carlos reorganizó las carpetas del backend por módulos y capas, y preparó contratos y puntos de partida para los endpoints, sin dar por implementados los módulos restantes. Mauricio informa que completó en Figma las maquetas web y móvil para los roles usuario, operador y administrador; se trata de un avance externo al repositorio, todavía sin enlace o entrega versionada aquí. Luis publicó en `aporte-login` un prototipo de interfaz de login, incorporado a `develop` bajo `frontend/`. Usa Vue CLI y JavaScript, por lo que aún debe evaluarse su adaptación al frontend objetivo en Vue.js + TypeScript.
 
 La separación de `trust` definida por la documentación es posterior al esqueleto integrado: confianza y sanciones permanecen provisionalmente en `users`, y apelaciones en `rules`. Esa diferencia está documentada y debe corregirse en una tarea posterior sin presentar la distribución actual como arquitectura objetivo.
 
@@ -26,7 +26,7 @@ La separación de `trust` definida por la documentación es posterior al esquele
 | --- | --- | --- |
 | Ronald | Commits de `christmas` (`9302fa5`, `c76bcde`, `7c073e8`, `06d3415`, `2f6e440`) integrados en `develop`; `backend/prisma/`, `docker-compose.yml` e Inventario. | Revisar consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha. |
 | Mauricio | Maquetas Figma web/móvil por los tres roles, informadas por el equipo; sin enlace versionado aquí. | Compartir el enlace, revisar los flujos e implementar el frontend común. |
-| Luis | Rama remota `aporte-login`, commits `b36c43b` y `a2b2712` con prototipo en `front-end/`. | Acordar con Mauricio la adaptación a Vue.js + TypeScript antes de integrar. |
+| Luis | Prototipo de `aporte-login` incorporado en `frontend/`; commits originales `b36c43b` y `a2b2712`. | Acordar con Mauricio la adaptación a Vue.js + TypeScript. |
 | Juan Carlos | Commits de estructura y contratos `cc76659`, `8dbf161`, `bde7441`, `23e9fae`, `da799b2` integrados en `develop`; planificación en `docs/project-planning`. | Completar casos de uso, contratos de API y endpoints aún pendientes. |
 
 Los hashes documentan el avance observado, no sustituyen los criterios de cierre ni corrigen retroactivamente mensajes de commits anteriores.
@@ -36,7 +36,7 @@ Los hashes documentan el avance observado, no sustituyen los criterios de cierre
 - PostgreSQL reproducible y contrato Prisma preliminar con migraciones y datos de desarrollo; revisar su coherencia con el UML vigente.
 - Backend Nest + TypeScript modular por capas. Inventario puede aportar endpoints reales y persistencia; los demás módulos mantienen contratos preliminares hasta implementar sus casos de uso.
 - Diseño web y móvil por rol en Figma como referencia para la interfaz, pendiente de vincular y revisar en el repositorio.
-- Prototipo de login de Luis en `aporte-login`; decidir su adaptación a Vue.js + TypeScript antes de integrar.
+- Prototipo de login de Luis incorporado desde `aporte-login`; decidir su adaptación a Vue.js + TypeScript antes de integrarlo funcionalmente.
 - Base común del frontend: estructura, navegación y criterios visuales acordados a partir de Figma. La interfaz de Inventario continúa como trabajo pendiente, no como entrega ya realizada.
 - Documentación de puesta en marcha y estado real de ramas, módulos y contratos.
 - `develop` creada y rama histórica `feature/mi_database` tratada según `ARCH-05`.
@@ -71,7 +71,7 @@ Los hashes documentan el avance observado, no sustituyen los criterios de cierre
 | Ronald Reynaldo Valdez Agüero | PostgreSQL, contrato Prisma, migración, seeds y arranque técnico del backend | `feature/mi_database` (integrada en `develop`); verificar cierre de rama |
 | Juan Carlos Postigo Cabana | Arquitectura, estructura por capas, contratos de módulos y planificación | Trabajo integrado en `develop` y documentación en `docs/project-planning` |
 | Mauricio Alejandro Farfán Huayta | Maquetas web y móvil por rol; coordinación del frontend común | Figma externo; rama de implementación por definir |
-| Luis Antonio Chipana Chura | Prototipo de login y futura adaptación al frontend común | `aporte-login` (remota, no integrada) |
+| Luis Antonio Chipana Chura | Prototipo de login y futura adaptación al frontend común | `frontend/` (incorporado desde `aporte-login`) |
 
 ## Tareas
 
@@ -202,14 +202,14 @@ Evita implementar en profundidad módulos funcionales que corresponden a Luis.
 
 **Responsabilidad actual:** prototipo de login y posterior trabajo funcional del frontend, coordinado con el diseño común.
 
-**Rama verificada:** `aporte-login` (remota, sin integrar en `develop`). `feat/inventory-ui` era una rama prevista y no se ha verificado como avance actual.
+**Rama de origen:** `aporte-login` (prototipo incorporado en `develop`). `feat/inventory-ui` era una rama prevista y no se ha verificado como avance actual.
 
-**Área del prototipo:** `front-end/` en su rama. El frontend definitivo del proyecto usa Vue.js + TypeScript y todavía debe decidir cómo adaptar el prototipo Vue CLI + JavaScript.
+**Área del prototipo:** `frontend/` en `develop`. El frontend definitivo del proyecto usa Vue.js + TypeScript y todavía debe decidir cómo adaptar el prototipo Vue CLI + JavaScript.
 
 **Tareas:**
 
 - Revisar el prototipo de login existente y coordinar con Mauricio qué se reutiliza y qué se adapta al frontend común.
-- Evitar integrar directamente `front-end/` sobre la estructura objetivo sin resolver el cambio de JavaScript a TypeScript y los elementos de navegación compartidos.
+- Evitar tratar el prototipo de `frontend/` como frontend definitivo sin resolver el cambio de JavaScript a TypeScript y los elementos de navegación compartidos.
 - Retomar las vistas de Inventario (`INV-01` a `INV-05`) una vez disponible la base común; la API de Inventario ya existe en el backend y no requiere inventar mocks para justificar estas vistas.
 
 **Coordinación:** evita modificar sin acuerdo previo el layout global, los estilos globales, el router global y los componentes de `shared/`. Si necesita un componente compartido, lo acuerda antes con Mauricio en lugar de crearlo dentro del módulo o modificar `shared/` por su cuenta.
@@ -222,7 +222,7 @@ Evita implementar en profundidad módulos funcionales que corresponden a Luis.
 - `v0.1.0 feat: integra inventario con API preliminar`
 - `v0.1.0 style: adapta vistas de inventario a dispositivos móviles`
 
-Estos commits de Inventario siguen siendo orientativos, no trabajo completado. El avance verificable de Luis está en `aporte-login` (`b36c43b`, `a2b2712`) y todavía requiere adaptación e integración.
+Estos commits de Inventario siguen siendo orientativos, no trabajo completado. El avance verificable de Luis procede de `aporte-login` (`b36c43b`, `a2b2712`), ya incorporado a `develop`, y todavía requiere adaptación funcional.
 
 ## Dependencias
 
@@ -230,7 +230,7 @@ Estos commits de Inventario siguen siendo orientativos, no trabajo completado. E
 | --- | --- | --- | --- |
 | `develop` y base de datos integradas | Juan Carlos y Ronald | Todo el equipo | Ya disponibles; comprobar el estado remoto antes de abrir tareas nuevas. |
 | Diseño web/móvil por rol y decisiones de navegación | Mauricio | Luis | Registrar y revisar el Figma antes de adaptar el prototipo de login. |
-| Estructura Vue.js + TypeScript compartida | Mauricio, coordinado con Luis | Luis | Precondición para incorporar el prototipo de `aporte-login` sin duplicar aplicaciones. |
+| Estructura Vue.js + TypeScript compartida | Mauricio, coordinado con Luis | Luis | Necesaria para adaptar el prototipo incorporado sin mantener dos aplicaciones. |
 | Contratos y endpoints de Inventario existentes | Ronald y Juan Carlos | Luis | Se usan como referencia para la interfaz; no se requiere un mock nuevo del módulo. |
 | Contratos de los demás módulos | Juan Carlos | Sprint 2 | Las carpetas creadas no sustituyen casos de uso ni endpoints funcionales. |
 
@@ -251,7 +251,7 @@ Estos commits de Inventario siguen siendo orientativos, no trabajo completado. E
 - Los contratos request/response preliminares están documentados y marcados como preliminares.
 - Las maquetas Figma web y móvil por rol son accesibles y están revisadas por el equipo.
 - El frontend base Vue.js + TypeScript arranca, aplica el diseño acordado y define navegación común.
-- Se decide y documenta cómo adaptar o descartar el prototipo de login de `aporte-login` antes de integrarlo.
+- Se decide y documenta cómo adaptar o descartar el prototipo de login incorporado antes de integrarlo funcionalmente.
 - Si las vistas de Inventario no se completan en este sprint, se trasladan explícitamente al Sprint 2 y se actualiza el backlog; no se marcan como entregadas por existir la API.
 - La documentación permite a un integrante nuevo levantar base de datos, backend y frontend.
 - Este archivo refleja el estado real del sprint al cerrarlo.
@@ -266,7 +266,7 @@ Pendiente registrar los Pull Requests y revisiones utilizados para cada integrac
 
 ## Resultado del sprint
 
-Avances comprobados: PostgreSQL/Prisma, migración, seeds, backend Nest, organización modular y módulo Inventario funcional en `develop`; prototipo de login en `aporte-login`. Mauricio reporta el diseño Figma completo para web y móvil por rol, pendiente de enlace y revisión en el repositorio. Siguen pendientes la base frontend integrada, la adaptación del login, las vistas visuales de Inventario y los endpoints de los demás módulos. El sprint permanece `in_progress`.
+Avances comprobados: PostgreSQL/Prisma, migración, seeds, backend Nest, organización modular, módulo Inventario funcional y prototipo de login incorporado desde `aporte-login` en `develop`. Mauricio reporta el diseño Figma completo para web y móvil por rol, pendiente de enlace y revisión en el repositorio. Siguen pendientes la base frontend Vue.js + TypeScript, la adaptación del login, las vistas visuales de Inventario y los endpoints de los demás módulos. El sprint permanece `in_progress`.
 
 ## Versión resultante
 
