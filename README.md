@@ -63,13 +63,34 @@ La planificación contempla estudiantes, docentes y personal administrativo, tie
 │   │   └── uml/
 │   ├── planning/
 │   └── requirements/
+├── frontend/
 ├── docker-compose.yml
+├── package.json
 ├── sonar-project.properties
 ├── sonar.sh
 └── README.md
 ```
 
 [`backend/README.md`](backend/README.md) contiene los comandos de instalación, ejecución, generación de Prisma y validación.
+
+## Ejecución local
+
+Con Docker disponible y la variable `DATABASE_URL` configurada para el backend, se instalan las dependencias sin salir de la raíz:
+
+```bash
+npm install --prefix backend
+npm install --prefix frontend
+```
+
+Después se inician los servicios desde la raíz:
+
+```bash
+npm run db
+npm run back
+npm run front
+```
+
+`db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. El frontend actual sigue siendo un prototipo sin integración con el backend.
 
 ## Arquitectura
 

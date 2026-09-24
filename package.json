@@ -1,0 +1,9 @@
+{
+  "name": "sistema-gestion-prestamos",
+  "private": true,
+  "scripts": {
+    "back": "npm --prefix backend run start:dev",
+    "db": "docker compose up -d postgres-db",
+    "front": "npm --prefix frontend run serve"
+  }
+}
