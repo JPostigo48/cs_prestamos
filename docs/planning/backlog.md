@@ -40,7 +40,7 @@ Los identificadores son referencias estables: se evita renumerarlos. Los element
 | DOC-04 | Definir contextos delimitados y vistas internas en Structurizr | Documentación | Juan Carlos Postigo Cabana | Alta | 0 | v0.0.1 | Terminado |
 | DOC-05 | Documentar la arquitectura modular por capas del backend | Documentación | Juan Carlos Postigo Cabana | Alta | 0 | v0.0.1 | Terminado |
 | DOC-06 | Documentar cómo levantar base de datos, backend y frontend | Documentación | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| DOC-07 | Alinear Structurizr con el UML vigente en confianza, sanciones y apelaciones | Documentación | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
+| DOC-07 | Alinear Structurizr con el UML vigente en confianza, sanciones y apelaciones | Documentación | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
 | DOC-08 | Revisar la trazabilidad de RF-17 y RF-19 ante préstamos planificados | Documentación | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
 | PLAN-01 | Crear visualización de sprints en el frontend | Planning | Juan Carlos Postigo Cabana | Media | Futuro | Por definir | Pendiente |
 | PLAN-02 | Definir el formato de lectura del front matter de planificación | Planning | Juan Carlos Postigo Cabana | Baja | Futuro | Por definir | Pendiente |
@@ -53,14 +53,14 @@ Los identificadores son referencias estables: se evita renumerarlos. Los element
 | ID | Tarea | Módulo | Responsable | Prioridad | Sprint | Versión | Estado |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ARCH-01 | Definir la estrategia de ramas, commits y versionado | Arquitectura | Juan Carlos Postigo Cabana | Alta | 0 | v0.0.1 | Terminado |
-| ARCH-02 | Inicializar Node.js + TypeScript con estructura modular por capas | Backend | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
+| ARCH-02 | Inicializar Node.js + TypeScript con estructura modular por capas | Backend | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
 | ARCH-03 | Preparar manejo de errores y configuración del backend | Backend | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
 | ARCH-04 | Consolidar Vue.js + TypeScript con router y estructura base | Frontend | Mauricio Alejandro Farfán Huayta | Alta | 1 | v0.1.0 | Pendiente |
-| ARCH-05 | Crear `develop` y resolver la rama remota `feature/mi_database` | Repositorio | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| ARCH-06 | Configurar PostgreSQL y el acceso desde el proyecto | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Pendiente |
-| ARCH-07 | Crear el esquema relacional preliminar derivado del modelo de dominio | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Pendiente |
-| ARCH-08 | Crear migraciones o mecanismo equivalente | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Pendiente |
-| ARCH-09 | Crear datos mínimos para desarrollo | Persistencia | Ronald Reynaldo Valdez Agüero | Media | 1 | v0.1.0 | Pendiente |
+| ARCH-05 | Crear `develop` y resolver la rama remota `feature/mi_database` | Repositorio | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
+| ARCH-06 | Configurar PostgreSQL y el acceso desde el proyecto | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Terminado |
+| ARCH-07 | Crear el esquema relacional preliminar derivado del modelo de dominio | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Terminado |
+| ARCH-08 | Crear migraciones o mecanismo equivalente | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 1 | v0.1.0 | Terminado |
+| ARCH-09 | Crear datos mínimos para desarrollo | Persistencia | Ronald Reynaldo Valdez Agüero | Media | 1 | v0.1.0 | Terminado |
 | ARCH-10 | Agregar cliente HTTP común en el frontend | Frontend | Mauricio Alejandro Farfán Huayta | Alta | 1 | v0.1.0 | Pendiente |
 | ARCH-11 | Definir la estrategia transaccional para préstamos concurrentes | Backend | Juan Carlos Postigo Cabana | Alta | 2 | v0.2.0 | Pendiente |
 | ARCH-12 | Integrar repositorios con persistencia real | Persistencia | Ronald Reynaldo Valdez Agüero | Alta | 2 | v0.2.0 | Pendiente |

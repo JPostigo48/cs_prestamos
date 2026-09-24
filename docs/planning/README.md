@@ -39,7 +39,7 @@ Cada responsable frontend implementa el comportamiento responsive de lo que desa
 | Sprint | Nombre | Estado | Versión objetivo |
 | --- | --- | --- | --- |
 | 0 | Planificación y arquitectura | En curso | `v0.0.1` |
-| 1 | Base técnica | Planificado | `v0.1.0` |
+| 1 | Base técnica | En curso | `v0.1.0` |
 | 2 | Primer flujo funcional | Planificado | `v0.2.0` |
 | 3 | Reglas de dominio y consolidación | Planificado | `v0.3.0` |
 

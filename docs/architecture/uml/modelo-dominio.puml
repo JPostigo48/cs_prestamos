@@ -453,51 +453,11 @@ package "Reglas y términos\n<<Área de dominio · límite por validar>>" as Are
     }
 
 
-    package "Apelación\n<<Aggregate>>" as AgApelacion #F8FAFC {
-
-        class Apelacion <<Aggregate Root · Entity>> {
-            apelacionId : ApelacionId
-            incumplimientoId : IncumplimientoId
-            usuarioId : UsuarioId
-
-            motivo : String
-            fecha : FechaHora
-
-            estado : EstadoApelacion
-
-            resolucion : String [0..1]
-            fechaResolucion : FechaHora [0..1]
-
-            {invariant} fecha >= Incumplimiento.fecha
-        }
-    }
-
-
-    enum EstadoApelacion {
-        PENDIENTE
-        ACEPTADA
-        RECHAZADA
-    }
-
-
     ReglaUso "1" --> "1..*\nversiones" VersionRegla
 
     VersionRegla ..> EstadoRegla : estado
 
     Incumplimiento "0..*" --> "1\nversión infringida" VersionRegla
-
-    Incumplimiento "1" --> "0..1\napelación" Apelacion
-
-    Apelacion ..> EstadoApelacion : estado
-
-
-    note bottom of Apelacion
-        Un incumplimiento admite como máximo
-        una apelación activa. Una apelación
-        ACEPTADA revierte la penalización aplicada
-        (mecanismo de reversión de confianza
-        pendiente de definir).
-    end note
 
 
     ' =====================================================
@@ -538,8 +498,6 @@ package "Reglas y términos\n<<Área de dominio · límite por validar>>" as Are
 
     AgVersionRegla -[hidden]down-> AgIncumplimiento
 
-    AgIncumplimiento -[hidden]down-> AgApelacion
-
 
     NotaHistorial -[hidden]down-> AgVersionTerminos
 
@@ -551,8 +509,6 @@ package "Reglas y términos\n<<Área de dominio · límite por validar>>" as Are
     AgVersionRegla -[hidden]right-> AgVersionTerminos
 
     AgIncumplimiento -[hidden]right-> AgAceptacion
-
-    AgApelacion -[hidden]right-> EstadoApelacion
 }
 
 

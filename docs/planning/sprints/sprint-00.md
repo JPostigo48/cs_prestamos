@@ -140,7 +140,7 @@ Aplica la [Definition of Done para tareas documentales](../git-workflow.md#tarea
 - Pull Request revisado;
 - merge en `develop`.
 
-> **Excepción de este sprint:** `develop` todavía no existe. La planificación inicial se integra en `main` y la creación de `develop` es la primera tarea del Sprint 1 (`ARCH-05`). A partir de ese punto se aplica el flujo completo sin excepciones.
+> **Situación al planificar el sprint:** `develop` todavía no existía y su creación quedó asignada a `ARCH-05`. Esa tarea ya fue completada durante el Sprint 1; el flujo documentado se aplica ahora con `develop` como rama de integración.
 
 ## Decisiones pendientes registradas
 
@@ -161,21 +161,21 @@ Estas decisiones quedan abiertas al cerrar el sprint. Ningún sprint posterior d
 | Límite DDD de Reglas y Términos | [UML](../../architecture/uml/README.md#límites-y-agregados) |
 | Estrategia transaccional y esquema de base de datos | [UML](../../architecture/uml/README.md#decisiones-deliberadamente-pendientes) |
 
-## Inconsistencias detectadas entre documentos
+## Seguimiento de inconsistencias entre documentos
 
-Se registran aquí y se corrigen en su documento de origen, no en la planificación.
+Se registran aquí y se corrigen en su documento de origen, no en la planificación. Las resueltas se conservan para mantener la trazabilidad.
 
-| # | Inconsistencia | Documentos implicados | Seguimiento |
-| --- | --- | --- | --- |
-| 1 | Structurizr sitúa `porcentajeConfianza`, `nivelConfianza` y `sanciones` **dentro del agregado Usuario**; el UML y el modelo de confianza los sitúan en el contexto Confianza, referenciando al usuario por `usuarioId`. | `workspace.dsl` (`InternaUsuarios`) · `modelo-dominio.puml` · `trust-model.md` | `DOC-07` |
-| 2 | Structurizr define `EstadoSancion` con dos valores (`ACTIVA`, `FINALIZADA`); el UML y RF-49 definen tres (`ACTIVA`, `FINALIZADA`, `ABSUELTA`). | `workspace.dsl` · `modelo-dominio.puml` · `functional.md` | `DOC-07` |
-| 3 | Structurizr no modela `Apelacion` ni su estado. El UML ya la incorpora como raíz de agregado dentro de Confianza y RF-52 a RF-56 la exigen. | `workspace.dsl` · `modelo-dominio.puml` · `functional.md` | `DOC-07` |
-| 4 | Structurizr describe el límite de Confianza como «pendiente de consolidación con Usuarios»; el modelo de confianza y el UML ya lo tratan como bounded context de soporte separado. | `workspace.dsl` · `trust-model.md` · `modelo-dominio.puml` | `DOC-07` |
-| 5 | RF-17 menciona solo préstamos **activos**; el UML y la arquitectura modular exigen que no se superpongan intervalos de préstamos activos **o planificados**. | `functional.md` · `modelo-dominio.puml` · `arquitectura-modular.puml` | `DOC-08` |
-| 6 | RF-19 no distingue el alta de un préstamo planificado de su inicio efectivo, por lo que no queda definido cuándo un ejemplar planificado pasa a `PRESTADO`. | `functional.md` · `modelo-dominio.puml` | `DOC-08` |
-| 7 | El estado `PLANIFICADO` y el intervalo `fechaInicio`–`fechaFin` existen en el UML y en Structurizr, pero ningún requisito funcional describe la planificación de un préstamo futuro. | `functional.md` · `modelo-dominio.puml` | `DOC-08` |
-| 8 | La duración de restricción por sanción está definida únicamente para estudiantes (`duracionRestriccionEstudiante`, RN-21, RN-23). No hay definición equivalente para docentes ni administrativos. | `terms-and-conditions.md` · `business-rules.md` · `modelo-dominio.puml` | Pendiente de decisión del equipo |
-| 9 | El árbol de organización del `README.md` raíz no incluye `arquitectura-modular.puml`, `sonar-project.properties`, `sonar.sh` ni `docs/planning/`. | `README.md` | `DOC-06` |
+| # | Inconsistencia | Documentos implicados | Seguimiento | Estado |
+| --- | --- | --- | --- | --- |
+| 1 | Structurizr situaba `porcentajeConfianza`, `nivelConfianza` y `sanciones` dentro del agregado Usuario, mientras el UML y el modelo de confianza los situaban en Confianza. | `workspace.dsl` · `modelo-dominio.puml` · `trust-model.md` | `DOC-07` | Resuelta |
+| 2 | Structurizr definía `EstadoSancion` sin el estado `ABSUELTA`. | `workspace.dsl` · `modelo-dominio.puml` · `functional.md` | `DOC-07` | Resuelta |
+| 3 | Structurizr no modelaba `Apelacion` ni su estado dentro de Confianza. | `workspace.dsl` · `modelo-dominio.puml` · `functional.md` | `DOC-07` | Resuelta |
+| 4 | Structurizr mantenía pendiente la separación de Confianza respecto de Usuarios. | `workspace.dsl` · `trust-model.md` · `modelo-dominio.puml` | `DOC-07` | Resuelta |
+| 5 | RF-17 menciona solo préstamos **activos**; el UML y la arquitectura modular exigen que no se superpongan intervalos de préstamos activos **o planificados**. | `functional.md` · `modelo-dominio.puml` · `arquitectura-modular.puml` | `DOC-08` | Pendiente |
+| 6 | RF-19 no distingue el alta de un préstamo planificado de su inicio efectivo, por lo que no queda definido cuándo un ejemplar planificado pasa a `PRESTADO`. | `functional.md` · `modelo-dominio.puml` | `DOC-08` | Pendiente |
+| 7 | El estado `PLANIFICADO` y el intervalo `fechaInicio`–`fechaFin` existen en el UML y en Structurizr, pero ningún requisito funcional describe la planificación de un préstamo futuro. | `functional.md` · `modelo-dominio.puml` | `DOC-08` | Pendiente |
+| 8 | La duración de restricción por sanción está definida únicamente para estudiantes (`duracionRestriccionEstudiante`, RN-21, RN-23). No hay definición equivalente para docentes ni administrativos. | `terms-and-conditions.md` · `business-rules.md` · `modelo-dominio.puml` | Decisión del equipo | Pendiente |
+| 9 | El árbol del `README.md` raíz no reflejaba los archivos y carpetas ya integrados. | `README.md` | Actualización documental | Resuelta |
 
 ## Pull Requests
 

@@ -21,7 +21,7 @@ rectangle "**Frontend**\nVue.js + TypeScript" as Frontend #EFF6FF
 ' La tabla mantiene una geometría común: las relaciones no pueden desplazar sus celdas.
 rectangle Backend [
 <size:18><b>Backend</b></size>
-Node.js + TypeScript · diseño propuesto, no implementación
+NestJS + TypeScript · arquitectura objetivo
 
 |<#E2E8F0> \n  **CAPAS / MÓDULOS**  \n |<#F3E8FF> \n  **Autenticación (auth)**  \n |<#E8F1FA> \n  **Usuarios (users)**  \n |<#E8F1FA> \n  **Inventario (inventory)**  \n |<#FFF2CC> \n  **Préstamos (loans)**  \n  **Dominio central**  \n |<#F1F5F9> \n  **Reglas y Términos**  \n |<#E2F3E8> \n  **Confianza (trust)**  \n |
 |<#E2E8F0> \n  **CAPA 4**  \n  **PRESENTACIÓN**  \n  HTTP · DTO entrada / salida  \n  Validación estructural  \n |<#FAF5FF> \n  Controladores de acceso  \n  DTO de entrada / salida  \n  Validación estructural  \n |<#F8FBFE> \n  Controladores de usuarios  \n  y solicitudes de registro  \n  DTO y validación estructural  \n |<#F8FBFE> \n  Controladores de inventario  \n  DTO de catálogo y ejemplares  \n  Validación estructural  \n |<#FFFBEB> \n  Controladores de préstamos  \n  y devoluciones  \n  DTO y validación estructural  \n |<#F8FAFC> \n  Controladores de reglas,  \n  términos e incumplimientos  \n  DTO y validación estructural  \n |<#F4FBF6> \n  Controladores de confianza,  \n  sanciones y apelaciones  \n  DTO y validación estructural  \n |
@@ -47,6 +47,7 @@ Apelaciones conserva sanción, usuario y resultado; solo un administrador resuel
 
 **Límites y pendientes:** Confianza es un contexto separado según el modelo actual; Reglas y Términos mantiene su límite DDD por validar.
 Pendientes: confianza inicial, rangos de niveles, restricciones concretas y efecto de absolver sobre la confianza; mecanismo de autenticación.
+El backend actual todavía conserva confianza y sanciones en users, y apelaciones en rules; esa distribución es anterior a este límite objetivo.
 **Shared/Common**, si resulta necesario, será técnico: tipos base, errores y configuración; sin IDs ni objetos de valor propios de un dominio.
 Las colaboraciones entre contextos se documentan en Structurizr; esta matriz no es un diagrama de dependencias ni un modelo de clases.
 endlegend

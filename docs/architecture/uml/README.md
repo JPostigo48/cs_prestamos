@@ -61,13 +61,14 @@ El diagrama NO define todavía:
 - credenciales o proveedor de autenticación;
 - consecuencias ejecutables y restricciones concretas asociadas a una sanción activa;
 - composición de una versión de términos;
-- estrategia transaccional, restricciones de persistencia o esquema de base de datos.
+- estrategia transaccional y restricciones de persistencia que garanticen las invariantes bajo concurrencia;
+- alineación definitiva entre el contrato Prisma existente y las decisiones de dominio que todavía están pendientes.
 
 Tampoco introduce subclases por tipo de usuario o recurso, un motor de reglas, eventos de dominio, sagas ni otros patrones que los requisitos actuales no justifican.
 
 ## Arquitectura modular por capas
 
-[`arquitectura-modular.puml`](arquitectura-modular.puml) es una vista de planificación arquitectónica del backend, no un inventario de componentes implementados. Las **columnas representan módulos** y las **filas representan capas**: Presentación, Aplicación, Dominio e Infraestructura. Permite repartir el trabajo por módulo y reconocer sus responsabilidades en cada capa. El frontend Vue.js y PostgreSQL quedan fuera de la matriz del backend Node.js; todos utilizan las tecnologías seleccionadas para el proyecto.
+[`arquitectura-modular.puml`](arquitectura-modular.puml) es la vista objetivo de la arquitectura del backend, no un inventario literal de archivos implementados. Las **columnas representan módulos** y las **filas representan capas**: Presentación, Aplicación, Dominio e Infraestructura. Permite repartir el trabajo por módulo y reconocer sus responsabilidades en cada capa. El frontend Vue.js y PostgreSQL quedan fuera de la matriz del backend NestJS; todos utilizan las tecnologías seleccionadas para el proyecto.
 
 La matriz utiliza una [tabla Creole](https://plantuml.com/creole) dentro del backend para mantener las columnas y filas alineadas sin depender de la distribución automática de paquetes. Prioriza la estructura sobre las flechas. Las dependencias e interacciones detalladas entre contextos se documentan en [Structurizr](../structurizr/README.md). El orden visual de las filas no representa una cadena de dependencias: Presentación invoca casos de uso de Aplicación; Aplicación coordina el dominio y los puertos internos; Infraestructura implementa esos contratos. **El dominio no depende de Infraestructura ni de PostgreSQL.**
 
@@ -76,6 +77,12 @@ Confianza aparece como módulo separado, de acuerdo con el [modelo de confianza 
 Shared/Common no se añade como columna ni como bounded context de negocio. Si se necesita durante la implementación, se limitará a tipos base, errores comunes, utilidades sin significado de negocio y configuración técnica compartida. Identificadores y objetos de valor específicos, como `UsuarioId`, `PrestamoId` o `PorcentajeConfianza`, permanecen en sus módulos propietarios.
 
 Los nombres de controllers, DTO y repositorios orientan el reparto de trabajo, no fijan todavía contratos de API ni clases definitivas. JWT y hash son opciones técnicas de Autenticación pendientes de selección; no se asume aún un proveedor ni un mecanismo de credenciales. Tampoco se fijan umbrales de confianza, restricciones aún pendientes ni la restitución de confianza tras una apelación aceptada.
+
+### Estado de implementación respecto de la vista
+
+El backend ya tiene una estructura ejecutable con los módulos `auth`, `users`, `inventory`, `loans` y `rules`, infraestructura Prisma compartida y casos de uso tipados. `inventory` contiene comportamiento y pruebas; los demás módulos son principalmente esqueletos con implementación pendiente.
+
+La estructura integrada desde `develop` fue creada antes de separar conceptualmente `trust`: mantiene contratos provisionales de confianza y sanciones dentro de `users`, y apelaciones dentro de `rules`. El UML, los requisitos y esta matriz son la fuente del diseño objetivo; mover esas responsabilidades al módulo `trust` debe realizarse como una tarea posterior y coordinada, no como parte de esta corrección documental.
 
 La matriz recoge los préstamos planificados y sus intervalos definidos en el UML. Existe un ajuste de trazabilidad pendiente en [requisitos funcionales](../../requirements/functional.md): RF-17 solo menciona préstamos activos y RF-19 no distingue el alta de un préstamo futuro de su inicio. Esta vista no decide cuándo un ejemplar planificado cambia a `PRESTADO`.
 
@@ -95,7 +102,7 @@ La ruta de salida es absoluta y temporal; los renderizados no se incorporan al r
 
 Se requiere Java y un [JAR de PlantUML](https://plantuml.com/download). El archivo usa el motor Smetana incluido en PlantUML para no depender de una instalación separada de Graphviz.
 
-Validado con Java 21 y PlantUML 1.2026.6 mediante comprobación de sintaxis, generación SVG/PNG y revisión visual del PNG.
+Validado con Java 21 y PlantUML 1.2026.8 mediante comprobación de sintaxis, generación SVG/PNG y revisión visual del PNG.
 
 Desde la raíz del repositorio, en PowerShell:
 

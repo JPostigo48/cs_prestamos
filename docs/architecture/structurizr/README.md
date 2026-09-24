@@ -10,10 +10,10 @@
 | `InteraccionContextosDDD` | Colaboración conceptual entre contextos, sin mostrar agregados internos. |
 | `InternaPrestamos` | Agregado `Préstamo`, intervalo, estado, devolución y referencias externas por ID. |
 | `InternaInventario` | Categorías, recursos, ejemplares, estado, observaciones y disponibilidad derivada. |
-| `InternaUsuarios` | Solicitudes de registro, evidencias, usuarios, confianza asociada y sanciones históricas. |
+| `InternaUsuarios` | Solicitudes de registro, evidencias e identidad institucional del usuario. |
 | `InternaReglasTerminos` | Reglas versionadas, incumplimientos, términos y aceptaciones históricas. |
 | `InternaAutenticacion` | Cuenta de acceso, roles y diferencia entre rol de acceso y tipo institucional. |
-| `InternaConfianza` | Responsabilidad conceptual de confianza, restricciones, sanciones activas y cambios por incumplimiento. |
+| `InternaConfianza` | Perfil de confianza, restricciones, sanciones, apelaciones y referencias externas por identificador. |
 
 ## Criterio de separación
 
@@ -25,9 +25,9 @@ Structurizr se usa aquí para explicar límites de dominio, responsabilidades, a
 
 - **Préstamos (loans) — central:** registra préstamos y devoluciones; coordina las condiciones para ocupar un ejemplar.
 - **Inventario (inventory) — soporte:** gestiona recursos, ejemplares físicos y disponibilidad.
-- **Usuarios (users) — soporte:** gestiona solicitudes, vinculación institucional y estado del usuario.
-- **Confianza — responsabilidad de soporte:** evalúa porcentaje, nivel, sanciones y restricciones. Se separa en Structurizr para explicar responsabilidades, pero su consolidación con Usuarios sigue pendiente.
-- **Reglas y Términos — soporte:** administra reglas vigentes, versiones, incumplimientos y términos aceptados.
+- **Usuarios (users) — soporte:** gestiona solicitudes, vinculación institucional e identidad del usuario.
+- **Confianza (trust) — soporte:** mantiene porcentaje, nivel, restricciones, sanciones y apelaciones; referencia a Usuarios, Reglas y Autenticación mediante identificadores.
+- **Reglas y Términos — área de dominio con límite por validar:** administra reglas vigentes, versiones, incumplimientos y términos aceptados.
 - **Autenticación (auth) — genérico de apoyo:** proporciona identidad autenticada, rol y control de acceso.
 
 Esta clasificación orienta responsabilidades del dominio. No define microservicios, bases de datos separadas ni mecanismos de integración.

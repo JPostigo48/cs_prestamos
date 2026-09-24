@@ -14,11 +14,15 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
             tags "BoundedContext,Soporte"
         }
 
-        usuarios = element "Usuarios (users)" "Bounded Context · soporte" "Gestiona solicitudes de registro, identidad institucional, confianza y sanciones del usuario." {
+        usuarios = element "Usuarios (users)" "Bounded Context · soporte" "Gestiona solicitudes de registro, vinculación e identidad institucional del usuario." {
             tags "BoundedContext,Soporte"
         }
 
-        reglas = element "Reglas y Términos" "Área de dominio · límite por validar" "Administra reglas vigentes, versiones, incumplimientos, apelaciones y términos aceptados." {
+        confianza = element "Confianza (trust)" "Bounded Context · soporte" "Mantiene porcentaje, nivel, restricciones, sanciones y apelaciones del usuario." {
+            tags "BoundedContext,Soporte"
+        }
+
+        reglas = element "Reglas y Términos" "Área de dominio · límite por validar" "Administra reglas vigentes, versiones, incumplimientos y términos aceptados." {
             tags "BoundedContext,AreaDominio"
         }
 
@@ -97,7 +101,7 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
 
 
         # ============================================================
-        # USUARIOS · elementos internos (incluye confianza y sanciones)
+        # USUARIOS · elementos internos
         # ============================================================
 
         aggSolicitudRegistro = element "Agregado Solicitud de Registro" "Aggregate" "Gestiona la solicitud antes de habilitar una cuenta." {
@@ -115,37 +119,67 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         tipoUsuario = element "TipoUsuario" "Enumeración" "ESTUDIANTE, DOCENTE o ADMINISTRATIVO." {
             tags "Enumeracion"
         }
-        aggUsuario = element "Agregado Usuario" "Aggregate" "Identidad institucional, vinculación, confianza y sanciones." {
+        aggUsuario = element "Agregado Usuario" "Aggregate" "Identidad institucional y vinculación vigente." {
             tags "Aggregate"
         }
         rootUsuario = element "Usuario" "Aggregate Root" "Raíz del usuario institucional." {
             tags "AggregateRoot"
         }
-        porcentajeConfianza = element "PorcentajeConfianza" "Value Object" "Valor entre 0 y 100 asociado al usuario." {
+
+
+        # ============================================================
+        # CONFIANZA · elementos internos
+        # ============================================================
+
+        aggPerfilConfianza = element "Agregado Perfil de Confianza" "Aggregate" "Porcentaje y nivel de confianza asociados a un usuario por usuarioId." {
+            tags "Aggregate"
+        }
+        rootPerfilConfianza = element "PerfilConfianza" "Aggregate Root" "Mantiene el porcentaje y deriva el nivel de confianza." {
+            tags "AggregateRoot"
+        }
+        porcentajeConfianza = element "PorcentajeConfianza" "Value Object" "Valor entre 0 y 100 asociado al perfil." {
             tags "ValueObject"
         }
         nivelConfianza = element "NivelConfianza" "Atributo derivado" "Cuatro niveles derivados del porcentaje; umbrales pendientes de definir." {
             tags "Concepto"
         }
-        sancionesUsuario = element "Sanción" "Entity" "Historial de penalizaciones; conserva confianzaAnterior y confianzaPosterior (0..*)." {
-            tags "Entity"
+        restriccionesConfianza = element "Restricciones por confianza" "Política de dominio" "Condiciones aplicables según el nivel o una sanción activa; detalle pendiente de definir." {
+            tags "Concepto"
         }
-        estadoSancion = element "EstadoSancion" "Enumeración" "ACTIVA o FINALIZADA." {
+        aggSancion = element "Agregado Sanción" "Aggregate" "Penalización aplicada con intervalo e historial propios." {
+            tags "Aggregate"
+        }
+        rootSancion = element "Sanción" "Aggregate Root" "Conserva usuario, incumplimiento, versión, operador, intervalo y cambio de confianza." {
+            tags "AggregateRoot"
+        }
+        estadoSancion = element "EstadoSancion" "Enumeración" "ACTIVA, FINALIZADA o ABSUELTA." {
             tags "Enumeracion"
         }
-        restriccionesUsuario = element "Restricciones por confianza" "Política de dominio" "Condiciones aplicables según el nivel de confianza o una sanción activa; detalle pendiente de definir." {
-            tags "Concepto"
+        aggApelacion = element "Agregado Apelación" "Aggregate" "Solicitud de revisión de una sanción activa." {
+            tags "Aggregate"
         }
-        cambioConfianzaPorIncumplimiento = element "Cambio de confianza por incumplimiento" "Política de dominio" "Aplica la penalización de la versión de regla infringida y origina la sanción correspondiente." {
-            tags "Concepto"
+        rootApelacion = element "Apelación" "Aggregate Root" "Conserva sanción, usuario, motivo, estado y resolución administrativa." {
+            tags "AggregateRoot"
         }
-        confianzaConsolidada = element "Confianza consolidada en Usuarios" "Aclaración" "La evaluación de confianza y sus restricciones derivadas se modelan dentro de Usuarios; no constituyen un bounded context separado." {
-            tags "Aclaracion"
+        estadoApelacion = element "EstadoApelacion" "Enumeración" "PENDIENTE, ACEPTADA o RECHAZADA." {
+            tags "Enumeracion"
+        }
+        invApelacionSancion = element "Invariante: sanción apelable" "Regla de dominio" "El usuario afectado apela una sanción activa; solo un administrador la resuelve." {
+            tags "Invariante"
+        }
+        refUsuarioConfianza = element "usuarioId (confianza)" "Referencia externa" "Referencia a Usuario sin cargar el agregado Usuarios." {
+            tags "ExternalRef"
+        }
+        refReglasSancion = element "incumplimientoId · reglaId · versionReglaId" "Referencias externas" "Conservan el origen histórico de la sanción en Reglas y Términos." {
+            tags "ExternalRef"
+        }
+        refCuentaResolucion = element "cuentaOperadorId · administradorId" "Referencias externas" "Identifican las cuentas que imponen la sanción o resuelven la apelación." {
+            tags "ExternalRef"
         }
 
 
         # ============================================================
-        # REGLAS Y TÉRMINOS · elementos internos (incluye apelaciones)
+        # REGLAS Y TÉRMINOS · elementos internos
         # ============================================================
 
         aggReglaUso = element "Agregado Regla de Uso" "Aggregate" "Identidad estable de una regla de uso." {
@@ -175,22 +209,10 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         invHistorialReglas = element "Invariante: historial estable" "Regla de dominio" "Cambios posteriores de reglas no alteran incumplimientos ya registrados." {
             tags "Invariante"
         }
-        aggApelacion = element "Agregado Apelación" "Aggregate" "Impugnación de un incumplimiento por parte del usuario sancionado." {
-            tags "Aggregate"
-        }
-        rootApelacion = element "Apelación" "Aggregate Root" "Motivo, fecha, estado y resolución de la impugnación." {
-            tags "AggregateRoot"
-        }
-        estadoApelacion = element "EstadoApelacion" "Enumeración" "PENDIENTE, ACEPTADA o RECHAZADA." {
-            tags "Enumeracion"
-        }
-        invApelacionUnica = element "Invariante: apelación única" "Regla de dominio" "Un incumplimiento admite como máximo una apelación activa; si es ACEPTADA revierte la penalización aplicada (mecanismo de reversión de confianza pendiente de definir)." {
-            tags "Invariante"
-        }
         notaHistorialIncumplimientos = element "Historial de incumplimientos" "Aclaración" "Conserva la versión de la regla infringida y la penalización realmente aplicada, incluso si la regla cambia después." {
             tags "Aclaracion"
         }
-        refUsuarioReglas = element "usuarioId (reglas)" "Referencia externa" "Referencia al usuario asociado al incumplimiento, la apelación o la aceptación." {
+        refUsuarioReglas = element "usuarioId (reglas)" "Referencia externa" "Referencia al usuario asociado al incumplimiento o la aceptación." {
             tags "ExternalRef"
         }
         aggVersionTerminos = element "Agregado Versión de Términos" "Aggregate" "Versión concreta y numerada de términos y condiciones." {
@@ -235,11 +257,14 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         # RELACIONES ESTRATÉGICAS (entre bounded contexts)
         # ============================================================
 
-        prestamos -> usuarios "verifica estado y confianza del usuario" "" "Estrategica"
+        prestamos -> usuarios "verifica habilitación del usuario" "" "Estrategica"
+        prestamos -> confianza "consulta restricciones vigentes" "" "Estrategica"
         prestamos -> inventario "consulta disponibilidad y ocupa ejemplares" "" "Estrategica"
         prestamos -> autenticacion "requiere identidad y permisos" "" "Estrategica"
-        reglas -> usuarios "incumplimientos y apelaciones afectan la confianza" "" "Estrategica"
-        usuarios -> reglas "consulta reglas vigentes para restricciones por confianza" "" "Estrategica"
+        reglas -> confianza "un incumplimiento puede originar una sanción" "" "Estrategica"
+        confianza -> usuarios "referencia al usuario sancionado" "" "Estrategica"
+        confianza -> reglas "conserva incumplimiento, regla y versión" "" "Estrategica"
+        confianza -> autenticacion "identifica operador y administrador" "" "Estrategica"
         autenticacion -> usuarios "vincula cuenta con usuario" "" "Estrategica"
 
 
@@ -291,14 +316,32 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         rootSolicitudRegistro -> rootUsuario "aprobada origina"
         aggUsuario -> rootUsuario "raíz"
         rootUsuario -> tipoUsuario "tipoUsuario" "" "Derivacion"
-        rootUsuario -> porcentajeConfianza "posee"
+
+
+        # ============================================================
+        # CONFIANZA · relaciones internas
+        # ============================================================
+
+        confianza -> aggPerfilConfianza "contiene"
+        confianza -> aggSancion "contiene"
+        confianza -> aggApelacion "contiene"
+        aggPerfilConfianza -> rootPerfilConfianza "raíz"
+        rootPerfilConfianza -> porcentajeConfianza "posee"
         porcentajeConfianza -> nivelConfianza "deriva" "" "Derivacion"
-        nivelConfianza -> restriccionesUsuario "condiciona"
-        rootUsuario -> sancionesUsuario "0..*"
-        sancionesUsuario -> estadoSancion "estado" "" "Derivacion"
-        sancionesUsuario -> cambioConfianzaPorIncumplimiento "registra"
-        cambioConfianzaPorIncumplimiento -> porcentajeConfianza "actualiza"
-        confianzaConsolidada -> aggUsuario "aclara"
+        nivelConfianza -> restriccionesConfianza "condiciona"
+        rootPerfilConfianza -> refUsuarioConfianza "usuarioId" "" "Derivacion"
+        aggSancion -> rootSancion "raíz"
+        rootSancion -> estadoSancion "estado" "" "Derivacion"
+        rootSancion -> refUsuarioConfianza "usuarioId" "" "Derivacion"
+        rootSancion -> refReglasSancion "origen histórico" "" "Derivacion"
+        rootSancion -> refCuentaResolucion "cuentaOperadorId" "" "Derivacion"
+        rootSancion -> restriccionesConfianza "activa restricción"
+        aggApelacion -> rootApelacion "raíz"
+        rootApelacion -> rootSancion "apela"
+        rootApelacion -> estadoApelacion "estado" "" "Derivacion"
+        rootApelacion -> invApelacionSancion "cumple"
+        rootApelacion -> refUsuarioConfianza "usuarioId" "" "Derivacion"
+        rootApelacion -> refCuentaResolucion "administradorId" "" "Derivacion"
 
 
         # ============================================================
@@ -308,7 +351,6 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         reglas -> aggReglaUso "contiene"
         reglas -> aggVersionRegla "contiene"
         reglas -> aggIncumplimiento "contiene"
-        reglas -> aggApelacion "contiene"
         reglas -> aggVersionTerminos "contiene"
         reglas -> aggAceptacionTerminos "contiene"
 
@@ -325,12 +367,6 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         rootVersionRegla -> invHistorialReglas "histórica"
         rootIncumplimiento -> refUsuarioReglas "usuarioId" "" "Derivacion"
         notaHistorialIncumplimientos -> rootIncumplimiento "aclara"
-
-        aggApelacion -> rootApelacion "raíz"
-        rootApelacion -> rootIncumplimiento "apela (0..1 por incumplimiento)"
-        rootApelacion -> estadoApelacion "estado" "" "Derivacion"
-        rootApelacion -> invApelacionUnica "cumple"
-        rootApelacion -> refUsuarioReglas "usuarioId" "" "Derivacion"
 
         aggVersionTerminos -> rootVersionTerminos "raíz"
         aggAceptacionTerminos -> rootAceptacionTerminos "raíz"
@@ -355,14 +391,14 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
         custom "01_MapaContextosDDD" {
             title "Mapa general de contextos DDD — préstamos universitarios"
             description "Vista estratégica principal del dominio. Muestra solo bounded contexts y dependencias principales."
-            include prestamos inventario usuarios reglas autenticacion
+            include prestamos inventario usuarios confianza reglas autenticacion
             autoLayout lr 360 240
         }
 
         custom "02_InteraccionContextosDDD" {
             title "Interacción entre contextos — préstamos universitarios"
             description "Colaboración conceptual entre bounded contexts. No muestra agregados ni entidades internas."
-            include prestamos inventario usuarios reglas autenticacion
+            include prestamos inventario usuarios confianza reglas autenticacion
             autoLayout lr 360 260
         }
 
@@ -382,22 +418,22 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
 
         custom "05_InternaUsuarios" {
             title "Usuarios — vista interna"
-            description "Solicitudes, evidencias, usuario institucional, confianza y sanciones. La confianza se modela aquí y no como contexto aparte."
-            include usuarios aggSolicitudRegistro rootSolicitudRegistro evidenciasVinculacion estadoSolicitud tipoUsuario aggUsuario rootUsuario porcentajeConfianza nivelConfianza restriccionesUsuario sancionesUsuario estadoSancion cambioConfianzaPorIncumplimiento confianzaConsolidada
+            description "Solicitudes, evidencias e identidad institucional. Confianza referencia al usuario por identificador desde otro contexto."
+            include usuarios aggSolicitudRegistro rootSolicitudRegistro evidenciasVinculacion estadoSolicitud tipoUsuario aggUsuario rootUsuario
             autoLayout lr 320 220
         }
 
         custom "06_InternaReglasTerminos" {
             title "Reglas y Términos — vista interna"
-            description "Reglas versionadas, incumplimientos históricos, apelaciones, términos y aceptaciones por versión concreta."
-            include reglas aggReglaUso rootReglaUso versionVigente aggVersionRegla rootVersionRegla estadoRegla aggIncumplimiento rootIncumplimiento invHistorialReglas notaHistorialIncumplimientos aggApelacion rootApelacion estadoApelacion invApelacionUnica refUsuarioReglas aggVersionTerminos rootVersionTerminos aggAceptacionTerminos rootAceptacionTerminos
+            description "Reglas versionadas, incumplimientos históricos, términos y aceptaciones por versión concreta."
+            include reglas aggReglaUso rootReglaUso versionVigente aggVersionRegla rootVersionRegla estadoRegla aggIncumplimiento rootIncumplimiento invHistorialReglas notaHistorialIncumplimientos refUsuarioReglas aggVersionTerminos rootVersionTerminos aggAceptacionTerminos rootAceptacionTerminos
             autoLayout lr 320 220
         }
 
-        custom "07_InternaApelaciones" {
-            title "Apelaciones — foco"
-            description "Detalle de la impugnación de un incumplimiento: una apelación activa como máximo, con efecto reversible sobre la penalización."
-            include aggIncumplimiento rootIncumplimiento aggApelacion rootApelacion estadoApelacion invApelacionUnica refUsuarioReglas
+        custom "07_InternaConfianza" {
+            title "Confianza — vista interna"
+            description "Perfil, porcentaje, nivel, restricciones, sanciones y apelaciones con referencias externas por identificador."
+            include confianza aggPerfilConfianza rootPerfilConfianza porcentajeConfianza nivelConfianza restriccionesConfianza aggSancion rootSancion estadoSancion aggApelacion rootApelacion estadoApelacion invApelacionSancion refUsuarioConfianza refReglasSancion refCuentaResolucion
             autoLayout lr 320 220
         }
 

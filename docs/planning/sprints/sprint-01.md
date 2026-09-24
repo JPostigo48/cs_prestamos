@@ -1,7 +1,7 @@
 ---
 sprint: 1
 name: Base técnica
-status: planned
+status: in_progress
 version: v0.1.0
 commit_prefix: v0.1.0
 ---
@@ -13,6 +13,12 @@ commit_prefix: v0.1.0
 Dejar preparados PostgreSQL, backend y frontend para que los sprints siguientes puedan implementar funcionalidades sin bloquearse entre sí.
 
 Este sprint **no** busca completar la lógica del sistema. Busca que cada integrante pueda trabajar en paralelo sobre su área con una base técnica común.
+
+## Estado actual
+
+`develop` ya contiene PostgreSQL mediante Docker Compose, el contrato y las migraciones de Prisma, seeds, la estructura modular ejecutable del backend y el módulo `inventory` conectado a persistencia. Los módulos `auth`, `users`, `loans` y `rules` conservan principalmente contratos y casos de uso pendientes. El frontend planificado todavía no está integrado en el repositorio.
+
+La separación de `trust` definida por la documentación es posterior al esqueleto integrado: confianza y sanciones permanecen provisionalmente en `users`, y apelaciones en `rules`. Esa diferencia está documentada y debe corregirse en una tarea posterior sin presentar la distribución actual como arquitectura objetivo.
 
 ## Alcance
 
@@ -27,7 +33,7 @@ Este sprint **no** busca completar la lógica del sistema. Busca que cada integr
 ## Fuera de alcance
 
 - Lógica de dominio completa en el backend.
-- Conexión del backend con la persistencia real: en este sprint se usan repositorios o datos mock temporales.
+- Completar la conexión con persistencia real en todos los módulos; `inventory` ya está conectado, pero los demás conservan implementaciones pendientes.
 - Autenticación funcional. El módulo `auth` puede existir como estructura vacía; su implementación corresponde al Sprint 2.
 - Confianza, sanciones, reglas versionadas, incumplimientos y términos.
 - Préstamos planificados y validación de superposición de intervalos.

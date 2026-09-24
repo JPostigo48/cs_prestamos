@@ -24,7 +24,7 @@ GitFlow simplificado adaptado al tamaño del equipo y del proyecto: dos ramas pe
 - Recibe las funcionalidades terminadas.
 - Las ramas temporales parten de `develop` y regresan a `develop` mediante Pull Request.
 
-> **Estado actual del repositorio:** todavía no existe `develop`. Se crea desde `main` al iniciar el Sprint 1. Existe además una rama remota histórica, `feature/mi_database`, anterior a esta convención: debe integrarse o descartarse explícitamente antes de arrancar el Sprint 1 (ver `ARCH-05` en el [backlog](backlog.md)).
+> **Estado actual del repositorio:** `develop` ya existe y contiene la base técnica integrada del backend. La rama histórica `feature/mi_database` fue incorporada en `develop`; su referencia remota todavía puede eliminarse una vez que el equipo confirme que ya no la necesita (ver `ARCH-05` en el [backlog](backlog.md)).
 
 ## Ramas temporales
 

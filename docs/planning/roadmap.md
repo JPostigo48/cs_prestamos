@@ -21,7 +21,7 @@ Planificación
 | Sprint | Nombre | Propósito | Versión objetivo | Prefijo de commit | Estado |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Planificación y arquitectura | Establecer requisitos, dominio, arquitectura y forma de trabajo antes de implementar. | `v0.0.1` | `v0.0.1` | En curso |
-| 1 | Base técnica | Dejar PostgreSQL, backend y frontend preparados para trabajar en paralelo. | `v0.1.0` | `v0.1.0` | Planificado |
+| 1 | Base técnica | Dejar PostgreSQL, backend y frontend preparados para trabajar en paralelo. | `v0.1.0` | `v0.1.0` | En curso |
 | 2 | Primer flujo funcional | Pasar de mocks a un flujo real: autenticación, inventario, préstamo y devolución. | `v0.2.0` | `v0.2.0` | Planificado |
 | 3 | Reglas de dominio y consolidación | Incorporar confianza, sanciones, reglas versionadas, incumplimientos y términos. | `v0.3.0` | `v0.3.0` | Planificado |
 
