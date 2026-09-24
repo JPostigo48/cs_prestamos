@@ -12,6 +12,8 @@ commit_prefix: v0.3.0
 
 Incorporar las reglas que distinguen al sistema de un CRUD de préstamos y consolidar el primer flujo funcional completo: préstamos planificados con intervalos no superpuestos, confianza, sanciones, reglas versionadas, incumplimientos con penalización histórica y versiones de términos aceptadas por el usuario.
 
+Este sprint comienza después del flujo integrado del Sprint 2. El contrato Prisma preliminar y las carpetas actuales del backend son puntos de partida, no evidencia de que estas reglas ya estén implementadas.
+
 ## Alcance
 
 - Préstamos planificados con intervalo `fechaInicio`–`fechaFin` y validación de superposición por ejemplar.

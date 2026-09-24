@@ -12,36 +12,36 @@ Progresión prevista del proyecto. Cada sprint tiene una versión objetivo; todo
 ## Progresión
 
 ```text
-Planificación
-  → Base técnica
-    → Flujo funcional
-      → Reglas del dominio
+Análisis y arquitectura compartidos
+  → Base técnica y prototipos por área
+    → Integración del primer flujo funcional
+      → Reglas del dominio y consolidación
 ```
 
 | Sprint | Nombre | Propósito | Versión objetivo | Prefijo de commit | Estado |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Planificación y arquitectura | Establecer requisitos, dominio, arquitectura y forma de trabajo antes de implementar. | `v0.0.1` | `v0.0.1` | En curso |
-| 1 | Base técnica | Dejar PostgreSQL, backend y frontend preparados para trabajar en paralelo. | `v0.1.0` | `v0.1.0` | En curso |
-| 2 | Primer flujo funcional | Pasar de mocks a un flujo real: autenticación, inventario, préstamo y devolución. | `v0.2.0` | `v0.2.0` | Planificado |
+| 0 | Planificación y arquitectura | Analizar requisitos, acordar el dominio y la arquitectura y planificar el trabajo entre todos. | `v0.0.1` | `v0.0.1` | En curso; cierre formal pendiente |
+| 1 | Base técnica y prototipos | Integrar PostgreSQL/Prisma, Nest e Inventario; consolidar diseño y base Vue. | `v0.1.0` | `v0.1.0` | En curso |
+| 2 | Primer flujo funcional | Integrar autenticación, usuarios, inventario existente, préstamo y devolución sobre datos reales. | `v0.2.0` | `v0.2.0` | Planificado |
 | 3 | Reglas de dominio y consolidación | Incorporar confianza, sanciones, reglas versionadas, incumplimientos y términos. | `v0.3.0` | `v0.3.0` | Planificado |
 
 ## Sprint 0 — Planificación y arquitectura
 
 **Versión objetivo:** `v0.0.1` · [Detalle](sprints/sprint-00.md)
 
-Levantamiento de requisitos, reglas de negocio, modelo de confianza, términos y condiciones, modelo de dominio UML, contextos delimitados en Structurizr, arquitectura modular por capas, estrategia Git y de versionado, backlog y planificación de los tres sprints siguientes. No produce código ejecutable.
+Análisis de requisitos y reglas, modelo de dominio, contextos DDD, arquitectura modular, estrategia Git, backlog y planificación de tareas realizados con participación del equipo. La documentación está avanzada; el sprint sigue abierto hasta registrar revisión, integración y cierre formal. El código, los esquemas físicos y los prototipos visuales se contabilizan en el Sprint 1, aunque parte del trabajo haya ocurrido en paralelo.
 
-## Sprint 1 — Base técnica
+## Sprint 1 — Base técnica y prototipos
 
 **Versión objetivo:** `v0.1.0` · [Detalle](sprints/sprint-01.md)
 
-PostgreSQL reproducible y esquema preliminar derivado del modelo de dominio; backend Node.js + TypeScript con estructura modular por capas y endpoints mock documentados; frontend Vue.js + TypeScript con layout, navegación, sistema visual y primera interfaz de Inventario consumiendo los mocks. El objetivo es habilitar trabajo paralelo, no completar lógica de dominio.
+Avance integrado en `develop`: PostgreSQL mediante Docker Compose, contrato Prisma con modelos del dominio, migración y datos iniciales; backend Nest con carpetas modulares por capas y módulo Inventario con persistencia y endpoints propios. Juan Carlos organizó los demás módulos y sus contratos, pero sus casos de uso y endpoints siguen pendientes. Fuera de `develop`, Mauricio reporta en Figma diseños web y móvil para usuario, operador y administrador; Luis desarrolló un prototipo de login en `aporte-login`. Falta evaluar su adaptación al frontend Vue.js + TypeScript objetivo e integrar el frontend común. Estos avances no equivalen al cierre del sprint.
 
 ## Sprint 2 — Primer flujo funcional
 
 **Versión objetivo:** `v0.2.0` · [Detalle](sprints/sprint-02.md)
 
-Persistencia real conectada a los repositorios; solicitud y aprobación de registro de usuarios; autenticación con interfaz propia; creación, consulta y devolución de préstamos sobre datos reales. Al terminar debe poder demostrarse el recorrido completo desde el inicio de sesión hasta la devolución de un ejemplar.
+Consolidación del frontend y del prototipo de login, integración de autenticación y registro de usuarios, aprovechamiento del Inventario ya conectado a Prisma y creación, consulta y devolución de préstamos con datos reales. La persistencia de los módulos aún incompletos se integra aquí; no se vuelve a planificar Inventario desde cero. Al terminar debe demostrarse el recorrido del inicio de sesión a la devolución.
 
 ## Sprint 3 — Reglas de dominio y consolidación
 

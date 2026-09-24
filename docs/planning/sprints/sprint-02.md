@@ -10,19 +10,20 @@ commit_prefix: v0.2.0
 
 ## Objetivo
 
-Pasar de esqueletos y mocks a un flujo funcional integrado: un usuario autenticado consulta recursos, crea un préstamo que se almacena realmente y registra su devolución.
+Partir del Inventario ya operativo en el backend y de los prototipos del Sprint 1 para integrar un flujo completo: un usuario se autentica, consulta recursos, crea un préstamo persistido y registra su devolución.
 
 A partir de este sprint se evita una división estrictamente por tecnología. Cada integrante conserva su responsabilidad principal, pero el trabajo se organiza por flujo funcional.
 
 ## Alcance
 
-- Esquema PostgreSQL consolidado y repositorios integrados con persistencia real.
+- Revisar el esquema PostgreSQL/Prisma existente e integrar con persistencia real los repositorios de los módulos aún incompletos; Inventario ya dispone de ella.
+- Integrar la base Vue.js + TypeScript y adaptar o reemplazar el prototipo de login de `aporte-login` según el diseño Figma revisado, sin integrar directamente una segunda aplicación JavaScript.
 - Solicitud de registro de usuarios con evidencia de vinculación, tipo de usuario y aprobación o rechazo.
 - Consulta de habilitación del usuario para realizar préstamos.
 - Autenticación de usuarios registrados, con interfaz propia y navegación según sesión.
-- Registro de recursos, categorías y ejemplares, con disponibilidad derivada.
+- Completar la integración del Inventario existente y verificar la disponibilidad derivada de sus ejemplares.
 - Creación de préstamos, consulta de préstamos activos e historial, y registro de devoluciones.
-- Interfaz de inventario conectada a la API real y primeras vistas de préstamos.
+- Interfaz de Inventario conectada a la API real y primeras vistas de préstamos; incorporar las vistas visuales de Inventario no cerradas en el Sprint 1.
 
 ## Fuera de alcance
 
@@ -58,8 +59,8 @@ Debe poder demostrarse el recorrido completo:
 | --- | --- | --- |
 | Ronald Reynaldo Valdez Agüero | Persistencia e integración de datos | `feat/persistence-integration` |
 | Juan Carlos Postigo Cabana | Backend, endpoints y coordinación | `feat/users-registration`, `feat/loan-flow` |
-| Mauricio Alejandro Farfán Huayta | Frontend general y autenticación | `feat/auth-ui` |
-| Luis Antonio Chipana Chura | Frontend de inventario y préstamos | `feat/inventory-management-ui`, `feat/loan-ui` |
+| Mauricio Alejandro Farfán Huayta | Frontend general, integración del diseño Figma y autenticación | `feat/auth-ui` (rama propuesta) |
+| Luis Antonio Chipana Chura | Adaptación coordinada del prototipo de login; frontend de inventario y préstamos | `aporte-login` como referencia; nuevas ramas por tarea |
 
 ## Tareas
 
@@ -133,11 +134,11 @@ Debe poder demostrarse el recorrido completo:
 
 **Responsabilidad:** frontend general y autenticación.
 
-**Rama:** `feat/auth-ui`
+**Rama propuesta:** `feat/auth-ui`. El prototipo previo está en `aporte-login` y debe revisarse con Luis antes de integrarlo.
 
 **Tareas:**
 
-- Crear la interfaz de inicio de sesión (`AUTH-04`).
+- Adaptar o rehacer la interfaz de inicio de sesión a partir del prototipo de Luis y de las maquetas de Figma (`AUTH-04`); no darla por integrada al comenzar.
 - Integrar la autenticación con la API (`AUTH-05`).
 - Implementar la navegación autenticada y la protección visual de rutas.
 - Mantener las vistas globales y la consistencia con Figma y el sistema visual.
@@ -160,6 +161,7 @@ La protección de rutas en el frontend es visual: no sustituye la restricción d
 
 **Tareas:**
 
+- Colaborar con Mauricio en la evaluación y adaptación del login de `aporte-login`, sin duplicar el router ni los componentes comunes.
 - Conectar el módulo Inventario con la API real (`INV-10`).
 - Completar la gestión visual de recursos y ejemplares.
 - Crear las vistas iniciales de préstamos dentro de `frontend/src/modules/loans/`.
@@ -182,6 +184,7 @@ La protección de rutas en el frontend es visual: no sustituye la restricción d
 | Dependencia | Quién la produce | Quién la consume | Observación |
 | --- | --- | --- | --- |
 | Sprint 1 cerrado y `v0.1.0` publicada | Todo el equipo | Todo el equipo | Precondición del sprint. |
+| Prototipo `aporte-login` evaluado y diseño Figma accesible | Mauricio y Luis | Mauricio y Luis | Decidir antes de construir el login definitivo; la rama no equivale a frontend integrado. |
 | Esquema consolidado y repositorios reales | Ronald | Juan Carlos | Bloquea la integración de los casos de uso con datos reales. |
 | Contratos de API consolidados | Juan Carlos | Mauricio y Luis | Necesarios antes de sustituir los mocks en el frontend. |
 | Mecanismo de autenticación decidido (`AUTH-01`) | Juan Carlos | Mauricio | Bloquea `AUTH-04` y `AUTH-05`. Debe decidirse al inicio del sprint. |

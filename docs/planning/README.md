@@ -19,7 +19,7 @@ El contenido es Markdown versionado en el repositorio. Está escrito con encabez
 | [Backlog](backlog.md) | Elementos de trabajo con identificador estable, módulo, responsable, prioridad, sprint, versión y estado. |
 | [Flujo de trabajo con Git](git-workflow.md) | Ramas permanentes y temporales, convención de commits con prefijo de versión, Pull Requests, tags y control de conflictos. |
 | [Sprint 0](sprints/sprint-00.md) | Planificación y arquitectura. `v0.0.1` |
-| [Sprint 1](sprints/sprint-01.md) | Base técnica. `v0.1.0` |
+| [Sprint 1](sprints/sprint-01.md) | Base técnica y prototipos. `v0.1.0` |
 | [Sprint 2](sprints/sprint-02.md) | Primer flujo funcional. `v0.2.0` |
 | [Sprint 3](sprints/sprint-03.md) | Reglas de dominio y consolidación. `v0.3.0` |
 
@@ -39,7 +39,7 @@ Cada responsable frontend implementa el comportamiento responsive de lo que desa
 | Sprint | Nombre | Estado | Versión objetivo |
 | --- | --- | --- | --- |
 | 0 | Planificación y arquitectura | En curso | `v0.0.1` |
-| 1 | Base técnica | En curso | `v0.1.0` |
+| 1 | Base técnica y prototipos | En curso | `v0.1.0` |
 | 2 | Primer flujo funcional | Planificado | `v0.2.0` |
 | 3 | Reglas de dominio y consolidación | Planificado | `v0.3.0` |
 

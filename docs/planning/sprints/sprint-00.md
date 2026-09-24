@@ -12,9 +12,9 @@ Sprint 0 no es un sprint de desarrollo. No produce código ejecutable. Existe po
 
 ## Objetivo
 
-Establecer una base común antes de comenzar la implementación: qué debe hacer el sistema, cómo se modela su dominio, cómo se organiza el código, cómo trabaja el equipo con Git y qué se hará en los tres sprints siguientes.
+Establecer entre todos una base común antes de implementar: requisitos, modelo de dominio, arquitectura, forma de trabajo con Git y planificación de tareas para los sprints siguientes.
 
-Responsable principal de la planificación: **Juan Carlos Postigo Cabana**.
+Responsable de consolidar la planificación y la documentación: **Juan Carlos Postigo Cabana**. El análisis y las decisiones de alcance se trabajan con aportes del equipo.
 
 ## Alcance
 
@@ -61,10 +61,10 @@ Responsable principal de la planificación: **Juan Carlos Postigo Cabana**.
 
 | Integrante | Participación en este sprint |
 | --- | --- |
-| Juan Carlos Postigo Cabana | Responsable de todos los entregables del sprint. |
-| Ronald Reynaldo Valdez Agüero | Revisión del modelo de dominio desde la perspectiva de persistencia, sin producir esquema todavía. |
-| Mauricio Alejandro Farfán Huayta | Trabajo previo de diseño: Figma, identidad visual, logo e inicio del frontend. No forma parte de los entregables versionados de este sprint. |
-| Luis Antonio Chipana Chura | Revisión del alcance funcional del módulo Inventario que asumirá en el Sprint 1. |
+| Juan Carlos Postigo Cabana | Consolida requisitos, arquitectura, documentación, backlog y dimensionamiento de los sprints. |
+| Ronald Reynaldo Valdez Agüero | Aporta la perspectiva de datos y persistencia al análisis del dominio. Su esquema y configuración técnica se registran en el Sprint 1. |
+| Mauricio Alejandro Farfán Huayta | Aporta flujos y necesidades de usuario al análisis. Sus maquetas de Figma se registran como avance de diseño del Sprint 1, fuera del repositorio. |
+| Luis Antonio Chipana Chura | Aporta la perspectiva de la interfaz y los flujos funcionales. Su prototipo de login en `aporte-login` se registra en el Sprint 1. |
 
 ## Tareas
 
@@ -113,6 +113,8 @@ Módulos considerados a partir de la documentación vigente. Los nombres entre p
 ## Dependencias
 
 Sprint 0 no depende de ningún otro sprint. Los sprints 1, 2 y 3 dependen de sus entregables:
+
+El equipo avanzó tareas técnicas y visuales del Sprint 1 mientras se terminaba la documentación. Esta superposición cronológica no cambia el alcance de cada sprint: el Sprint 0 registra planificación; el Sprint 1 registra esos artefactos y prototipos.
 
 - El esquema de base de datos del Sprint 1 se deriva del modelo de dominio producido aquí.
 - La estructura modular del backend del Sprint 1 sigue la arquitectura modular por capas definida aquí.
@@ -183,7 +185,7 @@ Pendiente.
 
 ## Resultado del sprint
 
-Pendiente.
+Documentación y planificación avanzadas con aportes de todo el equipo. Pendiente registrar revisión, Pull Request e integración antes de marcar el sprint como `completed`.
 
 ## Versión resultante
 
