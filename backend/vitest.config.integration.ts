@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     root: './',
-    include: ['src/modules/inventory/**/*.integration.spec.ts'],
+    testTimeout: 20000,
+    include: ['src/modules/inventory/**/*.integration.spec.ts', 'src/modules/users/**/*.integration.spec.ts'],
   },
 });

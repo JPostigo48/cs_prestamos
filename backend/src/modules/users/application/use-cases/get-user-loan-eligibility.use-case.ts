@@ -7,8 +7,7 @@ import { UserRepository } from '../../domain/repositories/user.repository.js';
 export class GetUserLoanEligibilityUseCase {
   constructor(private readonly users: UserRepository) {}
 
-  async execute(_input: GetUserInput): Promise<LoanEligibility> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: GetUserInput): Promise<LoanEligibility> {
+    return this.users.getLoanEligibility(input.userId);
   }
 }

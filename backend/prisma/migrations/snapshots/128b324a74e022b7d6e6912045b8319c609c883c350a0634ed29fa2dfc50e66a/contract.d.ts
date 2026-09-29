@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0745075c442937a011808205cb2189c319e04342c2b83dd6b7aee663bd2e4416'>;
+  StorageHashBase<'128b324a74e022b7d6e6912045b8319c609c883c350a0634ed29fa2dfc50e66a'>;
 export type ExecutionHash =
-  ExecutionHashBase<'e5fdc516c8813f4bb22bd1fabb4acef34ef1880ad6e2efa6a362a7c0bfb1b598'>;
+  ExecutionHashBase<'4f1e4890be066a85618d386c177e30a8fd4e44f43dfaeb236f358c2165dfe6e0'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -262,17 +262,6 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
-    readonly AuditoriaUsuario: {
-      readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly usuarioId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly solicitudRegistroId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly accion: Varchar<80>;
-      readonly motivo: CodecTypes['pg/text@1']['output'] | null;
-      readonly datosAnteriores: CodecTypes['pg/text@1']['output'] | null;
-      readonly datosNuevos: CodecTypes['pg/text@1']['output'] | null;
-      readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    };
     readonly CategoriaRecurso: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly nombre: Varchar<120>;
@@ -373,7 +362,6 @@ export type FieldOutputTypes = {
       readonly identificadorInstitucional: Varchar<80> | null;
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
-      readonly motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -429,17 +417,6 @@ export type FieldInputTypes = {
       readonly resueltaPorCuentaId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-    };
-    readonly AuditoriaUsuario: {
-      readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly usuarioId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly solicitudRegistroId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly accion: CodecTypes['sql/varchar@1']['input'];
-      readonly motivo: CodecTypes['pg/text@1']['input'] | null;
-      readonly datosAnteriores: CodecTypes['pg/text@1']['input'] | null;
-      readonly datosNuevos: CodecTypes['pg/text@1']['input'] | null;
-      readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly CategoriaRecurso: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
@@ -541,7 +518,6 @@ export type FieldInputTypes = {
       readonly identificadorInstitucional: CodecTypes['sql/varchar@1']['input'] | null;
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
-      readonly motivoRechazo: CodecTypes['pg/text@1']['input'] | null;
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -597,17 +573,6 @@ export type StorageColumnTypes = {
       readonly resueltaPorCuentaId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
-    };
-    readonly auditorias_usuario: {
-      readonly accion: Varchar<80>;
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly datosAnteriores: CodecTypes['pg/text@1']['output'] | null;
-      readonly datosNuevos: CodecTypes['pg/text@1']['output'] | null;
-      readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly motivo: CodecTypes['pg/text@1']['output'] | null;
-      readonly solicitudRegistroId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly usuarioId: CodecTypes['pg/uuid@1']['output'] | null;
     };
     readonly categorias_recurso: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -708,7 +673,6 @@ export type StorageColumnTypes = {
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly identificadorInstitucional: Varchar<80> | null;
-      readonly motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
       readonly nombre: Varchar<180>;
       readonly tipoUsuario: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -766,17 +730,6 @@ export type StorageColumnInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
     };
-    readonly auditorias_usuario: {
-      readonly accion: CodecTypes['sql/varchar@1']['input'];
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly datosAnteriores: CodecTypes['pg/text@1']['input'] | null;
-      readonly datosNuevos: CodecTypes['pg/text@1']['input'] | null;
-      readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly motivo: CodecTypes['pg/text@1']['input'] | null;
-      readonly solicitudRegistroId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly usuarioId: CodecTypes['pg/uuid@1']['input'] | null;
-    };
     readonly categorias_recurso: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
@@ -876,7 +829,6 @@ export type StorageColumnInputTypes = {
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly identificadorInstitucional: CodecTypes['sql/varchar@1']['input'] | null;
-      readonly motivoRechazo: CodecTypes['pg/text@1']['input'] | null;
       readonly nombre: CodecTypes['sql/varchar@1']['input'];
       readonly tipoUsuario: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -962,14 +914,12 @@ export namespace Models {
     identificadorInstitucional: Varchar<80> | null;
     fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['output'];
     estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
-    motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
     usuarioAprobadoId: CodecTypes['pg/uuid@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    auditorias: public_AuditoriaUsuario[];
     evidencias: public_EvidenciaVinculacion[];
     usuarioAprobado: public_Usuario | null;
-    readonly [RelationKeys]?: 'auditorias' | 'evidencias' | 'usuarioAprobado';
+    readonly [RelationKeys]?: 'evidencias' | 'usuarioAprobado';
   };
   export type public_EvidenciaVinculacion = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -990,7 +940,6 @@ export namespace Models {
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     aceptacionesTerminos: public_AceptacionTerminos[];
     apelaciones: public_Apelacion[];
-    auditorias: public_AuditoriaUsuario[];
     cuentaAcceso: public_CuentaAcceso | null;
     incumplimientos: public_Incumplimiento[];
     prestamos: public_Prestamo[];
@@ -999,26 +948,11 @@ export namespace Models {
     readonly [RelationKeys]?:
       | 'aceptacionesTerminos'
       | 'apelaciones'
-      | 'auditorias'
       | 'cuentaAcceso'
       | 'incumplimientos'
       | 'prestamos'
       | 'sanciones'
       | 'solicitudesAprobadas';
-  };
-  export type public_AuditoriaUsuario = {
-    id: CodecTypes['pg/uuid@1']['output'];
-    usuarioId: CodecTypes['pg/uuid@1']['output'] | null;
-    solicitudRegistroId: CodecTypes['pg/uuid@1']['output'] | null;
-    accion: Varchar<80>;
-    motivo: CodecTypes['pg/text@1']['output'] | null;
-    datosAnteriores: CodecTypes['pg/text@1']['output'] | null;
-    datosNuevos: CodecTypes['pg/text@1']['output'] | null;
-    fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    solicitudRegistro: public_SolicitudRegistro | null;
-    usuario: public_Usuario | null;
-    readonly [RelationKeys]?: 'solicitudRegistro' | 'usuario';
   };
   export type public_Sancion = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1165,7 +1099,6 @@ export declare const models: {
     SolicitudRegistro: Models.public_SolicitudRegistro;
     EvidenciaVinculacion: Models.public_EvidenciaVinculacion;
     Usuario: Models.public_Usuario;
-    AuditoriaUsuario: Models.public_AuditoriaUsuario;
     Sancion: Models.public_Sancion;
     Prestamo: Models.public_Prestamo;
     Devolucion: Models.public_Devolucion;
@@ -1407,120 +1340,6 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'cuentas_acceso';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
-            readonly auditorias_usuario: {
-              columns: {
-                readonly id: {
-                  readonly nativeType: 'uuid';
-                  readonly codecId: 'pg/uuid@1';
-                  readonly nullable: false;
-                };
-                readonly usuarioId: {
-                  readonly nativeType: 'uuid';
-                  readonly codecId: 'pg/uuid@1';
-                  readonly nullable: true;
-                };
-                readonly solicitudRegistroId: {
-                  readonly nativeType: 'uuid';
-                  readonly codecId: 'pg/uuid@1';
-                  readonly nullable: true;
-                };
-                readonly accion: {
-                  readonly nativeType: 'character varying';
-                  readonly codecId: 'sql/varchar@1';
-                  readonly nullable: false;
-                  readonly typeParams: { readonly length: 80 };
-                };
-                readonly motivo: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
-                readonly datosAnteriores: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
-                readonly datosNuevos: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
-                readonly fecha: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                  readonly typeParams: { readonly precision: 3 };
-                };
-                readonly createdAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                  readonly typeParams: { readonly precision: 3 };
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
-              indexes: readonly [
-                {
-                  readonly name: 'auditorias_usuario_usuarioId_fecha_idx_c02c2249';
-                  readonly prefix: 'auditorias_usuario_usuarioId_fecha_idx';
-                  readonly columns: readonly ['usuarioId', 'fecha'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454';
-                  readonly prefix: 'auditorias_usuario_solicitudRegistroId_fecha_idx';
-                  readonly columns: readonly ['solicitudRegistroId', 'fecha'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'auditorias_usuario_accion_fecha_idx_10245029';
-                  readonly prefix: 'auditorias_usuario_accion_fecha_idx';
-                  readonly columns: readonly ['accion', 'fecha'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'auditorias_usuario_usuarioId_idx_5f01c7d6';
-                  readonly prefix: 'auditorias_usuario_usuarioId_idx';
-                  readonly columns: readonly ['usuarioId'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'auditorias_usuario_solicitudRegistroId_idx_583e08f8';
-                  readonly prefix: 'auditorias_usuario_solicitudRegistroId_idx';
-                  readonly columns: readonly ['solicitudRegistroId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'auditorias_usuario';
-                    readonly columns: readonly ['usuarioId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'usuarios';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'auditorias_usuario';
-                    readonly columns: readonly ['solicitudRegistroId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'solicitudes_registro';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2426,11 +2245,6 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/text@1', 'PENDIENTE'>;
                   };
                 };
-                readonly motivoRechazo: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
                 readonly usuarioAprobadoId: {
                   readonly nativeType: 'uuid';
                   readonly codecId: 'pg/uuid@1';
@@ -2749,10 +2563,6 @@ type ContractBase = Omit<
       readonly model: 'EvidenciaVinculacion';
     };
     readonly usuarios: { readonly namespace: 'public' & NamespaceId; readonly model: 'Usuario' };
-    readonly auditorias_usuario: {
-      readonly namespace: 'public' & NamespaceId;
-      readonly model: 'AuditoriaUsuario';
-    };
     readonly sanciones: { readonly namespace: 'public' & NamespaceId; readonly model: 'Sancion' };
     readonly prestamos: { readonly namespace: 'public' & NamespaceId; readonly model: 'Prestamo' };
     readonly devoluciones: {
@@ -2973,99 +2783,6 @@ type ContractBase = Omit<
                 readonly resueltaPorCuentaId: { readonly column: 'resueltaPorCuentaId' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
-              };
-            };
-          };
-          readonly AuditoriaUsuario: {
-            readonly fields: {
-              readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
-              };
-              readonly usuarioId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
-              };
-              readonly solicitudRegistroId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
-              };
-              readonly accion: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'sql/varchar@1';
-                  readonly typeParams: { readonly length: 80 };
-                };
-              };
-              readonly motivo: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly datosAnteriores: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly datosNuevos: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly fecha: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly typeParams: { readonly precision: 3 };
-                };
-              };
-              readonly createdAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly typeParams: { readonly precision: 3 };
-                };
-              };
-            };
-            readonly relations: {
-              readonly solicitudRegistro: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'SolicitudRegistro';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['solicitudRegistroId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly usuario: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Usuario';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['usuarioId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-            };
-            readonly storage: {
-              readonly table: 'auditorias_usuario';
-              readonly namespaceId: 'public';
-              readonly fields: {
-                readonly id: { readonly column: 'id' };
-                readonly usuarioId: { readonly column: 'usuarioId' };
-                readonly solicitudRegistroId: { readonly column: 'solicitudRegistroId' };
-                readonly accion: { readonly column: 'accion' };
-                readonly motivo: { readonly column: 'motivo' };
-                readonly datosAnteriores: { readonly column: 'datosAnteriores' };
-                readonly datosNuevos: { readonly column: 'datosNuevos' };
-                readonly fecha: { readonly column: 'fecha' };
-                readonly createdAt: { readonly column: 'createdAt' };
               };
             };
           };
@@ -4039,10 +3756,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly motivoRechazo: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
               readonly usuarioAprobadoId: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
@@ -4064,17 +3777,6 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly auditorias: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'AuditoriaUsuario';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['solicitudRegistroId'];
-                };
-              };
               readonly evidencias: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4111,7 +3813,6 @@ type ContractBase = Omit<
                 };
                 readonly fechaSolicitud: { readonly column: 'fechaSolicitud' };
                 readonly estado: { readonly column: 'estado' };
-                readonly motivoRechazo: { readonly column: 'motivoRechazo' };
                 readonly usuarioAprobadoId: { readonly column: 'usuarioAprobadoId' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
@@ -4188,17 +3889,6 @@ type ContractBase = Omit<
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
                   readonly model: 'Apelacion';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['usuarioId'];
-                };
-              };
-              readonly auditorias: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'AuditoriaUsuario';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -4566,14 +4256,6 @@ type ContractBase = Omit<
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };
           readonly onUpdate: { readonly kind: 'generator'; readonly id: 'instantNow' };
-        },
-        {
-          readonly ref: {
-            readonly namespace: 'public';
-            readonly table: 'auditorias_usuario';
-            readonly column: 'id';
-          };
-          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
         },
         {
           readonly ref: {
