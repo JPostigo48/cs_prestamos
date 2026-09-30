@@ -5,7 +5,8 @@ defineProps<{ src: string; title: string }>()
 
 const emit = defineEmits<{ close: [] }>()
 const closeButton = ref<HTMLButtonElement | null>(null)
-const zoomed = ref(false)
+const image = ref<HTMLImageElement | null>(null)
+const zoom = ref(1)
 const dragging = ref(false)
 const offset = ref({ x: 0, y: 0 })
 
@@ -14,18 +15,46 @@ let movedDuringDrag = false
 let suppressClick = false
 let previousOverflow = ''
 
-function toggleZoom() {
+function changeZoom(nextZoom: number, clientX?: number, clientY?: number) {
+  const next = Math.min(8, Math.max(1, nextZoom))
+  if (next === zoom.value) return
+
+  if (next === 1) {
+    offset.value = { x: 0, y: 0 }
+  } else if (image.value && clientX !== undefined && clientY !== undefined) {
+    const bounds = image.value.getBoundingClientRect()
+    const centerX = bounds.left + bounds.width / 2 - offset.value.x
+    const centerY = bounds.top + bounds.height / 2 - offset.value.y
+    const ratio = next / zoom.value
+    offset.value = {
+      x: clientX - centerX - ratio * (clientX - centerX - offset.value.x),
+      y: clientY - centerY - ratio * (clientY - centerY - offset.value.y),
+    }
+  }
+
+  zoom.value = next
+}
+
+function zoomIn(event?: MouseEvent) {
   if (suppressClick) {
     suppressClick = false
     return
   }
 
-  zoomed.value = !zoomed.value
-  offset.value = { x: 0, y: 0 }
+  changeZoom(zoom.value + 0.5, event?.clientX, event?.clientY)
+}
+
+function zoomOut(event: MouseEvent) {
+  changeZoom(zoom.value - 0.5, event.clientX, event.clientY)
+}
+
+function onWheel(event: WheelEvent) {
+  const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1)
+  changeZoom(zoom.value * Math.exp(-delta * 0.002), event.clientX, event.clientY)
 }
 
 function startDrag(event: PointerEvent) {
-  if (!zoomed.value) return
+  if (zoom.value <= 1 || event.button !== 0) return
 
   dragStart = {
     x: event.clientX,
@@ -54,7 +83,10 @@ function moveDrag(event: PointerEvent) {
 }
 
 function stopDrag() {
-  if (movedDuringDrag) suppressClick = true
+  if (movedDuringDrag) {
+    suppressClick = true
+    window.setTimeout(() => { suppressClick = false }, 0)
+  }
   dragStart = null
   dragging.value = false
 }
@@ -100,24 +132,27 @@ onUnmounted(() => {
         ×
       </button>
       <img
+        ref="image"
         :src="src"
         :alt="title"
         role="button"
         tabindex="0"
         draggable="false"
         class="max-h-[85vh] max-w-[90vw] select-none object-contain"
-        :class="[zoomed ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in', dragging ? '' : 'transition-transform duration-200']"
-        :style="{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoomed ? 2.5 : 1})`, touchAction: 'none' }"
-        @click.stop="toggleZoom"
-        @keydown.enter.prevent="toggleZoom"
-        @keydown.space.prevent="toggleZoom"
+        :class="zoom > 1 ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'"
+        :style="{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`, touchAction: 'none' }"
+        @click.stop="zoomIn"
+        @contextmenu.prevent.stop="zoomOut"
+        @wheel.prevent="onWheel"
+        @keydown.enter.prevent="zoomIn()"
+        @keydown.space.prevent="zoomIn()"
         @pointerdown="startDrag"
         @pointermove="moveDrag"
         @pointerup="stopDrag"
         @pointercancel="cancelDrag"
       />
-      <p class="pointer-events-none absolute bottom-5 rounded-full bg-slate-950/70 px-4 py-2 text-xs text-white/80">
-        {{ zoomed ? 'Arrastra para mover · clic para alejar · Esc para cerrar' : 'Clic en la imagen para ampliar · Esc para cerrar' }}
+      <p class="pointer-events-none absolute bottom-5 max-w-[calc(100vw-2rem)] rounded-full bg-slate-950/70 px-4 py-2 text-center text-xs text-white/80">
+        {{ Math.round(zoom * 100) }} % · Clic o rueda arriba: acercar · clic derecho o rueda abajo: alejar · arrastra para mover · Esc: cerrar
       </p>
     </div>
   </Teleport>

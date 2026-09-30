@@ -41,7 +41,7 @@ const navigation = [
       </div>
     </header>
 
-    <main class="mx-auto px-5 py-10 lg:px-8" :class="route.path === '/project/architecture' ? 'max-w-[1800px]' : 'max-w-7xl'">
+    <main class="mx-auto px-5 py-10 lg:px-8" :class="route.path === '/project/architecture' ? 'max-w-[1600px]' : 'max-w-7xl'">
       <RouterView />
     </main>
 

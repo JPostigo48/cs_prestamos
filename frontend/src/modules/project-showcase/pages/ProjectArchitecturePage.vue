@@ -20,7 +20,7 @@ const selectedDiagram = ref<Diagram | null>(null)
     <EmptyState v-else-if="!architecture?.diagrams.length" class="mt-8" title="Diagramas no generados" detail="Genera los SVG a partir de docs/architecture/uml/ y vuelve a cargar esta página." />
 
     <div v-else class="mt-8">
-      <div class="flex flex-wrap gap-6">
+      <div class="flex flex-wrap justify-center gap-6">
         <article v-for="diagram in architecture.diagrams" :key="diagram.source" class="flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white md:w-[calc(50%-0.75rem)] xl:w-[25vw]">
           <div class="min-h-36 border-b border-slate-100 p-5">
             <span class="text-xs font-semibold uppercase tracking-widest text-blue-700">{{ diagram.type }}</span>
