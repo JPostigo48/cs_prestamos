@@ -395,13 +395,6 @@ workspace "Préstamos universitarios" "Modelo estratégico DDD del sistema de ge
             autoLayout lr 360 240
         }
 
-        custom "02_InteraccionContextosDDD" {
-            title "Interacción entre contextos — préstamos universitarios"
-            description "Colaboración conceptual entre bounded contexts. No muestra agregados ni entidades internas."
-            include prestamos inventario usuarios confianza reglas autenticacion
-            autoLayout lr 360 260
-        }
-
         custom "03_InternaPrestamos" {
             title "Préstamos — vista interna"
             description "Agregado, raíz, estado, intervalo, devolución y referencias externas por identificador."

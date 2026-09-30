@@ -1,6 +1,6 @@
 # Modelo de dominio UML
 
-[`modelo-dominio.puml`](modelo-dominio.puml) es el diagrama de clases conceptual del sistema. Está alineado con el [análisis de requisitos](../../requirements/README.md) vigente; no representa clases implementadas, tablas de PostgreSQL, DTO ni contratos de API. Las [vistas de Structurizr](../structurizr/README.md) describen los límites estratégicos; la incorporación de apelaciones en esas vistas se realizará por separado.
+[`modelo-dominio.puml`](modelo-dominio.puml) es el diagrama de clases conceptual del sistema. Está alineado con el [análisis de requisitos](../../requirements/README.md) vigente; no representa clases implementadas, tablas de PostgreSQL, DTO ni contratos de API. Las [vistas de Structurizr](../structurizr/README.md) describen los límites estratégicos y la estructura interna de cada contexto.
 
 ## Límites y agregados
 

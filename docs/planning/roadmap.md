@@ -55,7 +55,7 @@ Préstamos planificados con validación de superposición de intervalos, perfil 
 
 Project Showcase es una sección de documentación interactiva del proceso del proyecto, separada del sistema de préstamos y de sus módulos de negocio. Acompaña los Sprints 1 a 3 **sin reemplazar sus objetivos ni crear un Sprint 4**. Las rutas previstas son `/project`, `/project/sprints`, `/project/architecture`, `/project/api`, `/project/data`, `/project/team` y `/project/git`; Git es parte obligatoria de la sección.
 
-El resumen `/project` presentará sprint y versión objetivo, tecnologías, módulos, estado documentado de backend, frontend y persistencia, y accesos rápidos. La vista de sprints mostrará responsables, tareas, ramas y, cuando existan, resultados y Pull Requests. Arquitectura reunirá el modelo de dominio, mapa e interacción de contextos, arquitectura modular y flujo de préstamo que estén disponibles; no mezclará esos diagramas con el modelo físico de datos.
+El resumen `/project` presentará sprint y versión objetivo, tecnologías, módulos, estado documentado de backend, frontend y persistencia, y accesos rápidos. La vista de sprints mostrará responsables, tareas, ramas y, cuando existan, resultados y Pull Requests. Arquitectura reunirá el modelo de dominio, el mapa de contextos, las vistas internas y la arquitectura modular que estén disponibles; no mezclará esos diagramas con el modelo físico de datos.
 
 | Sprint | Versión | Etapa paralela | Resultado mínimo previsto |
 | --- | --- | --- | --- |

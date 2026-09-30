@@ -151,7 +151,6 @@ const diagrams = [
 const structurizrSource = 'docs/architecture/structurizr/workspace.dsl'
 const structurizrViews = [
   ['MapaContextosDDD', 'Mapa de contextos DDD', 'mapa-contextos-ddd.svg'],
-  ['InteraccionContextosDDD', 'Interacción entre contextos', 'interaccion-contextos-ddd.svg'],
   ['InternaPrestamos', 'Préstamos — vista interna', 'interna-prestamos.svg'],
   ['InternaInventario', 'Inventario — vista interna', 'interna-inventario.svg'],
   ['InternaUsuarios', 'Usuarios — vista interna', 'interna-usuarios.svg'],
@@ -195,10 +194,8 @@ if (process.env.STRUCTURIZR_JAR) {
   }
 }
 
-const visibleStructurizrViews = structurizrViews.filter(([key]) => key !== 'InteraccionContextosDDD')
-
 json('architecture.json', {
-  diagrams: [...diagrams, ...visibleStructurizrViews.map(([, title, file]) => ({
+  diagrams: [...diagrams, ...structurizrViews.map(([, title, file]) => ({
     title, source: structurizrSource, file, type: 'Contextos',
   }))].map(({ title, source, file, type }) => ({
     title,

@@ -7,7 +7,6 @@
 | Vista | Propósito |
 | --- | --- |
 | `MapaContextosDDD` | Mapa estratégico principal de bounded contexts y dependencias de alto nivel. |
-| `InteraccionContextosDDD` | Colaboración conceptual entre contextos, sin mostrar agregados internos. |
 | `InternaPrestamos` | Agregado `Préstamo`, intervalo, estado, devolución y referencias externas por ID. |
 | `InternaInventario` | Categorías, recursos, ejemplares, estado, observaciones y disponibilidad derivada. |
 | `InternaUsuarios` | Solicitudes de registro, evidencias e identidad institucional del usuario. |
@@ -17,7 +16,7 @@
 
 ## Criterio de separación
 
-El mapa general se mantiene como vista estratégica principal. La vista de interacción explica colaboración entre contextos sin abrir sus estructuras internas. Las vistas internas se dividen por contexto para evitar un diagrama único demasiado grande y para mantener relaciones cortas y legibles.
+El mapa general muestra los contextos y sus relaciones estratégicas. Las vistas internas se dividen por contexto para evitar un diagrama único demasiado grande y para mantener relaciones cortas y legibles.
 
 Structurizr se usa aquí para explicar límites de dominio, responsabilidades, agregados e invariantes. El detalle de atributos, multiplicidades finas y clases conceptuales completas permanece en PlantUML.
 
