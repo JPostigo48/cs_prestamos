@@ -4,6 +4,7 @@
   "scripts": {
     "back": "npm --prefix backend run start:dev",
     "db": "docker compose up -d postgres-db",
-    "front": "npm --prefix frontend run serve"
+    "front": "npm --prefix frontend run serve",
+    "project:generate": "node scripts/generate-project-showcase.mjs"
   }
 }

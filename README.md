@@ -14,7 +14,7 @@ El repositorio ya cuenta con una base técnica ejecutable del backend:
 - PostgreSQL reproducible mediante [`docker-compose.yml`](docker-compose.yml);
 - build, lint y pruebas configurados en [`backend/package.json`](backend/package.json).
 
-El repositorio contiene un prototipo de inicio de sesión en [`frontend/`](frontend/), realizado con Vue CLI y JavaScript. Todavía no está adaptado al frontend objetivo con Vue.js y TypeScript ni integrado con el backend. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
+El frontend en [`frontend/`](frontend/) utiliza Vue 3, TypeScript, Vite y Tailwind CSS. `/login` conserva el prototipo de acceso sin conexión con la API. `/project` presenta planificación y diagramas derivados del repositorio, separado de los módulos de negocio. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
 
 ## Alcance planificado
 
@@ -32,7 +32,7 @@ La planificación contempla estudiantes, docentes y personal administrativo, tie
 
 | Área | Tecnología |
 | --- | --- |
-| Frontend planificado | Vue.js con TypeScript |
+| Frontend | Vue 3, TypeScript, Vite y Tailwind CSS |
 | Backend | NestJS con TypeScript |
 | Persistencia | PostgreSQL y Prisma |
 | Pruebas | Vitest |
@@ -64,6 +64,10 @@ La planificación contempla estudiantes, docentes y personal administrativo, tie
 │   ├── planning/
 │   └── requirements/
 ├── frontend/
+│   └── src/modules/
+│       ├── auth/
+│       └── project-showcase/
+├── scripts/generate-project-showcase.mjs
 ├── docker-compose.yml
 ├── package.json
 ├── sonar-project.properties
@@ -90,7 +94,7 @@ npm run back
 npm run front
 ```
 
-`db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. El frontend actual sigue siendo un prototipo sin integración con el backend.
+`db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. El acceso sigue siendo un prototipo sin integración con el backend. Project Showcase puede actualizar sus datos y SVG con `npm run project:generate`; los requisitos de generación están en [`frontend/README.md`](frontend/README.md).
 
 ## Arquitectura
 
@@ -122,7 +126,7 @@ La estructura de código integrada desde `develop` es anterior a la separación 
 
 - Implementar la lógica de negocio marcada con `// TODO` en los módulos que hoy son esqueletos.
 - Alinear el código con el bounded context `trust` definido por la documentación vigente.
-- Integrar el proyecto frontend Vue.js.
+- Integrar los módulos frontend funcionales de usuarios, inventario y préstamos con la API; Project Showcase no sustituye esa implementación.
 - Definir credenciales, proveedor y flujo definitivo de autenticación.
 - Definir los valores pendientes del modelo de confianza y las restricciones por tipo de usuario.
 - Cerrar los contratos definitivos de la API y la estrategia transaccional para préstamos concurrentes.
