@@ -207,7 +207,7 @@ Los Pull Requests se mantienen pequeños y enfocados. Un Pull Request que toca v
 3. Cada responsable frontend implementa el responsive sobre su propia área.
 4. Mauricio mantiene principalmente: layout, `shared/`, diseño global, navegación y sistema visual.
 5. Luis trabaja principalmente sobre módulos funcionales dentro de `frontend/src/modules/`.
-6. Juan Carlos mantiene: planificación, documentación de sprints, endpoints, contratos de API, coordinación del backend y, posteriormente, el frontend de planificación.
+6. Juan Carlos mantiene: planificación, documentación de sprints, endpoints, contratos de API, coordinación del backend y el módulo documental Project Showcase planificado en paralelo desde Sprint 1.
 7. Ronald mantiene principalmente: PostgreSQL, migraciones, persistencia e integridad de datos.
 8. Los cambios sobre elementos globales se coordinan previamente.
 9. Se evita que dos integrantes modifiquen simultáneamente el router global, la configuración global, `shared/`, el esquema central de base de datos o los contratos de API comunes.
@@ -224,9 +224,12 @@ Los Pull Requests se mantienen pequeños y enfocados. Un Pull Request que toca v
 | `backend/src/` (estructura, rutas, contratos) | Juan Carlos | Ronald, al integrar repositorios reales. |
 | Esquema, migraciones y datos iniciales | Ronald | Juan Carlos, cuando un caso de uso requiera un cambio de esquema. |
 | `frontend/src/app/`, `router/`, `layouts/`, `shared/` | Mauricio | Luis, antes de añadir o modificar un componente compartido o una ruta. |
-| `frontend/src/modules/*` | Luis | Mauricio, si el módulo necesita un componente nuevo en `shared/`. |
+| `frontend/src/modules/*` funcionales del sistema de préstamos | Luis | Mauricio, si el módulo necesita un componente nuevo en `shared/`. |
+| Módulo frontend `project-showcase` | Juan Carlos | Mauricio, antes de modificar el router o componentes compartidos. |
 
 Si Luis necesita un componente compartido, lo acuerda antes con Mauricio en lugar de crearlo dentro de su módulo o modificar `shared/` por su cuenta.
+
+`feat/project-showcase` sigue la regla ordinaria de `feat/*`: parte de `develop` y vuelve por Pull Request a `develop`. `docs/project-planning` es la rama de documentación y no aloja el código de la sección. Los commits de Project Showcase llevan el prefijo de la versión objetivo del sprint en que se realizan.
 
 ## Definition of Done
 

@@ -49,17 +49,31 @@ Consolidación del frontend y del prototipo de login, integración de autenticac
 
 Préstamos planificados con validación de superposición de intervalos, perfil de confianza, sanciones, reglas versionadas, incumplimientos con penalización histórica y versiones de términos con su aceptación. Es el sprint que separa el sistema de un CRUD de préstamos.
 
+## Project Showcase — línea paralela
+
+**Responsable principal:** Juan Carlos Postigo Cabana · **Backlog:** `PLAN-01` a `PLAN-04` y `PLAN-06` a `PLAN-20` (`PLAN-05` mantiene la planificación) · **Rama de implementación prevista:** `feat/project-showcase`, desde `develop` y de regreso a `develop` mediante Pull Request. `docs/project-planning` se reserva para documentación, no para código frontend.
+
+Project Showcase es una sección de documentación interactiva del proceso del proyecto, separada del sistema de préstamos y de sus módulos de negocio. Acompaña los Sprints 1 a 3 **sin reemplazar sus objetivos ni crear un Sprint 4**. Las rutas previstas son `/project`, `/project/sprints`, `/project/architecture`, `/project/api`, `/project/data`, `/project/team` y `/project/git`; Git es parte obligatoria de la sección.
+
+El resumen `/project` presentará sprint y versión objetivo, tecnologías, módulos, estado documentado de backend, frontend y persistencia, y accesos rápidos. La vista de sprints mostrará responsables, tareas, ramas y, cuando existan, resultados y Pull Requests. Arquitectura reunirá el modelo de dominio, mapa e interacción de contextos, arquitectura modular y flujo de préstamo que estén disponibles; no mezclará esos diagramas con el modelo físico de datos.
+
+| Sprint | Versión | Etapa paralela | Resultado mínimo previsto |
+| --- | --- | --- | --- |
+| 1 | `v0.1.0` | Base del módulo, resumen, sprints, arquitectura, Git y formato de seguimiento semanal; SVG inicial de PlantUML. | `/project`, `/project/sprints`, `/project/architecture`, `/project/git`. |
+| 2 | `v0.2.0` | API desde OpenAPI, distinción de modelos, avances del equipo y transformación de documentación en datos. | `/project/api`, `/project/data`, `/project/team`. |
+| 3 | `v0.3.0` | Comparación planificado/realizado, historial Git y de versiones, exportación Structurizr, zoom SVG y navegación de presentación. | Sección navegable como evidencia del proceso, sujeta a datos efectivamente documentados. |
+
+[`docs/planning/`](README.md), [`docs/architecture/`](../architecture/uml/README.md), [`docs/requirements/`](../requirements/README.md), el código de `backend/` y las especificaciones generadas desde él conservan su papel de fuentes de verdad. Una transformación posterior podrá publicar `planning.json`, `backlog.json`, `team-progress.json`, `openapi.json` y SVG en `frontend/public/generated/project/`. Estos archivos son **derivados**: no se mantienen manualmente como una segunda documentación. El frontend consumirá los SVG exportados, no PlantUML ni Structurizr en tiempo de ejecución.
+
+`/project/api` usará una interfaz Vue propia alimentada por OpenAPI generado desde controllers y DTO de NestJS; OpenAPI es una especificación, no la interfaz, y Swagger UI no será la vista final. `/project/data` distinguirá modelo de dominio, modelo de persistencia y arquitectura. `/project/team` leerá [avances semanales](progress/README.md), no métricas individuales. `/project/git` mostrará el flujo de [Git](git-workflow.md) y solo presentará ramas, Pull Requests, commits y tags como realizados cuando estén documentados; la existencia de una rama no implica una tarea terminada.
+
+Para la generación se prevé `scripts/generate-project-showcase.mjs` y la salida `frontend/public/generated/project/`. PlantUML parte de `docs/architecture/uml/*.puml`; Structurizr parte de `docs/architecture/structurizr/workspace.dsl`. Se prefiere SVG para mantener nitidez y permitir zoom. El mecanismo de exportación de Structurizr debe documentarse antes de automatizarlo.
+
+La automatización completa depende de la base Vue.js + TypeScript compartida, de los contratos reales del backend y de un mecanismo de exportación Structurizr documentado antes de implementarlo. Una primera etapa puede consumir artefactos estáticos previamente generados sin duplicar las fuentes canónicas.
+
 ## Funcionalidades futuras identificadas
 
-Estas funcionalidades están reconocidas pero no planificadas dentro de los sprints 0 a 3. No tienen versión asignada.
-
-### Módulo de visualización de planificación
-
-**Responsable principal:** Juan Carlos Postigo Cabana · **Backlog:** `PLAN-01` a `PLAN-04`
-
-Sección del frontend que muestre, dentro de la propia aplicación, la información que hoy vive en [`docs/planning/`](README.md): roadmap, sprints con su estado y versión objetivo, responsables, tareas, ramas, commits, Pull Requests, tags, arquitectura relacionada y progreso general.
-
-La fuente de verdad seguirá siendo Markdown versionado. El módulo leerá esos archivos y su front matter; no sustituye a la documentación ni introduce una base de datos de planificación. **No se implementa durante los sprints actuales.**
+Las siguientes funcionalidades están reconocidas pero no planificadas dentro de los sprints 0 a 3. No tienen versión asignada.
 
 ### Apelaciones en la interfaz
 

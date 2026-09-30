@@ -25,6 +25,7 @@ Este sprint comienza después del flujo integrado del Sprint 2. El contrato Pris
 - Versiones de términos y condiciones, y registro de la versión aceptada por cada usuario.
 - Restricción de operaciones según los permisos del usuario autenticado.
 - Interfaces administrativas de reglas y términos, y visualización de confianza y sanciones.
+- Línea paralela Project Showcase: consolidar la comparación entre planificación y resultados, evidencia Git y navegación de diagramas, sin alterar el objetivo funcional de este sprint.
 
 ## Fuera de alcance
 
@@ -48,6 +49,8 @@ Sistema integrado con:
 - términos;
 - historial consistente.
 
+En paralelo, Project Showcase debe ser navegable como evidencia del proceso, siempre sobre resultados, Pull Requests, tags y versiones efectivamente registrados.
+
 ## Versión objetivo
 
 `v0.3.0` — todos los commits del sprint comienzan con este prefijo.
@@ -56,7 +59,7 @@ Sistema integrado con:
 
 | Integrante | Responsabilidad en el sprint | Ramas |
 | --- | --- | --- |
-| Juan Carlos Postigo Cabana | Planificación y backend de reglas, confianza y validación temporal | `feat/loan-overlap-validation`, `feat/trust-sanctions`, `feat/rule-versioning`, `feat/terms-versioning` |
+| Juan Carlos Postigo Cabana | Planificación, backend de reglas, confianza, validación temporal y Project Showcase | `feat/loan-overlap-validation`, `feat/trust-sanctions`, `feat/rule-versioning`, `feat/terms-versioning`; `feat/project-showcase` para el módulo documental |
 | Ronald Reynaldo Valdez Agüero | Persistencia de reglas, confianza e integridad histórica | `feat/rules-trust-persistence` |
 | Mauricio Alejandro Farfán Huayta | Interfaz general de reglas y administración | `feat/rules-admin-ui` |
 | Luis Antonio Chipana Chura | Interfaz de confianza y sanciones | `feat/trust-sanctions-ui` |
@@ -103,6 +106,15 @@ No es necesario trabajar todas al mismo tiempo. Las ramas se mantienen pequeñas
 - Restringir las operaciones según los permisos del usuario autenticado (`AUTH-06`, RNF-05).
 - Mantener actualizado este archivo durante el sprint (`PLAN-05`).
 
+**Tareas — Project Showcase (paralelas al dominio):**
+
+- Comparar lo planificado con lo realizado por sprint, incluidas tareas trasladadas, sin porcentajes arbitrarios (`PLAN-16`).
+- Completar `/project/git` con Pull Requests, tags y ramas documentadas (`PLAN-03`) y consolidar el historial de versiones (`PLAN-19`); la mera existencia de una rama no equivale a trabajo completado.
+- Documentar el mecanismo de exportación de Structurizr y automatizar sus vistas a SVG (`PLAN-17`). El frontend consume el artefacto exportado, nunca una instancia de Structurizr en tiempo de ejecución.
+- Añadir zoom al visualizador SVG (`PLAN-18`) y revisar navegación y experiencia de presentación (`PLAN-20`).
+
+**Rama prevista:** `feat/project-showcase` desde `develop`, con Pull Request de regreso a `develop`. Su continuidad entre sprints no cambia el prefijo de los commits: en esta etapa comienzan por `v0.3.0`. El alcance está condicionado al tiempo disponible después de las invariantes de préstamos y de integridad histórica, que siguen siendo prioritarias.
+
 **Commits esperados:**
 
 - `v0.3.0 feat: implementa préstamos planificados`
@@ -111,6 +123,11 @@ No es necesario trabajar todas al mismo tiempo. Las ramas se mantienen pequeñas
 - `v0.3.0 feat: implementa endpoints de reglas e incumplimientos`
 - `v0.3.0 feat: implementa endpoints de términos y condiciones`
 - `v0.3.0 docs: actualiza planificación del Sprint 3`
+- `v0.3.0 feat: compara planificación y resultados de cada sprint`
+- `v0.3.0 feat: agrega historial de ramas Pull Requests y versiones`
+- `v0.3.0 chore: automatiza exportación de diagramas Structurizr`
+- `v0.3.0 feat: mejora visualización interactiva de diagramas`
+- `v0.3.0 style: consolida interfaz del Project Showcase`
 
 ### Ronald Reynaldo Valdez Agüero
 
@@ -230,6 +247,8 @@ Los cambios futuros no alteran el historial.
 | Endpoints de confianza y sanciones | Juan Carlos | Luis | Bloquea `TRUST-07`. |
 | Endpoints de reglas y términos | Juan Carlos | Mauricio | Bloquea `RULE-09` y `TERM-04`. |
 | Navegación de módulos administrativos | Mauricio | Luis y Juan Carlos | Cambio sobre el router global: se coordina previamente. |
+| Resultados, Pull Requests y tags registrados al cerrar cada sprint | Equipo; Juan Carlos consolida | Juan Carlos (`PLAN-03`, `PLAN-16`, `PLAN-19`) | Mostrar ausencia de datos cuando todavía no existen; no inferir cierres desde ramas. |
+| Estrategia verificable de exportación Structurizr | Juan Carlos | Juan Carlos (`PLAN-17`) | Documentar herramientas y procedimiento antes de automatizar SVG; el DSL sigue siendo fuente. |
 
 **Orden interno recomendado:** reglas versionadas antes que incumplimientos; incumplimientos antes que sanciones; sanciones antes que la restricción de préstamos por sanción activa. La validación de superposición de intervalos es independiente del resto y puede avanzar en paralelo.
 
@@ -256,6 +275,7 @@ Esta decisión debe tomarse antes de iniciar el sprint. Si no se toma, `RF-31` s
 - Puede registrarse qué versión de los términos aceptó cada usuario y cuándo.
 - Las operaciones disponibles se restringen según los permisos del usuario autenticado.
 - El historial de reglas, incumplimientos y sanciones es consistente y no se reescribe.
+- Project Showcase permite recorrer el historial documentado, comparar planificado y realizado y consultar diagramas SVG con zoom; no presenta datos no registrados como hechos.
 
 ## Definition of Done
 

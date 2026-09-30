@@ -24,6 +24,7 @@ A partir de este sprint se evita una división estrictamente por tecnología. Ca
 - Completar la integración del Inventario existente y verificar la disponibilidad derivada de sus ejemplares.
 - Creación de préstamos, consulta de préstamos activos e historial, y registro de devoluciones.
 - Interfaz de Inventario conectada a la API real y primeras vistas de préstamos; incorporar las vistas visuales de Inventario no cerradas en el Sprint 1.
+- Línea paralela Project Showcase: secciones de API, modelos y equipo, alimentadas por fuentes documentales y OpenAPI generado, sin desplazar el flujo de préstamos.
 
 ## Fuera de alcance
 
@@ -49,6 +50,8 @@ Debe poder demostrarse el recorrido completo:
 7. consulta de préstamo;
 8. devolución.
 
+En paralelo, la segunda etapa de Project Showcase prevé `/project/api`, `/project/data` y `/project/team`; no forman parte del recorrido funcional de préstamos.
+
 ## Versión objetivo
 
 `v0.2.0` — todos los commits del sprint comienzan con este prefijo.
@@ -58,7 +61,7 @@ Debe poder demostrarse el recorrido completo:
 | Integrante | Responsabilidad en el sprint | Ramas |
 | --- | --- | --- |
 | Ronald Reynaldo Valdez Agüero | Persistencia e integración de datos | `feat/persistence-integration` |
-| Juan Carlos Postigo Cabana | Backend, endpoints y coordinación | `feat/users-registration`, `feat/loan-flow` |
+| Juan Carlos Postigo Cabana | Backend, endpoints, coordinación y Project Showcase | `feat/users-registration`, `feat/loan-flow`; `feat/project-showcase` para el módulo documental |
 | Mauricio Alejandro Farfán Huayta | Frontend general, integración del diseño Figma y autenticación | `feat/auth-ui` (rama propuesta) |
 | Luis Antonio Chipana Chura | Adaptación coordinada del prototipo de login; frontend de inventario y préstamos | `aporte-login` como referencia; nuevas ramas por tarea |
 
@@ -121,6 +124,16 @@ Debe poder demostrarse el recorrido completo:
 
 **Modelo de préstamo utilizado:** `usuarioId`, `ejemplarId`, `fechaInicio`, `fechaFin`, estado. Los estados son `PLANIFICADO`, `ACTIVO` y `FINALIZADO`. El Sprint 2 implementa el ciclo `ACTIVO` → `FINALIZADO`; `PLANIFICADO` forma parte del modelo desde ahora, pero su flujo se completa en el Sprint 3.
 
+**Tareas — Project Showcase (paralelas al flujo funcional):**
+
+- Generar OpenAPI desde controllers y DTO reales de NestJS mediante `@nestjs/swagger` (`PLAN-11`); no describir como implementados los endpoints que aún son esqueletos.
+- Agregar `/project/api` (`PLAN-10`) y una interfaz Vue propia de métodos, rutas, parámetros, cuerpos, respuestas, esquemas y autenticación cuando consten en la especificación (`PLAN-12`). Swagger UI puede ser herramienta de desarrollo, no la interfaz final.
+- Agregar `/project/data` (`PLAN-13`) distinguiendo modelo de dominio conceptual, modelo de persistencia Prisma/PostgreSQL y arquitectura. Una visualización adicional del esquema relacional dependerá de su viabilidad; no se confunde con el UML.
+- Agregar `/project/team` (`PLAN-14`) y mostrar avances semanales realmente registrados por semana, integrante y sprint (`PLAN-15`), sin métricas de productividad.
+- Definir el formato de lectura del front matter y automatizar la transformación de planificación, backlog y seguimiento a datos consumibles por Vue (`PLAN-02`). El generador futuro puede ubicarse en `scripts/generate-project-showcase.mjs` y producir artefactos derivados en `frontend/public/generated/project/`, no copias manuales de la fuente.
+
+**Rama prevista:** `feat/project-showcase`, actualizada desde `develop` y devuelta mediante Pull Request; coordinar la integración del router con Mauricio. Si el backend no dispone aún de controllers y DTO suficientemente descritos, `/project/api` queda condicionado a la generación real de OpenAPI, no a una lista de endpoints escrita a mano.
+
 **Commits esperados:**
 
 - `v0.2.0 feat: implementa solicitud de registro de usuario`
@@ -129,6 +142,11 @@ Debe poder demostrarse el recorrido completo:
 - `v0.2.0 feat: implementa consulta de préstamos`
 - `v0.2.0 feat: implementa registro de devoluciones`
 - `v0.2.0 docs: actualiza planificación del Sprint 2`
+- `v0.2.0 feat: agrega visualización de endpoints OpenAPI`
+- `v0.2.0 feat: agrega vista de modelos y persistencia`
+- `v0.2.0 feat: agrega seguimiento semanal del equipo`
+- `v0.2.0 chore: genera datos de planificación para el frontend`
+- `v0.2.0 chore: genera especificación OpenAPI del backend`
 
 ### Mauricio Alejandro Farfán Huayta
 
@@ -190,6 +208,9 @@ La protección de rutas en el frontend es visual: no sustituye la restricción d
 | Mecanismo de autenticación decidido (`AUTH-01`) | Juan Carlos | Mauricio | Bloquea `AUTH-04` y `AUTH-05`. Debe decidirse al inicio del sprint. |
 | Habilitación del usuario (`USR-05`) | Juan Carlos | Juan Carlos | Precondición de `LOAN-03`. Por eso Usuarios se cierra antes que Préstamos. |
 | Entrada de navegación al módulo de préstamos | Mauricio | Luis | Cambio sobre el router global: se coordina previamente. |
+| Controllers, DTO y contratos de API reales | Juan Carlos | Juan Carlos (`PLAN-11`, `PLAN-10`, `PLAN-12`) | OpenAPI se genera desde el backend; no se sustituye por una lista manual en Vue. |
+| Registro semanal verificable en `docs/planning/progress/` | Cada integrante; Juan Carlos consolida | Juan Carlos (`PLAN-14`, `PLAN-15`) | Sin semanas documentadas, la vista no inventa avances. |
+| Front matter y Markdown versionados | Juan Carlos | Juan Carlos (`PLAN-02`) | Los JSON derivados no reemplazan los documentos de planificación. |
 
 El esquema de base de datos sigue derivándose del modelo de dominio. Si la integración revela un desajuste, se corrige primero el modelo en [`docs/architecture/`](../../architecture/uml/README.md).
 
@@ -205,6 +226,7 @@ El esquema de base de datos sigue derivándose del modelo de dominio. Si la inte
 - Registrar una devolución finaliza el préstamo y devuelve el ejemplar a `DISPONIBLE` cuando su estado lo permite; si no, queda `NO_DISPONIBLE` con su observación.
 - El historial de préstamos por usuario se conserva.
 - El flujo completo, del inicio de sesión a la devolución, puede demostrarse de principio a fin.
+- En la línea paralela, las vistas `/project/api`, `/project/data` y `/project/team` solo muestran información sustentada por OpenAPI y los documentos disponibles; no se usa Swagger UI como interfaz final.
 
 ## Definition of Done
 

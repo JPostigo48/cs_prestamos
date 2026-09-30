@@ -40,6 +40,7 @@ Los hashes documentan el avance observado, no sustituyen los criterios de cierre
 - Base común del frontend: estructura, navegación y criterios visuales acordados a partir de Figma. La interfaz de Inventario continúa como trabajo pendiente, no como entrega ya realizada.
 - Documentación de puesta en marcha y estado real de ramas, módulos y contratos.
 - `develop` creada y rama histórica `feature/mi_database` tratada según `ARCH-05`.
+- Línea paralela Project Showcase: base visual y técnica de `/project`, sprints, arquitectura y Git, sin sustituir el frontend funcional del sistema de préstamos.
 
 ## Fuera de alcance
 
@@ -59,6 +60,7 @@ Los hashes documentan el avance observado, no sustituyen los criterios de cierre
 - Prototipo de login de `aporte-login` evaluado para su integración o adaptación.
 - Frontend base Vue.js + TypeScript integrado, con navegación y estructura comunes; Inventario visual queda pendiente mientras no esté integrado.
 - Instrucciones de puesta en marcha y estado del sprint actualizados.
+- Primera etapa prevista de Project Showcase con `/project`, `/project/sprints`, `/project/architecture` y `/project/git`; su incorporación al alcance no significa que ya esté integrada.
 
 ## Versión objetivo
 
@@ -69,7 +71,7 @@ Los hashes documentan el avance observado, no sustituyen los criterios de cierre
 | Integrante | Responsabilidad en el sprint | Rama |
 | --- | --- | --- |
 | Ronald Reynaldo Valdez Agüero | PostgreSQL, contrato Prisma, migración, seeds y arranque técnico del backend | `feature/mi_database` (integrada en `develop`); verificar cierre de rama |
-| Juan Carlos Postigo Cabana | Arquitectura, estructura por capas, contratos de módulos y planificación | Trabajo integrado en `develop` y documentación en `docs/project-planning` |
+| Juan Carlos Postigo Cabana | Arquitectura, estructura por capas, contratos de módulos, planificación y Project Showcase | Trabajo integrado en `develop`; documentación en `docs/project-planning`; código de Showcase previsto en `feat/project-showcase` |
 | Mauricio Alejandro Farfán Huayta | Maquetas web y móvil por rol; coordinación del frontend común | Figma externo; rama de implementación por definir |
 | Luis Antonio Chipana Chura | Prototipo de login y futura adaptación al frontend común | `aporte-login` (remota, no integrada) |
 
@@ -150,6 +152,18 @@ POST /loans
 
 Son preliminares. Antes de considerarlos definitivos deben contrastarse con los requisitos vigentes: `GET /resources` debe reflejar la disponibilidad derivada de los ejemplares (RF-13) y `POST /loans` debe anticipar el intervalo `fechaInicio`–`fechaFin` del modelo de dominio, aunque el sprint no implemente todavía su validación.
 
+**Tareas — Project Showcase (paralelas a backend y planificación):**
+
+- Crear la base del módulo separada de `auth`, `users`, `inventory`, `loans`, `rules` y `trust` (`PLAN-06`) y la ruta inicial `/project` (`PLAN-07`).
+- Mostrar el roadmap, el estado general y accesos a las secciones (`PLAN-04`); crear la vista de sprints con sus versiones, tareas y responsables (`PLAN-01`).
+- Crear la vista inicial de arquitectura a partir de los diagramas documentados (`PLAN-04`) y preparar SVG de PlantUML generados desde los `.puml` (`PLAN-09`).
+- Crear `/project/git` con la estrategia de ramas y versiones del [flujo Git](../git-workflow.md); distinguir ramas previstas de avances verificados (`PLAN-03`). Los Pull Requests y tags se completarán cuando estén documentados.
+- Definir el registro semanal en [`progress/`](../progress/README.md), sin inventar semanas anteriores (`PLAN-08`).
+
+**Rama prevista para código:** `feat/project-showcase`, creada desde `develop` y devuelta mediante Pull Request. `docs/project-planning` solo aloja la planificación. El módulo debe coordinar sus rutas con Mauricio, responsable del router global. La estructura Vue.js + TypeScript compartida (`ARCH-04`) es precondición; hasta tenerla no se considera implementada ninguna vista.
+
+**Resultado mínimo previsto:** `/project`, `/project/sprints`, `/project/architecture` y `/project/git`. En esta etapa se admiten artefactos estáticos previamente generados, no duplicación manual de los documentos fuente ni dependencia de PlantUML en tiempo de ejecución.
+
 **Commits esperados:**
 
 - `v0.1.0 chore: configura proyecto inicial del backend`
@@ -158,6 +172,12 @@ Son preliminares. Antes de considerarlos definitivos deben contrastarse con los 
 - `v0.1.0 feat: agrega endpoints mock para desarrollo`
 - `v0.1.0 docs: documenta contratos iniciales de la API`
 - `v0.1.0 docs: actualiza planificación del Sprint 1`
+- `v0.1.0 feat: crea módulo inicial de visualización del proyecto`
+- `v0.1.0 feat: agrega vista de planificación por sprints`
+- `v0.1.0 feat: agrega visualización de arquitectura`
+- `v0.1.0 feat: agrega visualización del flujo Git`
+- `v0.1.0 chore: automatiza exportación inicial de diagramas`
+- `v0.1.0 docs: agrega seguimiento semanal del proyecto`
 
 ### Mauricio Alejandro Farfán Huayta
 
@@ -233,6 +253,8 @@ Estos commits de Inventario siguen siendo orientativos, no trabajo completado. E
 | Estructura Vue.js + TypeScript compartida | Mauricio, coordinado con Luis | Luis | Precondición para incorporar el prototipo de `aporte-login` sin duplicar aplicaciones. |
 | Contratos y endpoints de Inventario existentes | Ronald y Juan Carlos | Luis | Se usan como referencia para la interfaz; no se requiere un mock nuevo del módulo. |
 | Contratos de los demás módulos | Juan Carlos | Sprint 2 | Las carpetas creadas no sustituyen casos de uso ni endpoints funcionales. |
+| Estructura Vue.js + TypeScript y router compartidos | Mauricio, coordinado con Luis | Juan Carlos (`PLAN-06`, `PLAN-07`) | Acordar integración de `/project` sin duplicar el frontend ni modificar simultáneamente el router global. |
+| Diagramas PlantUML versionados | Juan Carlos | Juan Carlos (`PLAN-09`) | Generar SVG desde los `.puml`; no copiar imágenes como nueva fuente de verdad. |
 
 **Trabajo paralelo:**
 
@@ -255,6 +277,7 @@ Estos commits de Inventario siguen siendo orientativos, no trabajo completado. E
 - Si las vistas de Inventario no se completan en este sprint, se trasladan explícitamente al Sprint 2 y se actualiza el backlog; no se marcan como entregadas por existir la API.
 - La documentación permite a un integrante nuevo levantar base de datos, backend y frontend.
 - Este archivo refleja el estado real del sprint al cerrarlo.
+- Si se integra Project Showcase, las cuatro rutas mínimas son navegables y distinguen planificación de resultados documentados; la vista Git no da por completada una rama solo por existir.
 
 ## Definition of Done
 
