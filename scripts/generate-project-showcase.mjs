@@ -195,8 +195,10 @@ if (process.env.STRUCTURIZR_JAR) {
   }
 }
 
+const visibleStructurizrViews = structurizrViews.filter(([key]) => key !== 'InteraccionContextosDDD')
+
 json('architecture.json', {
-  diagrams: [...diagrams, ...structurizrViews.map(([, title, file]) => ({
+  diagrams: [...diagrams, ...visibleStructurizrViews.map(([, title, file]) => ({
     title, source: structurizrSource, file, type: 'Contextos',
   }))].map(({ title, source, file, type }) => ({
     title,

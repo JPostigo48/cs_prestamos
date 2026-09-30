@@ -19,12 +19,6 @@
       "type": "Contextos"
     },
     {
-      "title": "Interacción entre contextos",
-      "source": "docs/architecture/structurizr/workspace.dsl",
-      "image": "/generated/project/diagrams/interaccion-contextos-ddd.svg",
-      "type": "Contextos"
-    },
-    {
       "title": "Préstamos — vista interna",
       "source": "docs/architecture/structurizr/workspace.dsl",
       "image": "/generated/project/diagrams/interna-prestamos.svg",
