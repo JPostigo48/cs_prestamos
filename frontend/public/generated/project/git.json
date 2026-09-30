@@ -1,0 +1,55 @@
+{
+  "branchTypes": [
+    {
+      "prefix": "feat/",
+      "purpose": "Nueva funcionalidad."
+    },
+    {
+      "prefix": "fix/",
+      "purpose": "Corrección de un defecto."
+    },
+    {
+      "prefix": "chore/",
+      "purpose": "Configuración, herramientas, tareas de soporte."
+    },
+    {
+      "prefix": "docs/",
+      "purpose": "Documentación."
+    },
+    {
+      "prefix": "refactor/",
+      "purpose": "Reorganización sin cambio de comportamiento."
+    },
+    {
+      "prefix": "test/",
+      "purpose": "Pruebas."
+    },
+    {
+      "prefix": "hotfix/",
+      "purpose": "Corrección urgente sobre una versión publicada. Opcional, todavía no utilizado."
+    }
+  ],
+  "versions": [
+    {
+      "sprint": "0 — Planificación y arquitectura",
+      "version": "v0.0.1",
+      "prefix": "v0.0.1"
+    },
+    {
+      "sprint": "1 — Base técnica",
+      "version": "v0.1.0",
+      "prefix": "v0.1.0"
+    },
+    {
+      "sprint": "2 — Primer flujo funcional",
+      "version": "v0.2.0",
+      "prefix": "v0.2.0"
+    },
+    {
+      "sprint": "3 — Reglas de dominio y consolidación",
+      "version": "v0.3.0",
+      "prefix": "v0.3.0"
+    }
+  ],
+  "source": "docs/planning/git-workflow.md"
+}

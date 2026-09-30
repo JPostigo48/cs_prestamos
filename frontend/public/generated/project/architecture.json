@@ -1,0 +1,59 @@
+{
+  "diagrams": [
+    {
+      "title": "Modelo de dominio",
+      "source": "docs/architecture/uml/modelo-dominio.puml",
+      "image": "/generated/project/diagrams/modelo-dominio.svg",
+      "type": "Dominio"
+    },
+    {
+      "title": "Arquitectura modular por capas",
+      "source": "docs/architecture/uml/arquitectura-modular.puml",
+      "image": "/generated/project/diagrams/arquitectura-modular.svg",
+      "type": "Arquitectura"
+    },
+    {
+      "title": "Mapa de contextos DDD",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/mapa-contextos-ddd.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Préstamos — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-prestamos.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Inventario — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-inventario.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Usuarios — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-usuarios.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Reglas y términos — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-reglas-terminos.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Confianza — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-confianza.svg",
+      "type": "Contextos"
+    },
+    {
+      "title": "Autenticación — vista interna",
+      "source": "docs/architecture/structurizr/workspace.dsl",
+      "image": "/generated/project/diagrams/interna-autenticacion.svg",
+      "type": "Contextos"
+    }
+  ],
+  "structurizr": "docs/architecture/structurizr/workspace.dsl"
+}
