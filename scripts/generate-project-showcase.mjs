@@ -99,6 +99,8 @@ json('backlog.json', backlog)
 const workflow = read('docs/planning/git-workflow.md')
 json('git.json', {
   branchTypes: table(section(workflow, '## Ramas temporales')).map(([prefix, purpose]) => ({ prefix, purpose })),
+  integrationPaths: table(section(workflow, '## Integración a develop'))
+    .map(([origin, method, review]) => ({ origin, method, review })),
   versions: table(section(workflow, '## Versión objetivo por sprint'))
     .map(([sprint, version, prefix]) => ({ sprint, version, prefix })),
   source: 'docs/planning/git-workflow.md',
@@ -142,6 +144,30 @@ const weeks = existsSync(progressDirectory)
   })
   : []
 json('team-progress.json', weeks)
+
+const teamSource = 'docs/planning/README.md'
+const activeSprint = sprints.filter((sprint) => sprint.status === 'in_progress').at(-1)
+const sprintProgress = activeSprint
+  ? table(section(read(activeSprint.source), '## Estado actual'))
+  : []
+const progressByName = new Map(sprintProgress.map(([name, update, pending]) => [
+  name,
+  { update, pending },
+]))
+const team = table(section(read(teamSource), '## Equipo y responsabilidades principales'))
+  .map(([name, responsibility, area]) => ({
+    name,
+    responsibility,
+    area,
+    update: progressByName.get(name)?.update ?? '',
+    pending: progressByName.get(name)?.pending ?? '',
+  }))
+json('team.json', {
+  members: team,
+  sprint: activeSprint?.sprint ?? null,
+  source: teamSource,
+  progressSource: sprintProgress.length ? activeSprint.source : null,
+})
 
 const diagrams = [
   { title: 'Modelo de dominio', source: 'docs/architecture/uml/modelo-dominio.puml', file: 'modelo-dominio.svg', type: 'Dominio' },

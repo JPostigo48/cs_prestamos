@@ -29,6 +29,18 @@
       "purpose": "Corrección urgente sobre una versión publicada. Opcional, todavía no utilizado."
     }
   ],
+  "integrationPaths": [
+    {
+      "origin": "Aportes de otros integrantes",
+      "method": "Pull Request hacia develop.",
+      "review": "Juan Carlos revisa el cambio antes del merge."
+    },
+    {
+      "origin": "Trabajo propio de Juan Carlos",
+      "method": "Merge directo desde la rama de tarea, permitido.",
+      "review": "Revisión local del diff, estado y comprobaciones pertinentes antes del merge."
+    }
+  ],
   "versions": [
     {
       "sprint": "0 — Planificación y arquitectura",

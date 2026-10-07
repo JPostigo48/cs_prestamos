@@ -65,7 +65,7 @@
       "status": "in_progress",
       "version": "v0.1.0",
       "objective": "Consolidar la base de datos, el backend modular y los prototipos visuales y de interfaz que permitirán integrar el primer flujo funcional en el Sprint 2.",
-      "result": "Avances comprobados: PostgreSQL/Prisma, migración, seeds, backend Nest, organización modular, módulo Inventario funcional y prototipo de login incorporado desde aporte-login en develop. Mauricio reporta el diseño Figma completo para web y móvil por rol, pendiente de enlace y revisión en el repositorio. Siguen pendientes la base frontend Vue.js + TypeScript, la adaptación del login, las vistas visuales de Inventario y los endpoints de los demás módulos. El sprint permanece in_progress.",
+      "result": "Avances registrados: Ronald preparó PostgreSQL/Prisma, migración, seeds y endpoints de Inventario; Juan Carlos llevó la planificación y preparó la estructura y los contratos del backend con apoyo de Ronald. Mauricio completó una maquetación Figma casi final para web y móvil por rol con ayuda de Luis; el enlace y la revisión final siguen pendientes. La base Vue 3 + TypeScript está integrada y el login permanece como prototipo visual, sin autenticación real. Faltan las vistas funcionales de Inventario, los casos de uso de los demás módulos y el cierre formal del sprint. El sprint permanece in_progress.",
       "members": [
         {
           "name": "Ronald Reynaldo Valdez Agüero",
@@ -74,8 +74,8 @@
         },
         {
           "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Arquitectura, estructura por capas, contratos de módulos y planificación",
-          "branch": "Trabajo integrado en develop y documentación en docs/project-planning"
+          "responsibility": "Arquitectura, estructura por capas, contratos de módulos, planificación y Project Showcase",
+          "branch": "Trabajo integrado en develop; documentación en docs/project-planning; código de Showcase previsto en feat/project-showcase"
         },
         {
           "name": "Mauricio Alejandro Farfán Huayta",
@@ -89,7 +89,14 @@
         }
       ],
       "planIds": [
-        "PLAN-05"
+        "PLAN-05",
+        "PLAN-06",
+        "PLAN-07",
+        "PLAN-04",
+        "PLAN-01",
+        "PLAN-09",
+        "PLAN-03",
+        "PLAN-08"
       ],
       "source": "docs/planning/sprints/sprint-01.md"
     },
@@ -108,8 +115,8 @@
         },
         {
           "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Backend, endpoints y coordinación",
-          "branch": "feat/users-registration, feat/loan-flow"
+          "responsibility": "Backend, endpoints, coordinación y Project Showcase",
+          "branch": "feat/users-registration, feat/loan-flow; feat/project-showcase para el módulo documental"
         },
         {
           "name": "Mauricio Alejandro Farfán Huayta",
@@ -123,7 +130,14 @@
         }
       ],
       "planIds": [
-        "PLAN-05"
+        "PLAN-05",
+        "PLAN-11",
+        "PLAN-10",
+        "PLAN-12",
+        "PLAN-13",
+        "PLAN-14",
+        "PLAN-15",
+        "PLAN-02"
       ],
       "source": "docs/planning/sprints/sprint-02.md"
     },
@@ -137,8 +151,8 @@
       "members": [
         {
           "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Planificación y backend de reglas, confianza y validación temporal",
-          "branch": "feat/loan-overlap-validation, feat/trust-sanctions, feat/rule-versioning, feat/terms-versioning"
+          "responsibility": "Planificación, backend de reglas, confianza, validación temporal y Project Showcase",
+          "branch": "feat/loan-overlap-validation, feat/trust-sanctions, feat/rule-versioning, feat/terms-versioning; feat/project-showcase para el módulo documental"
         },
         {
           "name": "Ronald Reynaldo Valdez Agüero",
@@ -157,7 +171,13 @@
         }
       ],
       "planIds": [
-        "PLAN-05"
+        "PLAN-05",
+        "PLAN-16",
+        "PLAN-03",
+        "PLAN-19",
+        "PLAN-17",
+        "PLAN-18",
+        "PLAN-20"
       ],
       "source": "docs/planning/sprints/sprint-03.md"
     }

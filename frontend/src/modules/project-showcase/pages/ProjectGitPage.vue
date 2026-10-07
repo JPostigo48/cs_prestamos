@@ -10,15 +10,26 @@ const { data: workflow, loading } = useGeneratedData(projectDocumentation.git)
   <section>
     <p class="text-sm font-semibold uppercase tracking-widest text-blue-700">Colaboración</p>
     <h1 class="mt-2 text-3xl font-bold">Flujo Git</h1>
-    <p class="mt-3 max-w-3xl text-slate-600">Las ramas temporales parten de develop y regresan mediante Pull Request. Una rama existente no demuestra que su tarea esté terminada.</p>
+    <p class="mt-3 max-w-3xl text-slate-600">Las ramas temporales parten de develop. La forma de integrarlas depende de quién realizó el cambio; una rama existente no demuestra que su tarea esté terminada.</p>
 
     <p v-if="loading" class="mt-8 text-sm text-slate-500">Cargando convenciones…</p>
     <EmptyState v-else-if="!workflow" class="mt-8" title="Flujo no generado" detail="La fuente de esta vista es docs/planning/git-workflow.md." />
 
     <div v-else class="mt-8 space-y-8">
       <div class="grid gap-3 text-center text-sm font-semibold text-slate-700 sm:grid-cols-5">
-        <div v-for="stage in ['Rama temporal', 'Pull Request', 'develop', 'main', 'tag']" :key="stage" class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-4">{{ stage }}</div>
+        <div v-for="stage in ['Rama temporal', 'Revisión', 'develop', 'main', 'tag']" :key="stage" class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-4">{{ stage }}</div>
       </div>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 class="text-lg font-bold">Integración a develop</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <div v-for="path in workflow.integrationPaths" :key="path.origin" class="rounded-xl bg-slate-50 p-4">
+            <h3 class="font-semibold text-slate-900">{{ path.origin }}</h3>
+            <p class="mt-2 text-sm text-slate-700">{{ path.method }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ path.review }}</p>
+          </div>
+        </div>
+      </section>
 
       <section class="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 class="text-lg font-bold">Ramas temporales</h2>

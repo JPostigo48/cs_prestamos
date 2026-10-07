@@ -49,8 +49,22 @@ export interface WeekProgress {
   source: string
 }
 
+export interface TeamData {
+  members: {
+    name: string
+    responsibility: string
+    area: string
+    update: string
+    pending: string
+  }[]
+  sprint: number | null
+  source: string
+  progressSource: string | null
+}
+
 export interface GitData {
   branchTypes: { prefix: string; purpose: string }[]
+  integrationPaths: { origin: string; method: string; review: string }[]
   versions: { sprint: string; version: string; prefix: string }[]
   source: string
 }
