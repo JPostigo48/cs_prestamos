@@ -7,6 +7,14 @@
         "parameters": [],
         "responses": {
           "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Backend funcionando"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -23,7 +31,38 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "database",
+                    "table",
+                    "rows"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "postgresql"
+                    },
+                    "table": {
+                      "type": "string",
+                      "example": "usuarios"
+                    },
+                    "rows": {
+                      "type": "integer",
+                      "example": 0
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Comprobar conexión con PostgreSQL",
@@ -49,7 +88,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Registrar categoría de recurso",
@@ -63,7 +109,17 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Consultar categorías de recurso",
@@ -88,7 +144,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Consultar categoría de recurso",
@@ -121,7 +184,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Modificar categoría de recurso",
@@ -144,7 +214,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedCategoryResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Eliminar categoría de recurso",
@@ -170,7 +247,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Registrar recurso",
@@ -209,7 +293,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Consultar recursos",
@@ -234,7 +328,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDetailResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Consultar recurso",
@@ -267,7 +368,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Modificar recurso",
@@ -290,7 +398,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedResourceResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Eliminar recurso",
@@ -325,7 +440,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Registrar ejemplar",
@@ -348,7 +470,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CopyResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Consultar ejemplares de un recurso",
@@ -373,7 +505,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyDetailResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Consultar ejemplar",
@@ -408,7 +547,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Modificar estado de un ejemplar",
@@ -433,7 +579,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceAvailabilityResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Consultar disponibilidad de un recurso",
@@ -468,7 +621,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Registrar observación de un ejemplar",
@@ -491,7 +651,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObservationResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Consultar observaciones de un ejemplar",
@@ -1223,11 +1393,13 @@
         "properties": {
           "nombre": {
             "type": "string",
-            "maxLength": 120
+            "maxLength": 120,
+            "example": "Equipos de laboratorio"
           },
           "tiempoMaximoPrestamoDias": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "example": 7
           }
         },
         "required": [
@@ -1235,33 +1407,84 @@
           "tiempoMaximoPrestamoDias"
         ]
       },
+      "CategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "example": 7
+          },
+          "resourceCount": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "tiempoMaximoPrestamoDias",
+          "resourceCount"
+        ]
+      },
       "UpdateCategoryDto": {
         "type": "object",
         "properties": {
           "nombre": {
             "type": "string",
-            "maxLength": 120
+            "maxLength": 120,
+            "example": "Equipos de laboratorio"
           },
           "tiempoMaximoPrestamoDias": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "example": 7
           }
         }
+      },
+      "DeletedCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "required": [
+          "deleted",
+          "categoryId"
+        ]
       },
       "CreateResourceDto": {
         "type": "object",
         "properties": {
           "categoriaId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "nombre": {
             "type": "string",
-            "maxLength": 180
+            "maxLength": 180,
+            "example": "Multímetro digital"
           },
           "descripcion": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
           }
         },
         "required": [
@@ -1269,33 +1492,311 @@
           "nombre"
         ]
       },
+      "ResourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "categoriaId",
+          "nombre",
+          "descripcion",
+          "available",
+          "totalCopies",
+          "availableCopies"
+        ]
+      },
+      "ResourceCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "example": 7
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "tiempoMaximoPrestamoDias"
+        ]
+      },
+      "ResourceDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "categoria": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceCategoryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "categoriaId",
+          "nombre",
+          "descripcion",
+          "available",
+          "totalCopies",
+          "availableCopies",
+          "categoria"
+        ]
+      },
       "UpdateResourceDto": {
         "type": "object",
         "properties": {
           "categoriaId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "nombre": {
             "type": "string",
-            "maxLength": 180
+            "maxLength": 180,
+            "example": "Multímetro digital"
           },
           "descripcion": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
           }
         }
+      },
+      "DeletedResourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          }
+        },
+        "required": [
+          "deleted",
+          "resourceId"
+        ]
       },
       "CreateCopyDto": {
         "type": "object",
         "properties": {
           "codigoInventario": {
             "type": "string",
-            "maxLength": 80
+            "maxLength": 80,
+            "example": "LAB-001"
           }
         },
         "required": [
           "codigoInventario"
+        ]
+      },
+      "CopyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "recursoId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "codigoInventario": {
+            "type": "string",
+            "example": "LAB-001"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "PRESTADO",
+              "NO_DISPONIBLE"
+            ],
+            "example": "DISPONIBLE"
+          }
+        },
+        "required": [
+          "id",
+          "recursoId",
+          "codigoInventario",
+          "estado"
+        ]
+      },
+      "CopyResourceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "categoriaId"
+        ]
+      },
+      "ObservationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440003"
+          },
+          "ejemplarId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "descripcion": {
+            "type": "string",
+            "example": "Carcasa con desgaste superficial"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-06T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "ejemplarId",
+          "descripcion",
+          "fecha"
+        ]
+      },
+      "CopyDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "recursoId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "codigoInventario": {
+            "type": "string",
+            "example": "LAB-001"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "PRESTADO",
+              "NO_DISPONIBLE"
+            ],
+            "example": "DISPONIBLE"
+          },
+          "recurso": {
+            "$ref": "#/components/schemas/CopyResourceDto"
+          },
+          "observaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObservationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "recursoId",
+          "codigoInventario",
+          "estado",
+          "recurso",
+          "observaciones"
         ]
       },
       "UpdateCopyStateDto": {
@@ -1307,11 +1808,50 @@
               "DISPONIBLE",
               "PRESTADO",
               "NO_DISPONIBLE"
-            ]
+            ],
+            "example": "NO_DISPONIBLE"
           }
         },
         "required": [
           "estado"
+        ]
+      },
+      "ResourceAvailabilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 2
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 1
+          },
+          "unavailableCopies": {
+            "type": "number",
+            "example": 1
+          },
+          "borrowedCopies": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "resourceId",
+          "available",
+          "totalCopies",
+          "availableCopies",
+          "unavailableCopies",
+          "borrowedCopies"
         ]
       },
       "CreateCopyObservationDto": {
@@ -1319,7 +1859,8 @@
         "properties": {
           "descripcion": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "example": "Carcasa con desgaste superficial"
           }
         },
         "required": [

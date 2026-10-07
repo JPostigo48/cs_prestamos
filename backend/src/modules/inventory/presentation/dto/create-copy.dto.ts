@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateCopyDto {
-  @ApiProperty({ type: String, maxLength: 80 })
+  @ApiProperty({ type: String, maxLength: 80, example: 'LAB-001' })
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsNotEmpty()

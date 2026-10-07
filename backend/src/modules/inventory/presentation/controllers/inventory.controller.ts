@@ -8,7 +8,15 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiBody, ApiExtension, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiExtension,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { InventoryService } from '../../application/use-cases/inventory.service.js';
 import { CreateCategoryDto } from '../dto/create-category.dto.js';
 import { CreateCopyDto } from '../dto/create-copy.dto.js';
@@ -17,6 +25,17 @@ import { CreateResourceDto } from '../dto/create-resource.dto.js';
 import { UpdateCategoryDto } from '../dto/update-category.dto.js';
 import { UpdateCopyStateDto } from '../dto/update-copy-state.dto.js';
 import { UpdateResourceDto } from '../dto/update-resource.dto.js';
+import {
+  CategoryResponseDto,
+  CopyDetailResponseDto,
+  CopyResponseDto,
+  DeletedCategoryResponseDto,
+  DeletedResourceResponseDto,
+  ObservationResponseDto,
+  ResourceAvailabilityResponseDto,
+  ResourceDetailResponseDto,
+  ResourceResponseDto,
+} from '../dto/inventory-response.dto.js';
 
 @ApiTags('Inventario')
 @Controller('inventory')
@@ -26,6 +45,7 @@ export class InventoryController {
   @Post('categories')
   @ApiBody({ type: CreateCategoryDto })
   @ApiOperation({ summary: 'Registrar categoría de recurso' })
+  @ApiCreatedResponse({ type: CategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.service.createCategory(dto);
@@ -33,6 +53,7 @@ export class InventoryController {
 
   @Get('categories')
   @ApiOperation({ summary: 'Consultar categorías de recurso' })
+  @ApiOkResponse({ type: CategoryResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
   listCategories() {
     return this.service.listCategories();
@@ -40,6 +61,7 @@ export class InventoryController {
 
   @Get('categories/:categoryId')
   @ApiOperation({ summary: 'Consultar categoría de recurso' })
+  @ApiOkResponse({ type: CategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   getCategory(@Param('categoryId') categoryId: string) {
     return this.service.getCategory(categoryId);
@@ -48,6 +70,7 @@ export class InventoryController {
   @Patch('categories/:categoryId')
   @ApiBody({ type: UpdateCategoryDto })
   @ApiOperation({ summary: 'Modificar categoría de recurso' })
+  @ApiOkResponse({ type: CategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   updateCategory(
     @Param('categoryId') categoryId: string,
@@ -58,6 +81,7 @@ export class InventoryController {
 
   @Delete('categories/:categoryId')
   @ApiOperation({ summary: 'Eliminar categoría de recurso' })
+  @ApiOkResponse({ type: DeletedCategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   deleteCategory(@Param('categoryId') categoryId: string) {
     return this.service.deleteCategory(categoryId);
@@ -66,6 +90,7 @@ export class InventoryController {
   @Post('resources')
   @ApiBody({ type: CreateResourceDto })
   @ApiOperation({ summary: 'Registrar recurso' })
+  @ApiCreatedResponse({ type: ResourceResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   createResource(@Body() dto: CreateResourceDto) {
     return this.service.createResource(dto);
@@ -76,6 +101,7 @@ export class InventoryController {
   @ApiQuery({ name: 'available', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiOperation({ summary: 'Consultar recursos' })
+  @ApiOkResponse({ type: ResourceResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
   listResources(
     @Query('categoryId') categoryId?: string,
@@ -87,6 +113,7 @@ export class InventoryController {
 
   @Get('resources/:resourceId')
   @ApiOperation({ summary: 'Consultar recurso' })
+  @ApiOkResponse({ type: ResourceDetailResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   getResource(@Param('resourceId') resourceId: string) {
     return this.service.getResource(resourceId);
@@ -95,6 +122,7 @@ export class InventoryController {
   @Patch('resources/:resourceId')
   @ApiBody({ type: UpdateResourceDto })
   @ApiOperation({ summary: 'Modificar recurso' })
+  @ApiOkResponse({ type: ResourceResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   updateResource(
     @Param('resourceId') resourceId: string,
@@ -105,6 +133,7 @@ export class InventoryController {
 
   @Delete('resources/:resourceId')
   @ApiOperation({ summary: 'Eliminar recurso' })
+  @ApiOkResponse({ type: DeletedResourceResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   deleteResource(@Param('resourceId') resourceId: string) {
     return this.service.deleteResource(resourceId);
@@ -113,6 +142,7 @@ export class InventoryController {
   @Post('resources/:resourceId/copies')
   @ApiBody({ type: CreateCopyDto })
   @ApiOperation({ summary: 'Registrar ejemplar' })
+  @ApiCreatedResponse({ type: CopyResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   createCopy(
     @Param('resourceId') resourceId: string,
@@ -123,6 +153,7 @@ export class InventoryController {
 
   @Get('resources/:resourceId/copies')
   @ApiOperation({ summary: 'Consultar ejemplares de un recurso' })
+  @ApiOkResponse({ type: CopyResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
   listCopiesByResource(@Param('resourceId') resourceId: string) {
     return this.service.listCopiesByResource(resourceId);
@@ -130,6 +161,7 @@ export class InventoryController {
 
   @Get('copies/:copyId')
   @ApiOperation({ summary: 'Consultar ejemplar' })
+  @ApiOkResponse({ type: CopyDetailResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   getCopy(@Param('copyId') copyId: string) {
     return this.service.getCopy(copyId);
@@ -138,6 +170,7 @@ export class InventoryController {
   @Patch('copies/:copyId/state')
   @ApiBody({ type: UpdateCopyStateDto })
   @ApiOperation({ summary: 'Modificar estado de un ejemplar' })
+  @ApiOkResponse({ type: CopyResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   updateCopyState(
     @Param('copyId') copyId: string,
@@ -148,6 +181,7 @@ export class InventoryController {
 
   @Get('resources/:resourceId/availability')
   @ApiOperation({ summary: 'Consultar disponibilidad de un recurso' })
+  @ApiOkResponse({ type: ResourceAvailabilityResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   getResourceAvailability(@Param('resourceId') resourceId: string) {
     return this.service.getResourceAvailability(resourceId);
@@ -156,6 +190,7 @@ export class InventoryController {
   @Post('copies/:copyId/observations')
   @ApiBody({ type: CreateCopyObservationDto })
   @ApiOperation({ summary: 'Registrar observación de un ejemplar' })
+  @ApiCreatedResponse({ type: ObservationResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   createObservation(
     @Param('copyId') copyId: string,
@@ -166,6 +201,7 @@ export class InventoryController {
 
   @Get('copies/:copyId/observations')
   @ApiOperation({ summary: 'Consultar observaciones de un ejemplar' })
+  @ApiOkResponse({ type: ObservationResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
   listObservationsByCopy(@Param('copyId') copyId: string) {
     return this.service.listObservationsByCopy(copyId);

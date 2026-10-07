@@ -11,7 +11,7 @@ export type InventoryCopyState =
   (typeof InventoryCopyState)[keyof typeof InventoryCopyState];
 
 export class UpdateCopyStateDto {
-  @ApiProperty({ enum: InventoryCopyState })
+  @ApiProperty({ enum: InventoryCopyState, example: InventoryCopyState.NO_DISPONIBLE })
   @IsEnum(InventoryCopyState)
   estado!: InventoryCopyState;
 }
