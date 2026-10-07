@@ -33,26 +33,29 @@ function statusLabel(status: string) {
 <template>
   <section>
     <p class="text-sm font-semibold uppercase tracking-widest text-blue-700">Planificación del equipo</p>
-    <h1 class="mt-2 text-3xl font-bold">Equipo</h1>
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <h1 class="text-3xl font-bold">Equipo</h1>
+      <div v-if="team?.sprints.length">
+        <label for="team-sprint" class="sr-only">Seleccionar sprint</label>
+        <select
+          id="team-sprint"
+          :value="selectedSprint?.sprint ?? ''"
+          class="w-52 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          @change="selectSprint"
+        >
+          <option v-for="sprint in team.sprints" :key="sprint.sprint" :value="sprint.sprint">
+            Sprint {{ sprint.sprint }}{{ sprint.sprint === team.currentSprint ? ' (actual)' : '' }}
+          </option>
+        </select>
+      </div>
+    </div>
     <p class="mt-3 max-w-3xl text-slate-600">Responsabilidades, avances y pendientes registrados por integrante en cada sprint.</p>
 
     <p v-if="loading" class="mt-8 text-sm text-slate-500">Cargando equipo…</p>
     <EmptyState v-else-if="!team?.sprints.length" class="mt-8" title="Equipo no generado" detail="La información del equipo se documenta en docs/planning/." />
 
     <div v-else class="mt-8">
-      <label for="team-sprint" class="block text-sm font-semibold text-slate-800">Seleccionar sprint</label>
-      <select
-        id="team-sprint"
-        :value="selectedSprint?.sprint ?? ''"
-        class="mt-2 w-full max-w-sm rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-        @change="selectSprint"
-      >
-        <option v-for="sprint in team.sprints" :key="sprint.sprint" :value="sprint.sprint">
-          Sprint {{ sprint.sprint }}{{ sprint.sprint === team.currentSprint ? ' (actual)' : '' }}
-        </option>
-      </select>
-
-      <section v-if="selectedSprint" class="mt-8">
+      <section v-if="selectedSprint">
         <div class="flex flex-wrap items-center gap-3">
           <h2 class="text-xl font-bold">Sprint {{ selectedSprint.sprint }} — {{ selectedSprint.name }}</h2>
           <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
