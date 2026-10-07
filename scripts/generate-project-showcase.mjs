@@ -111,35 +111,40 @@ json('git.json', {
 })
 
 const teamSource = 'docs/planning/README.md'
-const activeSprint = sprints.filter((sprint) => sprint.status === 'in_progress').at(-1)
-const sprintProgress = activeSprint
-  ? rawTable(section(read(activeSprint.source), '## Estado actual'))
-  : []
-const progressByName = new Map(sprintProgress.map(([name, update, pending, link]) => {
-  const evidence = link?.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/)
-  return [plain(name), {
-    update: plain(update ?? ''),
-    pending: plain(pending ?? ''),
-    evidence: evidence ? { label: evidence[1], url: evidence[2] } : null,
-  }]
-}))
-const team = table(section(read(teamSource), '## Equipo y responsabilidades principales'))
-  .map(([name, responsibility, area]) => {
-    const progress = progressByName.get(name)
-    return {
-      name,
-      responsibility,
-      area,
-      update: progress?.update ?? '',
-      pending: progress?.pending ?? '',
-      evidence: progress?.evidence ?? null,
-    }
-  })
+const roster = table(section(read(teamSource), '## Equipo y responsabilidades principales'))
+  .map(([name, responsibility, area]) => ({ name, responsibility, area }))
+const teamSprints = sprints.map((sprint) => {
+  const progressRows = rawTable(section(read(sprint.source), '## Estado actual'))
+  const progressByName = new Map(progressRows.map(([name, update, pending, link]) => {
+    const evidence = link?.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/)
+    return [plain(name), {
+      update: plain(update ?? ''),
+      pending: plain(pending ?? ''),
+      evidence: evidence ? { label: evidence[1], url: evidence[2] } : null,
+    }]
+  }))
+  return {
+    sprint: sprint.sprint,
+    name: sprint.name,
+    status: sprint.status,
+    source: sprint.source,
+    members: roster.map((member) => {
+      const assignment = sprint.members.find((item) => item.name === member.name)
+      const progress = progressByName.get(member.name)
+      return {
+        ...member,
+        responsibility: assignment?.responsibility ?? member.responsibility,
+        update: progress?.update ?? '',
+        pending: progress?.pending ?? '',
+        evidence: progress?.evidence ?? null,
+      }
+    }),
+  }
+})
 json('team.json', {
-  members: team,
-  sprint: activeSprint?.sprint ?? null,
+  currentSprint: sprints.filter((sprint) => sprint.status === 'in_progress').at(-1)?.sprint ?? null,
   source: teamSource,
-  progressSource: sprintProgress.length ? activeSprint.source : null,
+  sprints: teamSprints,
 })
 
 const diagrams = [

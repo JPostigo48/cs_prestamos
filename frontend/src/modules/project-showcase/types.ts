@@ -39,18 +39,27 @@ export interface ArchitectureData {
   structurizr: string
 }
 
-export interface TeamData {
-  members: {
-    name: string
-    responsibility: string
-    area: string
-    update: string
-    pending: string
-    evidence: { label: string; url: string } | null
-  }[]
-  sprint: number | null
+export interface TeamMember {
+  name: string
+  responsibility: string
+  area: string
+  update: string
+  pending: string
+  evidence: { label: string; url: string } | null
+}
+
+export interface TeamSprint {
+  sprint: number
+  name: string
+  status: string
   source: string
-  progressSource: string | null
+  members: TeamMember[]
+}
+
+export interface TeamData {
+  currentSprint: number | null
+  source: string
+  sprints: TeamSprint[]
 }
 
 export interface GitData {
