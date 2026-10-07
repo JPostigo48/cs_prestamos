@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Module, type Type } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants.js';
@@ -33,6 +33,9 @@ interface DocumentOperation {
     schema?: { type: string };
   }[];
   'x-implementation-status'?: 'implemented' | 'pending';
+  responses?: Record<string, {
+    content?: Record<string, { schema?: unknown }>;
+  }>;
 }
 
 const app = await NestFactory.create(ApiDocumentationModule, { logger: false });
@@ -62,13 +65,40 @@ try {
           schema: { type: 'string' },
         });
       }
+
+      if (
+        entry['x-implementation-status'] === 'implemented'
+        && !Object.values(entry.responses ?? {}).some((response) =>
+          Object.values(response.content ?? {}).some((media) => media.schema),
+        )
+      ) {
+        throw new Error(`${method.toUpperCase()} ${path} está implementado, pero no tiene un esquema de respuesta.`);
+      }
     }
   }
 
-  writeFileSync(
-    fileURLToPath(new URL('../openapi.json', import.meta.url)),
-    `${JSON.stringify(document, null, 2)}\n`,
+  const generated = `${JSON.stringify(document, null, 2)}\n`;
+  const backendFile = fileURLToPath(new URL('../openapi.json', import.meta.url));
+  const frontendFile = fileURLToPath(
+    new URL('../../frontend/public/generated/project/openapi.json', import.meta.url),
   );
+
+  if (process.argv.includes('--check')) {
+    for (const file of [backendFile, frontendFile]) {
+      try {
+        if (readFileSync(file, 'utf8') !== generated) {
+          throw new Error(`OpenAPI desactualizado: ${file}. Ejecuta npm run project:generate.`);
+        }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          throw new Error(`Falta ${file}. Ejecuta npm run project:generate.`, { cause: error });
+        }
+        throw error;
+      }
+    }
+  } else {
+    writeFileSync(backendFile, generated);
+  }
 } finally {
   await app.close();
 }

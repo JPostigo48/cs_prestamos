@@ -5,6 +5,7 @@
     "back": "npm --prefix backend run start:dev",
     "db": "docker compose up -d postgres-db",
     "front": "npm --prefix frontend run serve",
-    "project:generate": "npm --prefix backend run openapi:generate && node scripts/generate-project-showcase.mjs"
+    "project:generate": "npm --prefix backend run openapi:generate && node scripts/generate-project-showcase.mjs",
+    "project:check": "npm --prefix backend run openapi:check"
   }
 }

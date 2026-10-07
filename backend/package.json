@@ -17,6 +17,7 @@
     "prisma:generate": "prisma contract emit",
     "prisma:seed": "node --experimental-strip-types prisma/seed.ts",
     "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "openapi:check": "tsx scripts/generate-openapi.ts --check",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
