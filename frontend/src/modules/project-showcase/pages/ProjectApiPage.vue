@@ -76,27 +76,20 @@ function exampleFromSchema(schema?: OpenApiSchema): unknown {
   if (schema.example !== undefined) return schema.example
   if (schema.$ref) return exampleFromSchema(resolveSchema(schema))
   if (schema.allOf?.length) {
-    return Object.assign({}, ...schema.allOf.map((part) => exampleFromSchema(part)))
+    const examples = schema.allOf.map((part) => exampleFromSchema(part)).filter((value) => value !== undefined)
+    return examples.length ? Object.assign({}, ...examples) : undefined
   }
   if (schema.enum?.length) return schema.enum[0]
   if (schema.type === 'array') {
     const item = exampleFromSchema(schema.items)
-    return item === undefined ? [] : [item]
+    return item === undefined ? undefined : [item]
   }
   if (schema.type === 'object' || schema.properties) {
-    return Object.fromEntries(
-      Object.entries(schema.properties ?? {})
-        .map(([name, property]) => [name, exampleFromSchema(property)])
-        .filter(([, value]) => value !== undefined),
-    )
+    const entries = Object.entries(schema.properties ?? {})
+      .map(([name, property]) => [name, exampleFromSchema(property)])
+      .filter(([, value]) => value !== undefined)
+    return entries.length ? Object.fromEntries(entries) : undefined
   }
-  if (schema.format === 'uuid') return '550e8400-e29b-41d4-a716-446655440000'
-  if (schema.format === 'date-time') return '2026-10-06T10:00:00.000Z'
-  if (schema.format === 'email') return 'usuario@ejemplo.com'
-  if (schema.format === 'password') return 'ClaveEjemplo123'
-  if (schema.type === 'string') return 'Texto de ejemplo'
-  if (schema.type === 'integer' || schema.type === 'number') return 1
-  if (schema.type === 'boolean') return true
   return undefined
 }
 
@@ -107,9 +100,10 @@ function mediaExample(content?: Record<string, { schema?: OpenApiSchema; example
     : Object.entries(content)[0]
   if (!entry) return undefined
   const [mediaType, media] = entry
-  const value = media.example
-    ?? Object.values(media.examples ?? {}).find((example) => example.value !== undefined)?.value
-    ?? exampleFromSchema(media.schema)
+  const namedExample = Object.values(media.examples ?? {}).find((example) => example.value !== undefined)?.value
+  const value = media.example !== undefined
+    ? media.example
+    : namedExample !== undefined ? namedExample : exampleFromSchema(media.schema)
   return value === undefined ? undefined : {
     mediaType,
     body: mediaType === 'application/json' ? JSON.stringify(value, null, 2) : String(value),
@@ -195,7 +189,7 @@ function responseExamples(endpoint: Endpoint) {
                 </ul>
                 <p v-else class="mt-1 text-slate-500">Esquema no especificado.</p>
                 <div v-if="mediaExample(endpoint.requestBody.content)" class="mt-3">
-                  <p class="font-medium text-slate-900">JSON de envío ilustrativo</p>
+                  <p class="font-medium text-slate-900">JSON de envío orientativo · sustituye los datos antes de enviarlo</p>
                   <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ mediaExample(endpoint.requestBody.content)?.body }}</code></pre>
                 </div>
               </div>

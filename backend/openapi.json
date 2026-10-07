@@ -1876,13 +1876,18 @@
               "ESTUDIANTE",
               "DOCENTE",
               "ADMINISTRATIVO"
-            ]
+            ],
+            "example": "ESTUDIANTE"
           },
           "institutionalId": {
             "type": "string",
-            "maxLength": 80
+            "maxLength": 80,
+            "example": "20260001"
           },
           "evidence": {
+            "example": [
+              "Referencia de evidencia"
+            ],
             "type": "array",
             "items": {
               "type": "string"
@@ -1898,15 +1903,18 @@
         "properties": {
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "copyId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
           },
           "startsAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2030-01-15T10:00:00.000Z"
           }
         },
         "required": [
@@ -1920,11 +1928,13 @@
         "properties": {
           "returnedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2030-01-20T10:00:00.000Z"
           },
           "observation": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Devolución sin observaciones"
           }
         },
         "required": [
@@ -1936,16 +1946,19 @@
         "properties": {
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "email": {
             "type": "string",
-            "format": "email"
+            "format": "email",
+            "example": "usuario@ejemplo.com"
           },
           "password": {
             "type": "string",
             "format": "password",
-            "minLength": 8
+            "minLength": 8,
+            "example": "ClaveEjemplo123"
           },
           "role": {
             "type": "string",
@@ -1953,7 +1966,8 @@
               "USUARIO",
               "OPERADOR",
               "ADMINISTRADOR"
-            ]
+            ],
+            "example": "USUARIO"
           }
         },
         "required": [
@@ -1967,11 +1981,13 @@
         "properties": {
           "email": {
             "type": "string",
-            "format": "email"
+            "format": "email",
+            "example": "usuario@ejemplo.com"
           },
           "password": {
             "type": "string",
-            "format": "password"
+            "format": "password",
+            "example": "ClaveEjemplo123"
           }
         },
         "required": [
@@ -1984,18 +2000,22 @@
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 180
+            "maxLength": 180,
+            "example": "Regla de uso de ejemplo"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "example": "Descripción de la regla de uso"
           },
           "penaltyPercentage": {
             "type": "number",
             "minimum": 0,
-            "maximum": 100
+            "maximum": 100,
+            "example": 5
           },
           "consequence": {
-            "type": "string"
+            "type": "string",
+            "example": "Consecuencia definida para esta regla"
           }
         },
         "required": [
@@ -2010,18 +2030,22 @@
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 180
+            "maxLength": 180,
+            "example": "Regla de uso de ejemplo"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "example": "Descripción de la regla de uso"
           },
           "penaltyPercentage": {
             "type": "number",
             "minimum": 0,
-            "maximum": 100
+            "maximum": 100,
+            "example": 5
           },
           "consequence": {
-            "type": "string"
+            "type": "string",
+            "example": "Consecuencia definida para esta regla"
           }
         },
         "required": [
@@ -2039,7 +2063,8 @@
             "enum": [
               "ACTIVA",
               "INACTIVA"
-            ]
+            ],
+            "example": "ACTIVA"
           }
         },
         "required": [
@@ -2051,15 +2076,18 @@
         "properties": {
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "ruleId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440005"
           },
           "occurredAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2026-09-01T10:00:00.000Z"
           }
         },
         "required": [
@@ -2073,15 +2101,18 @@
         "properties": {
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "reason": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "example": "Solicito revisar la sanción registrada"
           },
           "submittedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2026-09-02T10:00:00.000Z"
           }
         },
         "required": [
@@ -2098,19 +2129,23 @@
             "enum": [
               "ACEPTADA",
               "RECHAZADA"
-            ]
+            ],
+            "example": "ACEPTADA"
           },
           "resolution": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "example": "Resultado de la revisión de la apelación"
           },
           "resolvedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2026-09-03T10:00:00.000Z"
           },
           "resolvedByAccountId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440006"
           }
         },
         "required": [
@@ -2125,14 +2160,17 @@
         "properties": {
           "number": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "example": 1
           },
           "title": {
             "type": "string",
-            "maxLength": 180
+            "maxLength": 180,
+            "example": "Términos de uso"
           },
           "content": {
-            "type": "string"
+            "type": "string",
+            "example": "Contenido de ejemplo de los términos"
           }
         },
         "required": [
@@ -2144,15 +2182,18 @@
         "properties": {
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "termsVersionId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440004"
           },
           "acceptedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2030-01-15T10:00:00.000Z"
           }
         },
         "required": [

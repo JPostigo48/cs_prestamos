@@ -10,18 +10,18 @@ import {
 import { UserType } from '../../domain/entities/registration-request.js';
 
 export class SubmitRegistrationRequestDto {
-  @ApiProperty({ enum: UserType })
+  @ApiProperty({ enum: UserType, example: UserType.ESTUDIANTE })
   @IsEnum(UserType)
   userType!: UserType;
 
-  @ApiPropertyOptional({ type: String, maxLength: 80 })
+  @ApiPropertyOptional({ type: String, maxLength: 80, example: '20260001' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @MaxLength(80)
   institutionalId?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({ type: [String], example: ['Referencia de evidencia'] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
