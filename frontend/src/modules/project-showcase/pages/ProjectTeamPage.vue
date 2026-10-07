@@ -35,7 +35,7 @@ function statusLabel(status: string) {
     <p class="text-sm font-semibold uppercase tracking-widest text-blue-700">Planificación del equipo</p>
     <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
       <h1 class="text-3xl font-bold">Equipo</h1>
-      <div v-if="team?.sprints.length">
+      <div v-if="team?.sprints.length" class="ml-auto">
         <label for="team-sprint" class="sr-only">Seleccionar sprint</label>
         <select
           id="team-sprint"
