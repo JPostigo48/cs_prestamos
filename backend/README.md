@@ -101,6 +101,21 @@ La actualización administrativa registra el cambio en `AuditoriaUsuario`.
 La protección de Users, Rules, Inventory y Loans debe aplicarse según la matriz
 de permisos de cada módulo; no se introduce una dependencia inversa hacia Auth.
 
+### Datos de desarrollo
+
+El seed es no destructivo: conserva los datos existentes y solo agrega usuarios
+o cuentas seed cuando no existen. No elimina préstamos, devoluciones, usuarios,
+recursos, ejemplares ni categorías. Las cuentas de desarrollo son:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| USUARIO | `seed.usuario@unsa.edu.pe` | `SeedUsuario-2026!` |
+| OPERADOR | `seed.operador@unsa.edu.pe` | `SeedOperador-2026!` |
+| ADMINISTRADOR | `seed.admin@unsa.edu.pe` | `SeedAdministrador-2026!` |
+
+Estas credenciales son exclusivamente para desarrollo local o entornos de
+prueba. Deben reemplazarse antes de usar un entorno compartido o productivo.
+
 ## Préstamos y devoluciones
 
 `POST /loans` requiere un JWT válido y recibe únicamente `copyId` y `startsAt`.

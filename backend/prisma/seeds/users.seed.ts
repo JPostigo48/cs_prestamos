@@ -63,6 +63,22 @@ export async function seedUsers() {
       vinculacionVigente: false,
       confianza: '75.00',
     });
+    const operatorUser = await upsertUser({
+      id: '00000000-0000-4000-8000-000000000003',
+      nombre: 'Operador Seed',
+      tipoUsuario: 'ADMINISTRATIVO',
+      identificadorInstitucional: 'SEED-OPERATOR',
+      vinculacionVigente: true,
+      confianza: '100.00',
+    });
+    const administratorUser = await upsertUser({
+      id: '00000000-0000-4000-8000-000000000004',
+      nombre: 'Administrador Seed',
+      tipoUsuario: 'ADMINISTRATIVO',
+      identificadorInstitucional: 'SEED-ADMIN',
+      vinculacionVigente: true,
+      confianza: '100.00',
+    });
     const approvedRequest = await upsertRequest({
       nombre: 'Usuario Aprobado Seed',
       tipoUsuario: 'ESTUDIANTE',
@@ -79,7 +95,32 @@ export async function seedUsers() {
       usuarioAprobadoId: null,
     });
     await ensureEvidence(pendingRequest.id, 'Evidencia institucional de prueba pendiente.');
-    return { approvedUser, inactiveUser, approvedRequest, pendingRequest };
+    const operatorRequest = await upsertRequest({
+      nombre: 'Operador Seed',
+      tipoUsuario: 'ADMINISTRATIVO',
+      identificadorInstitucional: 'SEED-OPERATOR',
+      estado: 'APROBADA',
+      usuarioAprobadoId: operatorUser.id,
+    });
+    await ensureEvidence(operatorRequest.id, 'Evidencia institucional de prueba de operador.');
+    const administratorRequest = await upsertRequest({
+      nombre: 'Administrador Seed',
+      tipoUsuario: 'ADMINISTRATIVO',
+      identificadorInstitucional: 'SEED-ADMIN',
+      estado: 'APROBADA',
+      usuarioAprobadoId: administratorUser.id,
+    });
+    await ensureEvidence(administratorRequest.id, 'Evidencia institucional de prueba de administrador.');
+    return {
+      approvedUser,
+      inactiveUser,
+      operatorUser,
+      administratorUser,
+      approvedRequest,
+      pendingRequest,
+      operatorRequest,
+      administratorRequest,
+    };
   } finally {
     await prisma.close();
   }
