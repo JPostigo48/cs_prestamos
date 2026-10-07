@@ -1,4 +1,5 @@
 import { Body, Controller, Param, Patch, Post } from '@nestjs/common';
+import { ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
 import { RegisterViolationUseCase } from '../../application/use-cases/register-violation.use-case.js';
 import { ResolveAppealUseCase } from '../../application/use-cases/resolve-appeal.use-case.js';
 import { SubmitAppealUseCase } from '../../application/use-cases/submit-appeal.use-case.js';
@@ -8,6 +9,7 @@ import {
   SubmitAppealDto,
 } from '../dto/violation.dto.js';
 
+@ApiTags('Reglas y términos')
 @Controller()
 export class ViolationsController {
   constructor(
@@ -17,11 +19,15 @@ export class ViolationsController {
   ) {}
 
   @Post('violations')
+  @ApiBody({ type: RegisterViolationDto })
+  @ApiOperation({ summary: 'Registrar incumplimiento' })
   register(@Body() input: RegisterViolationDto) {
     return this.registerViolation.execute(input);
   }
 
   @Post('violations/:violationId/appeals')
+  @ApiBody({ type: SubmitAppealDto })
+  @ApiOperation({ summary: 'Presentar apelación de un incumplimiento' })
   appeal(
     @Param('violationId') violationId: string,
     @Body() input: SubmitAppealDto,
@@ -35,6 +41,8 @@ export class ViolationsController {
   }
 
   @Patch('appeals/:appealId/resolution')
+  @ApiBody({ type: ResolveAppealDto })
+  @ApiOperation({ summary: 'Resolver apelación' })
   resolve(
     @Param('appealId') appealId: string,
     @Body() input: ResolveAppealDto,
