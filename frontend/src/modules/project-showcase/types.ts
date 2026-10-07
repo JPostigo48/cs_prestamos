@@ -39,16 +39,6 @@ export interface ArchitectureData {
   structurizr: string
 }
 
-export interface WeekProgress {
-  week: number
-  sprint: number
-  start: string
-  end: string
-  status: string
-  members: { name: string; planned: string[]; done: string[]; pending: string[]; blockers: string[] }[]
-  source: string
-}
-
 export interface TeamData {
   members: {
     name: string
@@ -56,6 +46,7 @@ export interface TeamData {
     area: string
     update: string
     pending: string
+    evidence: { label: string; url: string } | null
   }[]
   sprint: number | null
   source: string

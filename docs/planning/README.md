@@ -18,7 +18,6 @@ El contenido es Markdown versionado en el repositorio. Está escrito con encabez
 | [Roadmap](roadmap.md) | Progresión de sprints, línea paralela Project Showcase y funcionalidades futuras identificadas. |
 | [Backlog](backlog.md) | Elementos de trabajo con identificador estable, módulo, responsable, prioridad, sprint, versión y estado. |
 | [Flujo de trabajo con Git](git-workflow.md) | Ramas permanentes y temporales, convención de commits con prefijo de versión, Pull Requests, tags y control de conflictos. |
-| [Seguimiento semanal](progress/README.md) | Formato de registro semanal por sprint e integrante, sin inventar avances ni medir productividad. |
 | [Sprint 0](sprints/sprint-00.md) | Planificación y arquitectura. `v0.0.1` |
 | [Sprint 1](sprints/sprint-01.md) | Base técnica y prototipos. `v0.1.0` |
 | [Sprint 2](sprints/sprint-02.md) | Primer flujo funcional. `v0.2.0` |
@@ -35,7 +34,7 @@ El contenido es Markdown versionado en el repositorio. Está escrito con encabez
 
 Cada responsable frontend implementa el comportamiento responsive de lo que desarrolla. El trabajo no se divide en «escritorio» y «responsive»: se divide por módulos. El detalle de esta separación y de la coordinación sobre archivos globales está en [control de conflictos](git-workflow.md#control-de-conflictos).
 
-Los avances atribuidos a cada integrante para el sprint en curso se registran en su [documento de sprint](sprints/sprint-01.md#estado-actual). La vista Equipo combina esta tabla de responsabilidades con esos avances; los registros semanales solo aparecen cuando existen datos verificables en `progress/`.
+Los avances y pendientes atribuidos a cada integrante para el sprint en curso se registran en su [documento de sprint](sprints/sprint-01.md#estado-actual). La vista Equipo combina esa información con la tabla de responsabilidades, sin mantener una segunda bitácora semanal.
 
 Project Showcase es una sección de documentación del proyecto, no un módulo del negocio. Juan Carlos se encarga de su visualización frontend sin asumir el frontend funcional de préstamos asignado a Mauricio y Luis. `docs/project-planning` agrupa la planificación y sus ajustes de visualización. Las rutas y entregas por sprint están en el [roadmap](roadmap.md).
 
@@ -60,7 +59,7 @@ Sprint 0 no es un sprint de desarrollo: recoge el análisis y la planificación 
 
 ## Documentación y visualización
 
-`/project` y sus subrutas muestran planificación, arquitectura, API, modelos, equipo y flujo Git según los datos disponibles. Los Markdown de `docs/planning/`, incluidos los [avances semanales](progress/README.md), siguen siendo la fuente de verdad de planificación. Los diagramas `.puml` y `workspace.dsl`, el código backend y la especificación OpenAPI generada conservan sus respectivas fuentes canónicas.
+`/project` y sus subrutas muestran planificación, arquitectura, API, modelos, equipo y flujo Git según los datos disponibles. Los Markdown de `docs/planning/` siguen siendo la fuente de verdad de planificación. Los diagramas `.puml` y `workspace.dsl`, el código backend y la especificación OpenAPI generada conservan sus respectivas fuentes canónicas.
 
 El generador `scripts/generate-project-showcase.mjs` transforma esas fuentes sin copiarlas manualmente a componentes Vue. La salida está en `frontend/public/generated/project/`: datos de planificación y equipo, `openapi.json` y `diagrams/*.svg`. Son artefactos derivados, no documentos editables como fuente primaria. Los SVG de PlantUML y Structurizr se generan fuera del tiempo de ejecución del frontend cuando se configuran sus herramientas locales. La vista de API consume OpenAPI mediante una interfaz propia, no Swagger UI.
 

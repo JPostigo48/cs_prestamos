@@ -65,7 +65,7 @@
       "status": "in_progress",
       "version": "v0.1.0",
       "objective": "Consolidar la base de datos, el backend modular y los prototipos visuales y de interfaz que permitirán integrar el primer flujo funcional en el Sprint 2.",
-      "result": "Avances registrados: Ronald preparó PostgreSQL/Prisma, migración, seeds y endpoints de Inventario; Juan Carlos llevó la planificación y preparó la estructura y los contratos del backend con apoyo de Ronald. Mauricio completó una maquetación Figma casi final para web y móvil por rol con ayuda de Luis; el enlace y la revisión final siguen pendientes. La base Vue 3 + TypeScript está integrada y el login permanece como prototipo visual, sin autenticación real. Faltan las vistas funcionales de Inventario, los casos de uso de los demás módulos y el cierre formal del sprint. El sprint permanece in_progress.",
+      "result": "Avances registrados: Ronald preparó PostgreSQL/Prisma, migración, seeds y endpoints de Inventario; Juan Carlos llevó la planificación y preparó la estructura y los contratos del backend con apoyo de Ronald. Mauricio completó una maquetación Figma casi final para web y móvil por rol con ayuda de Luis; el diseño ya está enlazado, pero sigue pendiente su revisión final. La base Vue 3 + TypeScript está integrada y el login permanece como prototipo visual, sin autenticación real. Faltan las vistas funcionales de Inventario, los casos de uso de los demás módulos y el cierre formal del sprint. El sprint permanece in_progress.",
       "members": [
         {
           "name": "Ronald Reynaldo Valdez Agüero",

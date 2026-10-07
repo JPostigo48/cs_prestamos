@@ -5,28 +5,35 @@
       "responsibility": "Planificación, arquitectura, documentación, backend base, contratos de API, coordinación entre módulos y Project Showcase.",
       "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
       "update": "Planificación en docs/planning/, estructura y contratos del backend preparados con apoyo de Ronald.",
-      "pending": "Implementar los casos de uso y endpoints de los módulos restantes."
+      "pending": "Implementar los casos de uso y endpoints de los módulos restantes.",
+      "evidence": null
     },
     {
       "name": "Ronald Reynaldo Valdez Agüero",
       "responsibility": "Base de datos y persistencia: PostgreSQL, esquema, migraciones, datos iniciales e integridad.",
       "area": "Esquema y migraciones, capa de infraestructura",
       "update": "PostgreSQL/Prisma y endpoints de Inventario en develop; backend/prisma/ y backend/src/modules/inventory/.",
-      "pending": "Revisar la consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha."
+      "pending": "Revisar la consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha.",
+      "evidence": null
     },
     {
       "name": "Mauricio Alejandro Farfán Huayta",
       "responsibility": "Diseño visual, identidad, layout principal, navegación y componentes compartidos del frontend.",
       "area": "frontend/src/app/, router/, layouts/, shared/",
-      "update": "Maquetación Figma casi final, web y móvil por rol, con apoyo de Luis; sin enlace versionado aquí.",
-      "pending": "Compartir el enlace y revisar los flujos con el equipo antes de dar el diseño por cerrado."
+      "update": "Maquetación Figma casi final, web y móvil por rol, con apoyo de Luis.",
+      "pending": "Revisar los flujos con el equipo antes de dar el diseño por cerrado.",
+      "evidence": {
+        "label": "Ver Figma",
+        "url": "https://www.figma.com/make/xgNTepyl4gkprTBb8lWzqr/Sistema-de-Pr%C3%A9stamos-Universitarios?t=jn7FnIXxi2AFKMvo-1"
+      }
     },
     {
       "name": "Luis Antonio Chipana Chura",
       "responsibility": "Frontend funcional por módulos, incluido el responsive de sus propias vistas.",
       "area": "frontend/src/modules/",
       "update": "Apoyo a la maquetación Figma y prototipo visual de login incorporado desde aporte-login.",
-      "pending": "Integrar el acceso funcional con la API y coordinar sus vistas con el diseño común."
+      "pending": "Integrar el acceso funcional con la API y coordinar sus vistas con el diseño común.",
+      "evidence": null
     }
   ],
   "sprint": 1,

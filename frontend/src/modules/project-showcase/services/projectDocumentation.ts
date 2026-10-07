@@ -1,4 +1,4 @@
-import type { ArchitectureData, BacklogItem, GitData, OpenApiDocument, PlanningData, TeamData, WeekProgress } from '../types'
+import type { ArchitectureData, BacklogItem, GitData, OpenApiDocument, PlanningData, TeamData } from '../types'
 
 const base = `${import.meta.env.BASE_URL}generated/project`
 
@@ -17,7 +17,6 @@ export const projectDocumentation = {
   backlog: () => readGenerated<BacklogItem[]>('backlog.json'),
   architecture: () => readGenerated<ArchitectureData>('architecture.json'),
   team: () => readGenerated<TeamData>('team.json'),
-  progress: () => readGenerated<WeekProgress[]>('team-progress.json'),
   git: () => readGenerated<GitData>('git.json'),
   openApi: () => readGenerated<OpenApiDocument>('openapi.json'),
 }

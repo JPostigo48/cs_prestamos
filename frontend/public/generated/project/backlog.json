@@ -151,7 +151,7 @@
   },
   {
     "id": "PLAN-08",
-    "description": "Definir docs/planning/progress/ y el formato del seguimiento semanal",
+    "description": "Definir el formato de avances y pendientes por integrante dentro de cada sprint",
     "module": "Planning",
     "owner": "Juan Carlos Postigo Cabana",
     "priority": "Alta",
@@ -211,23 +211,23 @@
   },
   {
     "id": "PLAN-14",
-    "description": "Agregar /project/team con consulta por sprint, semana e integrante",
+    "description": "Agregar /project/team con integrantes, responsabilidades y estado del sprint",
     "module": "Project Showcase",
     "owner": "Juan Carlos Postigo Cabana",
     "priority": "Media",
     "sprint": "2",
     "version": "v0.2.0",
-    "status": "En curso"
+    "status": "Terminado"
   },
   {
     "id": "PLAN-15",
-    "description": "Mostrar avances semanales documentados sin convertirlos en métricas de productividad",
+    "description": "Mostrar avances y pendientes documentados por integrante sin métricas de productividad",
     "module": "Project Showcase",
     "owner": "Juan Carlos Postigo Cabana",
     "priority": "Media",
     "sprint": "2",
     "version": "v0.2.0",
-    "status": "Pendiente"
+    "status": "Terminado"
   },
   {
     "id": "PLAN-16",

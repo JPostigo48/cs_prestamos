@@ -129,10 +129,10 @@ En paralelo, la segunda etapa de Project Showcase prevé `/project/api`, `/proje
 - Generar OpenAPI desde controllers y DTO reales de NestJS mediante `@nestjs/swagger` (`PLAN-11`); no describir como implementados los endpoints que aún son esqueletos.
 - Agregar `/project/api` (`PLAN-10`) y una interfaz Vue propia de métodos, rutas, parámetros, cuerpos, respuestas, esquemas y autenticación cuando consten en la especificación (`PLAN-12`). Swagger UI puede ser herramienta de desarrollo, no la interfaz final.
 - Agregar `/project/data` (`PLAN-13`) distinguiendo modelo de dominio conceptual, modelo de persistencia Prisma/PostgreSQL y arquitectura. Una visualización adicional del esquema relacional dependerá de su viabilidad; no se confunde con el UML.
-- Agregar `/project/team` (`PLAN-14`) y mostrar avances semanales realmente registrados por semana, integrante y sprint (`PLAN-15`), sin métricas de productividad.
+- Agregar `/project/team` (`PLAN-14`) y mostrar responsabilidades, avances y pendientes del sprint por integrante (`PLAN-15`), sin métricas de productividad.
 - Definir el formato de lectura del front matter y automatizar la transformación de planificación, backlog y seguimiento a datos consumibles por Vue (`PLAN-02`). El generador futuro puede ubicarse en `scripts/generate-project-showcase.mjs` y producir artefactos derivados en `frontend/public/generated/project/`, no copias manuales de la fuente.
 
-**Rama prevista:** `feat/project-showcase`, actualizada desde `develop` y devuelta mediante Pull Request; coordinar la integración del router con Mauricio. Si el backend no dispone aún de controllers y DTO suficientemente descritos, `/project/api` queda condicionado a la generación real de OpenAPI, no a una lista de endpoints escrita a mano.
+**Integración:** las ramas de tarea parten de `develop` y regresan según el [flujo Git](../git-workflow.md); los cambios del router se coordinan con Mauricio. Si el backend no dispone aún de controllers y DTO suficientemente descritos, `/project/api` queda condicionado a la generación real de OpenAPI, no a una lista de endpoints escrita a mano.
 
 **Commits esperados:**
 
@@ -144,7 +144,7 @@ En paralelo, la segunda etapa de Project Showcase prevé `/project/api`, `/proje
 - `v0.2.0 docs: actualiza planificación del Sprint 2`
 - `v0.2.0 feat: agrega visualización de endpoints OpenAPI`
 - `v0.2.0 feat: agrega vista de modelos y persistencia`
-- `v0.2.0 feat: agrega seguimiento semanal del equipo`
+- `v0.2.0 feat: muestra avances del equipo por sprint`
 - `v0.2.0 chore: genera datos de planificación para el frontend`
 - `v0.2.0 chore: genera especificación OpenAPI del backend`
 
@@ -209,7 +209,7 @@ La protección de rutas en el frontend es visual: no sustituye la restricción d
 | Habilitación del usuario (`USR-05`) | Juan Carlos | Juan Carlos | Precondición de `LOAN-03`. Por eso Usuarios se cierra antes que Préstamos. |
 | Entrada de navegación al módulo de préstamos | Mauricio | Luis | Cambio sobre el router global: se coordina previamente. |
 | Controllers, DTO y contratos de API reales | Juan Carlos | Juan Carlos (`PLAN-11`, `PLAN-10`, `PLAN-12`) | OpenAPI se genera desde el backend; no se sustituye por una lista manual en Vue. |
-| Registro semanal verificable en `docs/planning/progress/` | Cada integrante; Juan Carlos consolida | Juan Carlos (`PLAN-14`, `PLAN-15`) | Sin semanas documentadas, la vista no inventa avances. |
+| Avances y pendientes del sprint por integrante | Cada integrante; Juan Carlos consolida | Juan Carlos (`PLAN-14`, `PLAN-15`) | La vista muestra solo lo registrado en el documento del sprint. |
 | Front matter y Markdown versionados | Juan Carlos | Juan Carlos (`PLAN-02`) | Los JSON derivados no reemplazan los documentos de planificación. |
 
 El esquema de base de datos sigue derivándose del modelo de dominio. Si la integración revela un desajuste, se corrige primero el modelo en [`docs/architecture/`](../../architecture/uml/README.md).

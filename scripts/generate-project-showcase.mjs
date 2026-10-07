@@ -39,11 +39,15 @@ function plain(value) {
   return value.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*`]/g, '').trim()
 }
 
-function table(markdown) {
+function rawTable(markdown) {
   return markdown.split(/\r?\n/)
     .filter((line) => line.startsWith('|') && !/^\|[\s:|-]+\|?$/.test(line))
     .slice(1)
-    .map((line) => line.slice(1, -1).split('|').map((cell) => plain(cell)))
+    .map((line) => line.slice(1, -1).split('|').map((cell) => cell.trim()))
+}
+
+function table(markdown) {
+  return rawTable(markdown).map((row) => row.map(plain))
 }
 
 function firstParagraph(markdown) {
@@ -106,62 +110,31 @@ json('git.json', {
   source: 'docs/planning/git-workflow.md',
 })
 
-const progressDirectory = join(root, 'docs/planning/progress')
-const weeks = existsSync(progressDirectory)
-  ? readdirSync(progressDirectory).filter((name) => /^week-\d\d\.md$/.test(name)).sort().map((name) => {
-    const path = join(progressDirectory, name)
-    const markdown = readFileSync(path, 'utf8')
-    const meta = frontMatter(markdown)
-    const members = [...markdown.matchAll(/^## (.+)$/gm)].map((match, index, headings) => {
-      const bodyStart = match.index + match[0].length
-      const bodyEnd = headings[index + 1]?.index ?? markdown.length
-      const body = markdown.slice(bodyStart, bodyEnd)
-      const items = (title) => {
-        const start = body.indexOf(`### ${title}`)
-        if (start < 0) return []
-        const after = body.slice(start + title.length + 4)
-        const end = after.search(/^### /m)
-        return (end < 0 ? after : after.slice(0, end)).split(/\r?\n/)
-          .filter((line) => line.startsWith('- ')).map((line) => plain(line.slice(2)))
-      }
-      return {
-        name: match[1].trim(),
-        planned: items('Planificado'),
-        done: items('Realizado'),
-        pending: items('Pendiente'),
-        blockers: items('Bloqueos'),
-      }
-    })
-    return {
-      week: Number(meta.week),
-      sprint: Number(meta.sprint),
-      start: meta.start,
-      end: meta.end,
-      status: meta.status,
-      members,
-      source: sourcePath(path),
-    }
-  })
-  : []
-json('team-progress.json', weeks)
-
 const teamSource = 'docs/planning/README.md'
 const activeSprint = sprints.filter((sprint) => sprint.status === 'in_progress').at(-1)
 const sprintProgress = activeSprint
-  ? table(section(read(activeSprint.source), '## Estado actual'))
+  ? rawTable(section(read(activeSprint.source), '## Estado actual'))
   : []
-const progressByName = new Map(sprintProgress.map(([name, update, pending]) => [
-  name,
-  { update, pending },
-]))
+const progressByName = new Map(sprintProgress.map(([name, update, pending, link]) => {
+  const evidence = link?.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/)
+  return [plain(name), {
+    update: plain(update ?? ''),
+    pending: plain(pending ?? ''),
+    evidence: evidence ? { label: evidence[1], url: evidence[2] } : null,
+  }]
+}))
 const team = table(section(read(teamSource), '## Equipo y responsabilidades principales'))
-  .map(([name, responsibility, area]) => ({
-    name,
-    responsibility,
-    area,
-    update: progressByName.get(name)?.update ?? '',
-    pending: progressByName.get(name)?.pending ?? '',
-  }))
+  .map(([name, responsibility, area]) => {
+    const progress = progressByName.get(name)
+    return {
+      name,
+      responsibility,
+      area,
+      update: progress?.update ?? '',
+      pending: progress?.pending ?? '',
+      evidence: progress?.evidence ?? null,
+    }
+  })
 json('team.json', {
   members: team,
   sprint: activeSprint?.sprint ?? null,
@@ -239,4 +212,4 @@ if (existsSync(openApiSource)) {
   rmSync(join(output, 'openapi.json'), { force: true })
 }
 
-process.stdout.write(`Project Showcase: ${sprints.length} sprints, ${backlog.length} tareas y ${weeks.length} semanas.\n`)
+process.stdout.write(`Project Showcase: ${sprints.length} sprints y ${backlog.length} tareas.\n`)
