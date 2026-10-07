@@ -59,11 +59,19 @@ export interface OpenApiSchema {
   $ref?: string
   type?: string
   format?: string
+  example?: unknown
+  allOf?: OpenApiSchema[]
   enum?: string[]
   items?: OpenApiSchema
   properties?: Record<string, OpenApiSchema>
   required?: string[]
   nullable?: boolean
+}
+
+export interface OpenApiMediaType {
+  schema?: OpenApiSchema
+  example?: unknown
+  examples?: Record<string, { value?: unknown }>
 }
 
 export interface OpenApiOperation {
@@ -72,8 +80,8 @@ export interface OpenApiOperation {
   description?: string
   operationId?: string
   parameters?: { name: string; in: string; required?: boolean; schema?: OpenApiSchema }[]
-  requestBody?: { content?: Record<string, { schema?: OpenApiSchema }> }
-  responses?: Record<string, unknown>
+  requestBody?: { content?: Record<string, OpenApiMediaType> }
+  responses?: Record<string, { description?: string; content?: Record<string, OpenApiMediaType> }>
   'x-implementation-status'?: 'implemented' | 'pending'
 }
 

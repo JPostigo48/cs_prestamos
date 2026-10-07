@@ -70,6 +70,58 @@ function requestFields(endpoint: Endpoint) {
     required: schema?.required?.includes(name) ?? false,
   }))
 }
+
+function exampleFromSchema(schema?: OpenApiSchema): unknown {
+  if (!schema) return undefined
+  if (schema.example !== undefined) return schema.example
+  if (schema.$ref) return exampleFromSchema(resolveSchema(schema))
+  if (schema.allOf?.length) {
+    return Object.assign({}, ...schema.allOf.map((part) => exampleFromSchema(part)))
+  }
+  if (schema.enum?.length) return schema.enum[0]
+  if (schema.type === 'array') {
+    const item = exampleFromSchema(schema.items)
+    return item === undefined ? [] : [item]
+  }
+  if (schema.type === 'object' || schema.properties) {
+    return Object.fromEntries(
+      Object.entries(schema.properties ?? {})
+        .map(([name, property]) => [name, exampleFromSchema(property)])
+        .filter(([, value]) => value !== undefined),
+    )
+  }
+  if (schema.format === 'uuid') return '550e8400-e29b-41d4-a716-446655440000'
+  if (schema.format === 'date-time') return '2026-10-06T10:00:00.000Z'
+  if (schema.format === 'email') return 'usuario@ejemplo.com'
+  if (schema.format === 'password') return 'ClaveEjemplo123'
+  if (schema.type === 'string') return 'Texto de ejemplo'
+  if (schema.type === 'integer' || schema.type === 'number') return 1
+  if (schema.type === 'boolean') return true
+  return undefined
+}
+
+function mediaExample(content?: Record<string, { schema?: OpenApiSchema; example?: unknown; examples?: Record<string, { value?: unknown }> }>) {
+  if (!content) return undefined
+  const entry = content['application/json']
+    ? ['application/json', content['application/json']] as const
+    : Object.entries(content)[0]
+  if (!entry) return undefined
+  const [mediaType, media] = entry
+  const value = media.example
+    ?? Object.values(media.examples ?? {}).find((example) => example.value !== undefined)?.value
+    ?? exampleFromSchema(media.schema)
+  return value === undefined ? undefined : {
+    mediaType,
+    body: mediaType === 'application/json' ? JSON.stringify(value, null, 2) : String(value),
+  }
+}
+
+function responseExamples(endpoint: Endpoint) {
+  return Object.entries(endpoint.responses ?? {}).flatMap(([status, response]) => {
+    const example = mediaExample(response.content)
+    return example ? [{ status, ...example }] : []
+  })
+}
 </script>
 
 <template>
@@ -142,9 +194,20 @@ function requestFields(endpoint: Endpoint) {
                   </li>
                 </ul>
                 <p v-else class="mt-1 text-slate-500">Esquema no especificado.</p>
+                <div v-if="mediaExample(endpoint.requestBody.content)" class="mt-3">
+                  <p class="font-medium text-slate-900">JSON de envío ilustrativo</p>
+                  <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ mediaExample(endpoint.requestBody.content)?.body }}</code></pre>
+                </div>
               </div>
 
               <p v-if="endpoint.responses">Códigos de respuesta declarados: {{ Object.keys(endpoint.responses).join(', ') }}</p>
+              <div v-for="example in responseExamples(endpoint)" :key="`${example.status}:${example.mediaType}`">
+                <p class="font-medium text-slate-900">Respuesta {{ example.status }} · ejemplo ilustrativo ({{ example.mediaType }})</p>
+                <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ example.body }}</code></pre>
+              </div>
+              <p v-if="endpoint.responses && !responseExamples(endpoint).length" class="text-slate-500">
+                La forma de la respuesta aún no está documentada.
+              </p>
             </div>
           </details>
         </div>
