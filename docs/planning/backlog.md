@@ -42,24 +42,24 @@ Los identificadores son referencias estables: se evita renumerarlos. Los element
 | DOC-06 | Documentar cómo levantar base de datos, backend y frontend | Documentación | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
 | DOC-07 | Alinear Structurizr con el UML vigente en confianza, sanciones y apelaciones | Documentación | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
 | DOC-08 | Revisar la trazabilidad de RF-17 y RF-19 ante préstamos planificados | Documentación | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
-| PLAN-01 | Crear visualización de sprints en el frontend (`/project/sprints`) | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| PLAN-02 | Definir el formato de lectura del front matter de planificación para generar datos consumibles por Vue | Project Showcase | Juan Carlos Postigo Cabana | Alta | 2 | v0.2.0 | Pendiente |
-| PLAN-03 | Mostrar ramas, commits, Pull Requests y tags por sprint: vista Git inicial en Sprint 1 e historial documentado en Sprint 3 | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1, 3 | v0.1.0, v0.3.0 | Pendiente |
-| PLAN-04 | Mostrar roadmap, progreso general y arquitectura relacionada en el resumen y la vista de arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| PLAN-05 | Mantener actualizada la planificación durante cada sprint | Planning | Juan Carlos Postigo Cabana | Alta | 1, 2, 3 | v0.1.0, v0.2.0, v0.3.0 | Pendiente |
-| PLAN-06 | Crear la estructura base del módulo Project Showcase, separada de los módulos de negocio | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| PLAN-07 | Crear `/project` como entrada y navegación hacia sus secciones | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| PLAN-08 | Definir `docs/planning/progress/` y el formato del seguimiento semanal | Planning | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Pendiente |
-| PLAN-09 | Preparar la exportación inicial de diagramas PlantUML a SVG para la vista de arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Media | 1 | v0.1.0 | Pendiente |
-| PLAN-10 | Agregar la sección `/project/api`, alimentada por OpenAPI | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
-| PLAN-11 | Generar la especificación OpenAPI desde controllers y DTO de NestJS | Backend / Project Showcase | Juan Carlos Postigo Cabana | Alta | 2 | v0.2.0 | Pendiente |
-| PLAN-12 | Crear una interfaz Vue propia para consultar endpoints y esquemas de OpenAPI | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
-| PLAN-13 | Agregar `/project/data` distinguiendo dominio, persistencia y arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
-| PLAN-14 | Agregar `/project/team` con consulta por sprint, semana e integrante | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
+| PLAN-01 | Crear visualización de sprints en el frontend (`/project/sprints`) | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
+| PLAN-02 | Definir el formato de lectura del front matter de planificación para generar datos consumibles por Vue | Project Showcase | Juan Carlos Postigo Cabana | Alta | 2 | v0.2.0 | Terminado |
+| PLAN-03 | Mostrar ramas, commits, Pull Requests y tags por sprint: vista Git inicial en Sprint 1 e historial documentado en Sprint 3 | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1, 3 | v0.1.0, v0.3.0 | En curso |
+| PLAN-04 | Mostrar roadmap, progreso general y arquitectura relacionada en el resumen y la vista de arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | En curso |
+| PLAN-05 | Mantener actualizada la planificación durante cada sprint | Planning | Juan Carlos Postigo Cabana | Alta | 1, 2, 3 | v0.1.0, v0.2.0, v0.3.0 | En curso |
+| PLAN-06 | Crear la estructura base del módulo Project Showcase, separada de los módulos de negocio | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
+| PLAN-07 | Crear `/project` como entrada y navegación hacia sus secciones | Project Showcase | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
+| PLAN-08 | Definir `docs/planning/progress/` y el formato del seguimiento semanal | Planning | Juan Carlos Postigo Cabana | Alta | 1 | v0.1.0 | Terminado |
+| PLAN-09 | Preparar la exportación inicial de diagramas PlantUML a SVG para la vista de arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Media | 1 | v0.1.0 | Terminado |
+| PLAN-10 | Agregar la sección `/project/api`, alimentada por OpenAPI | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Terminado |
+| PLAN-11 | Generar la especificación OpenAPI desde controllers y DTO de NestJS | Backend / Project Showcase | Juan Carlos Postigo Cabana | Alta | 2 | v0.2.0 | Terminado |
+| PLAN-12 | Crear una interfaz Vue propia para consultar endpoints y esquemas de OpenAPI | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Terminado |
+| PLAN-13 | Agregar `/project/data` distinguiendo dominio, persistencia y arquitectura | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Terminado |
+| PLAN-14 | Agregar `/project/team` con consulta por sprint, semana e integrante | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | En curso |
 | PLAN-15 | Mostrar avances semanales documentados sin convertirlos en métricas de productividad | Project Showcase | Juan Carlos Postigo Cabana | Media | 2 | v0.2.0 | Pendiente |
 | PLAN-16 | Comparar lo planificado y lo realizado por sprint, sin porcentajes no sustentados | Project Showcase | Juan Carlos Postigo Cabana | Media | 3 | v0.3.0 | Pendiente |
-| PLAN-17 | Documentar el mecanismo y automatizar la exportación de vistas Structurizr a SVG | Project Showcase | Juan Carlos Postigo Cabana | Media | 3 | v0.3.0 | Pendiente |
-| PLAN-18 | Mejorar el visualizador SVG con zoom | Project Showcase | Juan Carlos Postigo Cabana | Baja | 3 | v0.3.0 | Pendiente |
+| PLAN-17 | Documentar el mecanismo y automatizar la exportación de vistas Structurizr a SVG | Project Showcase | Juan Carlos Postigo Cabana | Media | 3 | v0.3.0 | Terminado |
+| PLAN-18 | Mejorar el visualizador SVG con zoom | Project Showcase | Juan Carlos Postigo Cabana | Baja | 3 | v0.3.0 | Terminado |
 | PLAN-19 | Consolidar el historial documentado de versiones, Pull Requests y tags | Project Showcase | Juan Carlos Postigo Cabana | Media | 3 | v0.3.0 | Pendiente |
 | PLAN-20 | Revisar navegación y presentación del Project Showcase | Project Showcase | Juan Carlos Postigo Cabana | Media | 3 | v0.3.0 | Pendiente |
 

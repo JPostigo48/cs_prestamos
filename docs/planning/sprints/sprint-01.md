@@ -16,20 +16,20 @@ Este sprint **no** busca completar la lógica del sistema. Busca que cada integr
 
 ## Estado actual
 
-`develop` ya contiene PostgreSQL mediante Docker Compose, el contrato Prisma para las entidades modeladas, una migración inicial, seeds y un backend Nest con Inventario funcional conectado a persistencia. Los demás módulos (`auth`, `users`, `loans`, `rules`) cuentan con carpetas y contratos preliminares; esto no significa que sus casos de uso y endpoints estén implementados. La versión objetivo del frontend aún no está integrada.
+`develop` contiene PostgreSQL mediante Docker Compose, el contrato Prisma para las entidades modeladas, una migración inicial, seeds y un backend Nest con Inventario funcional conectado a persistencia. Los demás módulos (`auth`, `users`, `loans`, `rules`) cuentan con carpetas y contratos preliminares; esto no significa que sus casos de uso y endpoints estén implementados. La base Vue 3 + TypeScript ya está integrada, pero todavía no existe el frontend funcional de préstamos.
 
-Ronald avanzó la base de datos y la base Nest en los commits de `christmas`. Juan Carlos reorganizó las carpetas del backend por módulos y capas, y preparó contratos y puntos de partida para los endpoints, sin dar por implementados los módulos restantes. Mauricio informa que completó en Figma las maquetas web y móvil para los roles usuario, operador y administrador; se trata de un avance externo al repositorio, todavía sin enlace o entrega versionada aquí. Luis publicó en `aporte-login` un prototipo de interfaz de login, incorporado a `develop` bajo `frontend/`. Usa Vue CLI y JavaScript, por lo que aún debe evaluarse su adaptación al frontend objetivo en Vue.js + TypeScript.
+Ronald avanzó la base de datos, la base Nest y los endpoints de Inventario. Juan Carlos llevó la planificación y preparó la organización modular y los contratos del backend con apoyo de Ronald; los casos de uso de los demás módulos siguen pendientes. Mauricio completó una maquetación Figma casi final, web y móvil para usuario, operador y administrador, con ayuda de Luis. El diseño sigue fuera del repositorio y no tiene enlace versionado aquí. Luis también aportó el prototipo visual de login desde `aporte-login`, incorporado en `frontend/`; todavía no autentica contra la API.
 
 La separación de `trust` definida por la documentación es posterior al esqueleto integrado: confianza y sanciones permanecen provisionalmente en `users`, y apelaciones en `rules`. Esa diferencia está documentada y debe corregirse en una tarea posterior sin presentar la distribución actual como arquitectura objetivo.
 
 | Integrante | Evidencia o ubicación del avance | Pendiente inmediato |
 | --- | --- | --- |
-| Ronald | Commits de `christmas` (`9302fa5`, `c76bcde`, `7c073e8`, `06d3415`, `2f6e440`) integrados en `develop`; `backend/prisma/`, `docker-compose.yml` e Inventario. | Revisar consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha. |
-| Mauricio | Maquetas Figma web/móvil por los tres roles, informadas por el equipo; sin enlace versionado aquí. | Compartir el enlace, revisar los flujos e implementar el frontend común. |
-| Luis | Prototipo de `aporte-login` incorporado en `frontend/`; commits originales `b36c43b` y `a2b2712`. | Acordar con Mauricio la adaptación a Vue.js + TypeScript. |
-| Juan Carlos | Commits de estructura y contratos `cc76659`, `8dbf161`, `bde7441`, `23e9fae`, `da799b2` integrados en `develop`; planificación en `docs/project-planning`. | Completar casos de uso, contratos de API y endpoints aún pendientes. |
+| Ronald Reynaldo Valdez Agüero | PostgreSQL/Prisma y endpoints de Inventario en `develop`; `backend/prisma/` y `backend/src/modules/inventory/`. | Revisar la consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha. |
+| Mauricio Alejandro Farfán Huayta | Maquetación Figma casi final, web y móvil por rol, con apoyo de Luis; sin enlace versionado aquí. | Compartir el enlace y revisar los flujos con el equipo antes de dar el diseño por cerrado. |
+| Luis Antonio Chipana Chura | Apoyo a la maquetación Figma y prototipo visual de login incorporado desde `aporte-login`. | Integrar el acceso funcional con la API y coordinar sus vistas con el diseño común. |
+| Juan Carlos Postigo Cabana | Planificación en `docs/planning/`, estructura y contratos del backend preparados con apoyo de Ronald. | Implementar los casos de uso y endpoints de los módulos restantes. |
 
-Los hashes documentan el avance observado, no sustituyen los criterios de cierre ni corrigen retroactivamente mensajes de commits anteriores.
+El avance de Figma fue comunicado por el equipo; hasta registrar un enlace revisable no se presenta como artefacto versionado. La existencia de carpetas o rutas de los demás módulos no acredita casos de uso implementados.
 
 ## Alcance
 
@@ -160,7 +160,7 @@ Son preliminares. Antes de considerarlos definitivos deben contrastarse con los 
 - Crear `/project/git` con la estrategia de ramas y versiones del [flujo Git](../git-workflow.md); distinguir ramas previstas de avances verificados (`PLAN-03`). Los Pull Requests y tags se completarán cuando estén documentados.
 - Definir el registro semanal en [`progress/`](../progress/README.md), sin inventar semanas anteriores (`PLAN-08`).
 
-**Rama prevista para código:** `feat/project-showcase`, creada desde `develop` y devuelta mediante Pull Request. `docs/project-planning` solo aloja la planificación. El módulo debe coordinar sus rutas con Mauricio, responsable del router global. La estructura Vue.js + TypeScript compartida (`ARCH-04`) es precondición; hasta tenerla no se considera implementada ninguna vista.
+**Rama actual:** `docs/project-planning` para planificación y ajustes de su visualización. El módulo coordina sus rutas con Mauricio, responsable del router global. La base Vue 3 + TypeScript ya existe; no equivale a tener implementado el frontend funcional de préstamos.
 
 **Resultado mínimo previsto:** `/project`, `/project/sprints`, `/project/architecture` y `/project/git`. En esta etapa se admiten artefactos estáticos previamente generados, no duplicación manual de los documentos fuente ni dependencia de PlantUML en tiempo de ejecución.
 
@@ -185,7 +185,7 @@ Son preliminares. Antes de considerarlos definitivos deben contrastarse con los 
 
 **Rama de implementación:** por definir. El diseño reportado se encuentra en Figma, no en una rama del repositorio.
 
-**Trabajo reportado:** maquetación completa en Figma para web y móvil, diferenciada por usuario, operador y administrador. Falta registrar el enlace o la entrega del diseño y traducirlo al frontend versionado; no se da por existente un layout integrado.
+**Trabajo reportado:** maquetación casi final en Figma para web y móvil, diferenciada por usuario, operador y administrador, con apoyo de Luis. Falta registrar el enlace, revisar los flujos y trasladar el diseño al frontend funcional; la base Vue 3 + TypeScript ya existe.
 
 **Tareas:**
 
@@ -224,7 +224,7 @@ Evita implementar en profundidad módulos funcionales que corresponden a Luis.
 
 **Rama de origen:** `aporte-login` (prototipo incorporado en `develop`). `feat/inventory-ui` era una rama prevista y no se ha verificado como avance actual.
 
-**Área del prototipo:** `frontend/` en `develop`. El frontend definitivo del proyecto usa Vue.js + TypeScript y todavía debe decidir cómo adaptar el prototipo Vue CLI + JavaScript.
+**Área del prototipo:** `frontend/` en `develop`. El login ya convive con la base Vue 3 + TypeScript como prototipo visual; falta conectarlo a la API.
 
 **Tareas:**
 
@@ -242,7 +242,7 @@ Evita implementar en profundidad módulos funcionales que corresponden a Luis.
 - `v0.1.0 feat: integra inventario con API preliminar`
 - `v0.1.0 style: adapta vistas de inventario a dispositivos móviles`
 
-Estos commits de Inventario siguen siendo orientativos, no trabajo completado. El avance verificable de Luis procede de `aporte-login` (`b36c43b`, `a2b2712`), ya incorporado a `develop`, y todavía requiere adaptación funcional.
+Estos commits de la interfaz de Inventario siguen siendo orientativos, no trabajo completado. Luis también apoyó la maquetación Figma de Mauricio. Su prototipo de login, incorporado desde `aporte-login`, aún requiere integración funcional.
 
 ## Dependencias
 
@@ -281,15 +281,15 @@ Estos commits de Inventario siguen siendo orientativos, no trabajo completado. E
 
 ## Definition of Done
 
-Aplica la [Definition of Done del proyecto](../git-workflow.md#definition-of-done): alcance cumplido, compila, pasa lint y pruebas si existen, respeta arquitectura y convenciones, sin errores conocidos, commits con prefijo `v0.1.0`, documentación afectada actualizada, Pull Request creado y revisado, merge en `develop`.
+Aplica la [Definition of Done del proyecto](../git-workflow.md#definition-of-done): alcance cumplido, compila cuando corresponde, pasa lint y pruebas si existen, respeta arquitectura y convenciones, sin errores conocidos, commits con prefijo de la versión objetivo, documentación afectada actualizada, revisión mediante Pull Request para aportes ajenos o revisión local del trabajo propio, e integración en `develop`.
 
 ## Pull Requests
 
-Pendiente registrar los Pull Requests y revisiones utilizados para cada integración.
+Registrar los Pull Requests utilizados para aportes del equipo y las integraciones directas del trabajo propio, sin presentar estas últimas como Pull Requests.
 
 ## Resultado del sprint
 
-Avances comprobados: PostgreSQL/Prisma, migración, seeds, backend Nest, organización modular, módulo Inventario funcional y prototipo de login incorporado desde `aporte-login` en `develop`. Mauricio reporta el diseño Figma completo para web y móvil por rol, pendiente de enlace y revisión en el repositorio. Siguen pendientes la base frontend Vue.js + TypeScript, la adaptación del login, las vistas visuales de Inventario y los endpoints de los demás módulos. El sprint permanece `in_progress`.
+Avances registrados: Ronald preparó PostgreSQL/Prisma, migración, seeds y endpoints de Inventario; Juan Carlos llevó la planificación y preparó la estructura y los contratos del backend con apoyo de Ronald. Mauricio completó una maquetación Figma casi final para web y móvil por rol con ayuda de Luis; el enlace y la revisión final siguen pendientes. La base Vue 3 + TypeScript está integrada y el login permanece como prototipo visual, sin autenticación real. Faltan las vistas funcionales de Inventario, los casos de uso de los demás módulos y el cierre formal del sprint. El sprint permanece `in_progress`.
 
 ## Versión resultante
 
