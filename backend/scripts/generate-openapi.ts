@@ -86,7 +86,7 @@ try {
   if (process.argv.includes('--check')) {
     for (const file of [backendFile, frontendFile]) {
       try {
-        if (readFileSync(file, 'utf8') !== generated) {
+        if (readFileSync(file, 'utf8').replace(/\r\n/g, '\n') !== generated) {
           throw new Error(`OpenAPI desactualizado: ${file}. Ejecuta npm run project:generate.`);
         }
       } catch (error) {
