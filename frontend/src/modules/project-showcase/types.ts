@@ -55,17 +55,30 @@ export interface GitData {
   source: string
 }
 
+export interface OpenApiSchema {
+  $ref?: string
+  type?: string
+  format?: string
+  enum?: string[]
+  items?: OpenApiSchema
+  properties?: Record<string, OpenApiSchema>
+  required?: string[]
+  nullable?: boolean
+}
+
 export interface OpenApiOperation {
   tags?: string[]
   summary?: string
   description?: string
   operationId?: string
-  parameters?: { name: string; in: string; required?: boolean }[]
-  requestBody?: unknown
+  parameters?: { name: string; in: string; required?: boolean; schema?: OpenApiSchema }[]
+  requestBody?: { content?: Record<string, { schema?: OpenApiSchema }> }
   responses?: Record<string, unknown>
+  'x-implementation-status'?: 'implemented' | 'pending'
 }
 
 export interface OpenApiDocument {
   info?: { title?: string; version?: string }
   paths?: Record<string, Record<string, OpenApiOperation>>
+  components?: { schemas?: Record<string, OpenApiSchema> }
 }

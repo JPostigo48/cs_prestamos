@@ -209,6 +209,8 @@ json('architecture.json', {
 const openApiSource = join(root, 'backend/openapi.json')
 if (existsSync(openApiSource)) {
   writeFileSync(join(output, 'openapi.json'), readFileSync(openApiSource))
+} else {
+  rmSync(join(output, 'openapi.json'), { force: true })
 }
 
 process.stdout.write(`Project Showcase: ${sprints.length} sprints, ${backlog.length} tareas y ${weeks.length} semanas.\n`)

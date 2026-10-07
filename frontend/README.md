@@ -7,6 +7,7 @@ Aplicación Vue 3, TypeScript, Vue Router y Tailwind CSS con Vite. Requiere Node
 Desde la raíz:
 
 ```powershell
+npm --prefix backend install
 npm --prefix frontend install
 npm run project:generate
 npm run front
@@ -39,4 +40,6 @@ npm run project:generate
 
 El generador transforma `workspace.dsl` a PlantUML en un directorio temporal y luego a SVG. Por ello las imágenes de Structurizr pueden diferir visualmente de Structurizr Local; el DSL sigue siendo la fuente estratégica. El frontend solo consume los SVG exportados, sin conectarse a PlantUML ni a Structurizr en ejecución.
 
-`/project/api` solo muestra endpoints cuando existe un `backend/openapi.json` generado desde los controllers y DTO reales; el generador lo copia como artefacto derivado. No se mantiene una lista paralela de endpoints ni se usa Swagger UI como interfaz final. Los avances semanales se leen de `docs/planning/progress/week-XX.md`; si aún no existen, la vista de equipo muestra ese estado sin inventar registros.
+`npm run project:generate` genera `backend/openapi.json` desde los controladores y DTO de NestJS y lo copia a `frontend/public/generated/project/openapi.json`. No inicia el servidor ni necesita conectarse a PostgreSQL. La sección `/project/api` permite consultar rutas, parámetros, cuerpos de solicitud y el estado de cada operación; no mantiene una lista paralela de endpoints ni usa Swagger UI como interfaz final.
+
+El estado **Implementado en código** identifica operaciones con lógica desarrollada, pero no garantiza que se haya probado su integración con la base de datos. Toda operación sin esa confirmación explícita aparece como **Pendiente**, aunque su ruta ya esté declarada. Los avances semanales se leen de `docs/planning/progress/week-XX.md`; si aún no existen, la vista de equipo muestra ese estado sin inventar registros.
