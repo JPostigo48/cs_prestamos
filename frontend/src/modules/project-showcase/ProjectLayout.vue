@@ -45,8 +45,5 @@ const navigation = [
       <RouterView />
     </main>
 
-    <footer class="mt-16 border-t border-slate-200 bg-white px-5 py-6 text-center text-xs text-slate-500">
-      Los documentos y modelos versionados siguen siendo la fuente de verdad. Esta sección muestra artefactos derivados.
-    </footer>
   </div>
 </template>
