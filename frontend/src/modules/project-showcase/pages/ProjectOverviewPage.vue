@@ -10,7 +10,6 @@ const sections = [
   { path: '/project/sprints', title: 'Sprints', detail: 'Planificación, responsables y resultados documentados.' },
   { path: '/project/architecture', title: 'Arquitectura', detail: 'Diagramas UML exportados desde sus fuentes.' },
   { path: '/project/api', title: 'API', detail: 'Endpoints descritos por OpenAPI cuando esté disponible.' },
-  { path: '/project/data', title: 'Datos', detail: 'Dominio, persistencia y arquitectura sin confundir sus modelos.' },
   { path: '/project/team', title: 'Equipo', detail: 'Responsabilidades, avances y pendientes por integrante del sprint.' },
   { path: '/project/git', title: 'Git', detail: 'Ramas, versiones y flujo de integración del proyecto.' },
 ]

@@ -8,7 +8,6 @@ const navigation = [
   { path: '/project/sprints', label: 'Sprints' },
   { path: '/project/architecture', label: 'Arquitectura' },
   { path: '/project/api', label: 'API' },
-  { path: '/project/data', label: 'Datos' },
   { path: '/project/team', label: 'Equipo' },
   { path: '/project/git', label: 'Git' },
 ]
