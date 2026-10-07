@@ -67,3 +67,36 @@ npm run test:cov
 ```
 
 Las variables locales se configuran en archivos `.env`, que no deben versionarse.
+
+## Autenticación
+
+Auth acepta únicamente correos normalizados (sin espacios y en minúsculas) cuyo
+dominio exacto sea `@unsa.edu.pe`. Las contraseñas se almacenan con Argon2id.
+El registro público crea exclusivamente cuentas `USUARIO`; los roles
+`OPERADOR` y `ADMINISTRADOR` deben asignarse mediante una operación administrativa
+o un seed controlado.
+
+Configura en `.env`:
+
+```text
+DATABASE_URL=postgresql://...
+JWT_SECRET=un-secreto-largo-y-aleatorio
+JWT_EXPIRES_IN=3600s
+PORT=3000
+```
+
+El JWT contiene `accountId`, `userId`, `userType` y `role`. Las rutas protegidas
+deben usar `AuthGuard`; para autorización por rol se combinan `@Roles(...)` y
+`RolesGuard`.
+
+Endpoints disponibles:
+
+- `POST /auth/accounts`: autorregistro de una cuenta `USUARIO`.
+- `POST /auth/authenticate`: autenticación y emisión del JWT.
+- `GET /auth/accounts/:accountId`: consulta propia o administrativa.
+- `PATCH /auth/accounts/:accountId`: cambio administrativo de rol o habilitación;
+  requiere `ADMINISTRADOR`.
+
+La actualización administrativa registra el cambio en `AuditoriaUsuario`.
+La protección de Users, Rules, Inventory y Loans debe aplicarse según la matriz
+de permisos de cada módulo; no se introduce una dependencia inversa hacia Auth.
