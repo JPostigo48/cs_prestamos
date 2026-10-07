@@ -100,3 +100,19 @@ Endpoints disponibles:
 La actualización administrativa registra el cambio en `AuditoriaUsuario`.
 La protección de Users, Rules, Inventory y Loans debe aplicarse según la matriz
 de permisos de cada módulo; no se introduce una dependencia inversa hacia Auth.
+
+## Préstamos y devoluciones
+
+`POST /loans` requiere un JWT válido y recibe únicamente `copyId` y `startsAt`.
+El usuario se obtiene de `@CurrentUser()` y no puede ser enviado por el cliente.
+El caso de uso verifica elegibilidad, disponibilidad, fecha de inicio, duración
+máxima de la categoría y solapamientos.
+
+`POST /loans/:loanId/return` requiere rol `OPERADOR` o `ADMINISTRADOR`. Al
+registrar la devolución se finaliza el préstamo, se libera el ejemplar y, si se
+envía una observación, se marca como `NO_DISPONIBLE` y se crea una observación
+de inventario.
+
+Las consultas de préstamos activos y vencidos requieren `OPERADOR` o
+`ADMINISTRADOR`. El historial y el detalle solo pueden consultarse para el
+propio usuario, salvo esos roles operativos.

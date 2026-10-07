@@ -64,6 +64,7 @@ export abstract class InventoryRepository {
     copyId: string,
     estado: InventoryCopyStateManaged,
   ): Promise<any>;
+  abstract markCopyAsLoaned(copyId: string): Promise<any>;
 
   abstract createObservation(data: {
     ejemplarId: string;

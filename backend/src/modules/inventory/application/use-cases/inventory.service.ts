@@ -488,6 +488,42 @@ export class InventoryService {
     };
   }
 
+  async getLoanAvailability(copyId: string) {
+    const copy = await this.ensureCopyExists(copyId);
+    const resource = await this.ensureResourceExists(copy.recursoId);
+    const category = await this.getCategory(resource.categoriaId);
+    return {
+      copyId,
+      available: copy.estado === 'DISPONIBLE',
+      maximumLoanDays: category.tiempoMaximoPrestamoDias,
+    };
+  }
+
+  async markCopyAsLoaned(copyId: string): Promise<void> {
+    const copy = await this.ensureCopyExists(copyId);
+    if (copy.estado !== 'DISPONIBLE') {
+      throw new ConflictException('El ejemplar no está disponible.');
+    }
+    await this.repository.markCopyAsLoaned(copyId);
+  }
+
+  async releaseCopyAfterReturn(
+    copyId: string,
+    observation?: string,
+  ): Promise<void> {
+    await this.ensureCopyExists(copyId);
+    await this.repository.updateCopyState(
+      copyId,
+      observation?.trim() ? 'NO_DISPONIBLE' : 'DISPONIBLE',
+    );
+    if (observation?.trim()) {
+      await this.repository.createObservation({
+        ejemplarId: copyId,
+        descripcion: observation.trim(),
+      });
+    }
+  }
+
   async updateCopyState(copyId: string, dto: UpdateCopyStateInput) {
     const copy = await this.ensureCopyExists(copyId);
     if (dto.estado === 'PRESTADO') {

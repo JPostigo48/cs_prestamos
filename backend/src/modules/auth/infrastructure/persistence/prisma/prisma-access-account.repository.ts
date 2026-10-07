@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Temporal } from 'temporal-polyfill';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type { AccessAccount } from '../../../domain/entities/access-account.js';
 import {
@@ -14,6 +15,10 @@ export class PrismaAccessAccountRepository implements AccessAccountRepository {
 
   private runtime() {
     return this.prisma.client.runtime();
+  }
+
+  private instant(value: Date) {
+    return Temporal.Instant.from(value.toISOString());
   }
 
   private map(row: any): AccessAccount {
@@ -109,7 +114,7 @@ export class PrismaAccessAccountRepository implements AccessAccountRepository {
     await this.runtime()
       .query(
         this.prisma.sql.public.cuentas_acceso
-          .update({ ultimoAcceso: accessedAt })
+          .update({ ultimoAcceso: this.instant(accessedAt) })
           .where((row, fns) => fns.eq(row.id, accountId))
           .build(),
       );

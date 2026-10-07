@@ -366,6 +366,23 @@ export class PrismaInventoryRepository extends InventoryRepository {
     return rows[0] ?? null;
   }
 
+  async markCopyAsLoaned(copyId: string) {
+    const query = this.prisma.sql.public.ejemplares
+      .update({ estado: 'PRESTADO' })
+      .where((row, fns) => fns.eq(row.id, copyId))
+      .returning(
+        'id',
+        'recursoId',
+        'codigoInventario',
+        'estado',
+        'createdAt',
+        'updatedAt',
+      )
+      .build();
+    const rows = await this.runtime().query(query);
+    return rows[0] ?? null;
+  }
+
   async createObservation(data: { ejemplarId: string; descripcion: string }) {
     const query = this.prisma.sql.public.observaciones_ejemplar
       .insert([{ ejemplarId: data.ejemplarId, descripcion: data.descripcion }])
