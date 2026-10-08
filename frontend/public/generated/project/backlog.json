@@ -1,0 +1,1062 @@
+[
+  {
+    "id": "DOC-01",
+    "description": "Levantar y organizar los requisitos funcionales y no funcionales",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-02",
+    "description": "Documentar reglas de negocio, modelo de confianza y términos y condiciones",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-03",
+    "description": "Modelar el dominio en UML con agregados, entidades y objetos de valor",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-04",
+    "description": "Definir contextos delimitados y vistas internas en Structurizr",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-05",
+    "description": "Documentar la arquitectura modular por capas del backend",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-06",
+    "description": "Documentar cómo levantar base de datos, backend y frontend",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "DOC-07",
+    "description": "Alinear Structurizr con el UML vigente en confianza, sanciones y apelaciones",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "DOC-08",
+    "description": "Revisar la trazabilidad de RF-17 y RF-19 ante préstamos planificados",
+    "module": "Documentación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "PLAN-01",
+    "description": "Crear visualización de sprints en el frontend (/project/sprints)",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-02",
+    "description": "Definir el formato de lectura del front matter de planificación para generar datos consumibles por Vue",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-03",
+    "description": "Mostrar ramas, commits, Pull Requests y tags por sprint: vista Git inicial en Sprint 1 e historial documentado en Sprint 3",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1, 3",
+    "version": "v0.1.0, v0.3.0",
+    "status": "En curso"
+  },
+  {
+    "id": "PLAN-04",
+    "description": "Mostrar roadmap, progreso general y arquitectura relacionada en el resumen y la vista de arquitectura",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "En curso"
+  },
+  {
+    "id": "PLAN-05",
+    "description": "Mantener actualizada la planificación durante cada sprint",
+    "module": "Planning",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1, 2, 3",
+    "version": "v0.1.0, v0.2.0, v0.3.0",
+    "status": "En curso"
+  },
+  {
+    "id": "PLAN-06",
+    "description": "Crear la estructura base del módulo Project Showcase, separada de los módulos de negocio",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-07",
+    "description": "Crear /project como entrada y navegación hacia sus secciones",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-08",
+    "description": "Definir el formato de avances y pendientes por integrante dentro de cada sprint",
+    "module": "Planning",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-09",
+    "description": "Preparar la exportación inicial de diagramas PlantUML a SVG para la vista de arquitectura",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-10",
+    "description": "Agregar la sección /project/api, alimentada por OpenAPI",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-11",
+    "description": "Generar la especificación OpenAPI desde controllers y DTO de NestJS",
+    "module": "Backend / Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-12",
+    "description": "Crear una interfaz Vue propia para consultar endpoints y esquemas de OpenAPI",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-13",
+    "description": "Agregar /project/data distinguiendo dominio, persistencia y arquitectura",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-14",
+    "description": "Agregar /project/team con integrantes, responsabilidades y estado del sprint",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-15",
+    "description": "Mostrar avances y pendientes documentados por integrante sin métricas de productividad",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-16",
+    "description": "Comparar lo planificado y lo realizado por sprint, sin porcentajes no sustentados",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "PLAN-17",
+    "description": "Documentar el mecanismo y automatizar la exportación de vistas Structurizr a SVG",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-18",
+    "description": "Mejorar el visualizador SVG con zoom",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Baja",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "PLAN-19",
+    "description": "Consolidar el historial documentado de versiones, Pull Requests y tags",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "PLAN-20",
+    "description": "Revisar navegación y presentación del Project Showcase",
+    "module": "Project Showcase",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "ARCH-01",
+    "description": "Definir la estrategia de ramas, commits y versionado",
+    "module": "Arquitectura",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "0",
+    "version": "v0.0.1",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-02",
+    "description": "Inicializar Node.js + TypeScript con estructura modular por capas",
+    "module": "Backend",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-03",
+    "description": "Preparar manejo de errores y configuración del backend",
+    "module": "Backend",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "ARCH-04",
+    "description": "Consolidar Vue.js + TypeScript con router y estructura base",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "ARCH-05",
+    "description": "Crear develop y resolver la rama remota feature/mi_database",
+    "module": "Repositorio",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-06",
+    "description": "Configurar PostgreSQL y el acceso desde el proyecto",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-07",
+    "description": "Crear el esquema relacional preliminar derivado del modelo de dominio",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-08",
+    "description": "Crear migraciones o mecanismo equivalente",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-09",
+    "description": "Crear datos mínimos para desarrollo",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Media",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Terminado"
+  },
+  {
+    "id": "ARCH-10",
+    "description": "Agregar cliente HTTP común en el frontend",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "ARCH-11",
+    "description": "Definir la estrategia transaccional para préstamos concurrentes",
+    "module": "Backend",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "ARCH-12",
+    "description": "Integrar repositorios con persistencia real",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-01",
+    "description": "Decidir el mecanismo de credenciales y autenticación",
+    "module": "Autenticación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-02",
+    "description": "Implementar el endpoint de autenticación de usuarios registrados",
+    "module": "Autenticación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-03",
+    "description": "Modelar CuentaAcceso y RolAcceso en dominio y persistencia",
+    "module": "Autenticación",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-04",
+    "description": "Crear la interfaz de inicio de sesión",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-05",
+    "description": "Integrar la autenticación con la API y la navegación según sesión",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "AUTH-06",
+    "description": "Restringir operaciones según los permisos del usuario autenticado",
+    "module": "Autenticación",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-01",
+    "description": "Implementar la solicitud de registro con tipo de usuario e identificador institucional",
+    "module": "Usuarios",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-02",
+    "description": "Registrar la evidencia de vinculación asociada a la solicitud",
+    "module": "Usuarios",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-03",
+    "description": "Implementar la aprobación y el rechazo de solicitudes de registro",
+    "module": "Usuarios",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-04",
+    "description": "Persistir usuarios, solicitudes y evidencias",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-05",
+    "description": "Consultar si un usuario está habilitado para realizar préstamos",
+    "module": "Usuarios",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "USR-06",
+    "description": "Definir el procedimiento de verificación de la vinculación con la EPCC",
+    "module": "Usuarios",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-01",
+    "description": "Crear la estructura del módulo Inventario en el frontend",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-02",
+    "description": "Crear el listado de recursos",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-03",
+    "description": "Crear el detalle de un recurso con sus ejemplares",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-04",
+    "description": "Mostrar el estado de disponibilidad de los ejemplares",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-05",
+    "description": "Adaptar las vistas de inventario a dispositivos móviles",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Media",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-06",
+    "description": "Implementar el registro de recursos y su categoría",
+    "module": "Inventario",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-07",
+    "description": "Implementar el registro de ejemplares de un recurso",
+    "module": "Inventario",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-08",
+    "description": "Derivar la disponibilidad del recurso de sus ejemplares",
+    "module": "Inventario",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-09",
+    "description": "Persistir categorías, recursos y ejemplares",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-10",
+    "description": "Conectar el módulo de inventario con la API real",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-11",
+    "description": "Registrar observaciones sobre el estado de un ejemplar",
+    "module": "Inventario",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "INV-12",
+    "description": "Definir el tiempo máximo de préstamo por categoría",
+    "module": "Inventario",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-01",
+    "description": "Definir los contratos preliminares de préstamos y publicarlos como mock",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "1",
+    "version": "v0.1.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-02",
+    "description": "Implementar la creación de un préstamo sobre un ejemplar disponible",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-03",
+    "description": "Verificar la habilitación del usuario antes de prestar",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-04",
+    "description": "Aplicar el plazo de la categoría al fijar fechaFin",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-05",
+    "description": "Cambiar el ejemplar a PRESTADO de forma consistente con el préstamo",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-06",
+    "description": "Implementar la consulta de préstamos activos e historial por usuario",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-07",
+    "description": "Implementar el registro de devoluciones y la liberación del ejemplar",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-08",
+    "description": "Persistir préstamos y devoluciones",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-09",
+    "description": "Crear el formulario de préstamo en el frontend",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-10",
+    "description": "Crear el listado de préstamos y el registro visual de devoluciones",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-11",
+    "description": "Adaptar el módulo de préstamos a dispositivos móviles",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Media",
+    "sprint": "2",
+    "version": "v0.2.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-12",
+    "description": "Implementar préstamos planificados con intervalo fechaInicio–fechaFin",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-13",
+    "description": "Validar que un ejemplar no tenga intervalos superpuestos",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-14",
+    "description": "Identificar préstamos que superaron su fecha límite de devolución",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-15",
+    "description": "Aplicar las restricciones de préstamo por tipo de usuario",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "LOAN-16",
+    "description": "Confirmar y, si procede, aplicar el límite de préstamos activos para estudiantes",
+    "module": "Préstamos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Baja",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-01",
+    "description": "Implementar el perfil de confianza con porcentaje en el intervalo 0–100",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-02",
+    "description": "Derivar el nivel de confianza del porcentaje",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-03",
+    "description": "Exponer la consulta de porcentaje y nivel de confianza",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-04",
+    "description": "Registrar sanciones con intervalo, estado, operador y cambio de confianza",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-05",
+    "description": "Impedir nuevos préstamos mientras exista una sanción activa",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-06",
+    "description": "Persistir perfiles de confianza y el historial de sanciones",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-07",
+    "description": "Crear la visualización de confianza, sanciones y restricciones",
+    "module": "Frontend",
+    "owner": "Luis Antonio Chipana Chura",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-08",
+    "description": "Implementar el flujo de apelación y su resolución por un administrador",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-09",
+    "description": "Definir porcentaje inicial, umbrales de los cuatro niveles y restricciones por nivel",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TRUST-10",
+    "description": "Definir el efecto de una apelación aceptada sobre el porcentaje de confianza",
+    "module": "Confianza",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-01",
+    "description": "Implementar el registro y la modificación de reglas de uso",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-02",
+    "description": "Permitir activar y desactivar reglas sin eliminarlas",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-03",
+    "description": "Configurar la penalización porcentual y la consecuencia de cada regla",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-04",
+    "description": "Versionar las reglas conservando su historial",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-05",
+    "description": "Registrar incumplimientos conservando regla, versión y penalización aplicada",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-06",
+    "description": "Descontar la penalización configurada del porcentaje de confianza",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-07",
+    "description": "Registrar la duración de restricción para estudiantes en la versión de regla",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-08",
+    "description": "Persistir reglas, versiones e incumplimientos con integridad histórica",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-09",
+    "description": "Crear la interfaz administrativa de reglas y sus versiones",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-10",
+    "description": "Consultar las reglas vigentes desde la aplicación",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "RULE-11",
+    "description": "Definir la representación y la ejecución de la consecuencia de una regla",
+    "module": "Reglas",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TERM-01",
+    "description": "Implementar versiones de términos y condiciones",
+    "module": "Términos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TERM-02",
+    "description": "Registrar qué versión aceptó cada usuario y cuándo",
+    "module": "Términos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TERM-03",
+    "description": "Persistir versiones de términos y sus aceptaciones",
+    "module": "Persistencia",
+    "owner": "Ronald Reynaldo Valdez Agüero",
+    "priority": "Alta",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TERM-04",
+    "description": "Crear la interfaz de términos y condiciones",
+    "module": "Frontend",
+    "owner": "Mauricio Alejandro Farfán Huayta",
+    "priority": "Media",
+    "sprint": "3",
+    "version": "v0.3.0",
+    "status": "Pendiente"
+  },
+  {
+    "id": "TERM-05",
+    "description": "Definir la composición de una versión de términos",
+    "module": "Términos",
+    "owner": "Juan Carlos Postigo Cabana",
+    "priority": "Media",
+    "sprint": "Futuro",
+    "version": "Por definir",
+    "status": "Pendiente"
+  }
+]

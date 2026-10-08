@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 
 export const InventoryCopyState = {
@@ -10,6 +11,7 @@ export type InventoryCopyState =
   (typeof InventoryCopyState)[keyof typeof InventoryCopyState];
 
 export class UpdateCopyStateDto {
+  @ApiProperty({ enum: InventoryCopyState, example: InventoryCopyState.NO_DISPONIBLE })
   @IsEnum(InventoryCopyState)
   estado!: InventoryCopyState;
 }

@@ -4,6 +4,9 @@
 /docs/architecture/structurizr/workspace.json
 .sonar/
 
+# Dependencias locales del frontend
+/frontend/node_modules/
+
 .env
 .vscode/
 .sonar/

@@ -1,0 +1,169 @@
+{
+  "currentSprint": 1,
+  "source": "docs/planning/README.md",
+  "sprints": [
+    {
+      "sprint": 0,
+      "name": "Planificación y arquitectura",
+      "status": "in_progress",
+      "source": "docs/planning/sprints/sprint-00.md",
+      "members": [
+        {
+          "name": "Juan Carlos Postigo Cabana",
+          "responsibility": "Consolida requisitos, arquitectura, documentación, backlog y dimensionamiento de los sprints.",
+          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Ronald Reynaldo Valdez Agüero",
+          "responsibility": "Aporta la perspectiva de datos y persistencia al análisis del dominio. Su esquema y configuración técnica se registran en el Sprint 1.",
+          "area": "Esquema y migraciones, capa de infraestructura",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Mauricio Alejandro Farfán Huayta",
+          "responsibility": "Aporta flujos y necesidades de usuario al análisis. Sus maquetas de Figma se registran como avance de diseño del Sprint 1, fuera del repositorio.",
+          "area": "frontend/src/app/, router/, layouts/, shared/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Luis Antonio Chipana Chura",
+          "responsibility": "Aporta la perspectiva de la interfaz y los flujos funcionales. Su prototipo de login en aporte-login se registra en el Sprint 1.",
+          "area": "frontend/src/modules/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "sprint": 1,
+      "name": "Base técnica y prototipos",
+      "status": "in_progress",
+      "source": "docs/planning/sprints/sprint-01.md",
+      "members": [
+        {
+          "name": "Juan Carlos Postigo Cabana",
+          "responsibility": "Arquitectura, estructura por capas, contratos de módulos, planificación y Project Showcase",
+          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
+          "update": "Planificación en docs/planning/, estructura y contratos del backend preparados con apoyo de Ronald.",
+          "pending": "Implementar los casos de uso y endpoints de los módulos restantes.",
+          "evidence": null
+        },
+        {
+          "name": "Ronald Reynaldo Valdez Agüero",
+          "responsibility": "PostgreSQL, contrato Prisma, migración, seeds y arranque técnico del backend",
+          "area": "Esquema y migraciones, capa de infraestructura",
+          "update": "PostgreSQL/Prisma y endpoints de Inventario en develop; backend/prisma/ y backend/src/modules/inventory/.",
+          "pending": "Revisar la consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha.",
+          "evidence": null
+        },
+        {
+          "name": "Mauricio Alejandro Farfán Huayta",
+          "responsibility": "Maquetas web y móvil por rol; coordinación del frontend común",
+          "area": "frontend/src/app/, router/, layouts/, shared/",
+          "update": "Maquetación Figma casi final, web y móvil por rol, con apoyo de Luis.",
+          "pending": "Revisar los flujos con el equipo antes de dar el diseño por cerrado.",
+          "evidence": {
+            "label": "Ver Figma",
+            "url": "https://www.figma.com/make/xgNTepyl4gkprTBb8lWzqr/Sistema-de-Pr%C3%A9stamos-Universitarios?t=jn7FnIXxi2AFKMvo-1"
+          }
+        },
+        {
+          "name": "Luis Antonio Chipana Chura",
+          "responsibility": "Prototipo de login y futura adaptación al frontend común",
+          "area": "frontend/src/modules/",
+          "update": "Apoyo a la maquetación Figma y prototipo visual de login incorporado desde aporte-login.",
+          "pending": "Integrar el acceso funcional con la API y coordinar sus vistas con el diseño común.",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "sprint": 2,
+      "name": "Primer flujo funcional",
+      "status": "planned",
+      "source": "docs/planning/sprints/sprint-02.md",
+      "members": [
+        {
+          "name": "Juan Carlos Postigo Cabana",
+          "responsibility": "Backend, endpoints, coordinación y Project Showcase",
+          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Ronald Reynaldo Valdez Agüero",
+          "responsibility": "Persistencia e integración de datos",
+          "area": "Esquema y migraciones, capa de infraestructura",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Mauricio Alejandro Farfán Huayta",
+          "responsibility": "Frontend general, integración del diseño Figma y autenticación",
+          "area": "frontend/src/app/, router/, layouts/, shared/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Luis Antonio Chipana Chura",
+          "responsibility": "Adaptación coordinada del prototipo de login; frontend de inventario y préstamos",
+          "area": "frontend/src/modules/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "sprint": 3,
+      "name": "Reglas de dominio y consolidación",
+      "status": "planned",
+      "source": "docs/planning/sprints/sprint-03.md",
+      "members": [
+        {
+          "name": "Juan Carlos Postigo Cabana",
+          "responsibility": "Planificación, backend de reglas, confianza, validación temporal y Project Showcase",
+          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Ronald Reynaldo Valdez Agüero",
+          "responsibility": "Persistencia de reglas, confianza e integridad histórica",
+          "area": "Esquema y migraciones, capa de infraestructura",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Mauricio Alejandro Farfán Huayta",
+          "responsibility": "Interfaz general de reglas y administración",
+          "area": "frontend/src/app/, router/, layouts/, shared/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        },
+        {
+          "name": "Luis Antonio Chipana Chura",
+          "responsibility": "Interfaz de confianza y sanciones",
+          "area": "frontend/src/modules/",
+          "update": "",
+          "pending": "",
+          "evidence": null
+        }
+      ]
+    }
+  ]
+}

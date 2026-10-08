@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticateAccountUseCase } from '../../application/use-cases/authenticate-account.use-case.js';
 import { GetAccessAccountUseCase } from '../../application/use-cases/get-access-account.use-case.js';
 import { RegisterAccessAccountUseCase } from '../../application/use-cases/register-access-account.use-case.js';
@@ -36,6 +37,7 @@ function configuredExpiresIn(): number {
   return Number(match[1]) * (multipliers[match[2] as keyof typeof multipliers] ?? 1);
 }
 
+@ApiTags('Autenticación')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -47,11 +49,15 @@ export class AuthController {
   ) {}
 
   @Post('accounts')
+  @ApiBody({ type: RegisterAccessAccountDto })
+  @ApiOperation({ summary: 'Registrar cuenta de acceso' })
   register(@Body() input: RegisterAccessAccountDto) {
     return this.registerAccount.execute(input).then(safeAccount);
   }
 
   @Post('authenticate')
+  @ApiBody({ type: AuthenticateAccountDto })
+  @ApiOperation({ summary: 'Autenticar cuenta de acceso' })
   authenticate(@Body() input: AuthenticateAccountDto) {
     return this.authenticateAccount.execute(input).then((identity) => ({
       accessToken: this.jwt.sign(identity),
@@ -67,6 +73,7 @@ export class AuthController {
   }
 
   @Get('accounts/:accountId')
+    @ApiOperation({ summary: 'Consultar cuenta de acceso' })
   @UseGuards(AuthGuard, RolesGuard)
   getById(
     @Param('accountId') accountId: string,

@@ -1,0 +1,2341 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Backend funcionando"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Consultar estado del backend",
+        "tags": [
+          "Sistema"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/health/database": {
+      "get": {
+        "operationId": "AppController_checkDatabase",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "database",
+                    "table",
+                    "rows"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "postgresql"
+                    },
+                    "table": {
+                      "type": "string",
+                      "example": "usuarios"
+                    },
+                    "rows": {
+                      "type": "integer",
+                      "example": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Comprobar conexión con PostgreSQL",
+        "tags": [
+          "Sistema"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/categories": {
+      "post": {
+        "operationId": "InventoryController_createCategory",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Registrar categoría de recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "get": {
+        "operationId": "InventoryController_listCategories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar categorías de recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/categories/{categoryId}": {
+      "get": {
+        "operationId": "InventoryController_getCategory",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar categoría de recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "patch": {
+        "operationId": "InventoryController_updateCategory",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Modificar categoría de recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "delete": {
+        "operationId": "InventoryController_deleteCategory",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedCategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Eliminar categoría de recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/resources": {
+      "post": {
+        "operationId": "InventoryController_createResource",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Registrar recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "get": {
+        "operationId": "InventoryController_listResources",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "available",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar recursos",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/resources/{resourceId}": {
+      "get": {
+        "operationId": "InventoryController_getResource",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDetailResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "patch": {
+        "operationId": "InventoryController_updateResource",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Modificar recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "delete": {
+        "operationId": "InventoryController_deleteResource",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedResourceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Eliminar recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/resources/{resourceId}/copies": {
+      "post": {
+        "operationId": "InventoryController_createCopy",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCopyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Registrar ejemplar",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "get": {
+        "operationId": "InventoryController_listCopiesByResource",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CopyResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar ejemplares de un recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/copies/{copyId}": {
+      "get": {
+        "operationId": "InventoryController_getCopy",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyDetailResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar ejemplar",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "delete": {
+        "operationId": "InventoryController_deleteCopy",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/inventory/copies/{copyId}/state": {
+      "patch": {
+        "operationId": "InventoryController_updateCopyState",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCopyStateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Modificar estado de un ejemplar",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/resources/{resourceId}/availability": {
+      "get": {
+        "operationId": "InventoryController_getResourceAvailability",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceAvailabilityResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar disponibilidad de un recurso",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/availability": {
+      "get": {
+        "operationId": "InventoryController_getGlobalAvailability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/inventory/copies/{copyId}/observations": {
+      "post": {
+        "operationId": "InventoryController_createObservation",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCopyObservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Registrar observación de un ejemplar",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      },
+      "get": {
+        "operationId": "InventoryController_listObservationsByCopy",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObservationResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar observaciones de un ejemplar",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/users/registration-requests": {
+      "post": {
+        "operationId": "RegistrationRequestsController_submit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRegistrationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Presentar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "get": {
+        "operationId": "RegistrationRequestsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/registration-requests/{requestId}": {
+      "get": {
+        "operationId": "RegistrationRequestsController_getById",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/registration-requests/{requestId}/approve": {
+      "post": {
+        "operationId": "RegistrationRequestsController_approve",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Aprobar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/registration-requests/{requestId}/reject": {
+      "post": {
+        "operationId": "RegistrationRequestsController_reject",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Rechazar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "operationId": "UsersController_getById",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar usuario",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/loan-eligibility": {
+      "get": {
+        "operationId": "UsersController_getEligibility",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar habilitación para préstamos",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/affiliation-status": {
+      "patch": {
+        "operationId": "UsersController_updateAffiliationStatus",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/trust": {
+      "get": {
+        "operationId": "UsersController_getTrust",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar perfil de confianza",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/trust-profile": {
+      "get": {
+        "operationId": "UsersController_getTrustProfileByName",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/sanctions": {
+      "get": {
+        "operationId": "UsersController_getSanctions",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar sanciones de un usuario",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans": {
+      "post": {
+        "operationId": "LoansController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLoanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/active": {
+      "get": {
+        "operationId": "LoansController_listActive",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar préstamos activos",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/overdue": {
+      "get": {
+        "operationId": "LoansController_listOverdue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar préstamos vencidos",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/user/{userId}/history": {
+      "get": {
+        "operationId": "LoansController_listHistory",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar historial de préstamos de un usuario",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/{loanId}": {
+      "get": {
+        "operationId": "LoansController_getById",
+        "parameters": [
+          {
+            "name": "loanId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/{loanId}/return": {
+      "post": {
+        "operationId": "LoansController_registerReturn",
+        "parameters": [
+          {
+            "name": "loanId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnLoanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar devolución",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/auth/accounts": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAccessAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar cuenta de acceso",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/auth/authenticate": {
+      "post": {
+        "operationId": "AuthController_authenticate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthenticateAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Autenticar cuenta de acceso",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/auth/accounts/{accountId}": {
+      "get": {
+        "operationId": "AuthController_getById",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar cuenta de acceso",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "patch": {
+        "operationId": "AuthController_update",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/rules": {
+      "post": {
+        "operationId": "RulesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar regla de uso",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/rules/{ruleId}": {
+      "put": {
+        "operationId": "RulesController_update",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Modificar regla de uso",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/rules/{ruleId}/status": {
+      "patch": {
+        "operationId": "RulesController_setStatus",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRuleStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Cambiar estado de una regla",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/rules/active": {
+      "get": {
+        "operationId": "RulesController_listActive",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar reglas vigentes",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/violations": {
+      "post": {
+        "operationId": "ViolationsController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterViolationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar incumplimiento",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/violations/{violationId}/appeals": {
+      "post": {
+        "operationId": "ViolationsController_appeal",
+        "parameters": [
+          {
+            "name": "violationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Presentar apelación de un incumplimiento",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/appeals/{appealId}/resolution": {
+      "patch": {
+        "operationId": "ViolationsController_resolve",
+        "parameters": [
+          {
+            "name": "appealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Resolver apelación",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/terms/versions": {
+      "post": {
+        "operationId": "TermsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTermsVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar versión de términos",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/terms/acceptances": {
+      "post": {
+        "operationId": "TermsController_accept",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptTermsVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Aceptar versión de términos",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/terms/users/{userId}/acceptances": {
+      "get": {
+        "operationId": "TermsController_listByUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar aceptaciones de términos de un usuario",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    }
+  },
+  "info": {
+    "title": "CS Préstamos — API",
+    "description": "Contratos HTTP declarados en el backend. El estado de implementación se indica por operación.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "minimum": 1,
+            "example": 7
+          }
+        },
+        "required": [
+          "nombre",
+          "tiempoMaximoPrestamoDias"
+        ]
+      },
+      "CategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "example": 7
+          },
+          "resourceCount": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "tiempoMaximoPrestamoDias",
+          "resourceCount"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "minimum": 1,
+            "example": 7
+          }
+        }
+      },
+      "DeletedCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "required": [
+          "deleted",
+          "categoryId"
+        ]
+      },
+      "CreateResourceDto": {
+        "type": "object",
+        "properties": {
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          }
+        },
+        "required": [
+          "categoriaId",
+          "nombre"
+        ]
+      },
+      "ResourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "categoriaId",
+          "nombre",
+          "descripcion",
+          "available",
+          "totalCopies",
+          "availableCopies"
+        ]
+      },
+      "ResourceCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Equipos de laboratorio"
+          },
+          "tiempoMaximoPrestamoDias": {
+            "type": "number",
+            "example": 7
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "tiempoMaximoPrestamoDias"
+        ]
+      },
+      "ResourceDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 0
+          },
+          "categoria": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceCategoryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "categoriaId",
+          "nombre",
+          "descripcion",
+          "available",
+          "totalCopies",
+          "availableCopies",
+          "categoria"
+        ]
+      },
+      "UpdateResourceDto": {
+        "type": "object",
+        "properties": {
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "nombre": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Multímetro digital"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true,
+            "example": "Equipo para prácticas de laboratorio"
+          }
+        }
+      },
+      "DeletedResourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          }
+        },
+        "required": [
+          "deleted",
+          "resourceId"
+        ]
+      },
+      "CreateCopyDto": {
+        "type": "object",
+        "properties": {
+          "codigoInventario": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "LAB-001"
+          }
+        },
+        "required": [
+          "codigoInventario"
+        ]
+      },
+      "CopyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "recursoId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "codigoInventario": {
+            "type": "string",
+            "example": "LAB-001"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "PRESTADO",
+              "NO_DISPONIBLE"
+            ],
+            "example": "DISPONIBLE"
+          }
+        },
+        "required": [
+          "id",
+          "recursoId",
+          "codigoInventario",
+          "estado"
+        ]
+      },
+      "CopyResourceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Multímetro digital"
+          },
+          "categoriaId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "categoriaId"
+        ]
+      },
+      "ObservationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440003"
+          },
+          "ejemplarId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "descripcion": {
+            "type": "string",
+            "example": "Carcasa con desgaste superficial"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-06T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "ejemplarId",
+          "descripcion",
+          "fecha"
+        ]
+      },
+      "CopyDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440002"
+          },
+          "recursoId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "codigoInventario": {
+            "type": "string",
+            "example": "LAB-001"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "PRESTADO",
+              "NO_DISPONIBLE"
+            ],
+            "example": "DISPONIBLE"
+          },
+          "recurso": {
+            "$ref": "#/components/schemas/CopyResourceDto"
+          },
+          "observaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObservationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "recursoId",
+          "codigoInventario",
+          "estado",
+          "recurso",
+          "observaciones"
+        ]
+      },
+      "UpdateCopyStateDto": {
+        "type": "object",
+        "properties": {
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "PRESTADO",
+              "NO_DISPONIBLE"
+            ],
+            "example": "NO_DISPONIBLE"
+          }
+        },
+        "required": [
+          "estado"
+        ]
+      },
+      "ResourceAvailabilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "totalCopies": {
+            "type": "number",
+            "example": 2
+          },
+          "availableCopies": {
+            "type": "number",
+            "example": 1
+          },
+          "unavailableCopies": {
+            "type": "number",
+            "example": 1
+          },
+          "borrowedCopies": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "resourceId",
+          "available",
+          "totalCopies",
+          "availableCopies",
+          "unavailableCopies",
+          "borrowedCopies"
+        ]
+      },
+      "CreateCopyObservationDto": {
+        "type": "object",
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Carcasa con desgaste superficial"
+          }
+        },
+        "required": [
+          "descripcion"
+        ]
+      },
+      "SubmitRegistrationRequestDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "ESTUDIANTE",
+              "DOCENTE",
+              "ADMINISTRATIVO"
+            ],
+            "example": "ESTUDIANTE"
+          },
+          "tipoUsuario": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "20260001"
+          },
+          "identificadorInstitucional": {
+            "example": [
+              "Referencia de evidencia"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "userType"
+        ]
+      },
+      "CreateLoanDto": {
+        "type": "object",
+        "properties": {
+          "copyId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2030-01-15T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "copyId",
+          "startsAt"
+        ]
+      },
+      "ReturnLoanDto": {
+        "type": "object",
+        "properties": {
+          "returnedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2030-01-20T10:00:00.000Z"
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000,
+            "example": "Devolución sin observaciones"
+          }
+        },
+        "required": [
+          "returnedAt"
+        ]
+      },
+      "RegisterAccessAccountDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@ejemplo.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 8,
+            "example": "ClaveEjemplo123"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "OPERADOR",
+              "ADMINISTRADOR"
+            ],
+            "example": "USUARIO"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "password"
+        ]
+      },
+      "AuthenticateAccountDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@ejemplo.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "ClaveEjemplo123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CreateRuleDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Regla de uso de ejemplo"
+          },
+          "description": {
+            "type": "string",
+            "example": "Descripción de la regla de uso"
+          },
+          "penaltyPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 5
+          },
+          "consequence": {
+            "type": "string",
+            "example": "Consecuencia definida para esta regla"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "penaltyPercentage",
+          "consequence"
+        ]
+      },
+      "UpdateRuleDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Regla de uso de ejemplo"
+          },
+          "description": {
+            "type": "string",
+            "example": "Descripción de la regla de uso"
+          },
+          "penaltyPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 5
+          },
+          "consequence": {
+            "type": "string",
+            "example": "Consecuencia definida para esta regla"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "penaltyPercentage",
+          "consequence"
+        ]
+      },
+      "SetRuleStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVA",
+              "INACTIVA"
+            ],
+            "example": "ACTIVA"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "RegisterViolationDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440005"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-01T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "userId",
+          "ruleId",
+          "occurredAt"
+        ]
+      },
+      "SubmitAppealDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Solicito revisar la sanción registrada"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-02T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "userId",
+          "reason",
+          "submittedAt"
+        ]
+      },
+      "ResolveAppealDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACEPTADA",
+              "RECHAZADA"
+            ],
+            "example": "ACEPTADA"
+          },
+          "resolution": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Resultado de la revisión de la apelación"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-03T10:00:00.000Z"
+          },
+          "resolvedByAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440006"
+          }
+        },
+        "required": [
+          "status",
+          "resolution",
+          "resolvedAt",
+          "resolvedByAccountId"
+        ]
+      },
+      "CreateTermsVersionDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Términos de uso"
+          },
+          "content": {
+            "type": "string",
+            "example": "Contenido de ejemplo de los términos"
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "AcceptTermsVersionDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440004"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2030-01-15T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "userId",
+          "termsVersionId",
+          "acceptedAt"
+        ]
+      }
+    }
+  }
+}

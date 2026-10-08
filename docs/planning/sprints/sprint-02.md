@@ -1,0 +1,247 @@
+---
+sprint: 2
+name: Primer flujo funcional
+status: planned
+version: v0.2.0
+commit_prefix: v0.2.0
+---
+
+# Sprint 2 — Primer flujo funcional
+
+## Objetivo
+
+Partir del Inventario ya operativo en el backend y de los prototipos del Sprint 1 para integrar un flujo completo: un usuario se autentica, consulta recursos, crea un préstamo persistido y registra su devolución.
+
+A partir de este sprint se evita una división estrictamente por tecnología. Cada integrante conserva su responsabilidad principal, pero el trabajo se organiza por flujo funcional.
+
+## Alcance
+
+- Revisar el esquema PostgreSQL/Prisma existente e integrar con persistencia real los repositorios de los módulos aún incompletos; Inventario ya dispone de ella.
+- Integrar la base Vue.js + TypeScript y adaptar o reemplazar el prototipo de login ya incorporado desde `aporte-login` según el diseño Figma revisado, sin mantener una segunda aplicación JavaScript.
+- Solicitud de registro de usuarios con evidencia de vinculación, tipo de usuario y aprobación o rechazo.
+- Consulta de habilitación del usuario para realizar préstamos.
+- Autenticación de usuarios registrados, con interfaz propia y navegación según sesión.
+- Completar la integración del Inventario existente y verificar la disponibilidad derivada de sus ejemplares.
+- Creación de préstamos, consulta de préstamos activos e historial, y registro de devoluciones.
+- Interfaz de Inventario conectada a la API real y primeras vistas de préstamos; incorporar las vistas visuales de Inventario no cerradas en el Sprint 1.
+- Línea paralela Project Showcase: secciones de API, modelos y equipo, alimentadas por fuentes documentales y OpenAPI generado, sin desplazar el flujo de préstamos.
+
+## Fuera de alcance
+
+- Préstamos planificados y validación de superposición de intervalos: Sprint 3.
+- Perfil de confianza, niveles, sanciones y apelaciones: Sprint 3.
+- Reglas versionadas, incumplimientos y términos: Sprint 3.
+- Identificación de préstamos vencidos (RF-25): Sprint 3.
+- Restricciones de préstamo por tipo de usuario o nivel de confianza: Sprint 3.
+- Cualquier valor todavía pendiente del modelo de confianza.
+
+En este sprint, la habilitación del usuario para prestar se resuelve con lo que ya está definido: solicitud aprobada y vinculación vigente. La habilitación no incorpora todavía confianza ni sanciones; esa composición llega en el Sprint 3 y se documentará como un cambio de la regla, no como una regla nueva.
+
+## Entregables
+
+Debe poder demostrarse el recorrido completo:
+
+1. usuario autenticado;
+2. consulta de recursos;
+3. consulta de ejemplares;
+4. disponibilidad;
+5. creación de préstamo;
+6. almacenamiento real;
+7. consulta de préstamo;
+8. devolución.
+
+En paralelo, la segunda etapa de Project Showcase prevé `/project/api`, `/project/data` y `/project/team`; no forman parte del recorrido funcional de préstamos.
+
+## Versión objetivo
+
+`v0.2.0` — todos los commits del sprint comienzan con este prefijo.
+
+## Integrantes y responsabilidades
+
+| Integrante | Responsabilidad en el sprint | Ramas |
+| --- | --- | --- |
+| Ronald Reynaldo Valdez Agüero | Persistencia e integración de datos | `feat/persistence-integration` |
+| Juan Carlos Postigo Cabana | Backend, endpoints, coordinación y Project Showcase | `feat/users-registration`, `feat/loan-flow`; `feat/project-showcase` para el módulo documental |
+| Mauricio Alejandro Farfán Huayta | Frontend general, integración del diseño Figma y autenticación | `feat/auth-ui` (rama propuesta) |
+| Luis Antonio Chipana Chura | Adaptación coordinada del prototipo de login; frontend de inventario y préstamos | `aporte-login` como referencia; nuevas ramas por tarea |
+
+## Tareas
+
+### Ronald Reynaldo Valdez Agüero
+
+**Responsabilidad:** persistencia e integración de datos.
+
+**Rama:** `feat/persistence-integration`
+
+**Tareas:**
+
+- Consolidar el esquema PostgreSQL a partir del preliminar del Sprint 1.
+- Integrar los repositorios con persistencia real (`ARCH-12`).
+- Apoyar la persistencia de los módulos Usuarios, Inventario y Préstamos (`USR-04`, `INV-09`, `LOAN-08`).
+- Revisar las restricciones relacionales, en particular la que impide que un ejemplar tenga dos préstamos activos simultáneos (RNF-04).
+- Mantener las migraciones.
+- Preparar datos de desarrollo suficientes para demostrar el flujo completo.
+
+**Commits esperados:**
+
+- `v0.2.0 feat: integra persistencia real de usuarios`
+- `v0.2.0 feat: integra persistencia de inventario`
+- `v0.2.0 feat: integra persistencia de préstamos`
+- `v0.2.0 chore: actualiza migraciones del modelo`
+
+### Juan Carlos Postigo Cabana
+
+**Responsabilidad:** backend, contratos de la API y coordinación entre módulos.
+
+**Ramas:** `feat/users-registration` y `feat/loan-flow`. No es necesario trabajar ambas simultáneamente; conviene cerrar la de usuarios antes de abrir la de préstamos, porque la habilitación del usuario es una precondición del préstamo.
+
+**Tareas — Usuarios:**
+
+- Implementar la solicitud de registro con tipo de usuario e identificador institucional (`USR-01`, RF-01, RF-02).
+- Registrar la evidencia de vinculación asociada a la solicitud (`USR-02`, RF-03).
+- Implementar la aprobación y el rechazo de solicitudes (`USR-03`, RF-04).
+- Exponer la consulta de habilitación para préstamos (`USR-05`, RF-07).
+
+**Tareas — Préstamos:**
+
+- Implementar la creación de un préstamo sobre un ejemplar disponible (`LOAN-02`, RF-15).
+- Verificar la habilitación del usuario antes de prestar (`LOAN-03`, RF-16).
+- Aplicar el plazo de la categoría al fijar `fechaFin` (`LOAN-04`, RF-18).
+- Cambiar el ejemplar a `PRESTADO` de forma consistente con el alta del préstamo (`LOAN-05`, RF-19).
+- Implementar la consulta de préstamos activos e historial por usuario (`LOAN-06`, RF-23, RF-24).
+- Implementar el registro de devoluciones y la liberación del ejemplar (`LOAN-07`, RF-20, RF-21).
+- Definir la estrategia transaccional para préstamos concurrentes (`ARCH-11`, RNF-04, RNF-09).
+
+**Tareas — Inventario y coordinación:**
+
+- Implementar el registro de recursos, categorías y ejemplares (`INV-06`, `INV-07`, `INV-12`).
+- Derivar la disponibilidad del recurso de sus ejemplares (`INV-08`, RF-13).
+- Registrar observaciones sobre el estado de un ejemplar (`INV-11`, RF-14, RF-22).
+- Decidir el mecanismo de credenciales y autenticación (`AUTH-01`) e implementar el endpoint correspondiente (`AUTH-02`).
+- Consolidar los contratos de la API y sustituir los mocks del Sprint 1.
+- Revisar la trazabilidad de RF-17 y RF-19 ante préstamos planificados (`DOC-08`), antes de que el Sprint 3 implemente la validación de superposición.
+- Mantener actualizado este archivo durante el sprint (`PLAN-05`).
+
+**Modelo de préstamo utilizado:** `usuarioId`, `ejemplarId`, `fechaInicio`, `fechaFin`, estado. Los estados son `PLANIFICADO`, `ACTIVO` y `FINALIZADO`. El Sprint 2 implementa el ciclo `ACTIVO` → `FINALIZADO`; `PLANIFICADO` forma parte del modelo desde ahora, pero su flujo se completa en el Sprint 3.
+
+**Tareas — Project Showcase (paralelas al flujo funcional):**
+
+- Generar OpenAPI desde controllers y DTO reales de NestJS mediante `@nestjs/swagger` (`PLAN-11`); no describir como implementados los endpoints que aún son esqueletos.
+- Agregar `/project/api` (`PLAN-10`) y una interfaz Vue propia de métodos, rutas, parámetros, cuerpos, respuestas, esquemas y autenticación cuando consten en la especificación (`PLAN-12`). Swagger UI puede ser herramienta de desarrollo, no la interfaz final.
+- Agregar `/project/data` (`PLAN-13`) distinguiendo modelo de dominio conceptual, modelo de persistencia Prisma/PostgreSQL y arquitectura. Una visualización adicional del esquema relacional dependerá de su viabilidad; no se confunde con el UML.
+- Agregar `/project/team` (`PLAN-14`) y mostrar responsabilidades, avances y pendientes del sprint por integrante (`PLAN-15`), sin métricas de productividad.
+- Definir el formato de lectura del front matter y automatizar la transformación de planificación, backlog y seguimiento a datos consumibles por Vue (`PLAN-02`). El generador futuro puede ubicarse en `scripts/generate-project-showcase.mjs` y producir artefactos derivados en `frontend/public/generated/project/`, no copias manuales de la fuente.
+
+**Integración:** las ramas de tarea parten de `develop` y regresan según el [flujo Git](../git-workflow.md); los cambios del router se coordinan con Mauricio. Si el backend no dispone aún de controllers y DTO suficientemente descritos, `/project/api` queda condicionado a la generación real de OpenAPI, no a una lista de endpoints escrita a mano.
+
+**Commits esperados:**
+
+- `v0.2.0 feat: implementa solicitud de registro de usuario`
+- `v0.2.0 feat: agrega aprobación de solicitudes de registro`
+- `v0.2.0 feat: implementa creación de préstamos`
+- `v0.2.0 feat: implementa consulta de préstamos`
+- `v0.2.0 feat: implementa registro de devoluciones`
+- `v0.2.0 docs: actualiza planificación del Sprint 2`
+- `v0.2.0 feat: agrega visualización de endpoints OpenAPI`
+- `v0.2.0 feat: agrega vista de modelos y persistencia`
+- `v0.2.0 feat: muestra avances del equipo por sprint`
+- `v0.2.0 chore: genera datos de planificación para el frontend`
+- `v0.2.0 chore: genera especificación OpenAPI del backend`
+
+### Mauricio Alejandro Farfán Huayta
+
+**Responsabilidad:** frontend general y autenticación.
+
+**Rama propuesta:** `feat/auth-ui`. El prototipo previo, incorporado desde `aporte-login` en `frontend/`, debe revisarse con Luis antes de adaptarlo a la base común.
+
+**Tareas:**
+
+- Adaptar o rehacer la interfaz de inicio de sesión a partir del prototipo de Luis y de las maquetas de Figma (`AUTH-04`); no darla por integrada al comenzar.
+- Integrar la autenticación con la API (`AUTH-05`).
+- Implementar la navegación autenticada y la protección visual de rutas.
+- Mantener las vistas globales y la consistencia con Figma y el sistema visual.
+- Adaptar la autenticación a dispositivos móviles.
+
+La protección de rutas en el frontend es visual: no sustituye la restricción de permisos del backend (RNF-05), que corresponde a `AUTH-06` en el Sprint 3.
+
+**Commits esperados:**
+
+- `v0.2.0 feat: crea interfaz de autenticación`
+- `v0.2.0 feat: integra autenticación con la API`
+- `v0.2.0 feat: agrega navegación según sesión`
+- `v0.2.0 style: adapta autenticación a dispositivos móviles`
+
+### Luis Antonio Chipana Chura
+
+**Responsabilidad:** frontend de inventario y préstamos, incluido su responsive.
+
+**Ramas:** `feat/inventory-management-ui` y, posteriormente, `feat/loan-ui`.
+
+**Tareas:**
+
+- Colaborar con Mauricio en la evaluación y adaptación del login de `aporte-login`, sin duplicar el router ni los componentes comunes.
+- Conectar el módulo Inventario con la API real (`INV-10`).
+- Completar la gestión visual de recursos y ejemplares.
+- Crear las vistas iniciales de préstamos dentro de `frontend/src/modules/loans/`.
+- Implementar el formulario de préstamo (`LOAN-09`).
+- Implementar la consulta de préstamos y el registro visual de devoluciones (`LOAN-10`).
+- Adaptar el módulo de préstamos a dispositivos móviles (`LOAN-11`).
+
+**Coordinación:** la navegación hacia el nuevo módulo de préstamos toca el router global, que mantiene Mauricio. Se acuerda antes de abrir el Pull Request.
+
+**Commits esperados:**
+
+- `v0.2.0 feat: integra inventario con API real`
+- `v0.2.0 feat: crea formulario de préstamo`
+- `v0.2.0 feat: crea listado de préstamos`
+- `v0.2.0 feat: agrega registro visual de devoluciones`
+- `v0.2.0 style: adapta módulo de préstamos a dispositivos móviles`
+
+## Dependencias
+
+| Dependencia | Quién la produce | Quién la consume | Observación |
+| --- | --- | --- | --- |
+| Sprint 1 cerrado y `v0.1.0` publicada | Todo el equipo | Todo el equipo | Precondición del sprint. |
+| Prototipo de `aporte-login` evaluado y diseño Figma accesible | Mauricio y Luis | Mauricio y Luis | Decidir antes de construir el login definitivo; incorporar el prototipo no equivale a tener el frontend integrado funcionalmente. |
+| Esquema consolidado y repositorios reales | Ronald | Juan Carlos | Bloquea la integración de los casos de uso con datos reales. |
+| Contratos de API consolidados | Juan Carlos | Mauricio y Luis | Necesarios antes de sustituir los mocks en el frontend. |
+| Mecanismo de autenticación decidido (`AUTH-01`) | Juan Carlos | Mauricio | Bloquea `AUTH-04` y `AUTH-05`. Debe decidirse al inicio del sprint. |
+| Habilitación del usuario (`USR-05`) | Juan Carlos | Juan Carlos | Precondición de `LOAN-03`. Por eso Usuarios se cierra antes que Préstamos. |
+| Entrada de navegación al módulo de préstamos | Mauricio | Luis | Cambio sobre el router global: se coordina previamente. |
+| Controllers, DTO y contratos de API reales | Juan Carlos | Juan Carlos (`PLAN-11`, `PLAN-10`, `PLAN-12`) | OpenAPI se genera desde el backend; no se sustituye por una lista manual en Vue. |
+| Avances y pendientes del sprint por integrante | Cada integrante; Juan Carlos consolida | Juan Carlos (`PLAN-14`, `PLAN-15`) | La vista muestra solo lo registrado en el documento del sprint. |
+| Front matter y Markdown versionados | Juan Carlos | Juan Carlos (`PLAN-02`) | Los JSON derivados no reemplazan los documentos de planificación. |
+
+El esquema de base de datos sigue derivándose del modelo de dominio. Si la integración revela un desajuste, se corrige primero el modelo en [`docs/architecture/`](../../architecture/uml/README.md).
+
+## Criterios de aceptación
+
+- Un usuario puede solicitar el registro aportando su tipo, identificador institucional y evidencia de vinculación.
+- Una solicitud puede aprobarse o rechazarse, y solo una solicitud aprobada habilita la cuenta.
+- Un usuario registrado puede autenticarse y la navegación cambia según su sesión.
+- Los recursos y sus ejemplares pueden consultarse desde la interfaz con datos reales de PostgreSQL.
+- La disponibilidad de un recurso se deriva de la existencia de al menos un ejemplar `DISPONIBLE`, sin almacenarse como fuente de verdad adicional.
+- Crear un préstamo verifica la habilitación del usuario, fija `fechaFin` según el plazo de la categoría y deja el ejemplar en `PRESTADO`.
+- Un mismo ejemplar no puede quedar asociado a dos préstamos activos, tampoco ante solicitudes concurrentes.
+- Registrar una devolución finaliza el préstamo y devuelve el ejemplar a `DISPONIBLE` cuando su estado lo permite; si no, queda `NO_DISPONIBLE` con su observación.
+- El historial de préstamos por usuario se conserva.
+- El flujo completo, del inicio de sesión a la devolución, puede demostrarse de principio a fin.
+- En la línea paralela, las vistas `/project/api`, `/project/data` y `/project/team` solo muestran información sustentada por OpenAPI y los documentos disponibles; no se usa Swagger UI como interfaz final.
+
+## Definition of Done
+
+Aplica la [Definition of Done del proyecto](../git-workflow.md#definition-of-done), con commits que comienzan por `v0.2.0`.
+
+## Pull Requests
+
+Pendiente.
+
+## Resultado del sprint
+
+Pendiente.
+
+## Versión resultante
+
+Prevista: `v0.2.0`
+
+Al completar e integrar correctamente: `develop` → `main`, y después el tag `v0.2.0`.

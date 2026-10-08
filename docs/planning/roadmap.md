@@ -1,0 +1,101 @@
+---
+document: roadmap
+version: v0.0.1
+status: in_progress
+owner: Juan Carlos Postigo Cabana
+---
+
+# Roadmap
+
+Progresión prevista del proyecto. Cada sprint tiene una versión objetivo; todos los commits de un sprint comienzan con esa versión, según la [convención de commits](git-workflow.md#convención-de-commits).
+
+## Progresión
+
+```text
+Análisis y arquitectura compartidos
+  → Base técnica y prototipos por área
+    → Integración del primer flujo funcional
+      → Reglas del dominio y consolidación
+```
+
+| Sprint | Nombre | Propósito | Versión objetivo | Prefijo de commit | Estado |
+| --- | --- | --- | --- | --- | --- |
+| 0 | Planificación y arquitectura | Analizar requisitos, acordar el dominio y la arquitectura y planificar el trabajo entre todos. | `v0.0.1` | `v0.0.1` | En curso; cierre formal pendiente |
+| 1 | Base técnica y prototipos | Integrar PostgreSQL/Prisma, Nest e Inventario; consolidar diseño y base Vue. | `v0.1.0` | `v0.1.0` | En curso |
+| 2 | Primer flujo funcional | Integrar autenticación, usuarios, inventario existente, préstamo y devolución sobre datos reales. | `v0.2.0` | `v0.2.0` | Planificado |
+| 3 | Reglas de dominio y consolidación | Incorporar confianza, sanciones, reglas versionadas, incumplimientos y términos. | `v0.3.0` | `v0.3.0` | Planificado |
+
+## Sprint 0 — Planificación y arquitectura
+
+**Versión objetivo:** `v0.0.1` · [Detalle](sprints/sprint-00.md)
+
+Análisis de requisitos y reglas, modelo de dominio, contextos DDD, arquitectura modular, estrategia Git, backlog y planificación de tareas realizados con participación del equipo. La documentación está avanzada; el sprint sigue abierto hasta registrar revisión, integración y cierre formal. El código, los esquemas físicos y los prototipos visuales se contabilizan en el Sprint 1, aunque parte del trabajo haya ocurrido en paralelo.
+
+## Sprint 1 — Base técnica y prototipos
+
+**Versión objetivo:** `v0.1.0` · [Detalle](sprints/sprint-01.md)
+
+Avance integrado en `develop`: PostgreSQL mediante Docker Compose, contrato Prisma con modelos del dominio, migración y datos iniciales; backend Nest con carpetas modulares por capas y endpoints de Inventario implementados por Ronald. Juan Carlos llevó la planificación y preparó la estructura y los contratos de los demás módulos con apoyo de Ronald; sus casos de uso y endpoints siguen pendientes. Mauricio completó con ayuda de Luis una maquetación Figma casi final, web y móvil para usuario, operador y administrador, [enlazada en el Sprint 1](sprints/sprint-01.md#estado-actual) y pendiente de revisión final. La base Vue 3 + TypeScript está integrada y el login de Luis sigue siendo un prototipo visual sin autenticación real. Estos avances no equivalen al cierre del sprint.
+
+## Sprint 2 — Primer flujo funcional
+
+**Versión objetivo:** `v0.2.0` · [Detalle](sprints/sprint-02.md)
+
+Consolidación del frontend y del prototipo de login, integración de autenticación y registro de usuarios, aprovechamiento del Inventario ya conectado a Prisma y creación, consulta y devolución de préstamos con datos reales. La persistencia de los módulos aún incompletos se integra aquí; no se vuelve a planificar Inventario desde cero. Al terminar debe demostrarse el recorrido del inicio de sesión a la devolución.
+
+## Sprint 3 — Reglas de dominio y consolidación
+
+**Versión objetivo:** `v0.3.0` · [Detalle](sprints/sprint-03.md)
+
+Préstamos planificados con validación de superposición de intervalos, perfil de confianza, sanciones, reglas versionadas, incumplimientos con penalización histórica y versiones de términos con su aceptación. Es el sprint que separa el sistema de un CRUD de préstamos.
+
+## Project Showcase — línea paralela
+
+**Responsable principal:** Juan Carlos Postigo Cabana · **Backlog:** `PLAN-01` a `PLAN-04` y `PLAN-06` a `PLAN-20` (`PLAN-05` mantiene la planificación) · **Rama actual de planificación:** `docs/project-planning`. Los cambios frontend de esta sección se limitan a reflejar la documentación versionada.
+
+Project Showcase es una sección de documentación interactiva del proceso del proyecto, separada del sistema de préstamos y de sus módulos de negocio. Acompaña los Sprints 1 a 3 **sin reemplazar sus objetivos ni crear un Sprint 4**. Las rutas existentes son `/project`, `/project/sprints`, `/project/architecture`, `/project/api`, `/project/data`, `/project/team` y `/project/git`; algunas todavía tienen alcance parcial.
+
+El resumen `/project` muestra sprint, versión objetivo, tecnologías y accesos a las secciones. Todavía no resume el estado por módulo. La vista de sprints muestra responsables y backlog documentado; el historial de ramas, resultados y Pull Requests sigue pendiente de consolidación. Arquitectura reúne el modelo de dominio, el mapa de contextos, las vistas internas y la arquitectura modular disponibles, sin mezclarlos con el modelo físico de datos.
+
+| Sprint | Versión | Etapa paralela | Resultado mínimo previsto |
+| --- | --- | --- | --- |
+| 1 | `v0.1.0` | Base del módulo, resumen, sprints, arquitectura, Git y formato de avances por integrante; SVG inicial de PlantUML. | `/project`, `/project/sprints`, `/project/architecture`, `/project/git`. |
+| 2 | `v0.2.0` | API desde OpenAPI, distinción de modelos, avances del equipo y transformación de documentación en datos. | `/project/api`, `/project/data`, `/project/team`. |
+| 3 | `v0.3.0` | Comparación planificado/realizado, historial Git y de versiones, exportación Structurizr, zoom SVG y navegación de presentación. | Sección navegable como evidencia del proceso, sujeta a datos efectivamente documentados. |
+
+[`docs/planning/`](README.md), [`docs/architecture/`](../architecture/uml/README.md), [`docs/requirements/`](../requirements/README.md), el código de `backend/` y las especificaciones generadas desde él conservan su papel de fuentes de verdad. El generador publica `planning.json`, `backlog.json`, `team.json`, `openapi.json` y SVG en `frontend/public/generated/project/`. Estos archivos son **derivados**: no se mantienen manualmente como una segunda documentación. El frontend consume los SVG exportados, no PlantUML ni Structurizr en tiempo de ejecución.
+
+`/project/api` usa una interfaz Vue propia alimentada por OpenAPI generado desde controllers y DTO de NestJS, sin Swagger UI. `/project/data` distingue modelo de dominio, modelo de persistencia y arquitectura. `/project/team` muestra responsabilidades, avances y pendientes por integrante desde el documento del sprint, sin métricas individuales. `/project/git` muestra el flujo de [Git](git-workflow.md) y no presenta ramas, Pull Requests, commits o tags como realizados sin evidencia.
+
+La generación usa `scripts/generate-project-showcase.mjs` y escribe en `frontend/public/generated/project/`. PlantUML parte de `docs/architecture/uml/*.puml`; Structurizr parte de `docs/architecture/structurizr/workspace.dsl`. Los SVG permiten consulta y zoom; su exportación local está documentada en `frontend/README.md`.
+
+La generación de datos de planificación y OpenAPI ya está disponible. Los SVG se actualizan localmente cuando se configuran las herramientas de PlantUML y Structurizr; los contratos reales del backend y el contenido de las vistas funcionales siguen avanzando por separado.
+
+## Funcionalidades futuras identificadas
+
+Las siguientes funcionalidades están reconocidas pero no planificadas dentro de los sprints 0 a 3. No tienen versión asignada.
+
+### Apelaciones en la interfaz
+
+**Backlog:** `TRUST-08`
+
+El dominio ya modela apelaciones sobre sanciones activas (RF-52 a RF-56). Sprint 3 incorpora confianza y sanciones; el flujo completo de apelación y resolución por un administrador queda identificado como continuación natural, sin versión asignada todavía.
+
+### Verificación de vinculación institucional
+
+**Backlog:** `USR-06`
+
+RF-03 exige registrar información para verificar la vinculación vigente con la EPCC, pero el procedimiento de verificación sigue [pendiente de definición](../architecture/uml/README.md#decisiones-deliberadamente-pendientes). Sprint 2 registra la evidencia y permite aprobar o rechazar manualmente; el mecanismo de verificación se planificará cuando esté acordado.
+
+## Versionado
+
+| Versión | Origen | Contenido |
+| --- | --- | --- |
+| `v0.0.1` | Cierre de Sprint 0 | Documentación de requisitos, arquitectura y planificación. Tag opcional. |
+| `v0.1.0` | Cierre de Sprint 1 | Base técnica ejecutable con mocks. |
+| `v0.2.0` | Cierre de Sprint 2 | Primer flujo funcional integrado. |
+| `v0.3.0` | Cierre de Sprint 3 | Reglas de dominio, confianza, sanciones y versionado de reglas y términos. |
+| `v0.x.y` | Corrección posterior | Incrementos PATCH sobre una versión ya cerrada. |
+| `v1.0.0` | Por definir | Primera versión considerada completa y estable. Todavía no planificada. |
+
+El detalle del flujo `rama temporal → develop → main → tag` está en [flujo de trabajo con Git](git-workflow.md#versionado-y-tags).

@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateLoanUseCase } from '../../application/use-cases/create-loan.use-case.js';
 import { GetLoanUseCase } from '../../application/use-cases/get-loan.use-case.js';
 import { ListActiveLoansUseCase } from '../../application/use-cases/list-active-loans.use-case.js';
@@ -22,6 +23,7 @@ import type { AuthenticatedIdentity } from '../../../auth/application/ports/auth
 import { AccessRole } from '../../../auth/domain/entities/access-account.js';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator.js';
 
+@ApiTags('Préstamos')
 @Controller('loans')
 @UseGuards(AuthGuard)
 export class LoansController {
@@ -35,6 +37,8 @@ export class LoansController {
   ) {}
 
   @Post()
+  @ApiBody({ type: CreateLoanDto })
+  @ApiOperation({ summary: 'Registrar préstamo' })
   create(@Body() input: CreateLoanDto, @CurrentUser() user: AuthenticatedIdentity) {
     return this.createLoan.execute({
       copyId: input.copyId,
@@ -46,11 +50,14 @@ export class LoansController {
   @Get('active')
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Get('active')
+  @ApiOperation({ summary: 'Consultar préstamos activos' })
   listActive() {
     return this.listActiveLoans.execute();
   }
 
   @Get('overdue')
+  @ApiOperation({ summary: 'Consultar préstamos vencidos' })
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   listOverdue() {
@@ -58,6 +65,7 @@ export class LoansController {
   }
 
   @Get('user/:userId/history')
+  @ApiOperation({ summary: 'Consultar historial de préstamos de un usuario' })
   listHistory(@Param('userId') userId: string, @CurrentUser() user: AuthenticatedIdentity) {
     if (user.userId !== userId && user.role === AccessRole.USER) {
       throw new ForbiddenException('No tiene permisos para consultar este historial.');
@@ -66,6 +74,7 @@ export class LoansController {
   }
 
   @Get(':loanId')
+  @ApiOperation({ summary: 'Consultar préstamo' })
   async getById(
     @Param('loanId') loanId: string,
     @CurrentUser() user: AuthenticatedIdentity,
@@ -83,6 +92,9 @@ export class LoansController {
   @Post(':loanId/return')
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Post(':loanId/return')
+  @ApiBody({ type: ReturnLoanDto })
+  @ApiOperation({ summary: 'Registrar devolución' })
   registerReturn(
     @Param('loanId') loanId: string,
     @Body() input: ReturnLoanDto,
