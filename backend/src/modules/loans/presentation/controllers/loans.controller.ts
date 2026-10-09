@@ -50,7 +50,6 @@ export class LoansController {
   @Get('active')
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
-  @Get('active')
   @ApiOperation({ summary: 'Consultar préstamos activos' })
   listActive() {
     return this.listActiveLoans.execute();
@@ -92,7 +91,6 @@ export class LoansController {
   @Post(':loanId/return')
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
-  @Post(':loanId/return')
   @ApiBody({ type: ReturnLoanDto })
   @ApiOperation({ summary: 'Registrar devolución' })
   registerReturn(

@@ -36,7 +36,6 @@ function configuredExpiresIn(): number {
   const multipliers = { s: 1, m: 60, h: 3600, d: 86400 };
   return Number(match[1]) * (multipliers[match[2] as keyof typeof multipliers] ?? 1);
 }
-
 @ApiTags('Autenticación')
 @Controller('auth')
 export class AuthController {
@@ -73,7 +72,7 @@ export class AuthController {
   }
 
   @Get('accounts/:accountId')
-    @ApiOperation({ summary: 'Consultar cuenta de acceso' })
+  @ApiOperation({ summary: 'Consultar cuenta de acceso' })
   @UseGuards(AuthGuard, RolesGuard)
   getById(
     @Param('accountId') accountId: string,
