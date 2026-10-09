@@ -1,0 +1,92 @@
+[
+  {
+    "id": "column.public.solicitudes_registro.nombre",
+    "label": "Add column \"nombre\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "nombre",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"nombre\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "nombre"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"nombre\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"nombre\" character varying(180)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"nombre\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "nombre"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.solicitudes_registro.nombre",
+    "label": "Set NOT NULL on \"solicitudes_registro\".\"nombre\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "nombre",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"nombre\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "nombre"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"nombre\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"solicitudes_registro\" WHERE \"nombre\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"nombre\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ALTER COLUMN \"nombre\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"nombre\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "nombre",
+          "NO"
+        ]
+      }
+    ]
+  }
+]

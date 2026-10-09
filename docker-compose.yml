@@ -12,6 +12,15 @@ services:
     volumes:
       # CAMBIO CLAVE: Remaniobramos el punto de montaje a la raíz de la librería de postgres
       - biblioteca_postgres_data:/var/lib/postgresql
+  structurizr:
+    image: structurizr/structurizr
+    container_name: mi-structurizr
+    restart: always
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./docs/architecture/structurizr:/usr/local/structurizr
+    command: local
 
 volumes:
   biblioteca_postgres_data:

@@ -67,3 +67,67 @@ npm run test:cov
 ```
 
 Las variables locales se configuran en archivos `.env`, que no deben versionarse.
+
+## Autenticación
+
+Auth acepta únicamente correos normalizados (sin espacios y en minúsculas) cuyo
+dominio exacto sea `@unsa.edu.pe`. Las contraseñas se almacenan con Argon2id.
+El registro público crea exclusivamente cuentas `USUARIO`; los roles
+`OPERADOR` y `ADMINISTRADOR` deben asignarse mediante una operación administrativa
+o un seed controlado.
+
+Configura en `.env`:
+
+```text
+DATABASE_URL=postgresql://...
+JWT_SECRET=un-secreto-largo-y-aleatorio
+JWT_EXPIRES_IN=3600s
+PORT=3000
+```
+
+El JWT contiene `accountId`, `userId`, `userType` y `role`. Las rutas protegidas
+deben usar `AuthGuard`; para autorización por rol se combinan `@Roles(...)` y
+`RolesGuard`.
+
+Endpoints disponibles:
+
+- `POST /auth/accounts`: autorregistro de una cuenta `USUARIO`.
+- `POST /auth/authenticate`: autenticación y emisión del JWT.
+- `GET /auth/accounts/:accountId`: consulta propia o administrativa.
+- `PATCH /auth/accounts/:accountId`: cambio administrativo de rol o habilitación;
+  requiere `ADMINISTRADOR`.
+
+La actualización administrativa registra el cambio en `AuditoriaUsuario`.
+La protección de Users, Rules, Inventory y Loans debe aplicarse según la matriz
+de permisos de cada módulo; no se introduce una dependencia inversa hacia Auth.
+
+### Datos de desarrollo
+
+El seed es no destructivo: conserva los datos existentes y solo agrega usuarios
+o cuentas seed cuando no existen. No elimina préstamos, devoluciones, usuarios,
+recursos, ejemplares ni categorías. Las cuentas de desarrollo son:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| USUARIO | `seed.usuario@unsa.edu.pe` | `SeedUsuario-2026!` |
+| OPERADOR | `seed.operador@unsa.edu.pe` | `SeedOperador-2026!` |
+| ADMINISTRADOR | `seed.admin@unsa.edu.pe` | `SeedAdministrador-2026!` |
+
+Estas credenciales son exclusivamente para desarrollo local o entornos de
+prueba. Deben reemplazarse antes de usar un entorno compartido o productivo.
+
+## Préstamos y devoluciones
+
+`POST /loans` requiere un JWT válido y recibe únicamente `copyId` y `startsAt`.
+El usuario se obtiene de `@CurrentUser()` y no puede ser enviado por el cliente.
+El caso de uso verifica elegibilidad, disponibilidad, fecha de inicio, duración
+máxima de la categoría y solapamientos.
+
+`POST /loans/:loanId/return` requiere rol `OPERADOR` o `ADMINISTRADOR`. Al
+registrar la devolución se finaliza el préstamo, se libera el ejemplar y, si se
+envía una observación, se marca como `NO_DISPONIBLE` y se crea una observación
+de inventario.
+
+Las consultas de préstamos activos y vencidos requieren `OPERADOR` o
+`ADMINISTRADOR`. El historial y el detalle solo pueden consultarse para el
+propio usuario, salvo esos roles operativos.

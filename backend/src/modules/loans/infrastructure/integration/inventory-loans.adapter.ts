@@ -10,18 +10,15 @@ import { InventoryService } from '../../../inventory/application/use-cases/inven
 export class InventoryLoansAdapter implements LoanInventoryPort {
   constructor(private readonly inventory: InventoryService) {}
 
-  async getAvailability(_copyId: string): Promise<CopyLoanAvailability> {
-    // TODO
-    throw new Error('Not implemented');
+  async getAvailability(copyId: string): Promise<CopyLoanAvailability> {
+    return this.inventory.getLoanAvailability(copyId);
   }
 
-  async markAsLoaned(_copyId: string): Promise<void> {
-    // TODO
-    throw new Error('Not implemented');
+  async markAsLoaned(copyId: string): Promise<void> {
+    await this.inventory.markCopyAsLoaned(copyId);
   }
 
-  async releaseAfterReturn(_input: ReleaseCopyInput): Promise<void> {
-    // TODO
-    throw new Error('Not implemented');
+  async releaseAfterReturn(input: ReleaseCopyInput): Promise<void> {
+    await this.inventory.releaseCopyAfterReturn(input.copyId, input.observation);
   }
 }

@@ -34,6 +34,7 @@ model Recurso {
 
   @@index([categoriaId])
   @@index([nombre])
+  @@unique([categoriaId, nombre])
   @@map("recursos")
 }
 
@@ -73,10 +74,12 @@ model ObservacionEjemplar {
 // -----------------------------------------------------------------------------
 model SolicitudRegistro {
   id                         Uuid                   @id @default(uuid())
+  nombre                     VarChar(180)
   tipoUsuario                TipoUsuario
   identificadorInstitucional VarChar(80)?
   fechaSolicitud             Timestamptz(3)         @default(now())
   estado                     EstadoSolicitud        @default(PENDIENTE)
+  motivoRechazo              String?
   usuarioAprobadoId          Uuid?
 
   createdAt                  Timestamptz(3)         @default(now())
@@ -84,10 +87,12 @@ model SolicitudRegistro {
 
   evidencias                 EvidenciaVinculacion[]
   usuarioAprobado            Usuario?               @relation("SolicitudAprobadaUsuario", fields:[usuarioAprobadoId], references:[id], onDelete: SetNull, onUpdate: Cascade)
+  auditorias                 AuditoriaUsuario[]     @relation("AuditoriaSolicitud")
 
   @@index([estado, fechaSolicitud])
   @@index([identificadorInstitucional])
   @@index([usuarioAprobadoId])
+  @@check(expression: "length(btrim(\"nombre\")) >= 2", name: "solicitudes_registro_nombre_length_check")
   @@map("solicitudes_registro")
 }
 
@@ -122,10 +127,33 @@ model Usuario {
   apelaciones                Apelacion[]
   aceptacionesTerminos       AceptacionTerminos[]
   cuentaAcceso               CuentaAcceso?
+  auditorias                 AuditoriaUsuario[]
 
   @@index([tipoUsuario])
   @@index([vinculacionVigente])
+  @@check(expression: "confianza >= 0 AND confianza <= 100", name: "usuarios_confianza_range_check")
+  @@check(expression: "length(btrim(\"nombre\")) >= 2", name: "usuarios_nombre_length_check")
   @@map("usuarios")
+}
+
+model AuditoriaUsuario {
+  id                  Uuid              @id @default(uuid())
+  usuarioId           Uuid?
+  solicitudRegistroId Uuid?
+  accion              VarChar(80)
+  motivo              String?
+  datosAnteriores     String?
+  datosNuevos         String?
+  fecha               Timestamptz(3)    @default(now())
+  createdAt           Timestamptz(3)    @default(now())
+
+  usuario             Usuario?         @relation(fields:[usuarioId], references:[id], onDelete: SetNull, onUpdate: Cascade)
+  solicitudRegistro   SolicitudRegistro? @relation("AuditoriaSolicitud", fields:[solicitudRegistroId], references:[id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([usuarioId, fecha])
+  @@index([solicitudRegistroId, fecha])
+  @@index([accion, fecha])
+  @@map("auditorias_usuario")
 }
 
 model Sancion {

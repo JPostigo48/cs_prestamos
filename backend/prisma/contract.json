@@ -12,6 +12,10 @@
       "model": "Apelacion",
       "namespace": "public"
     },
+    "auditorias_usuario": {
+      "model": "AuditoriaUsuario",
+      "namespace": "public"
+    },
     "categorias_recurso": {
       "model": "CategoriaRecurso",
       "namespace": "public"
@@ -490,6 +494,149 @@
               },
               "namespaceId": "public",
               "table": "apelaciones"
+            }
+          },
+          "AuditoriaUsuario": {
+            "fields": {
+              "accion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 80
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "datosAnteriores": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "datosNuevos": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fecha": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "motivo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "solicitudRegistroId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "usuarioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "solicitudRegistro": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "solicitudRegistroId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SolicitudRegistro",
+                  "namespace": "public"
+                }
+              },
+              "usuario": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "usuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accion": {
+                  "column": "accion"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "datosAnteriores": {
+                  "column": "datosAnteriores"
+                },
+                "datosNuevos": {
+                  "column": "datosNuevos"
+                },
+                "fecha": {
+                  "column": "fecha"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "motivo": {
+                  "column": "motivo"
+                },
+                "solicitudRegistroId": {
+                  "column": "solicitudRegistroId"
+                },
+                "usuarioId": {
+                  "column": "usuarioId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "auditorias_usuario"
             }
           },
           "CategoriaRecurso": {
@@ -1918,6 +2065,23 @@
                   }
                 }
               },
+              "motivoRechazo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 180
+                  }
+                }
+              },
               "tipoUsuario": {
                 "nullable": false,
                 "type": {
@@ -1947,6 +2111,21 @@
               }
             },
             "relations": {
+              "auditorias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "solicitudRegistroId"
+                  ]
+                },
+                "to": {
+                  "model": "AuditoriaUsuario",
+                  "namespace": "public"
+                }
+              },
               "evidencias": {
                 "cardinality": "1:N",
                 "on": {
@@ -1995,6 +2174,12 @@
                 },
                 "identificadorInstitucional": {
                   "column": "identificadorInstitucional"
+                },
+                "motivoRechazo": {
+                  "column": "motivoRechazo"
+                },
+                "nombre": {
+                  "column": "nombre"
                 },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
@@ -2116,6 +2301,21 @@
                 },
                 "to": {
                   "model": "Apelacion",
+                  "namespace": "public"
+                }
+              },
+              "auditorias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "usuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "AuditoriaUsuario",
                   "namespace": "public"
                 }
               },
@@ -2816,6 +3016,161 @@
                   ]
                 }
               ]
+            },
+            "auditorias_usuario": {
+              "columns": {
+                "accion": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 80
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "datosAnteriores": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "datosNuevos": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fecha": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "motivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "solicitudRegistroId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "usuarioId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "usuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "auditorias_usuario"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuarios"
+                  }
+                },
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "solicitudRegistroId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "auditorias_usuario"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "solicitudes_registro"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "accion",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_accion_fecha_idx_10245029",
+                  "prefix": "auditorias_usuario_accion_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "solicitudRegistroId",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454",
+                  "prefix": "auditorias_usuario_solicitudRegistroId_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "solicitudRegistroId"
+                  ],
+                  "name": "auditorias_usuario_solicitudRegistroId_idx_583e08f8",
+                  "prefix": "auditorias_usuario_solicitudRegistroId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_usuarioId_fecha_idx_c02c2249",
+                  "prefix": "auditorias_usuario_usuarioId_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId"
+                  ],
+                  "name": "auditorias_usuario_usuarioId_idx_5f01c7d6",
+                  "prefix": "auditorias_usuario_usuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "categorias_recurso": {
               "columns": {
@@ -3765,7 +4120,14 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "categoriaId",
+                    "nombre"
+                  ]
+                }
+              ]
             },
             "reglas_uso": {
               "columns": {
@@ -4071,6 +4433,11 @@
                   "prefix": "solicitudes_registro_estado_check"
                 },
                 {
+                  "expression": "length(btrim(\"nombre\")) >= 2",
+                  "name": "solicitudes_registro_nombre_length_check_7b391dd1",
+                  "prefix": "solicitudes_registro_nombre_length_check"
+                },
+                {
                   "expression": "\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO')",
                   "name": "solicitudes_registro_tipoUsuario_check_70fac5a9",
                   "prefix": "solicitudes_registro_tipoUsuario_check"
@@ -4127,6 +4494,19 @@
                   "nullable": true,
                   "typeParams": {
                     "length": 80
+                  }
+                },
+                "motivoRechazo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "nombre": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 180
                   }
                 },
                 "tipoUsuario": {
@@ -4207,6 +4587,16 @@
             },
             "usuarios": {
               "checks": [
+                {
+                  "expression": "confianza >= 0 AND confianza <= 100",
+                  "name": "usuarios_confianza_range_check_f2990dfd",
+                  "prefix": "usuarios_confianza_range_check"
+                },
+                {
+                  "expression": "length(btrim(\"nombre\")) >= 2",
+                  "name": "usuarios_nombre_length_check_7b391dd1",
+                  "prefix": "usuarios_nombre_length_check"
+                },
                 {
                   "expression": "\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO')",
                   "name": "usuarios_tipoUsuario_check_70fac5a9",
@@ -4577,10 +4967,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8b3fc545ac268a096596a6f90ad53442d955beb4fe7a67062546a520c4123218"
+    "storageHash": "0745075c442937a011808205cb2189c319e04342c2b83dd6b7aee663bd2e4416"
   },
   "execution": {
-    "executionHash": "4f1e4890be066a85618d386c177e30a8fd4e44f43dfaeb236f358c2165dfe6e0",
+    "executionHash": "e5fdc516c8813f4bb22bd1fabb4acef34ef1880ad6e2efa6a362a7c0bfb1b598",
     "mutations": {
       "defaults": [
         {
@@ -4618,6 +5008,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "apelaciones"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "auditorias_usuario"
           }
         },
         {

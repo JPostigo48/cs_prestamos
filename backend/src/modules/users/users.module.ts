@@ -6,6 +6,9 @@ import { GetUserLoanEligibilityUseCase } from './application/use-cases/get-user-
 import { GetUserTrustProfileUseCase } from './application/use-cases/get-user-trust-profile.use-case.js';
 import { GetUserUseCase } from './application/use-cases/get-user.use-case.js';
 import { ListUserSanctionsUseCase } from './application/use-cases/list-user-sanctions.use-case.js';
+import { ListRegistrationRequestsUseCase } from './application/use-cases/list-registration-requests.use-case.js';
+import { ListUsersUseCase } from './application/use-cases/list-users.use-case.js';
+import { UpdateAffiliationStatusUseCase } from './application/use-cases/update-affiliation-status.use-case.js';
 import { RejectRegistrationRequestUseCase } from './application/use-cases/reject-registration-request.use-case.js';
 import { SubmitRegistrationRequestUseCase } from './application/use-cases/submit-registration-request.use-case.js';
 import { RegistrationRequestRepository } from './domain/repositories/registration-request.repository.js';
@@ -25,6 +28,9 @@ const useCases = [
   GetUserTrustProfileUseCase,
   ApplyTrustPenaltyUseCase,
   ListUserSanctionsUseCase,
+  ListRegistrationRequestsUseCase,
+  ListUsersUseCase,
+  UpdateAffiliationStatusUseCase,
 ];
 
 @Module({

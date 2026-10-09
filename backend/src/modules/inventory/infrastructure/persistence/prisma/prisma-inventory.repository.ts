@@ -90,8 +90,10 @@ export class PrismaInventoryRepository extends InventoryRepository {
     const query = this.prisma.sql.public.categorias_recurso
       .delete()
       .where((row, fns) => fns.eq(row.id, categoryId))
+      .returning('id')
       .build();
-    return await this.runtime().execute(query);
+    const rows = await this.runtime().query(query);
+    return rows.length;
   }
 
   async countResourcesByCategory(categoryId: string): Promise<number> {
@@ -133,6 +135,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
     categoryId?: string;
     available?: boolean;
     search?: string;
+    limit?: number;
+    offset?: number;
   }) {
     let base = this.prisma.sql.public.recursos.select(
       'id',
@@ -155,8 +159,31 @@ export class PrismaInventoryRepository extends InventoryRepository {
       );
     }
 
+    if (filters?.limit !== undefined) {
+      base = base.limit(filters.limit);
+    }
+    if (filters?.offset !== undefined) {
+      base = base.offset(filters.offset);
+    }
+
     const query = base.build();
     return await this.runtime().query(query);
+  }
+
+  async countResources(filters?: { categoryId?: string; search?: string }) {
+    let base = this.prisma.sql.public.recursos.select('id');
+    if (filters?.categoryId) {
+      base = base.where((row, fns) =>
+        fns.eq(row.categoriaId, filters.categoryId!),
+      );
+    }
+    if (filters?.search) {
+      base = base.where((row, fns) =>
+        fns.ilike(row.nombre, `%${filters.search!}%`),
+      );
+    }
+    const rows = await this.runtime().query(base.build());
+    return rows.length;
   }
 
   async findResourceById(resourceId: string) {
@@ -212,8 +239,10 @@ export class PrismaInventoryRepository extends InventoryRepository {
     const query = this.prisma.sql.public.recursos
       .delete()
       .where((row, fns) => fns.eq(row.id, resourceId))
+      .returning('id')
       .build();
-    return await this.runtime().execute(query);
+    const rows = await this.runtime().query(query);
+    return rows.length;
   }
 
   async countCopiesByResource(resourceId: string): Promise<number> {
@@ -230,6 +259,19 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .select('id')
       .where((row, fns) => fns.eq(row.recursoId, resourceId))
       .where((row, fns) => fns.eq(row.estado, 'DISPONIBLE'))
+      .build();
+    const rows = await this.runtime().query(query);
+    return rows.length;
+  }
+
+  async countCopiesByResourceAndState(
+    resourceId: string,
+    estado: InventoryCopyStatus,
+  ): Promise<number> {
+    const query = this.prisma.sql.public.ejemplares
+      .select('id')
+      .where((row, fns) => fns.eq(row.recursoId, resourceId))
+      .where((row, fns) => fns.eq(row.estado, estado))
       .build();
     const rows = await this.runtime().query(query);
     return rows.length;
@@ -295,11 +337,38 @@ export class PrismaInventoryRepository extends InventoryRepository {
     return rows[0] ?? null;
   }
 
+  async deleteCopy(copyId: string) {
+    const query = this.prisma.sql.public.ejemplares
+      .delete()
+      .where((row, fns) => fns.eq(row.id, copyId))
+      .returning('id')
+      .build();
+    const rows = await this.runtime().query(query);
+    return rows.length;
+  }
+
   async updateCopyState(copyId: string, estado: InventoryCopyStateManaged) {
     const nextState: InventoryCopyStateManaged =
       estado as InventoryCopyStateManaged;
     const query = this.prisma.sql.public.ejemplares
       .update({ estado: nextState })
+      .where((row, fns) => fns.eq(row.id, copyId))
+      .returning(
+        'id',
+        'recursoId',
+        'codigoInventario',
+        'estado',
+        'createdAt',
+        'updatedAt',
+      )
+      .build();
+    const rows = await this.runtime().query(query);
+    return rows[0] ?? null;
+  }
+
+  async markCopyAsLoaned(copyId: string) {
+    const query = this.prisma.sql.public.ejemplares
+      .update({ estado: 'PRESTADO' })
       .where((row, fns) => fns.eq(row.id, copyId))
       .returning(
         'id',

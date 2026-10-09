@@ -25,6 +25,7 @@ import { CreateResourceDto } from '../dto/create-resource.dto.js';
 import { UpdateCategoryDto } from '../dto/update-category.dto.js';
 import { UpdateCopyStateDto } from '../dto/update-copy-state.dto.js';
 import { UpdateResourceDto } from '../dto/update-resource.dto.js';
+import { ListResourcesQueryDto } from '../dto/list-resources-query.dto.js';
 import {
   CategoryResponseDto,
   CopyDetailResponseDto,
@@ -103,12 +104,8 @@ export class InventoryController {
   @ApiOperation({ summary: 'Consultar recursos' })
   @ApiOkResponse({ type: ResourceResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
-  listResources(
-    @Query('categoryId') categoryId?: string,
-    @Query('available') available?: string,
-    @Query('search') search?: string,
-  ) {
-    return this.service.listResources({ categoryId, available, search });
+  listResources(@Query() query: ListResourcesQueryDto) {
+    return this.service.listResources(query);
   }
 
   @Get('resources/:resourceId')
@@ -167,6 +164,11 @@ export class InventoryController {
     return this.service.getCopy(copyId);
   }
 
+  @Delete('copies/:copyId')
+  deleteCopy(@Param('copyId') copyId: string) {
+    return this.service.deleteCopy(copyId);
+  }
+
   @Patch('copies/:copyId/state')
   @ApiBody({ type: UpdateCopyStateDto })
   @ApiOperation({ summary: 'Modificar estado de un ejemplar' })
@@ -185,6 +187,11 @@ export class InventoryController {
   @ApiExtension('x-implementation-status', 'implemented')
   getResourceAvailability(@Param('resourceId') resourceId: string) {
     return this.service.getResourceAvailability(resourceId);
+  }
+
+  @Get('availability')
+  getGlobalAvailability() {
+    return this.service.getGlobalAvailability();
   }
 
   @Post('copies/:copyId/observations')

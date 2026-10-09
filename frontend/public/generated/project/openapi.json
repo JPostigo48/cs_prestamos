@@ -520,6 +520,28 @@
           "Inventario"
         ],
         "x-implementation-status": "implemented"
+      },
+      "delete": {
+        "operationId": "InventoryController_deleteCopy",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
       }
     },
     "/inventory/copies/{copyId}/state": {
@@ -594,6 +616,21 @@
           "Inventario"
         ],
         "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/availability": {
+      "get": {
+        "operationId": "InventoryController_getGlobalAvailability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
       }
     },
     "/inventory/copies/{copyId}/observations": {
@@ -691,6 +728,19 @@
           }
         },
         "summary": "Presentar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "get": {
+        "operationId": "RegistrationRequestsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Usuarios"
         ],
@@ -822,6 +872,45 @@
         "x-implementation-status": "pending"
       }
     },
+    "/users/{userId}/affiliation-status": {
+      "patch": {
+        "operationId": "UsersController_updateAffiliationStatus",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
     "/users/{userId}/trust": {
       "get": {
         "operationId": "UsersController_getTrust",
@@ -841,6 +930,30 @@
           }
         },
         "summary": "Consultar perfil de confianza",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/trust-profile": {
+      "get": {
+        "operationId": "UsersController_getTrustProfileByName",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Usuarios"
         ],
@@ -1086,6 +1199,28 @@
           }
         },
         "summary": "Consultar cuenta de acceso",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "patch": {
+        "operationId": "AuthController_update",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Autenticación"
         ],
@@ -1870,6 +2005,11 @@
       "SubmitRegistrationRequestDto": {
         "type": "object",
         "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
           "userType": {
             "type": "string",
             "enum": [
@@ -1879,12 +2019,12 @@
             ],
             "example": "ESTUDIANTE"
           },
-          "institutionalId": {
+          "tipoUsuario": {
             "type": "string",
             "maxLength": 80,
             "example": "20260001"
           },
-          "evidence": {
+          "identificadorInstitucional": {
             "example": [
               "Referencia de evidencia"
             ],
@@ -1901,15 +2041,10 @@
       "CreateLoanDto": {
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "copyId": {
             "type": "string",
             "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440002"
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "startsAt": {
             "type": "string",
@@ -1918,7 +2053,6 @@
           }
         },
         "required": [
-          "userId",
           "copyId",
           "startsAt"
         ]

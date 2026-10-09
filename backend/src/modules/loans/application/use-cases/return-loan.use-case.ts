@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ReturnLoanInput } from '../ports/loans.inputs.js';
-import { LoanInventoryPort } from '../ports/loan-inventory.port.js';
 import type { Loan } from '../../domain/entities/loan.js';
 import { LoanRepository } from '../../domain/repositories/loan.repository.js';
 
@@ -8,11 +7,18 @@ import { LoanRepository } from '../../domain/repositories/loan.repository.js';
 export class ReturnLoanUseCase {
   constructor(
     private readonly loans: LoanRepository,
-    private readonly inventory: LoanInventoryPort,
   ) {}
 
-  async execute(_input: ReturnLoanInput): Promise<Loan> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: ReturnLoanInput): Promise<Loan> {
+    const loan = await this.loans.findById(input.loanId);
+    if (!loan) throw new NotFoundException('Préstamo no encontrado.');
+    if (loan.status !== 'ACTIVO' && loan.status !== 'PLANIFICADO') {
+      throw new ConflictException('El préstamo ya fue finalizado.');
+    }
+    if (input.returnedAt < loan.startsAt) {
+      throw new ConflictException('La devolución no puede preceder al préstamo.');
+    }
+    await this.loans.registerReturnWithCopy(input);
+    return (await this.loans.findById(input.loanId)) ?? loan;
   }
 }
