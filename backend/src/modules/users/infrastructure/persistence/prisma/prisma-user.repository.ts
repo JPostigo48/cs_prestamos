@@ -11,6 +11,15 @@ import {
   type ApplyTrustPenaltyData,
 } from '../../../domain/repositories/user.repository.js';
 
+export function isEffectiveActiveSanction(
+  sanction: Pick<Sanction, 'status' | 'startsAt' | 'endsAt'>,
+  at: Date,
+): boolean {
+  return sanction.status === 'ACTIVA' &&
+    sanction.startsAt <= at &&
+    (sanction.endsAt === null || sanction.endsAt > at);
+}
+
 @Injectable()
 export class PrismaUserRepository extends UserRepository {
   constructor(private readonly prisma: PrismaService) {
@@ -71,11 +80,7 @@ export class PrismaUserRepository extends UserRepository {
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const sanctions = await this.listSanctions(userId);
     const now = new Date();
-    const activeSanctions = sanctions.filter((sanction) =>
-      sanction.status === 'ACTIVA' &&
-      sanction.startsAt <= now &&
-      (sanction.endsAt === null || sanction.endsAt > now),
-    );
+    const activeSanctions = sanctions.filter((sanction) => isEffectiveActiveSanction(sanction, now));
     const active = activeSanctions.length > 0;
     const reasons = [
       ...(user.hasCurrentAffiliation ? [] : ['VINCULACION_NO_VIGENTE']),
@@ -89,7 +94,7 @@ export class PrismaUserRepository extends UserRepository {
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const sanctions = await this.listSanctions(userId);
     const now = new Date();
-    return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => sanction.status === 'ACTIVA' && sanction.startsAt <= now && (sanction.endsAt === null || sanction.endsAt > now)) };
+    return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => isEffectiveActiveSanction(sanction, now)) };
   }
 
   async applyTrustPenalty(data: ApplyTrustPenaltyData): Promise<UserTrustProfile> {

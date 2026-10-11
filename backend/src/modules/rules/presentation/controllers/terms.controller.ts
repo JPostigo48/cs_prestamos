@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
 import { AcceptTermsVersionUseCase } from '../../application/use-cases/accept-terms-version.use-case.js';
 import { CreateTermsVersionUseCase } from '../../application/use-cases/create-terms-version.use-case.js';
@@ -47,7 +47,9 @@ export class TermsController {
   @Get('users/:userId/acceptances')
   @ApiOperation({ summary: 'Consultar aceptaciones de términos de un usuario' })
   listByUser(@Param('userId') userId: string, @CurrentUser() user: AuthenticatedIdentity) {
-    if (user.userId !== userId && user.role === AccessRole.USER) throw new Error('No autorizado.');
+    if (user.userId !== userId && user.role === AccessRole.USER) {
+      throw new ForbiddenException('No tiene permisos para consultar estas aceptaciones.');
+    }
     return this.listUserAcceptances.execute({ userId });
   }
 }
