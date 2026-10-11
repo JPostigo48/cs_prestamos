@@ -2233,11 +2233,6 @@
       "SubmitAppealDto": {
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "reason": {
             "type": "string",
             "maxLength": 2000,
@@ -2250,7 +2245,6 @@
           }
         },
         "required": [
-          "userId",
           "reason",
           "submittedAt"
         ]
@@ -2275,18 +2269,12 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-09-03T10:00:00.000Z"
-          },
-          "resolvedByAccountId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440006"
           }
         },
         "required": [
           "status",
           "resolution",
-          "resolvedAt",
-          "resolvedByAccountId"
+          "resolvedAt"
         ]
       },
       "CreateTermsVersionDto": {
