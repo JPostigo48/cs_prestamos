@@ -7,8 +7,10 @@ import { TermsRepository } from '../../domain/repositories/terms.repository.js';
 export class AcceptTermsVersionUseCase {
   constructor(private readonly terms: TermsRepository) {}
 
-  async execute(_input: AcceptTermsVersionInput): Promise<TermsAcceptance> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: AcceptTermsVersionInput): Promise<TermsAcceptance> {
+    if (!(await this.terms.findVersionById(input.termsVersionId))) {
+      throw new Error('Versión de términos no encontrada.');
+    }
+    return this.terms.accept(input);
   }
 }

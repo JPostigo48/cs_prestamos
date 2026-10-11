@@ -7,8 +7,10 @@ import { AppealRepository } from '../../domain/repositories/appeal.repository.js
 export class ResolveAppealUseCase {
   constructor(private readonly appeals: AppealRepository) {}
 
-  async execute(_input: ResolveAppealInput): Promise<Appeal> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: ResolveAppealInput): Promise<Appeal> {
+    const appeal = await this.appeals.findById(input.appealId);
+    if (!appeal) throw new Error('Apelación no encontrada.');
+    if (appeal.status !== 'PENDIENTE') throw new Error('La apelación ya fue resuelta.');
+    return this.appeals.resolve(input);
   }
 }

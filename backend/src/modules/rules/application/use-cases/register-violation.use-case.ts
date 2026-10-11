@@ -13,8 +13,23 @@ export class RegisterViolationUseCase {
     private readonly users: UserTrustPort,
   ) {}
 
-  async execute(_input: RegisterViolationInput): Promise<Violation> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: RegisterViolationInput): Promise<Violation> {
+    const rule = await this.rules.findById(input.ruleId);
+    const version = rule?.versions.find((item) => item.id === rule.currentVersionId);
+    if (!rule || !version || version.status !== 'ACTIVA') {
+      throw new Error('La regla no está activa.');
+    }
+    const violation = await this.violations.create({
+      userId: input.userId,
+      ruleId: input.ruleId,
+      ruleVersionId: version.id,
+      occurredAt: input.occurredAt,
+      appliedPenalty: version.penaltyPercentage,
+    });
+    await this.users.applyPenalty({
+      userId: input.userId, violationId: violation.id, ruleId: input.ruleId,
+      ruleVersionId: version.id, penaltyPercentage: version.penaltyPercentage,
+    });
+    return violation;
   }
 }

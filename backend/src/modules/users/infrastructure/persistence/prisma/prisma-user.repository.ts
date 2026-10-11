@@ -89,7 +89,20 @@ export class PrismaUserRepository extends UserRepository {
     const user = await this.findById(data.userId);
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const next = Math.max(0, user.trustPercentage - data.penaltyPercentage);
-    await this.runtime().query(this.prisma.sql.public.usuarios.update({ confianza: next.toFixed(2) }).where((row, fns) => fns.eq(row.id, data.userId)).returning('id').build());
+    await this.prisma.client.transaction(async (tx) => {
+      await tx.query(this.prisma.sql.public.usuarios.update({ confianza: next.toFixed(2) }).where((row, fns) => fns.eq(row.id, data.userId)).returning('id').build());
+      await tx.query(this.prisma.sql.public.sanciones.insert([{
+        usuarioId: data.userId,
+        incumplimientoId: data.violationId,
+        reglaId: data.ruleId,
+        versionReglaId: data.ruleVersionId,
+        estado: 'ACTIVA',
+        fechaInicio: new Date(),
+        fechaFin: null,
+        confianzaAnterior: user.trustPercentage.toFixed(2),
+        confianzaPosterior: next.toFixed(2),
+      }]).returning('id').build());
+    });
     await this.audit({ usuarioId: data.userId, accion: 'CONFIANZA_ACTUALIZADA', datosAnteriores: { confianza: user.trustPercentage }, datosNuevos: { confianza: next }, });
     return this.getTrustProfile(data.userId);
   }

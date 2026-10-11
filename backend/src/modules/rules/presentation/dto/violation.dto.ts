@@ -19,10 +19,6 @@ export class RegisterViolationDto {
 }
 
 export class SubmitAppealDto {
-  @ApiProperty({ type: String, format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' })
-  @IsUUID()
-  userId!: string;
-
   @ApiProperty({ type: String, maxLength: 2000, example: 'Solicito revisar la sanción registrada' })
   @IsString()
   @MaxLength(2000)
@@ -49,7 +45,4 @@ export class ResolveAppealDto {
   @IsDate()
   resolvedAt!: Date;
 
-  @ApiProperty({ type: String, format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440006' })
-  @IsUUID()
-  resolvedByAccountId!: string;
 }
