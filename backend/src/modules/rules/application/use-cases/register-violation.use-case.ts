@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { RegisterViolationInput } from '../ports/violations.inputs.js';
 import { UserTrustPort } from '../ports/user-trust.port.js';
 import type { Violation } from '../../domain/entities/violation.js';
@@ -17,7 +17,7 @@ export class RegisterViolationUseCase {
     const rule = await this.rules.findById(input.ruleId);
     const version = rule?.versions.find((item) => item.id === rule.currentVersionId);
     if (!rule || !version || version.status !== 'ACTIVA') {
-      throw new Error('La regla no está activa.');
+      throw new NotFoundException('Regla activa no encontrada.');
     }
     const violation = await this.violations.create({
       userId: input.userId,

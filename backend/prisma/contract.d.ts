@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0745075c442937a011808205cb2189c319e04342c2b83dd6b7aee663bd2e4416'>;
+  StorageHashBase<'852410ac28569b6d7378ebe1d98fe19b6a09cedac7146c5d6effa6780118dc61'>;
 export type ExecutionHash =
   ExecutionHashBase<'e5fdc516c8813f4bb22bd1fabb4acef34ef1880ad6e2efa6a362a7c0bfb1b598'>;
 export type ProfileHash =
@@ -358,7 +358,7 @@ export type FieldOutputTypes = {
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly reglaId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly versionReglaId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly estado: 'ACTIVA' | 'FINALIZADA';
+      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly confianzaAnterior: Numeric<5, 2>;
@@ -526,7 +526,7 @@ export type FieldInputTypes = {
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly reglaId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly versionReglaId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly estado: 'ACTIVA' | 'FINALIZADA';
+      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly confianzaAnterior: CodecTypes['pg/numeric@1']['input'];
@@ -692,7 +692,7 @@ export type StorageColumnTypes = {
       readonly confianzaAnterior: Numeric<5, 2>;
       readonly confianzaPosterior: Numeric<5, 2>;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly estado: 'ACTIVA' | 'FINALIZADA';
+      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
@@ -860,7 +860,7 @@ export type StorageColumnInputTypes = {
       readonly confianzaAnterior: CodecTypes['pg/numeric@1']['input'];
       readonly confianzaPosterior: CodecTypes['pg/numeric@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly estado: 'ACTIVA' | 'FINALIZADA';
+      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
@@ -1026,7 +1026,7 @@ export namespace Models {
     incumplimientoId: CodecTypes['pg/uuid@1']['output'] | null;
     reglaId: CodecTypes['pg/uuid@1']['output'] | null;
     versionReglaId: CodecTypes['pg/uuid@1']['output'] | null;
-    estado: 'ACTIVA' | 'FINALIZADA';
+    estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
     fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
     fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     confianzaAnterior: Numeric<5, 2>;
@@ -2705,7 +2705,7 @@ type ContractBase = Omit<
             };
             readonly EstadoSancion: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['ACTIVA', 'FINALIZADA'];
+              readonly values: readonly ['ACTIVA', 'FINALIZADA', 'ABSUELTA'];
             };
             readonly EstadoSolicitud: {
               readonly kind: 'valueSet';
@@ -4490,6 +4490,7 @@ type ContractBase = Omit<
             readonly members: readonly [
               { readonly name: 'ACTIVA'; readonly value: 'ACTIVA' },
               { readonly name: 'FINALIZADA'; readonly value: 'FINALIZADA' },
+              { readonly name: 'ABSUELTA'; readonly value: 'ABSUELTA' },
             ];
           };
           readonly EstadoRegla: {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AcceptTermsVersionInput } from '../ports/terms.inputs.js';
 import type { TermsAcceptance } from '../../domain/entities/terms.js';
 import { TermsRepository } from '../../domain/repositories/terms.repository.js';
@@ -9,7 +9,7 @@ export class AcceptTermsVersionUseCase {
 
   async execute(input: AcceptTermsVersionInput): Promise<TermsAcceptance> {
     if (!(await this.terms.findVersionById(input.termsVersionId))) {
-      throw new Error('Versión de términos no encontrada.');
+      throw new NotFoundException('Versión de términos no encontrada.');
     }
     return this.terms.accept(input);
   }

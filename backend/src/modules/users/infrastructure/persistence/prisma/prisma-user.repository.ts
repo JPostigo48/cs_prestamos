@@ -70,19 +70,26 @@ export class PrismaUserRepository extends UserRepository {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const sanctions = await this.listSanctions(userId);
-    const active = sanctions.some((sanction) => sanction.status === 'ACTIVA');
+    const now = new Date();
+    const activeSanctions = sanctions.filter((sanction) =>
+      sanction.status === 'ACTIVA' &&
+      sanction.startsAt <= now &&
+      (sanction.endsAt === null || sanction.endsAt > now),
+    );
+    const active = activeSanctions.length > 0;
     const reasons = [
       ...(user.hasCurrentAffiliation ? [] : ['VINCULACION_NO_VIGENTE']),
       ...(active ? ['SANCION_ACTIVA'] : []),
     ];
-    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, activeSanctions: sanctions.filter((sanction) => sanction.status === 'ACTIVA'), trustPercentage: user.trustPercentage, trustLevel: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1' };
+    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, activeSanctions, trustPercentage: user.trustPercentage, trustLevel: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1' };
   }
 
   async getTrustProfile(userId: string): Promise<UserTrustProfile> {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const sanctions = await this.listSanctions(userId);
-    return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => sanction.status === 'ACTIVA') };
+    const now = new Date();
+    return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => sanction.status === 'ACTIVA' && sanction.startsAt <= now && (sanction.endsAt === null || sanction.endsAt > now)) };
   }
 
   async applyTrustPenalty(data: ApplyTrustPenaltyData): Promise<UserTrustProfile> {

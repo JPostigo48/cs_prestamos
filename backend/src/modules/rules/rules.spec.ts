@@ -34,6 +34,24 @@ describe('Rules use cases', () => {
     await expect(useCase.execute({ appealId: 'a1', status: 'RECHAZADA', resolution: 'no', resolvedAt: new Date(), resolvedByAccountId: 'a' })).rejects.toThrow();
   });
 
+  it('passes the trusted resolver identity through to the repository', async () => {
+    const appeals = {
+      findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }),
+      resolve: vi.fn().mockResolvedValue({ id: 'a1', status: 'ACEPTADA' }),
+    };
+    const useCase = new ResolveAppealUseCase(appeals as any);
+    await useCase.execute({
+      appealId: 'a1',
+      status: 'ACEPTADA',
+      resolution: 'validada',
+      resolvedAt: new Date(),
+      resolvedByAccountId: 'account-from-jwt',
+    });
+    expect(appeals.resolve).toHaveBeenCalledWith(expect.objectContaining({
+      resolvedByAccountId: 'account-from-jwt',
+    }));
+  });
+
   it('accepts an existing terms version', async () => {
     const terms = { findVersionById: vi.fn().mockResolvedValue({ id: 't1' }), accept: vi.fn().mockResolvedValue({ id: 'a1' }) };
     const useCase = new AcceptTermsVersionUseCase(terms as any);

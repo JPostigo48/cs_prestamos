@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type { Appeal } from '../../../domain/entities/appeal.js';
 import {
@@ -31,7 +31,22 @@ export class PrismaAppealRepository implements AppealRepository {
   }
 
   async resolve(data: ResolveAppealData): Promise<Appeal> {
-    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.update({ estado: data.status, resolucion: data.resolution, fechaResolucion: data.resolvedAt, resueltaPorCuentaId: data.resolvedByAccountId }).where((r, f) => f.eq(r.id, data.appealId)).returning('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
-    return this.map(rows[0]);
+    return this.prisma.client.transaction(async (tx) => {
+      const rows = await tx.query(this.prisma.sql.public.apelaciones
+        .update({ estado: data.status, resolucion: data.resolution, fechaResolucion: data.resolvedAt, resueltaPorCuentaId: data.resolvedByAccountId })
+        .where((r, f) => f.eq(r.id, data.appealId))
+        .where((r, f) => f.eq(r.estado, 'PENDIENTE'))
+        .returning('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
+      const appeal = rows[0];
+      if (!appeal) throw new ConflictException('La apelación ya fue resuelta o no existe.');
+      if (data.status === 'ACEPTADA') {
+        await tx.query(this.prisma.sql.public.sanciones
+          .update({ estado: 'ABSUELTA' })
+          .where((r, f) => f.eq(r.incumplimientoId, appeal.incumplimientoId))
+          .where((r, f) => f.eq(r.estado, 'ACTIVA'))
+          .returning('id').build());
+      }
+      return this.map(appeal);
+    });
   }
 }

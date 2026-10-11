@@ -155,6 +155,10 @@
               {
                 "name": "FINALIZADA",
                 "value": "FINALIZADA"
+              },
+              {
+                "name": "ABSUELTA",
+                "value": "ABSUELTA"
               }
             ]
           },
@@ -4196,8 +4200,8 @@
             "sanciones": {
               "checks": [
                 {
-                  "expression": "\"estado\" IN ('ACTIVA', 'FINALIZADA')",
-                  "name": "sanciones_estado_check_5348962d",
+                  "expression": "\"estado\" IN ('ACTIVA', 'FINALIZADA', 'ABSUELTA')",
+                  "name": "sanciones_estado_check_1e842a90",
                   "prefix": "sanciones_estado_check"
                 }
               ],
@@ -4934,7 +4938,8 @@
               "kind": "valueSet",
               "values": [
                 "ACTIVA",
-                "FINALIZADA"
+                "FINALIZADA",
+                "ABSUELTA"
               ]
             },
             "EstadoSolicitud": {
@@ -4967,7 +4972,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0745075c442937a011808205cb2189c319e04342c2b83dd6b7aee663bd2e4416"
+    "storageHash": "852410ac28569b6d7378ebe1d98fe19b6a09cedac7146c5d6effa6780118dc61"
   },
   "execution": {
     "executionHash": "e5fdc516c8813f4bb22bd1fabb4acef34ef1880ad6e2efa6a362a7c0bfb1b598",
