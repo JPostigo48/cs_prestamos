@@ -7,8 +7,7 @@ import { RuleRepository } from '../../domain/repositories/rule.repository.js';
 export class CreateRuleUseCase {
   constructor(private readonly rules: RuleRepository) {}
 
-  async execute(_input: CreateRuleInput): Promise<UsageRule> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: CreateRuleInput): Promise<UsageRule> {
+    return this.rules.create(input);
   }
 }

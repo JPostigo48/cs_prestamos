@@ -10,13 +10,17 @@ import {
 export class PrismaViolationRepository implements ViolationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(_data: RegisterViolationData): Promise<Violation> {
-    // TODO
-    throw new Error('Not implemented');
+  private runtime() { return this.prisma.client.runtime(); }
+  private map(row: any): Violation {
+    return { id: row.id, userId: row.usuarioId, ruleId: row.reglaId, ruleVersionId: row.versionReglaId, occurredAt: row.fecha, appliedPenalty: Number(row.penalizacionAplicada) };
+  }
+  async create(data: RegisterViolationData): Promise<Violation> {
+    const rows = await this.runtime().query(this.prisma.sql.public.incumplimientos.insert([{ usuarioId: data.userId, reglaId: data.ruleId, versionReglaId: data.ruleVersionId, fecha: data.occurredAt, penalizacionAplicada: data.appliedPenalty.toFixed(2) }]).returning('id','usuarioId','reglaId','versionReglaId','fecha','penalizacionAplicada').build());
+    return this.map(rows[0]);
   }
 
-  async findById(_violationId: string): Promise<Violation | null> {
-    // TODO
-    throw new Error('Not implemented');
+  async findById(violationId: string): Promise<Violation | null> {
+    const rows = await this.runtime().query(this.prisma.sql.public.incumplimientos.select('id','usuarioId','reglaId','versionReglaId','fecha','penalizacionAplicada').where((r, f) => f.eq(r.id, violationId)).limit(1).build());
+    return rows[0] ? this.map(rows[0]) : null;
   }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { InventoryModule } from '../inventory/inventory.module.js';
 import { UsersModule } from '../users/users.module.js';
+import { AuthModule } from '../auth/auth.module.js';
 import { LoanInventoryPort } from './application/ports/loan-inventory.port.js';
 import { UserLoanEligibilityPort } from './application/ports/user-loan-eligibility.port.js';
 import { CreateLoanUseCase } from './application/use-cases/create-loan.use-case.js';
@@ -25,7 +26,7 @@ const useCases = [
 ];
 
 @Module({
-  imports: [UsersModule, InventoryModule],
+  imports: [UsersModule, InventoryModule, AuthModule],
   controllers: [LoansController],
   providers: [
     ...useCases,

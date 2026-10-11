@@ -8,9 +8,8 @@ export class ListUserTermsAcceptancesUseCase {
   constructor(private readonly terms: TermsRepository) {}
 
   async execute(
-    _input: ListUserTermsAcceptancesInput,
+    input: ListUserTermsAcceptancesInput,
   ): Promise<TermsAcceptance[]> {
-    // TODO
-    throw new Error('Not implemented');
+    return this.terms.findAcceptancesByUserId(input.userId);
   }
 }

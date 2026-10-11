@@ -16,6 +16,12 @@ export interface GetAccessAccountInput {
   accountId: string;
 }
 
+export interface UpdateAccessAccountInput {
+  accountId: string;
+  role?: AccessRole;
+  enabled?: boolean;
+}
+
 export interface AuthenticatedIdentity {
   accountId: string;
   userId: string;

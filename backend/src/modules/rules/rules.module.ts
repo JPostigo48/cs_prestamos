@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { UserTrustPort } from './application/ports/user-trust.port.js';
 import { AcceptTermsVersionUseCase } from './application/use-cases/accept-terms-version.use-case.js';
@@ -38,7 +39,7 @@ const useCases = [
 ];
 
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, AuthModule],
   controllers: [RulesController, ViolationsController, TermsController],
   providers: [
     ...useCases,

@@ -12,6 +12,7 @@ export type TrustLevel = (typeof TrustLevel)[keyof typeof TrustLevel];
 export const SanctionStatus = {
   ACTIVA: 'ACTIVA',
   FINALIZADA: 'FINALIZADA',
+  ABSUELTA: 'ABSUELTA',
 } as const;
 
 export type SanctionStatus =
@@ -49,6 +50,10 @@ export type UserTrustProfile = {
 export type LoanEligibility = {
   userId: string;
   enabled: boolean;
+  eligible?: boolean;
+  reasons?: string[];
+  hasCurrentAffiliation?: boolean;
+  activeSanctions?: Sanction[];
   trustPercentage: number;
   trustLevel: TrustLevel;
 };

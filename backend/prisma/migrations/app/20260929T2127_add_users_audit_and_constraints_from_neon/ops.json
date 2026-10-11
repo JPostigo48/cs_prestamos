@@ -1,0 +1,488 @@
+[
+  {
+    "id": "table.auditorias_usuario",
+    "label": "Create table \"auditorias_usuario\"",
+    "summary": "Creates table \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"auditorias_usuario\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"auditorias_usuario\"",
+        "sql": "CREATE TABLE \"public\".\"auditorias_usuario\" (\n  \"accion\" character varying(80) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"datosAnteriores\" text,\n  \"datosNuevos\" text,\n  \"fecha\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"motivo\" text,\n  \"solicitudRegistroId\" uuid,\n  \"usuarioId\" uuid,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"auditorias_usuario\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.solicitudes_registro.motivoRechazo",
+    "label": "Add column \"motivoRechazo\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "motivoRechazo",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"motivoRechazo\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "motivoRechazo"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"motivoRechazo\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"motivoRechazo\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"motivoRechazo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "motivoRechazo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.solicitudes_registro.solicitudes_registro_nombre_length_check_7b391dd1",
+    "label": "Add check constraint \"solicitudes_registro_nombre_length_check_7b391dd1\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "solicitudes_registro_nombre_length_check_7b391dd1",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"solicitudes_registro_nombre_length_check_7b391dd1\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_nombre_length_check_7b391dd1",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"solicitudes_registro_nombre_length_check_7b391dd1\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD CONSTRAINT \"solicitudes_registro_nombre_length_check_7b391dd1\" CHECK (length(btrim(\"nombre\")) >= 2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"solicitudes_registro_nombre_length_check_7b391dd1\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_nombre_length_check_7b391dd1",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.usuarios.usuarios_confianza_range_check_f2990dfd",
+    "label": "Add check constraint \"usuarios_confianza_range_check_f2990dfd\" on \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "usuarios_confianza_range_check_f2990dfd",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"usuarios_confianza_range_check_f2990dfd\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_confianza_range_check_f2990dfd",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"usuarios_confianza_range_check_f2990dfd\"",
+        "sql": "ALTER TABLE \"public\".\"usuarios\" ADD CONSTRAINT \"usuarios_confianza_range_check_f2990dfd\" CHECK (confianza >= 0 AND confianza <= 100)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"usuarios_confianza_range_check_f2990dfd\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_confianza_range_check_f2990dfd",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.usuarios.usuarios_nombre_length_check_7b391dd1",
+    "label": "Add check constraint \"usuarios_nombre_length_check_7b391dd1\" on \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "usuarios_nombre_length_check_7b391dd1",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"usuarios_nombre_length_check_7b391dd1\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_nombre_length_check_7b391dd1",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"usuarios_nombre_length_check_7b391dd1\"",
+        "sql": "ALTER TABLE \"public\".\"usuarios\" ADD CONSTRAINT \"usuarios_nombre_length_check_7b391dd1\" CHECK (length(btrim(\"nombre\")) >= 2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"usuarios_nombre_length_check_7b391dd1\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuarios_nombre_length_check_7b391dd1",
+          "public",
+          "\"public\".\"usuarios\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditorias_usuario.auditorias_usuario_accion_fecha_idx_10245029",
+    "label": "Create index \"auditorias_usuario_accion_fecha_idx_10245029\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditorias_usuario_accion_fecha_idx_10245029",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditorias_usuario_accion_fecha_idx_10245029\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_accion_fecha_idx_10245029\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditorias_usuario_accion_fecha_idx_10245029\"",
+        "sql": "CREATE INDEX \"auditorias_usuario_accion_fecha_idx_10245029\" ON \"public\".\"auditorias_usuario\" (\"accion\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditorias_usuario_accion_fecha_idx_10245029\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_accion_fecha_idx_10245029\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditorias_usuario.auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454",
+    "label": "Create index \"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\"",
+        "sql": "CREATE INDEX \"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\" ON \"public\".\"auditorias_usuario\" (\"solicitudRegistroId\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditorias_usuario.auditorias_usuario_solicitudRegistroId_idx_583e08f8",
+    "label": "Create index \"auditorias_usuario_solicitudRegistroId_idx_583e08f8\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditorias_usuario_solicitudRegistroId_idx_583e08f8",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditorias_usuario_solicitudRegistroId_idx_583e08f8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_solicitudRegistroId_idx_583e08f8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditorias_usuario_solicitudRegistroId_idx_583e08f8\"",
+        "sql": "CREATE INDEX \"auditorias_usuario_solicitudRegistroId_idx_583e08f8\" ON \"public\".\"auditorias_usuario\" (\"solicitudRegistroId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditorias_usuario_solicitudRegistroId_idx_583e08f8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_solicitudRegistroId_idx_583e08f8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditorias_usuario.auditorias_usuario_usuarioId_fecha_idx_c02c2249",
+    "label": "Create index \"auditorias_usuario_usuarioId_fecha_idx_c02c2249\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditorias_usuario_usuarioId_fecha_idx_c02c2249",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditorias_usuario_usuarioId_fecha_idx_c02c2249\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditorias_usuario_usuarioId_fecha_idx_c02c2249\"",
+        "sql": "CREATE INDEX \"auditorias_usuario_usuarioId_fecha_idx_c02c2249\" ON \"public\".\"auditorias_usuario\" (\"usuarioId\", \"fecha\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditorias_usuario_usuarioId_fecha_idx_c02c2249\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_usuarioId_fecha_idx_c02c2249\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditorias_usuario.auditorias_usuario_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"auditorias_usuario_usuarioId_idx_5f01c7d6\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditorias_usuario_usuarioId_idx_5f01c7d6",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditorias_usuario_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditorias_usuario_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"auditorias_usuario_usuarioId_idx_5f01c7d6\" ON \"public\".\"auditorias_usuario\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditorias_usuario_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditorias_usuario_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.auditorias_usuario.auditorias_usuario_usuarioId_fkey",
+    "label": "Add foreign key \"auditorias_usuario_usuarioId_fkey\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "auditorias_usuario_usuarioId_fkey",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"auditorias_usuario_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditorias_usuario_usuarioId_fkey",
+          "public",
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"auditorias_usuario_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"auditorias_usuario\"\nADD CONSTRAINT \"auditorias_usuario_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"auditorias_usuario_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditorias_usuario_usuarioId_fkey",
+          "public",
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.auditorias_usuario.auditorias_usuario_solicitudRegistroId_fkey",
+    "label": "Add foreign key \"auditorias_usuario_solicitudRegistroId_fkey\" on \"auditorias_usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "auditorias_usuario_solicitudRegistroId_fkey",
+        "table": "auditorias_usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"auditorias_usuario_solicitudRegistroId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditorias_usuario_solicitudRegistroId_fkey",
+          "public",
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"auditorias_usuario_solicitudRegistroId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"auditorias_usuario\"\nADD CONSTRAINT \"auditorias_usuario_solicitudRegistroId_fkey\"\nFOREIGN KEY (\"solicitudRegistroId\")\nREFERENCES \"public\".\"solicitudes_registro\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"auditorias_usuario_solicitudRegistroId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditorias_usuario_solicitudRegistroId_fkey",
+          "public",
+          "\"public\".\"auditorias_usuario\""
+        ]
+      }
+    ]
+  }
+]

@@ -7,8 +7,8 @@ import { RuleRepository } from '../../domain/repositories/rule.repository.js';
 export class UpdateRuleUseCase {
   constructor(private readonly rules: RuleRepository) {}
 
-  async execute(_input: UpdateRuleInput): Promise<RuleVersion> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: UpdateRuleInput): Promise<RuleVersion> {
+    const { ruleId, ...data } = input;
+    return this.rules.addVersion(ruleId, data);
   }
 }

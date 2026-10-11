@@ -7,8 +7,7 @@ import { LoanRepository } from '../../domain/repositories/loan.repository.js';
 export class ListUserLoanHistoryUseCase {
   constructor(private readonly loans: LoanRepository) {}
 
-  async execute(_input: ListUserLoanHistoryInput): Promise<Loan[]> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: ListUserLoanHistoryInput): Promise<Loan[]> {
+    return this.loans.findByUserId(input.userId);
   }
 }

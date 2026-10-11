@@ -21,10 +21,12 @@ export type AffiliationEvidence = {
 
 export type RegistrationRequest = {
   id: string;
+  name: string;
   userType: UserType;
   institutionalId: string | null;
   requestedAt: Date;
   status: RegistrationRequestStatus;
+  rejectionReason: string | null;
   approvedUserId: string | null;
   evidence: AffiliationEvidence[];
 };

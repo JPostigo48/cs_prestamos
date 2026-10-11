@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { SubmitAppealInput } from '../ports/violations.inputs.js';
 import type { Appeal } from '../../domain/entities/appeal.js';
 import { AppealRepository } from '../../domain/repositories/appeal.repository.js';
@@ -11,8 +11,14 @@ export class SubmitAppealUseCase {
     private readonly violations: ViolationRepository,
   ) {}
 
-  async execute(_input: SubmitAppealInput): Promise<Appeal> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: SubmitAppealInput): Promise<Appeal> {
+    const violation = await this.violations.findById(input.violationId);
+    if (!violation || violation.userId !== input.userId) {
+      throw new NotFoundException('Incumplimiento no encontrado.');
+    }
+    if (await this.appeals.findByViolationId(input.violationId)) {
+      throw new ConflictException('El incumplimiento ya tiene una apelación.');
+    }
+    return this.appeals.create(input);
   }
 }

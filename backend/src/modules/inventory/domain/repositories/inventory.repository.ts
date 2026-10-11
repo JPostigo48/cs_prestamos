@@ -28,7 +28,13 @@ export abstract class InventoryRepository {
     categoryId?: string;
     available?: boolean;
     search?: string;
+    limit?: number;
+    offset?: number;
   }): Promise<any[]>;
+  abstract countResources(filters?: {
+    categoryId?: string;
+    search?: string;
+  }): Promise<number>;
   abstract findResourceById(resourceId: string): Promise<any>;
   abstract updateResource(
     resourceId: string,
@@ -41,6 +47,10 @@ export abstract class InventoryRepository {
   abstract deleteResource(resourceId: string): Promise<unknown>;
   abstract countCopiesByResource(resourceId: string): Promise<number>;
   abstract countAvailableCopiesByResource(resourceId: string): Promise<number>;
+  abstract countCopiesByResourceAndState(
+    resourceId: string,
+    estado: InventoryCopyStatus,
+  ): Promise<number>;
 
   abstract createCopy(data: {
     recursoId: string;
@@ -49,10 +59,12 @@ export abstract class InventoryRepository {
   }): Promise<any>;
   abstract findCopiesByResource(resourceId: string): Promise<any[]>;
   abstract findCopyById(copyId: string): Promise<any>;
+  abstract deleteCopy(copyId: string): Promise<number>;
   abstract updateCopyState(
     copyId: string,
     estado: InventoryCopyStateManaged,
   ): Promise<any>;
+  abstract markCopyAsLoaned(copyId: string): Promise<any>;
 
   abstract createObservation(data: {
     ejemplarId: string;

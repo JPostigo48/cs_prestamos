@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
 import { CreateRuleUseCase } from '../../application/use-cases/create-rule.use-case.js';
 import { ListActiveRulesUseCase } from '../../application/use-cases/list-active-rules.use-case.js';
@@ -9,9 +9,15 @@ import {
   SetRuleStatusDto,
   UpdateRuleDto,
 } from '../dto/rule.dto.js';
+import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
+import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
+import { Roles } from '../../../auth/presentation/decorators/roles.decorator.js';
+import { AccessRole } from '../../../auth/domain/entities/access-account.js';
 
 @ApiTags('Reglas y términos')
 @Controller('rules')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(AccessRole.ADMINISTRATOR)
 export class RulesController {
   constructor(
     private readonly createRule: CreateRuleUseCase,

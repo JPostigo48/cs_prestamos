@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -37,6 +38,10 @@ export class InventoryService {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       value,
     );
+  }
+
+  private isUniqueViolation(error: any): boolean {
+    return error?.code === '23505' || error?.cause?.code === '23505';
   }
 
   private async ensureCategoryExists(categoryId: string) {
@@ -90,7 +95,54 @@ export class InventoryService {
       available: row.available ?? false,
       totalCopies: row.totalCopies ?? 0,
       availableCopies: row.availableCopies ?? 0,
+      ...(row.categoria
+        ? {
+            categoria: {
+              id: row.categoria.id,
+              nombre: row.categoria.nombre,
+            },
+          }
+        : {}),
     };
+  }
+
+  private async getAvailabilityCounts(resourceId: string) {
+    const [disponibles, prestados, noDisponibles] = await Promise.all([
+      this.repository.countCopiesByResourceAndState(resourceId, 'DISPONIBLE'),
+      this.repository.countCopiesByResourceAndState(resourceId, 'PRESTADO'),
+      this.repository.countCopiesByResourceAndState(
+        resourceId,
+        'NO_DISPONIBLE',
+      ),
+    ]);
+    return { disponibles, prestados, noDisponibles };
+  }
+
+  private async mapResourceRows(rows: any[]) {
+    const categories = new Map<string, Promise<any>>();
+    return Promise.all(
+      rows.map(async (row: any) => {
+        let categoryPromise = categories.get(row.categoriaId);
+        if (!categoryPromise) {
+          categoryPromise = this.repository.findCategoryById(row.categoriaId);
+          categories.set(row.categoriaId, categoryPromise);
+        }
+        const [category, counts] = await Promise.all([
+          categoryPromise,
+          this.getAvailabilityCounts(row.id),
+        ]);
+        return this.toResourceResponse({
+          ...row,
+          categoria: category
+            ? { id: category.id, nombre: category.nombre }
+            : null,
+          available: counts.disponibles > 0,
+          totalCopies:
+            counts.disponibles + counts.prestados + counts.noDisponibles,
+          availableCopies: counts.disponibles,
+        });
+      }),
+    );
   }
 
   private toCopyResponse(row: any) {
@@ -132,8 +184,11 @@ export class InventoryService {
       });
       return this.toCategoryResponse(created[0] ?? created);
     } catch (error: any) {
-      if (error instanceof ConflictException || error?.code === '23505') {
+      if (this.isUniqueViolation(error)) {
         throw new ConflictException('Ya existe una categoría con ese nombre.');
+      }
+      if (error instanceof HttpException || error instanceof Error) {
+        throw error;
       }
       throw new InternalServerErrorException('No se pudo crear la categoría.');
     }
@@ -203,7 +258,10 @@ export class InventoryService {
         'No se puede eliminar la categoría porque tiene recursos asociados.',
       );
     }
-    await this.repository.deleteCategory(categoryId);
+    const deleted = await this.repository.deleteCategory(categoryId);
+    if (deleted === 0) {
+      throw new NotFoundException('Categoría no encontrada.');
+    }
     return { deleted: true, categoryId };
   }
 
@@ -227,10 +285,13 @@ export class InventoryService {
       });
       return this.toResourceResponse(created[0] ?? created);
     } catch (error: any) {
-      if (error instanceof ConflictException || error?.code === '23505') {
+      if (this.isUniqueViolation(error)) {
         throw new ConflictException(
           'Ya existe un recurso con ese nombre para la categoría indicada.',
         );
+      }
+      if (error instanceof HttpException || error instanceof Error) {
+        throw error;
       }
       throw new InternalServerErrorException('No se pudo crear el recurso.');
     }
@@ -240,52 +301,46 @@ export class InventoryService {
     categoryId?: string;
     available?: string;
     search?: string;
+    page?: number;
+    limit?: number;
   }) {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
+    const offset = (page - 1) * limit;
     const normalizedFilters: {
       categoryId?: string;
       available?: boolean;
       search?: string;
-    } = {};
-    if (filters?.categoryId) {
-      if (!this.isUuid(filters.categoryId)) {
-        throw new BadRequestException('categoryId no es un UUID válido.');
-      }
-      normalizedFilters.categoryId = filters.categoryId;
-    }
-    if (filters?.available !== undefined) {
-      if (filters.available === 'true' || filters.available === 'false') {
-        normalizedFilters.available = filters.available === 'true';
-      } else {
-        throw new BadRequestException('available debe ser true o false.');
-      }
-    }
-    if (filters?.search) {
-      normalizedFilters.search = this.normalizeText(filters.search, 'search')!;
-    }
+    } = {
+      categoryId: filters?.categoryId,
+      available:
+        filters?.available === undefined
+          ? undefined
+          : filters.available === 'true',
+      search: filters?.search,
+    };
 
-    const rows = await this.repository.findAllResources(normalizedFilters);
-    const mapped = await Promise.all(
-      rows.map(async (row: any) => {
-        const total = await this.repository.countCopiesByResource(row.id);
-        const available = await this.repository.countAvailableCopiesByResource(
-          row.id,
-        );
-        return this.toResourceResponse({
-          ...row,
-          available: available > 0,
-          totalCopies: total,
-          availableCopies: available,
-        });
-      }),
+    const rows = await this.repository.findAllResources(
+      normalizedFilters.available === undefined
+        ? { ...normalizedFilters, limit, offset }
+        : normalizedFilters,
     );
-
-    if (normalizedFilters.available !== undefined) {
-      return mapped.filter(
-        (row) => row.available === normalizedFilters.available,
-      );
-    }
-
-    return mapped;
+    const mapped = await this.mapResourceRows(rows);
+    const filtered =
+      normalizedFilters.available === undefined
+        ? mapped
+        : mapped.filter(
+            (row) => row.available === normalizedFilters.available,
+          );
+    const data =
+      normalizedFilters.available === undefined
+        ? filtered
+        : filtered.slice(offset, offset + limit);
+    const total =
+      normalizedFilters.available === undefined
+        ? await this.repository.countResources(normalizedFilters)
+        : filtered.length;
+    return { data, total, page, limit };
   }
 
   async getResource(resourceId: string) {
@@ -294,15 +349,14 @@ export class InventoryService {
     const category = await this.repository.findCategoryById(
       resource.categoriaId,
     );
-    const total = await this.repository.countCopiesByResource(resourceId);
-    const available =
-      await this.repository.countAvailableCopiesByResource(resourceId);
+    const counts = await this.getAvailabilityCounts(resourceId);
     return {
       ...this.toResourceResponse({
         ...resource,
-        available: available > 0,
-        totalCopies: total,
-        availableCopies: available,
+        available: counts.disponibles > 0,
+        totalCopies:
+          counts.disponibles + counts.prestados + counts.noDisponibles,
+        availableCopies: counts.disponibles,
       }),
       categoria: category
         ? {
@@ -339,11 +393,23 @@ export class InventoryService {
           : (this.normalizeText(dto.descripcion, 'descripcion') ?? null);
     }
 
-    const updated = await this.repository.updateResource(
-      resourceId,
-      updateData,
-    );
-    return this.toResourceResponse(updated);
+    try {
+      const updated = await this.repository.updateResource(
+        resourceId,
+        updateData,
+      );
+      return this.toResourceResponse(updated);
+    } catch (error: any) {
+      if (this.isUniqueViolation(error)) {
+        throw new ConflictException(
+          'Ya existe un recurso con ese nombre para la categoría indicada.',
+        );
+      }
+      if (error instanceof HttpException || error instanceof Error) {
+        throw error;
+      }
+      throw new InternalServerErrorException('No se pudo actualizar el recurso.');
+    }
   }
 
   async deleteResource(resourceId: string) {
@@ -354,7 +420,10 @@ export class InventoryService {
         'No se puede eliminar el recurso porque tiene ejemplares asociados.',
       );
     }
-    await this.repository.deleteResource(resourceId);
+    const deleted = await this.repository.deleteResource(resourceId);
+    if (deleted === 0) {
+      throw new NotFoundException('Recurso no encontrado.');
+    }
     return { deleted: true, resourceId };
   }
 
@@ -375,10 +444,13 @@ export class InventoryService {
       });
       return this.toCopyResponse(created[0] ?? created);
     } catch (error: any) {
-      if (error instanceof ConflictException || error?.code === '23505') {
+      if (this.isUniqueViolation(error)) {
         throw new ConflictException(
           'Ya existe un ejemplar con ese código de inventario.',
         );
+      }
+      if (error instanceof HttpException || error instanceof Error) {
+        throw error;
       }
       throw new InternalServerErrorException('No se pudo crear el ejemplar.');
     }
@@ -388,6 +460,15 @@ export class InventoryService {
     await this.ensureResourceExists(resourceId);
     const rows = await this.repository.findCopiesByResource(resourceId);
     return rows.map((row: any) => this.toCopyResponse(row));
+  }
+
+  async deleteCopy(copyId: string) {
+    await this.ensureCopyExists(copyId);
+    const deleted = await this.repository.deleteCopy(copyId);
+    if (deleted === 0) {
+      throw new NotFoundException('Ejemplar no encontrado.');
+    }
+    return { deleted: true, copyId };
   }
 
   async getCopy(copyId: string) {
@@ -405,6 +486,42 @@ export class InventoryService {
         this.toObservationResponse(row),
       ),
     };
+  }
+
+  async getLoanAvailability(copyId: string) {
+    const copy = await this.ensureCopyExists(copyId);
+    const resource = await this.ensureResourceExists(copy.recursoId);
+    const category = await this.getCategory(resource.categoriaId);
+    return {
+      copyId,
+      available: copy.estado === 'DISPONIBLE',
+      maximumLoanDays: category.tiempoMaximoPrestamoDias,
+    };
+  }
+
+  async markCopyAsLoaned(copyId: string): Promise<void> {
+    const copy = await this.ensureCopyExists(copyId);
+    if (copy.estado !== 'DISPONIBLE') {
+      throw new ConflictException('El ejemplar no está disponible.');
+    }
+    await this.repository.markCopyAsLoaned(copyId);
+  }
+
+  async releaseCopyAfterReturn(
+    copyId: string,
+    observation?: string,
+  ): Promise<void> {
+    await this.ensureCopyExists(copyId);
+    await this.repository.updateCopyState(
+      copyId,
+      observation?.trim() ? 'NO_DISPONIBLE' : 'DISPONIBLE',
+    );
+    if (observation?.trim()) {
+      await this.repository.createObservation({
+        ejemplarId: copyId,
+        descripcion: observation.trim(),
+      });
+    }
   }
 
   async updateCopyState(copyId: string, dto: UpdateCopyStateInput) {
@@ -429,18 +546,50 @@ export class InventoryService {
 
   async getResourceAvailability(resourceId: string) {
     await this.ensureResourceExists(resourceId);
-    const totalCopies = await this.repository.countCopiesByResource(resourceId);
-    const availableCopies =
-      await this.repository.countAvailableCopiesByResource(resourceId);
-    const unavailableCopies = totalCopies - availableCopies;
+    const counts = await this.getAvailabilityCounts(resourceId);
+    const totalCopies =
+      counts.disponibles + counts.prestados + counts.noDisponibles;
     return {
       resourceId,
-      available: availableCopies > 0,
+      available: counts.disponibles > 0,
       totalCopies,
-      availableCopies,
-      unavailableCopies,
-      borrowedCopies: 0,
+      disponibles: counts.disponibles,
+      prestados: counts.prestados,
+      noDisponibles: counts.noDisponibles,
     };
+  }
+
+  async getGlobalAvailability() {
+    const resources = await this.repository.findAllResources();
+    const categories = new Map<string, Promise<any>>();
+    return Promise.all(
+      resources.map(async (row: any) => {
+        let categoryPromise = categories.get(row.categoriaId);
+        if (!categoryPromise) {
+          categoryPromise = this.repository.findCategoryById(row.categoriaId);
+          categories.set(row.categoriaId, categoryPromise);
+        }
+        const [category, counts] = await Promise.all([
+          categoryPromise,
+          this.getAvailabilityCounts(row.id),
+        ]);
+        return {
+          ...this.toResourceResponse({
+            ...row,
+            categoria: category
+              ? { id: category.id, nombre: category.nombre }
+              : null,
+            available: counts.disponibles > 0,
+            totalCopies:
+              counts.disponibles + counts.prestados + counts.noDisponibles,
+            availableCopies: counts.disponibles,
+          }),
+          disponibles: counts.disponibles,
+          prestados: counts.prestados,
+          noDisponibles: counts.noDisponibles,
+        };
+      }),
+    );
   }
 
   async createObservation(copyId: string, dto: CreateCopyObservationInput) {
