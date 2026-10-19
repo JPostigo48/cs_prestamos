@@ -1,31 +1,43 @@
 # Análisis de requisitos
 
-Esta carpeta es la fuente principal del análisis de requisitos actual del sistema de gestión de préstamos universitarios. Su contenido documenta la planificación del dominio y no implica que las funcionalidades descritas estén implementadas.
+Esta carpeta es la **fuente de verdad de los requisitos y políticas de negocio acordados** para el sistema de gestión de préstamos universitarios de la Escuela Profesional de Ciencia de la Computación (EPCC). Documenta el comportamiento esperado y **no implica que ya esté implementado**.
 
 ## Organización
 
 | Documento | Contenido |
 | --- | --- |
-| [Requisitos funcionales](functional.md) | Capacidades previstas, organizadas por dominio o módulo. |
-| [Requisitos no funcionales](non-functional.md) | Atributos de calidad, capacidad y consistencia esperados. |
-| [Reglas de negocio](business-rules.md) | Restricciones y condiciones que rigen el dominio. |
-| [Modelo de confianza](trust-model.md) | Porcentaje, niveles, sanciones, apelaciones y decisiones pendientes de la confianza del usuario. |
-| [Términos y condiciones](terms-and-conditions.md) | Gestión dinámica, versionado y aceptación de las reglas de uso. |
+| [Requisitos funcionales](functional.md) | Capacidades del sistema e identificadores estables `RF-xx`. |
+| [Requisitos no funcionales](non-functional.md) | Rendimiento, integridad, seguridad, persistencia, usabilidad y trazabilidad. |
+| [Reglas de negocio](business-rules.md) | Invariantes y restricciones independientes de la interfaz. |
+| [Modelo de confianza](trust-model.md) | Confianza inicial, cuatro niveles, acceso por categoría, recompensas, sanciones, acumulación y apelaciones. |
+| [Términos y condiciones](terms-and-conditions.md) | Texto de aceptación, políticas por categoría, matrices de tardanza y daño, pérdida/robo, inasistencia a reservas, sanciones y versionado. |
 
-Cada documento mantiene una responsabilidad específica. Cuando un requisito necesita desarrollo conceptual, se referencia el documento correspondiente en lugar de duplicar su contenido.
+El [modelo de dominio UML](../architecture/uml/README.md) y las [vistas DDD de Structurizr](../architecture/structurizr/README.md) deben revisarse para reflejar las nuevas políticas. **Actualizar estos Markdown no actualiza automáticamente el UML, Prisma ni el código**.
 
-## Estado de la planificación
+## Versión vigente
 
-Los documentos reflejan las definiciones disponibles en esta etapa. Los valores o comportamientos todavía no acordados se identifican expresamente como pendientes y no deben inferirse durante el diseño o la implementación.
+**Línea base de requisitos revisada al 19 de octubre de 2026.** Los valores, matrices y criterios de esta carpeta constituyen la versión vigente para el desarrollo. Se mantienen como configuración versionada y podrán modificarse en revisiones posteriores según la evolución de la aplicación.
 
-El [modelo de dominio UML](../architecture/uml/README.md) está alineado con esta planificación. Las [vistas DDD en Structurizr](../architecture/structurizr/README.md) representan el mapa de contextos y las vistas internas por contexto.
+Esta revisión documental no equivale a certificar que las funciones ya estén implementadas, probadas o aprobadas como normativa institucional.
 
-## Trazabilidad y convenciones
+## Ciclo y configuración vigente
 
-- `RF-xx` identifica un requisito funcional.
-- `RNF-xx` identifica un requisito no funcional.
-- `RN-xx` identifica una regla de negocio.
-- Los identificadores se consideran referencias estables para documentación, diseño, pruebas y seguimiento; cualquier cambio debe evitar renumeraciones innecesarias.
-- El modelo de confianza y los términos y condiciones son documentos conceptuales: complementan los requisitos, pero no crean requisitos adicionales por sí mismos.
+Todo préstamo nace de una reserva CONFIRMADA de un ejemplar concreto que queda RESERVADO inmediatamente. Al recoger, la reserva pasa a RECOGIDA y nace el préstamo ACTIVO; no existe un préstamo PLANIFICADO independiente. Un estudiante solo puede mantener una operación abierta en total, reserva CONFIRMADA o préstamo ACTIVO. Docentes y administrativos pueden mantener varias sobre ejemplares distintos.
 
-La separación por archivos y el uso de identificadores estables permiten que, en el futuro, esta documentación pueda servir como fuente para una visualización interactiva desde el frontend. Esa visualización no forma parte de la implementación actual.
+La duración empieza en la recogida efectiva: **electrónicos 8 horas dentro del campus, libros 14 días y deportes 2 días**. Las políticas y duración se conservan al confirmar la reserva. Los cambios posteriores no modifican esa operación; la elegibilidad personal y términos vigentes se verifican nuevamente al entregar.
+
+La ventana de recogida incluye los 30 minutos posteriores a la hora pactada. Después, la reserva pasa a VENCIDA y genera inasistencia. La cancelación válida o administrativa no genera esa falta.
+
+Las reglas completas de acumulación, escalamiento y absolución están en [términos y condiciones](terms-and-conditions.md#8-acumulación-de-sanciones). Las suspensiones futuras usan PROGRAMADA, las efectivas ACTIVA y las terminadas FINALIZADA o ABSUELTA. Las sanciones sin suspensión se finalizan después del descuento y pueden apelarse durante 30 días desde su registro; las demás finalizadas, durante 30 días desde su finalización.
+
+El administrador puede finalizar un bloqueo indefinido por solución material acreditada, guardando motivo, evidencia y fecha, **sin absolver ni devolver confianza**. Un saldo Crítico sigue impidiendo reservar, aun resuelto el incidente: no existe recuperación automática ni excepción administrativa al nivel. Solo una apelación aceptada restituye el descuento efectivo correspondiente. Otras restricciones siguen vigentes.
+
+## Identificadores y mantenimiento
+
+- `RF-xx`: requisito funcional. Se mantienen los **RF-01 a RF-56** y se agregan RF-57 en adelante sin renumerar.
+- `RNF-xx`: requisito no funcional. Se conservan los diez originales y se añaden los necesarios.
+- `RN-xx`: regla de negocio. Se mantienen los identificadores RN-01 a RN-29 y se incorporan los adicionales.
+- La versión de la regla aplicable se guarda al registrar una falta. Una actualización de términos no modifica sanciones históricas.
+- Los cambios posteriores en valores o criterios deben registrarse como una revisión de esta línea base y de las políticas correspondientes.
+
+La documentación y sus diagramas son independientes de la implementación actual. La visualización del proyecto puede consumir estos archivos, pero no reemplazarlos como fuente de verdad.
