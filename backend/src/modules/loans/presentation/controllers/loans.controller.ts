@@ -8,7 +8,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExtension, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetLoanUseCase } from '../../application/use-cases/get-loan.use-case.js';
 import { ListActiveLoansUseCase } from '../../application/use-cases/list-active-loans.use-case.js';
 import { ListOverdueLoansUseCase } from '../../application/use-cases/list-overdue-loans.use-case.js';
@@ -45,6 +45,7 @@ export class LoansController {
   @Post('reservations')
   @ApiBody({ type: CreateReservationDto })
   @ApiOperation({ summary: 'Confirmar una reserva de ejemplar' })
+  @ApiExtension('x-implementation-status', 'implemented')
   createReservationEndpoint(
     @Body() input: CreateReservationDto,
     @CurrentUser() user: AuthenticatedIdentity,
@@ -60,6 +61,7 @@ export class LoansController {
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Registrar recogida y crear el préstamo' })
+  @ApiExtension('x-implementation-status', 'implemented')
   pickup(@Param('reservationId') reservationId: string) {
     return this.pickupReservation.execute({
       reservationId,
@@ -70,6 +72,7 @@ export class LoansController {
   @Delete('reservations/:reservationId')
   @ApiBody({ type: CancelReservationDto })
   @ApiOperation({ summary: 'Cancelar una reserva confirmada' })
+  @ApiExtension('x-implementation-status', 'implemented')
   cancelReservation(
     @Param('reservationId') reservationId: string,
     @Body() input: CancelReservationDto,
@@ -86,6 +89,7 @@ export class LoansController {
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Consultar préstamos activos' })
+  @ApiExtension('x-implementation-status', 'implemented')
   listActive() {
     return this.listActiveLoans.execute();
   }
@@ -94,12 +98,14 @@ export class LoansController {
   @ApiOperation({ summary: 'Consultar préstamos vencidos' })
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiExtension('x-implementation-status', 'implemented')
   listOverdue() {
     return this.listOverdueLoans.execute({ at: new Date() });
   }
 
   @Get('user/:userId/history')
   @ApiOperation({ summary: 'Consultar historial de préstamos de un usuario' })
+  @ApiExtension('x-implementation-status', 'implemented')
   listHistory(@Param('userId') userId: string, @CurrentUser() user: AuthenticatedIdentity) {
     if (user.userId !== userId && user.role === AccessRole.USER) {
       throw new ForbiddenException('No tiene permisos para consultar este historial.');
@@ -109,6 +115,7 @@ export class LoansController {
 
   @Get(':loanId')
   @ApiOperation({ summary: 'Consultar préstamo' })
+  @ApiExtension('x-implementation-status', 'implemented')
   async getById(
     @Param('loanId') loanId: string,
     @CurrentUser() user: AuthenticatedIdentity,
@@ -128,6 +135,7 @@ export class LoansController {
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiBody({ type: ReturnLoanDto })
   @ApiOperation({ summary: 'Registrar devolución' })
+  @ApiExtension('x-implementation-status', 'implemented')
   registerReturn(
     @Param('loanId') loanId: string,
     @Body() input: ReturnLoanDto,

@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiExtension, ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
 import { RegisterViolationUseCase } from '../../application/use-cases/register-violation.use-case.js';
 import { ResolveAppealUseCase } from '../../application/use-cases/resolve-appeal.use-case.js';
 import { SubmitAppealUseCase } from '../../application/use-cases/submit-appeal.use-case.js';
@@ -30,6 +30,7 @@ export class ViolationsController {
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiBody({ type: RegisterViolationDto })
   @ApiOperation({ summary: 'Registrar incumplimiento' })
+  @ApiExtension('x-implementation-status', 'implemented')
   register(@Body() input: RegisterViolationDto) {
     return this.registerViolation.execute(input);
   }
@@ -37,6 +38,7 @@ export class ViolationsController {
   @Post('sanctions/:sanctionId/appeals')
   @ApiBody({ type: SubmitAppealDto })
   @ApiOperation({ summary: 'Presentar apelación de una sanción' })
+  @ApiExtension('x-implementation-status', 'implemented')
   appeal(
     @Param('sanctionId') sanctionId: string,
     @Body() input: SubmitAppealDto,
@@ -54,6 +56,7 @@ export class ViolationsController {
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: ResolveAppealDto })
   @ApiOperation({ summary: 'Resolver apelación' })
+  @ApiExtension('x-implementation-status', 'implemented')
   resolve(
     @Param('appealId') appealId: string,
     @Body() input: ResolveAppealDto,
