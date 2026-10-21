@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import { AppealStatus } from './domain/entities/appeal.js';
 import { RegisterViolationUseCase } from './application/use-cases/register-violation.use-case.js';
 import { SubmitAppealUseCase } from './application/use-cases/submit-appeal.use-case.js';
 import { ResolveAppealUseCase } from './application/use-cases/resolve-appeal.use-case.js';
 import { AcceptTermsVersionUseCase } from './application/use-cases/accept-terms-version.use-case.js';
-import { CreateLoanUseCase } from '../loans/application/use-cases/create-loan.use-case.js';
 import { isEffectiveActiveSanction, PrismaUserRepository } from '../users/infrastructure/persistence/prisma/prisma-user.repository.js';
 import { PrismaAppealRepository } from './infrastructure/persistence/prisma/prisma-appeal.repository.js';
 
@@ -21,62 +21,70 @@ describe('Rules use cases', () => {
     expect(users.applyPenalty).toHaveBeenCalledWith(expect.objectContaining({ violationId: 'v1', penaltyPercentage: 10 }));
   });
 
-  it('prevents duplicate appeals and only allows the violation owner to submit', async () => {
-    const appeals = { findByViolationId: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: 'a1' }) };
+  it('prevents duplicate appeals and only allows the sanction owner to submit', async () => {
+    const appeals = {
+      findSanctionByViolationId: vi.fn().mockResolvedValue({
+        id: 's1', userId: 'u1', status: 'ACTIVA', startsAt: new Date(), endsAt: null,
+      }),
+      findByViolationId: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: 'a1' }),
+    };
     const violations = { findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }) };
     const useCase = new SubmitAppealUseCase(appeals as any, violations as any);
     await expect(useCase.execute({ violationId: 'v1', userId: 'u2', reason: 'x', submittedAt: new Date() })).rejects.toThrow();
     await expect(useCase.execute({ violationId: 'v1', userId: 'u1', reason: 'x', submittedAt: new Date() })).resolves.toBeDefined();
+    expect(appeals.create).toHaveBeenCalledWith(expect.objectContaining({ violationId: 'v1', userId: 'u1' }));
+    appeals.findByViolationId.mockResolvedValue({ id: 'a1' });
+    await expect(useCase.execute({ violationId: 'v1', userId: 'u1', reason: 'x', submittedAt: new Date() })).rejects.toThrow();
+  });
+
+  it('rejects an appeal more than 30 days after the sanction ended', async () => {
+    const appeals = {
+      findSanctionByViolationId: vi.fn().mockResolvedValue({
+        id: 's1', userId: 'u1', status: 'FINALIZADA',
+        startsAt: new Date('2026-08-01T00:00:00Z'), endsAt: new Date('2026-08-10T00:00:00Z'),
+      }),
+      findByViolationId: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+    };
+    const useCase = new SubmitAppealUseCase(appeals as any, {
+      findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }),
+    } as any);
+    await expect(useCase.execute({
+      violationId: 'v1', userId: 'u1', reason: 'fuera de plazo',
+      submittedAt: new Date('2026-08-10T00:00:00Z'),
+    })).rejects.toThrow('plazo');
+    expect(appeals.create).not.toHaveBeenCalled();
+  });
+
+  it('requires a sanction and permits an appeal within 30 days after finalization', async () => {
+    const appeals = {
+      findSanctionByViolationId: vi.fn().mockResolvedValue(null),
+      findByViolationId: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: 'a1' }),
+    };
+    const useCase = new SubmitAppealUseCase(appeals as any, {
+      findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }),
+    } as any);
+    const input = { violationId: 'v1', userId: 'u1', reason: 'revisión', submittedAt: new Date(0) };
+    await expect(useCase.execute(input)).rejects.toThrow('Sanción no encontrada');
+    appeals.findSanctionByViolationId.mockResolvedValue({
+      id: 's1', userId: 'u1', status: 'FINALIZADA',
+      startsAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      endsAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    });
+    await expect(useCase.execute(input)).resolves.toEqual({ id: 'a1' });
+    expect(appeals.create.mock.calls[0][0].submittedAt.getTime()).toBeGreaterThan(0);
   });
 
   it('resolves pending appeals and rejects already resolved appeals', async () => {
-    const appeals = { findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }), resolve: vi.fn().mockResolvedValue({ id: 'a1', status: 'ACEPTADA' }) };
+    const appeals = { findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }), resolve: vi.fn().mockResolvedValue({ id: 'a1', status: AppealStatus.ACCEPTED }) };
     const useCase = new ResolveAppealUseCase(appeals as any);
-    await expect(useCase.execute({ appealId: 'a1', status: 'ACEPTADA', resolution: 'ok', resolvedAt: new Date(), resolvedByAccountId: 'a' })).resolves.toMatchObject({ status: 'ACEPTADA' });
-    appeals.findById.mockResolvedValue({ id: 'a1', status: 'ACEPTADA' });
-    await expect(useCase.execute({ appealId: 'a1', status: 'RECHAZADA', resolution: 'no', resolvedAt: new Date(), resolvedByAccountId: 'a' })).rejects.toThrow();
+    await expect(useCase.execute({ appealId: 'a1', status: AppealStatus.ACCEPTED, resolution: 'ok', resolvedAt: new Date(), resolvedByAccountId: 'a' })).resolves.toMatchObject({ status: AppealStatus.ACCEPTED });
+    appeals.findById.mockResolvedValue({ id: 'a1', status: AppealStatus.ACCEPTED });
+    await expect(useCase.execute({ appealId: 'a1', status: AppealStatus.REJECTED, resolution: 'no', resolvedAt: new Date(), resolvedByAccountId: 'a' })).rejects.toThrow();
   });
 
-  it('unblocks loans only after an accepted appeal absolves the active sanction', async () => {
-    let sanctionStatus = 'ACTIVA';
-    const appeals = {
-      findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }),
-      resolve: vi.fn().mockImplementation(async (input: any) => {
-        if (input.status === 'ACEPTADA') sanctionStatus = 'ABSUELTA';
-        return { id: 'a1', status: input.status };
-      }),
-    };
-    const resolver = new ResolveAppealUseCase(appeals as any);
-    const eligibility = () => ({ enabled: sanctionStatus !== 'ACTIVA' });
-    const inventory = { getAvailability: vi.fn().mockResolvedValue({ available: true, maximumLoanDays: 1 }) };
-    const loans = { hasOverlappingLoan: vi.fn().mockResolvedValue(false), createWithCopy: vi.fn().mockResolvedValue({ id: 'l1' }) };
-    const createLoan = () => new CreateLoanUseCase(loans as any, { getByUserId: vi.fn().mockImplementation(eligibility) } as any, inventory as any);
-    const input = { userId: 'u1', copyId: 'c1', startsAt: new Date(Date.now() + 60_000) };
-    await expect(createLoan().execute(input)).rejects.toThrow();
-    await resolver.execute({ appealId: 'a1', status: 'ACEPTADA', resolution: 'fundada', resolvedAt: new Date(), resolvedByAccountId: 'operator-1' });
-    await expect(createLoan().execute(input)).resolves.toEqual({ id: 'l1' });
-  });
-
-  it('keeps the sanction blocking loans when an appeal is rejected', async () => {
-    let sanctionStatus = 'ACTIVA';
-    const appeals = {
-      findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }),
-      resolve: vi.fn().mockImplementation(async (input: any) => ({ id: 'a1', status: input.status })),
-    };
-    const resolver = new ResolveAppealUseCase(appeals as any);
-    await resolver.execute({ appealId: 'a1', status: 'RECHAZADA', resolution: 'infundada', resolvedAt: new Date(), resolvedByAccountId: 'operator-1' });
-    expect(sanctionStatus).toBe('ACTIVA');
-    const createLoan = new CreateLoanUseCase(
-      { hasOverlappingLoan: vi.fn() } as any,
-      { getByUserId: vi.fn().mockReturnValue({ enabled: false }) } as any,
-      { getAvailability: vi.fn() } as any,
-    );
-    await expect(createLoan.execute({
-      userId: 'u1',
-      copyId: 'c1',
-      startsAt: new Date(Date.now() + 60_000),
-    })).rejects.toThrow();
-  });
 
   it('recognizes only effective active sanctions for eligibility', () => {
     const at = new Date('2026-10-11T12:00:00.000Z');
@@ -95,7 +103,14 @@ describe('Rules use cases', () => {
         fecha: new Date(), estado: 'ACEPTADA', resolucion: 'fundada',
         fechaResolucion: new Date(), resueltaPorCuentaId: 'account-1',
       }])
-      .mockResolvedValueOnce([{ id: 's1' }]);
+      .mockResolvedValueOnce([{
+        id: 's1', usuarioId: 'u1', estado: 'FINALIZADA',
+        confianzaAnterior: '60.00', confianzaPosterior: '45.00',
+      }])
+      .mockResolvedValueOnce([{ id: 'u1', confianza: '55.00' }])
+      .mockResolvedValueOnce([{ id: 's1' }])
+      .mockResolvedValueOnce([{ id: 'u1' }])
+      .mockResolvedValueOnce([{ id: 'audit-1' }]);
     const chain = (value: unknown) => ({
       where: () => chain(value),
       limit: () => chain(value),
@@ -107,13 +122,15 @@ describe('Rules use cases', () => {
       client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
       sql: { public: {
         apelaciones: { update: () => chain('appeal-update') },
-        sanciones: { update: () => chain('sanction-update') },
+        sanciones: { select: () => chain('sanction-select'), update: () => chain('sanction-update') },
+        usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
+        auditorias_usuario: { insert: () => chain('audit-insert') },
       } },
     };
     const repository = new PrismaAppealRepository(prisma as any);
     const result = await repository.resolve({
       appealId: 'a1',
-      status: 'ACEPTADA',
+      status: AppealStatus.ACCEPTED,
       resolution: 'fundada',
       resolvedAt: new Date(),
       resolvedByAccountId: 'account-1',
@@ -121,6 +138,32 @@ describe('Rules use cases', () => {
 
     expect(result.status).toBe('ACEPTADA');
     expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledWith('audit-insert');
+  });
+
+  it('rolls back an accepted appeal when the sanction no longer exists', async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce([{
+        id: 'a1', incumplimientoId: 'v1', usuarioId: 'u1', estado: 'ACEPTADA',
+      }])
+      .mockResolvedValueOnce([]);
+    const chain = (value: unknown): any => ({
+      where: () => chain(value), limit: () => chain(value),
+      returning: () => chain(value), build: () => value,
+    });
+    const prisma = {
+      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      sql: { public: {
+        apelaciones: { update: () => chain('appeal-update') },
+        sanciones: { select: () => chain('sanction-select') },
+      } },
+    };
+    const repository = new PrismaAppealRepository(prisma as any);
+    await expect(repository.resolve({
+      appealId: 'a1', status: AppealStatus.ACCEPTED, resolution: 'fundada',
+      resolvedAt: new Date(), resolvedByAccountId: 'admin-1',
+    })).rejects.toThrow('sanción');
     expect(query).toHaveBeenCalledTimes(2);
   });
 
@@ -161,12 +204,12 @@ describe('Rules use cases', () => {
   it('passes the trusted resolver identity through to the repository', async () => {
     const appeals = {
       findById: vi.fn().mockResolvedValue({ id: 'a1', status: 'PENDIENTE' }),
-      resolve: vi.fn().mockResolvedValue({ id: 'a1', status: 'ACEPTADA' }),
+      resolve: vi.fn().mockResolvedValue({ id: 'a1', status: AppealStatus.ACCEPTED }),
     };
     const useCase = new ResolveAppealUseCase(appeals as any);
     await useCase.execute({
       appealId: 'a1',
-      status: 'ACEPTADA',
+      status: AppealStatus.ACCEPTED,
       resolution: 'validada',
       resolvedAt: new Date(),
       resolvedByAccountId: 'account-from-jwt',

@@ -23,11 +23,6 @@ export class SubmitAppealDto {
   @IsString()
   @MaxLength(2000)
   reason!: string;
-
-  @ApiProperty({ type: String, format: 'date-time', example: '2026-09-02T10:00:00.000Z' })
-  @Type(() => Date)
-  @IsDate()
-  submittedAt!: Date;
 }
 
 export class ResolveAppealDto {
@@ -39,10 +34,4 @@ export class ResolveAppealDto {
   @IsString()
   @MaxLength(2000)
   resolution!: string;
-
-  @ApiProperty({ type: String, format: 'date-time', example: '2026-09-03T10:00:00.000Z' })
-  @Type(() => Date)
-  @IsDate()
-  resolvedAt!: Date;
-
 }

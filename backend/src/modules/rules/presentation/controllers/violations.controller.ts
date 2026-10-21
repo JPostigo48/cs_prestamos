@@ -46,13 +46,13 @@ export class ViolationsController {
       violationId,
       userId: user.userId,
       reason: input.reason,
-      submittedAt: input.submittedAt,
+      submittedAt: new Date(),
     });
   }
 
   @Patch('appeals/:appealId/resolution')
   @UseGuards(RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: ResolveAppealDto })
   @ApiOperation({ summary: 'Resolver apelación' })
   resolve(
@@ -64,7 +64,7 @@ export class ViolationsController {
       appealId,
       status: input.status,
       resolution: input.resolution,
-      resolvedAt: input.resolvedAt,
+      resolvedAt: new Date(),
       resolvedByAccountId: user.accountId,
     });
   }
