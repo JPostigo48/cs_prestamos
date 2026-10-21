@@ -1,6 +1,7 @@
 import type {
   RuleStatus,
   RuleVersion,
+  SuspensionType,
   UsageRule,
 } from '../entities/usage-rule.js';
 
@@ -9,6 +10,8 @@ export interface RuleVersionData {
   description: string;
   penaltyPercentage: number;
   consequence: string;
+  suspensionType: SuspensionType;
+  suspensionDays?: number | null;
 }
 
 export abstract class RuleRepository {

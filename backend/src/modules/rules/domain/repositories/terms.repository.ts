@@ -17,4 +17,5 @@ export abstract class TermsRepository {
   abstract findVersionById(versionId: string): Promise<TermsVersion | null>;
   abstract accept(data: AcceptTermsVersionData): Promise<TermsAcceptance>;
   abstract findAcceptancesByUserId(userId: string): Promise<TermsAcceptance[]>;
+  abstract hasAcceptedCurrentVersion(userId: string): Promise<boolean>;
 }

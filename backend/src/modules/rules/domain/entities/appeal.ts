@@ -7,6 +7,7 @@ export enum AppealStatus {
 export interface Appeal {
   id: string;
   violationId: string;
+  sanctionId: string | null;
   userId: string;
   reason: string;
   submittedAt: Date;

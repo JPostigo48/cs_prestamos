@@ -7,8 +7,7 @@ import { TermsRepository } from '../../domain/repositories/terms.repository.js';
 export class CreateTermsVersionUseCase {
   constructor(private readonly terms: TermsRepository) {}
 
-  async execute(_input: CreateTermsVersionInput): Promise<TermsVersion> {
-    // TODO
-    throw new Error('Not implemented');
+  async execute(input: CreateTermsVersionInput): Promise<TermsVersion> {
+    return this.terms.createVersion(input);
   }
 }

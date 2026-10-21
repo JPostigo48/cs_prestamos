@@ -1,0 +1,530 @@
+[
+  {
+    "id": "table.reservas",
+    "label": "Create table \"reservas\"",
+    "summary": "Creates table \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"reservas\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"reservas\"",
+        "sql": "CREATE TABLE \"public\".\"reservas\" (\n  \"fechaCancelacion\" timestamptz(3),\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"ejemplarId\" uuid NOT NULL,\n  \"estado\" text DEFAULT 'CONFIRMADA' NOT NULL,\n  \"fechaLimiteRecogida\" timestamptz(3) NOT NULL,\n  \"duracionPrestamoHoras\" int4 NOT NULL,\n  \"fechaRecogida\" timestamptz(3),\n  \"fechaSolicitada\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"motivoCancelacion\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuarioId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"reservas_estado_check_c75da3fc\" CHECK (\"estado\" IN ('CONFIRMADA', 'RECOGIDA', 'CANCELADA', 'VENCIDA'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"reservas\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.prestamos.reservaId",
+    "label": "Add column \"reservaId\" to \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "reservaId",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"reservaId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "prestamos",
+          "reservaId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"reservaId\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\" ADD COLUMN \"reservaId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"reservaId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "prestamos",
+          "reservaId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.prestamos.prestamos_reservaId_key",
+    "label": "Add unique constraint on \"prestamos\" (reservaId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "prestamos_reservaId_key",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prestamos_reservaId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_reservaId_key",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"prestamos_reservaId_key\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\" ADD CONSTRAINT \"prestamos_reservaId_key\" UNIQUE (\"reservaId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prestamos_reservaId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_reservaId_key",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropCheckConstraint.ejemplares.ejemplares_estado_check_dcc20e51",
+    "label": "Drop check constraint \"ejemplares_estado_check_dcc20e51\" on \"ejemplares\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "ejemplares_estado_check_dcc20e51",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"ejemplares_estado_check_dcc20e51\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_estado_check_dcc20e51",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"ejemplares_estado_check_dcc20e51\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" DROP CONSTRAINT \"ejemplares_estado_check_dcc20e51\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"ejemplares_estado_check_dcc20e51\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_estado_check_dcc20e51",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.ejemplares.ejemplares_estado_check_edc0183f",
+    "label": "Add check constraint \"ejemplares_estado_check_edc0183f\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "ejemplares_estado_check_edc0183f",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"ejemplares_estado_check_edc0183f\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_estado_check_edc0183f",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"ejemplares_estado_check_edc0183f\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" ADD CONSTRAINT \"ejemplares_estado_check_edc0183f\" CHECK (\"estado\" IN ('DISPONIBLE', 'RESERVADO', 'PRESTADO', 'NO_DISPONIBLE'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"ejemplares_estado_check_edc0183f\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_estado_check_edc0183f",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reservas.reservas_usuarioId_estado_idx_e25db20e",
+    "label": "Create index \"reservas_usuarioId_estado_idx_e25db20e\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reservas_usuarioId_estado_idx_e25db20e",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reservas_usuarioId_estado_idx_e25db20e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reservas_usuarioId_estado_idx_e25db20e\"",
+        "sql": "CREATE INDEX \"reservas_usuarioId_estado_idx_e25db20e\" ON \"public\".\"reservas\" (\"usuarioId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reservas_usuarioId_estado_idx_e25db20e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_usuarioId_estado_idx_e25db20e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reservas.reservas_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"reservas_usuarioId_idx_5f01c7d6\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reservas_usuarioId_idx_5f01c7d6",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reservas_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reservas_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"reservas_usuarioId_idx_5f01c7d6\" ON \"public\".\"reservas\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reservas_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reservas.reservas_ejemplarId_estado_idx_9d636bd5",
+    "label": "Create index \"reservas_ejemplarId_estado_idx_9d636bd5\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reservas_ejemplarId_estado_idx_9d636bd5",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reservas_ejemplarId_estado_idx_9d636bd5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_ejemplarId_estado_idx_9d636bd5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reservas_ejemplarId_estado_idx_9d636bd5\"",
+        "sql": "CREATE INDEX \"reservas_ejemplarId_estado_idx_9d636bd5\" ON \"public\".\"reservas\" (\"ejemplarId\", \"estado\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reservas_ejemplarId_estado_idx_9d636bd5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_ejemplarId_estado_idx_9d636bd5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reservas.reservas_ejemplarId_idx_3f5f7f14",
+    "label": "Create index \"reservas_ejemplarId_idx_3f5f7f14\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reservas_ejemplarId_idx_3f5f7f14",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reservas_ejemplarId_idx_3f5f7f14\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reservas_ejemplarId_idx_3f5f7f14\"",
+        "sql": "CREATE INDEX \"reservas_ejemplarId_idx_3f5f7f14\" ON \"public\".\"reservas\" (\"ejemplarId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reservas_ejemplarId_idx_3f5f7f14\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_ejemplarId_idx_3f5f7f14\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reservas.reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9",
+    "label": "Create index \"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\"",
+        "sql": "CREATE INDEX \"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\" ON \"public\".\"reservas\" (\"estado\", \"fechaLimiteRecogida\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.reservas.reservas_usuarioId_fkey",
+    "label": "Add foreign key \"reservas_usuarioId_fkey\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "reservas_usuarioId_fkey",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"reservas_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reservas_usuarioId_fkey",
+          "public",
+          "\"public\".\"reservas\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"reservas_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"reservas\"\nADD CONSTRAINT \"reservas_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"reservas_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reservas_usuarioId_fkey",
+          "public",
+          "\"public\".\"reservas\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.reservas.reservas_ejemplarId_fkey",
+    "label": "Add foreign key \"reservas_ejemplarId_fkey\" on \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "reservas_ejemplarId_fkey",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"reservas_ejemplarId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reservas_ejemplarId_fkey",
+          "public",
+          "\"public\".\"reservas\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"reservas_ejemplarId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"reservas\"\nADD CONSTRAINT \"reservas_ejemplarId_fkey\"\nFOREIGN KEY (\"ejemplarId\")\nREFERENCES \"public\".\"ejemplares\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"reservas_ejemplarId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reservas_ejemplarId_fkey",
+          "public",
+          "\"public\".\"reservas\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.prestamos.prestamos_reservaId_fkey",
+    "label": "Add foreign key \"prestamos_reservaId_fkey\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "prestamos_reservaId_fkey",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"prestamos_reservaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_reservaId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"prestamos_reservaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\"\nADD CONSTRAINT \"prestamos_reservaId_fkey\"\nFOREIGN KEY (\"reservaId\")\nREFERENCES \"public\".\"reservas\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"prestamos_reservaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_reservaId_fkey",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,212 @@
+[
+  {
+    "id": "dropCheckConstraint.sanciones.sanciones_estado_check_1e842a90",
+    "label": "Drop check constraint \"sanciones_estado_check_1e842a90\" on \"sanciones\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "sanciones_estado_check_1e842a90",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sanciones_estado_check_1e842a90\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1e842a90",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"sanciones_estado_check_1e842a90\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\" DROP CONSTRAINT \"sanciones_estado_check_1e842a90\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sanciones_estado_check_1e842a90\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1e842a90",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.versiones_regla.diasSuspension",
+    "label": "Add column \"diasSuspension\" to \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "diasSuspension",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"diasSuspension\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "versiones_regla",
+          "diasSuspension"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"diasSuspension\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_regla\" ADD COLUMN \"diasSuspension\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"diasSuspension\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "versiones_regla",
+          "diasSuspension"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.versiones_regla.tipoSuspension",
+    "label": "Add column \"tipoSuspension\" to \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "tipoSuspension",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"tipoSuspension\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "versiones_regla",
+          "tipoSuspension"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"tipoSuspension\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_regla\" ADD COLUMN \"tipoSuspension\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"tipoSuspension\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "versiones_regla",
+          "tipoSuspension"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.sanciones.sanciones_estado_check_1de51348",
+    "label": "Add check constraint \"sanciones_estado_check_1de51348\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "sanciones_estado_check_1de51348",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sanciones_estado_check_1de51348\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1de51348",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"sanciones_estado_check_1de51348\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\" ADD CONSTRAINT \"sanciones_estado_check_1de51348\" CHECK (\"estado\" IN ('PROGRAMADA', 'ACTIVA', 'FINALIZADA', 'ABSUELTA'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sanciones_estado_check_1de51348\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1de51348",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.versiones_regla.versiones_regla_tipoSuspension_check_410b7d83",
+    "label": "Add check constraint \"versiones_regla_tipoSuspension_check_410b7d83\" on \"versiones_regla\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "versiones_regla_tipoSuspension_check_410b7d83",
+        "table": "versiones_regla"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"versiones_regla_tipoSuspension_check_410b7d83\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_tipoSuspension_check_410b7d83",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"versiones_regla_tipoSuspension_check_410b7d83\"",
+        "sql": "ALTER TABLE \"public\".\"versiones_regla\" ADD CONSTRAINT \"versiones_regla_tipoSuspension_check_410b7d83\" CHECK (\"tipoSuspension\" IN ('NINGUNA', 'TEMPORAL', 'INDEFINIDA'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"versiones_regla_tipoSuspension_check_410b7d83\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "versiones_regla_tipoSuspension_check_410b7d83",
+          "public",
+          "\"public\".\"versiones_regla\""
+        ]
+      }
+    ]
+  }
+]
