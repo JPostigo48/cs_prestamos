@@ -5,7 +5,6 @@ import { AuthModule } from '../auth/auth.module.js';
 import { RulesModule } from '../rules/rules.module.js';
 import { LoanInventoryPort } from './application/ports/loan-inventory.port.js';
 import { UserLoanEligibilityPort } from './application/ports/user-loan-eligibility.port.js';
-import { CreateLoanUseCase } from './application/use-cases/create-loan.use-case.js';
 import { GetLoanUseCase } from './application/use-cases/get-loan.use-case.js';
 import { ListActiveLoansUseCase } from './application/use-cases/list-active-loans.use-case.js';
 import { ListOverdueLoansUseCase } from './application/use-cases/list-overdue-loans.use-case.js';
@@ -23,7 +22,6 @@ import { PickupReservationUseCase } from './application/use-cases/pickup-reserva
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case.js';
 
 const useCases = [
-  CreateLoanUseCase,
   ReturnLoanUseCase,
   GetLoanUseCase,
   ListActiveLoansUseCase,

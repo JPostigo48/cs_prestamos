@@ -1,12 +1,5 @@
 import type { Loan, LoanReturn } from '../entities/loan.js';
 
-export interface CreateLoanData {
-  userId: string;
-  copyId: string;
-  startsAt: Date;
-  endsAt: Date;
-}
-
 export interface RegisterLoanReturnData {
   loanId: string;
   returnedAt: Date;
@@ -14,8 +7,6 @@ export interface RegisterLoanReturnData {
 }
 
 export abstract class LoanRepository {
-  abstract create(data: CreateLoanData): Promise<Loan>;
-  abstract createWithCopy(data: CreateLoanData): Promise<Loan>;
   abstract findById(loanId: string): Promise<Loan | null>;
   abstract findActive(): Promise<Loan[]>;
   abstract findByUserId(userId: string): Promise<Loan[]>;

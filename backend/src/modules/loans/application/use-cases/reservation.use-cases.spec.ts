@@ -44,6 +44,7 @@ describe('Reservation use cases', () => {
     expect(reservations.create).toHaveBeenCalledWith(expect.objectContaining({
       userId: 'user-1',
       copyId: 'copy-1',
+      enforceSingleOpenOperation: true,
       pickupDeadline: reservation.pickupDeadline,
     }));
   });
@@ -97,6 +98,9 @@ describe('Reservation use cases', () => {
 
     await expect(useCase.execute({ userId: 'user-1', copyId: 'copy-1', requestedAt })).resolves.toEqual(reservation);
     expect(reservations.hasOpenReservationOrLoan).not.toHaveBeenCalled();
+    expect(reservations.create).toHaveBeenCalledWith(expect.objectContaining({
+      enforceSingleOpenOperation: false,
+    }));
   });
 
   it('requires pickup inside the reservation window', async () => {
@@ -104,7 +108,11 @@ describe('Reservation use cases', () => {
       findById: vi.fn().mockResolvedValue(reservation),
       pickup: vi.fn().mockResolvedValue({ reservation, loan: { id: 'loan-1' } }),
     };
-    const useCase = new PickupReservationUseCase(reservations as any);
+    const useCase = new PickupReservationUseCase(
+      reservations as any,
+      { getByUserId: vi.fn().mockResolvedValue({ enabled: true }) } as any,
+      { hasAcceptedCurrentVersion: vi.fn().mockResolvedValue(true) } as any,
+    );
 
     await expect(useCase.execute({
       reservationId: reservation.id,
@@ -115,6 +123,30 @@ describe('Reservation use cases', () => {
       reservationId: reservation.id,
       pickedUpAt: reservation.pickupDeadline,
     })).resolves.toEqual({ id: 'loan-1' });
+  });
+
+  it('rechecks eligibility and current terms before pickup', async () => {
+    const reservations = {
+      findById: vi.fn().mockResolvedValue(reservation),
+      pickup: vi.fn(),
+    };
+    const users = { getByUserId: vi.fn().mockResolvedValue({ enabled: false }) };
+    const terms = { hasAcceptedCurrentVersion: vi.fn().mockResolvedValue(true) };
+    const useCase = new PickupReservationUseCase(reservations as any, users as any, terms as any);
+
+    await expect(useCase.execute({
+      reservationId: reservation.id,
+      pickedUpAt: requestedAt,
+    })).rejects.toThrow(ConflictException);
+    expect(reservations.pickup).not.toHaveBeenCalled();
+
+    users.getByUserId.mockResolvedValue({ enabled: true });
+    terms.hasAcceptedCurrentVersion.mockResolvedValue(false);
+    await expect(useCase.execute({
+      reservationId: reservation.id,
+      pickedUpAt: requestedAt,
+    })).rejects.toThrow(ConflictException);
+    expect(reservations.pickup).not.toHaveBeenCalled();
   });
 
   it('only allows the owner to cancel a confirmed reservation', async () => {

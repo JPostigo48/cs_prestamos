@@ -40,6 +40,7 @@ export class CreateReservationUseCase {
     return this.reservations.create({
       userId: input.userId,
       copyId: input.copyId,
+      enforceSingleOpenOperation: eligibility.institutionalType === 'ESTUDIANTE',
       requestedAt: input.requestedAt,
       pickupDeadline,
       loanDurationHours: availability.maximumLoanHours,

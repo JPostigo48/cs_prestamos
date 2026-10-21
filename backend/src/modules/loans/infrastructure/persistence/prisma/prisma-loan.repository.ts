@@ -8,7 +8,6 @@ import { Temporal } from 'temporal-polyfill';
 import type { Loan, LoanReturn } from '../../../domain/entities/loan.js';
 import {
   LoanRepository,
-  type CreateLoanData,
   type RegisterLoanReturnData,
 } from '../../../domain/repositories/loan.repository.js';
 
@@ -68,85 +67,6 @@ export class PrismaLoanRepository implements LoanRepository {
         return this.map(row, returns[0] ?? null);
       }),
     );
-  }
-
-  async create(data: CreateLoanData): Promise<Loan> {
-    try {
-      const rows = await this.runtime()
-        .query(
-          this.prisma.sql.public.prestamos
-            .insert([{
-              usuarioId: data.userId,
-              ejemplarId: data.copyId,
-              fechaInicio: this.instant(data.startsAt),
-              fechaFin: this.instant(data.endsAt),
-              estado: 'ACTIVO',
-            }])
-            .returning(
-              'id',
-              'usuarioId',
-              'ejemplarId',
-              'fechaInicio',
-              'fechaFin',
-              'estado',
-            )
-            .build(),
-        );
-      if (!rows[0]) throw new InternalServerErrorException('No se pudo crear el préstamo.');
-      return this.map(rows[0]);
-    } catch (error) {
-      if (String(error).toLowerCase().includes('exclusion')) {
-        throw new ConflictException('El ejemplar ya tiene un préstamo solapado.');
-      }
-      throw error;
-    }
-  }
-
-  async createWithCopy(data: CreateLoanData): Promise<Loan> {
-    try {
-      const rows = await this.prisma.client.transaction(async (tx) => {
-        const copyRows = await tx.query(
-          this.prisma.sql.public.ejemplares
-            .update({ estado: 'PRESTADO' })
-            .where((row, fns) => fns.eq(row.id, data.copyId))
-            .where((row, fns) => fns.eq(row.estado, 'DISPONIBLE'))
-            .returning('id')
-            .build(),
-        );
-        if (!copyRows[0]) {
-          throw new ConflictException('El ejemplar no está disponible.');
-        }
-        const loanRows = await tx.query(
-          this.prisma.sql.public.prestamos
-            .insert([{
-              usuarioId: data.userId,
-              ejemplarId: data.copyId,
-              fechaInicio: this.instant(data.startsAt),
-              fechaFin: this.instant(data.endsAt),
-              estado: 'ACTIVO',
-            }])
-            .returning(
-              'id',
-              'usuarioId',
-              'ejemplarId',
-              'fechaInicio',
-              'fechaFin',
-              'estado',
-            )
-            .build(),
-        );
-        if (!loanRows[0]) {
-          throw new InternalServerErrorException('No se pudo crear el préstamo.');
-        }
-        return loanRows[0];
-      });
-      return this.map(rows);
-    } catch (error) {
-      if (error instanceof ConflictException || error instanceof InternalServerErrorException) {
-        throw error;
-      }
-      throw new ConflictException('No se pudo crear el préstamo.');
-    }
   }
 
   async findById(loanId: string): Promise<Loan | null> {

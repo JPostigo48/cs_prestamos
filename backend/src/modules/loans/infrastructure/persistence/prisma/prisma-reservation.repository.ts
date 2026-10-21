@@ -76,6 +76,37 @@ export class PrismaReservationRepository implements ReservationRepository {
   async create(data: CreateReservationData): Promise<Reservation> {
     try {
       const rows = await this.prisma.client.transaction(async (tx) => {
+        if (data.enforceSingleOpenOperation) {
+          // Serializa las reservas del mismo estudiante antes de verificar su cupo.
+          const users = await tx.query(
+            this.prisma.sql.public.usuarios
+              .update({ vinculacionVigente: true })
+              .where((row, fns) => fns.eq(row.id, data.userId))
+              .where((row, fns) => fns.eq(row.vinculacionVigente, true))
+              .returning('id')
+              .build(),
+          );
+          if (!users[0]) throw new ConflictException('El usuario no es elegible para préstamos.');
+          const reservations = await tx.query(
+            this.prisma.sql.public.reservas
+              .select('id')
+              .where((row, fns) => fns.eq(row.usuarioId, data.userId))
+              .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+              .limit(1)
+              .build(),
+          );
+          const loans = await tx.query(
+            this.prisma.sql.public.prestamos
+              .select('id')
+              .where((row, fns) => fns.eq(row.usuarioId, data.userId))
+              .where((row, fns) => fns.eq(row.estado, 'ACTIVO'))
+              .limit(1)
+              .build(),
+          );
+          if (reservations[0] || loans[0]) {
+            throw new ConflictException('El estudiante ya tiene una operación abierta.');
+          }
+        }
         const copies = await tx.query(
           this.prisma.sql.public.ejemplares
             .update({ estado: 'RESERVADO' })
@@ -168,13 +199,15 @@ export class PrismaReservationRepository implements ReservationRepository {
           .build(),
       );
       if (!updated[0]) throw new ConflictException('La reserva ya fue procesada.');
-      await tx.query(
+      const copies = await tx.query(
         this.prisma.sql.public.ejemplares
           .update({ estado: 'PRESTADO' })
           .where((row, fns) => fns.eq(row.id, reservation.ejemplarId))
           .where((row, fns) => fns.eq(row.estado, 'RESERVADO'))
+          .returning('id')
           .build(),
       );
+      if (!copies[0]) throw new ConflictException('El ejemplar ya no está reservado.');
       const loans = await tx.query(
         this.prisma.sql.public.prestamos
           .insert([{

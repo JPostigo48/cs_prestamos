@@ -985,32 +985,6 @@
         "x-implementation-status": "pending"
       }
     },
-    "/loans": {
-      "post": {
-        "operationId": "LoansController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLoanDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "Registrar préstamo",
-        "tags": [
-          "Préstamos"
-        ],
-        "x-implementation-status": "pending"
-      }
-    },
     "/loans/reservations": {
       "post": {
         "operationId": "LoansController_createReservationEndpoint",
@@ -1233,7 +1207,7 @@
             "description": ""
           }
         },
-        "summary": "Registrar cuenta de acceso",
+        "summary": "Registrar cuenta de acceso para un usuario aprobado",
         "tags": [
           "Autenticación"
         ],
@@ -2144,25 +2118,6 @@
           "userType"
         ]
       },
-      "CreateLoanDto": {
-        "type": "object",
-        "properties": {
-          "copyId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2030-01-15T10:00:00.000Z"
-          }
-        },
-        "required": [
-          "copyId",
-          "startsAt"
-        ]
-      },
       "CreateReservationDto": {
         "type": "object",
         "properties": {}
@@ -2351,16 +2306,10 @@
             "type": "string",
             "maxLength": 2000,
             "example": "Solicito revisar la sanción registrada"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-09-02T10:00:00.000Z"
           }
         },
         "required": [
-          "reason",
-          "submittedAt"
+          "reason"
         ]
       },
       "ResolveAppealDto": {
@@ -2378,17 +2327,11 @@
             "type": "string",
             "maxLength": 2000,
             "example": "Resultado de la revisión de la apelación"
-          },
-          "resolvedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-09-03T10:00:00.000Z"
           }
         },
         "required": [
           "status",
-          "resolution",
-          "resolvedAt"
+          "resolution"
         ]
       },
       "CreateTermsVersionDto": {
