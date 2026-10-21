@@ -16,4 +16,11 @@ export class UpdateCategoryDto {
   @IsInt()
   @Min(1)
   tiempoMaximoPrestamoDias?: number;
+
+  @IsOptional()
+  @ApiPropertyOptional({ type: Number, minimum: 1, example: 168 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  tiempoMaximoPrestamoHoras?: number;
 }

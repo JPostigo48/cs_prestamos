@@ -1,9 +1,3 @@
-export interface CreateLoanInput {
-  userId: string;
-  copyId: string;
-  startsAt: Date;
-}
-
 export interface ReturnLoanInput {
   loanId: string;
   returnedAt: Date;

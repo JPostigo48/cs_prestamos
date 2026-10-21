@@ -66,13 +66,12 @@ try {
         });
       }
 
-      if (
-        entry['x-implementation-status'] === 'implemented'
-        && !Object.values(entry.responses ?? {}).some((response) =>
-          Object.values(response.content ?? {}).some((media) => media.schema),
-        )
-      ) {
-        throw new Error(`${method.toUpperCase()} ${path} está implementado, pero no tiene un esquema de respuesta.`);
+      for (const response of Object.values(entry.responses ?? {})) {
+        for (const media of Object.values(response.content ?? {})) {
+          if (!media.schema) {
+            throw new Error(`${method.toUpperCase()} ${path} declara una respuesta sin esquema.`);
+          }
+        }
       }
     }
   }

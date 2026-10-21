@@ -1,0 +1,44 @@
+[
+  {
+    "id": "unique.recursos.recursos_categoriaId_nombre_key",
+    "label": "Add unique constraint on \"recursos\" (categoriaId, nombre)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "recursos_categoriaId_nombre_key",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"recursos_categoriaId_nombre_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_categoriaId_nombre_key",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"recursos_categoriaId_nombre_key\"",
+        "sql": "ALTER TABLE \"public\".\"recursos\" ADD CONSTRAINT \"recursos_categoriaId_nombre_key\" UNIQUE (\"categoriaId\", \"nombre\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"recursos_categoriaId_nombre_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_categoriaId_nombre_key",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ]
+  }
+]

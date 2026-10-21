@@ -18,4 +18,6 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci --prefix backend
-      - run: npm run project:check
+      - run: npm run openapi:check --prefix backend
+      - run: npm run typecheck --prefix backend
+      - run: npm run test --prefix backend
