@@ -125,7 +125,7 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
         const existing = await tx.query(this.prisma.sql.public.usuarios.select('id').where((row, fns) => fns.eq(row.identificadorInstitucional, request.identificadorInstitucional!)).where((row, fns) => fns.eq(row.vinculacionVigente, true)).limit(1).build());
         if (existing.length) throw new ConflictException('El identificador institucional ya está vinculado.');
       }
-      const userRows = await tx.query(this.prisma.sql.public.usuarios.insert([{ nombre: request.nombre, tipoUsuario: request.tipoUsuario, identificadorInstitucional: request.identificadorInstitucional, vinculacionVigente: true, confianza: '100.00' }]).returning('id', 'nombre', 'tipoUsuario', 'identificadorInstitucional', 'vinculacionVigente', 'confianza').build());
+      const userRows = await tx.query(this.prisma.sql.public.usuarios.insert([{ nombre: request.nombre, tipoUsuario: request.tipoUsuario, identificadorInstitucional: request.identificadorInstitucional, vinculacionVigente: true, confianza: '75.00' }]).returning('id', 'nombre', 'tipoUsuario', 'identificadorInstitucional', 'vinculacionVigente', 'confianza').build());
       const userRow = userRows[0];
       if (!userRow) throw new Error('No se pudo crear el usuario.');
       const updatedRows = await tx.query(this.prisma.sql.public.solicitudes_registro.update({ estado: 'APROBADA', motivoRechazo: null, usuarioAprobadoId: userRow.id }).where((row, fns) => fns.eq(row.id, requestId)).where((row, fns) => fns.eq(row.estado, 'PENDIENTE')).returning('id', 'nombre', 'tipoUsuario', 'identificadorInstitucional', 'fechaSolicitud', 'estado', 'motivoRechazo', 'usuarioAprobadoId').build());

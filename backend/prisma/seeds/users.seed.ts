@@ -53,7 +53,7 @@ export async function seedUsers() {
       tipoUsuario: 'ESTUDIANTE',
       identificadorInstitucional: 'SEED-APPROVED',
       vinculacionVigente: true,
-      confianza: '100.00',
+      confianza: '75.00',
     });
     const inactiveUser = await upsertUser({
       id: '00000000-0000-4000-8000-000000000002',
@@ -69,7 +69,7 @@ export async function seedUsers() {
       tipoUsuario: 'ADMINISTRATIVO',
       identificadorInstitucional: 'SEED-OPERATOR',
       vinculacionVigente: true,
-      confianza: '100.00',
+      confianza: '75.00',
     });
     const administratorUser = await upsertUser({
       id: '00000000-0000-4000-8000-000000000004',
@@ -77,7 +77,7 @@ export async function seedUsers() {
       tipoUsuario: 'ADMINISTRATIVO',
       identificadorInstitucional: 'SEED-ADMIN',
       vinculacionVigente: true,
-      confianza: '100.00',
+      confianza: '75.00',
     });
     const approvedRequest = await upsertRequest({
       nombre: 'Usuario Aprobado Seed',
