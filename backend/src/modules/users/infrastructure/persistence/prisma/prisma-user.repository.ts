@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
-import type {
-  LoanEligibility,
-  Sanction,
-  User,
-  UserTrustProfile,
+import {
+  type LoanEligibility,
+  deriveTrustLevel,
+  type Sanction,
+  type User,
+  type UserTrustProfile,
 } from '../../../domain/entities/user.js';
 import { UserRepository } from '../../../domain/repositories/user.repository.js';
 
@@ -93,7 +94,7 @@ export class PrismaUserRepository extends UserRepository {
       ...(user.hasCurrentAffiliation ? [] : ['VINCULACION_NO_VIGENTE']),
       ...(active ? ['SANCION_ACTIVA'] : []),
     ];
-    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, institutionalType: user.userType, activeSanctions, trustPercentage: user.trustPercentage, trustLevel: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1' };
+    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, institutionalType: user.userType, activeSanctions, trustPercentage: user.trustPercentage, trustLevel: deriveTrustLevel(user.trustPercentage) };
   }
 
   async getTrustProfile(userId: string): Promise<UserTrustProfile> {
@@ -101,7 +102,7 @@ export class PrismaUserRepository extends UserRepository {
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     const sanctions = await this.listSanctions(userId);
     const now = new Date();
-    return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => isEffectiveActiveSanction(sanction, now)) };
+    return { userId, percentage: user.trustPercentage, level: deriveTrustLevel(user.trustPercentage), currentlyPenalized: sanctions.some((sanction) => isEffectiveActiveSanction(sanction, now)) };
   }
 
   async listSanctions(userId: string): Promise<Sanction[]> {

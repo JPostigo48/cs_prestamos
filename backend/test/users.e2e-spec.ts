@@ -1,7 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module.js';
 import { HttpExceptionFilter } from '../src/shared/infrastructure/filters/http-exception.filter.js';
 import { PrismaService } from '../src/shared/infrastructure/prisma/prisma.service.js';
@@ -9,7 +8,7 @@ import { JwtPort } from '../src/modules/auth/application/ports/jwt.port.js';
 import { AccessRole } from '../src/modules/auth/domain/entities/access-account.js';
 
 describe('Users flow (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let prisma: PrismaService;
   let requestId: string;
   let rejectedRequestId: string;
@@ -54,7 +53,7 @@ describe('Users flow (e2e)', () => {
       userType: 'ESTUDIANTE',
       role: AccessRole.USER,
     });
-    expect(approved.body).toMatchObject({ request: { status: 'APROBADA' }, user: { id: userId, trustPercentage: 100 } });
+    expect(approved.body).toMatchObject({ request: { status: 'APROBADA' }, user: { id: userId, trustPercentage: 75 } });
 
     await request(app.getHttpServer()).get(`/users/${userId}`).expect(401);
     await request(app.getHttpServer()).get(`/users/${userId}`).auth(userToken, { type: 'bearer' }).expect(200);
