@@ -10,6 +10,7 @@ import { JwtTokenAdapter } from './infrastructure/security/jwt-token.adapter.js'
 
 const user = {
   userId: 'user-1',
+  email: 'estudiante@unsa.edu.pe',
   userType: 'ESTUDIANTE' as const,
   currentAffiliation: true,
 };

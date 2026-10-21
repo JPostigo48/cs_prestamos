@@ -409,12 +409,12 @@ describe('InventoryService', () => {
     repository.countCopiesByResourceAndState.mockImplementation(
       (_id, state) =>
         Promise.resolve(
-          state === 'DISPONIBLE' && expected.available !== false ? 1 : 0,
+          state === 'DISPONIBLE' && (!('available' in expected) || expected.available !== false) ? 1 : 0,
         ),
     );
     await service.listResources({ ...filter, page: 1, limit: 20 });
     const expectedQuery =
-      expected.available === undefined
+      !('available' in expected)
         ? { ...expected, limit: 20, offset: 0 }
         : expected;
     expect(repository.findAllResources).toHaveBeenCalledWith(
