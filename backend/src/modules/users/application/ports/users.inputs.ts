@@ -39,11 +39,3 @@ export type ListUsersInput = {
   page?: number;
   limit?: number;
 };
-
-export type ApplyTrustPenaltyInput = {
-  userId: string;
-  violationId: string;
-  ruleId: string;
-  ruleVersionId: string;
-  penaltyPercentage: number;
-};

@@ -43,6 +43,8 @@ export class RulesController {
       description: input.description,
       penaltyPercentage: input.penaltyPercentage,
       consequence: input.consequence,
+      suspensionType: input.suspensionType,
+      suspensionDays: input.suspensionDays,
     });
   }
 

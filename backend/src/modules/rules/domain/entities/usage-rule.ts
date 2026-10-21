@@ -3,6 +3,12 @@ export enum RuleStatus {
   INACTIVE = 'INACTIVA',
 }
 
+export enum SuspensionType {
+  NONE = 'NINGUNA',
+  TEMPORARY = 'TEMPORAL',
+  INDEFINITE = 'INDEFINIDA',
+}
+
 export interface RuleVersion {
   id: string;
   ruleId: string;
@@ -11,6 +17,8 @@ export interface RuleVersion {
   description: string;
   penaltyPercentage: number;
   consequence: string;
+  suspensionType: SuspensionType | null;
+  suspensionDays: number | null;
   status: RuleStatus;
 }
 

@@ -276,6 +276,8 @@ model VersionRegla {
   descripcion            String
   penalizacionPorcentual Numeric(5, 2)
   consecuencia           String
+  tipoSuspension         TipoSuspension?
+  diasSuspension         Int?
   estado                 EstadoRegla      @default(ACTIVA)
 
   createdAt              Timestamptz(3)   @default(now())
@@ -438,6 +440,7 @@ enum EstadoSolicitud {
 enum EstadoSancion {
   @@type("pg/text@1")
 
+  PROGRAMADA
   ACTIVA
   FINALIZADA
   ABSUELTA
@@ -448,6 +451,14 @@ enum EstadoRegla {
 
   ACTIVA
   INACTIVA
+}
+
+enum TipoSuspension {
+  @@type("pg/text@1")
+
+  NINGUNA
+  TEMPORAL
+  INDEFINIDA
 }
 
 enum EstadoApelacion {

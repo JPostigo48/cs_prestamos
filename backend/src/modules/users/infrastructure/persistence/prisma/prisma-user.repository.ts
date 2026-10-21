@@ -6,18 +6,25 @@ import type {
   User,
   UserTrustProfile,
 } from '../../../domain/entities/user.js';
-import {
-  UserRepository,
-  type ApplyTrustPenaltyData,
-} from '../../../domain/repositories/user.repository.js';
+import { UserRepository } from '../../../domain/repositories/user.repository.js';
 
 export function isEffectiveActiveSanction(
   sanction: Pick<Sanction, 'status' | 'startsAt' | 'endsAt'>,
   at: Date,
 ): boolean {
-  return sanction.status === 'ACTIVA' &&
+  return (sanction.status === 'ACTIVA' || sanction.status === 'PROGRAMADA') &&
     sanction.startsAt <= at &&
     (sanction.endsAt === null || sanction.endsAt > at);
+}
+
+export function effectiveSanctionStatus(
+  sanction: Pick<Sanction, 'status' | 'startsAt' | 'endsAt'>,
+  at: Date,
+): Sanction['status'] {
+  if (sanction.status === 'ABSUELTA') return 'ABSUELTA';
+  if (sanction.endsAt !== null && sanction.endsAt <= at) return 'FINALIZADA';
+  if (sanction.startsAt > at) return 'PROGRAMADA';
+  return 'ACTIVA';
 }
 
 @Injectable()
@@ -97,30 +104,8 @@ export class PrismaUserRepository extends UserRepository {
     return { userId, percentage: user.trustPercentage, level: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1', currentlyPenalized: sanctions.some((sanction) => isEffectiveActiveSanction(sanction, now)) };
   }
 
-  async applyTrustPenalty(data: ApplyTrustPenaltyData): Promise<UserTrustProfile> {
-    const user = await this.findById(data.userId);
-    if (!user) throw new NotFoundException('Usuario no encontrado.');
-    const next = Math.max(0, user.trustPercentage - data.penaltyPercentage);
-    await this.prisma.client.transaction(async (tx) => {
-      await tx.query(this.prisma.sql.public.usuarios.update({ confianza: next.toFixed(2) }).where((row, fns) => fns.eq(row.id, data.userId)).returning('id').build());
-      await tx.query(this.prisma.sql.public.sanciones.insert([{
-        usuarioId: data.userId,
-        incumplimientoId: data.violationId,
-        reglaId: data.ruleId,
-        versionReglaId: data.ruleVersionId,
-        estado: 'ACTIVA',
-        fechaInicio: new Date(),
-        fechaFin: null,
-        confianzaAnterior: user.trustPercentage.toFixed(2),
-        confianzaPosterior: next.toFixed(2),
-      }]).returning('id').build());
-    });
-    await this.audit({ usuarioId: data.userId, accion: 'CONFIANZA_ACTUALIZADA', datosAnteriores: { confianza: user.trustPercentage }, datosNuevos: { confianza: next }, });
-    return this.getTrustProfile(data.userId);
-  }
-
   async listSanctions(userId: string): Promise<Sanction[]> {
     const rows = await this.runtime().query(this.prisma.sql.public.sanciones.select('id', 'usuarioId', 'incumplimientoId', 'reglaId', 'versionReglaId', 'estado', 'fechaInicio', 'fechaFin', 'confianzaAnterior', 'confianzaPosterior').where((row, fns) => fns.eq(row.usuarioId, userId)).build());
-    return rows.map((row: any) => ({ id: row.id, userId: row.usuarioId, violationId: row.incumplimientoId, ruleId: row.reglaId, ruleVersionId: row.versionReglaId, status: row.estado, startsAt: row.fechaInicio, endsAt: row.fechaFin, previousTrust: Number(row.confianzaAnterior), resultingTrust: Number(row.confianzaPosterior) }));
+    return rows.map((row: any) => ({ id: row.id, userId: row.usuarioId, violationId: row.incumplimientoId, ruleId: row.reglaId, ruleVersionId: row.versionReglaId, status: effectiveSanctionStatus({ status: row.estado, startsAt: row.fechaInicio, endsAt: row.fechaFin }, new Date()), startsAt: row.fechaInicio, endsAt: row.fechaFin, previousTrust: Number(row.confianzaAnterior), resultingTrust: Number(row.confianzaPosterior) }));
   }
 }

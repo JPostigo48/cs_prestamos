@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { UpdateRuleInput } from '../ports/rules.inputs.js';
 import type { RuleVersion } from '../../domain/entities/usage-rule.js';
 import { RuleRepository } from '../../domain/repositories/rule.repository.js';
+import { validateSuspensionPolicy } from '../suspension-policy.js';
 
 @Injectable()
 export class UpdateRuleUseCase {
@@ -9,6 +10,6 @@ export class UpdateRuleUseCase {
 
   async execute(input: UpdateRuleInput): Promise<RuleVersion> {
     const { ruleId, ...data } = input;
-    return this.rules.addVersion(ruleId, data);
+    return this.rules.addVersion(ruleId, validateSuspensionPolicy(data));
   }
 }

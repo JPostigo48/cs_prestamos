@@ -2219,13 +2219,27 @@
           "consequence": {
             "type": "string",
             "example": "Consecuencia definida para esta regla"
+          },
+          "suspensionType": {
+            "type": "string",
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA"
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           }
         },
         "required": [
           "title",
           "description",
           "penaltyPercentage",
-          "consequence"
+          "consequence",
+          "suspensionType"
         ]
       },
       "UpdateRuleDto": {
@@ -2249,13 +2263,27 @@
           "consequence": {
             "type": "string",
             "example": "Consecuencia definida para esta regla"
+          },
+          "suspensionType": {
+            "type": "string",
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA"
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           }
         },
         "required": [
           "title",
           "description",
           "penaltyPercentage",
-          "consequence"
+          "consequence",
+          "suspensionType"
         ]
       },
       "SetRuleStatusDto": {

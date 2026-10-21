@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ApplyTrustPenaltyUseCase } from './application/use-cases/apply-trust-penalty.use-case.js';
 import { ApproveRegistrationRequestUseCase } from './application/use-cases/approve-registration-request.use-case.js';
 import { GetRegistrationRequestUseCase } from './application/use-cases/get-registration-request.use-case.js';
 import { GetUserLoanEligibilityUseCase } from './application/use-cases/get-user-loan-eligibility.use-case.js';
@@ -27,7 +26,6 @@ const useCases = [
   GetUserUseCase,
   GetUserLoanEligibilityUseCase,
   GetUserTrustProfileUseCase,
-  ApplyTrustPenaltyUseCase,
   ListUserSanctionsUseCase,
   ListRegistrationRequestsUseCase,
   ListUsersUseCase,
@@ -51,7 +49,6 @@ const useCases = [
   exports: [
     GetUserUseCase,
     GetUserLoanEligibilityUseCase,
-    ApplyTrustPenaltyUseCase,
   ],
 })
 export class UsersModule {}

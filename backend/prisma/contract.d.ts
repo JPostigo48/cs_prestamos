@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'902b5eb5f4a3ec1f8fae1702f121207c8960668d466c0131908b01a7a3b61483'>;
+  StorageHashBase<'584506ccbd3d0d08875bec17d1f1f6c2c7b393889985422e731514167818b65d'>;
 export type ExecutionHash =
   ExecutionHashBase<'82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f'>;
 export type ProfileHash =
@@ -374,7 +374,7 @@ export type FieldOutputTypes = {
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly reglaId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly versionReglaId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+      readonly estado: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly confianzaAnterior: Numeric<5, 2>;
@@ -412,6 +412,8 @@ export type FieldOutputTypes = {
       readonly descripcion: CodecTypes['pg/text@1']['output'];
       readonly penalizacionPorcentual: Numeric<5, 2>;
       readonly consecuencia: CodecTypes['pg/text@1']['output'];
+      readonly tipoSuspension: 'NINGUNA' | 'TEMPORAL' | 'INDEFINIDA' | null;
+      readonly diasSuspension: CodecTypes['pg/int4@1']['output'] | null;
       readonly estado: 'ACTIVA' | 'INACTIVA';
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -558,7 +560,7 @@ export type FieldInputTypes = {
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly reglaId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly versionReglaId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+      readonly estado: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly confianzaAnterior: CodecTypes['pg/numeric@1']['input'];
@@ -596,6 +598,8 @@ export type FieldInputTypes = {
       readonly descripcion: CodecTypes['pg/text@1']['input'];
       readonly penalizacionPorcentual: CodecTypes['pg/numeric@1']['input'];
       readonly consecuencia: CodecTypes['pg/text@1']['input'];
+      readonly tipoSuspension: 'NINGUNA' | 'TEMPORAL' | 'INDEFINIDA' | null;
+      readonly diasSuspension: CodecTypes['pg/int4@1']['input'] | null;
       readonly estado: 'ACTIVA' | 'INACTIVA';
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -740,7 +744,7 @@ export type StorageColumnTypes = {
       readonly confianzaAnterior: Numeric<5, 2>;
       readonly confianzaPosterior: Numeric<5, 2>;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+      readonly estado: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
@@ -776,11 +780,13 @@ export type StorageColumnTypes = {
       readonly consecuencia: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly descripcion: CodecTypes['pg/text@1']['output'];
+      readonly diasSuspension: CodecTypes['pg/int4@1']['output'] | null;
       readonly estado: 'ACTIVA' | 'INACTIVA';
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly numero: CodecTypes['pg/int4@1']['output'];
       readonly penalizacionPorcentual: Numeric<5, 2>;
       readonly reglaId: CodecTypes['pg/uuid@1']['output'];
+      readonly tipoSuspension: 'NINGUNA' | 'TEMPORAL' | 'INDEFINIDA' | null;
       readonly titulo: Varchar<180>;
     };
     readonly versiones_terminos: {
@@ -924,7 +930,7 @@ export type StorageColumnInputTypes = {
       readonly confianzaAnterior: CodecTypes['pg/numeric@1']['input'];
       readonly confianzaPosterior: CodecTypes['pg/numeric@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+      readonly estado: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
       readonly fechaFin: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
@@ -960,11 +966,13 @@ export type StorageColumnInputTypes = {
       readonly consecuencia: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly descripcion: CodecTypes['pg/text@1']['input'];
+      readonly diasSuspension: CodecTypes['pg/int4@1']['input'] | null;
       readonly estado: 'ACTIVA' | 'INACTIVA';
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly numero: CodecTypes['pg/int4@1']['input'];
       readonly penalizacionPorcentual: CodecTypes['pg/numeric@1']['input'];
       readonly reglaId: CodecTypes['pg/uuid@1']['input'];
+      readonly tipoSuspension: 'NINGUNA' | 'TEMPORAL' | 'INDEFINIDA' | null;
       readonly titulo: CodecTypes['sql/varchar@1']['input'];
     };
     readonly versiones_terminos: {
@@ -1112,7 +1120,7 @@ export namespace Models {
     incumplimientoId: CodecTypes['pg/uuid@1']['output'] | null;
     reglaId: CodecTypes['pg/uuid@1']['output'] | null;
     versionReglaId: CodecTypes['pg/uuid@1']['output'] | null;
-    estado: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+    estado: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
     fechaInicio: CodecTypes['pg/timestamptz-temporal@1']['output'];
     fechaFin: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     confianzaAnterior: Numeric<5, 2>;
@@ -1169,6 +1177,8 @@ export namespace Models {
     descripcion: CodecTypes['pg/text@1']['output'];
     penalizacionPorcentual: Numeric<5, 2>;
     consecuencia: CodecTypes['pg/text@1']['output'];
+    tipoSuspension: 'NINGUNA' | 'TEMPORAL' | 'INDEFINIDA' | null;
+    diasSuspension: CodecTypes['pg/int4@1']['output'] | null;
     estado: 'ACTIVA' | 'INACTIVA';
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     incumplimientos: public_Incumplimiento[];
@@ -2840,6 +2850,16 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
+                readonly tipoSuspension: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly diasSuspension: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
                 readonly estado: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -2954,7 +2974,7 @@ type ContractBase = Omit<
             };
             readonly EstadoSancion: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['ACTIVA', 'FINALIZADA', 'ABSUELTA'];
+              readonly values: readonly ['PROGRAMADA', 'ACTIVA', 'FINALIZADA', 'ABSUELTA'];
             };
             readonly EstadoSolicitud: {
               readonly kind: 'valueSet';
@@ -2963,6 +2983,10 @@ type ContractBase = Omit<
             readonly RolAcceso: {
               readonly kind: 'valueSet';
               readonly values: readonly ['USUARIO', 'OPERADOR', 'ADMINISTRADOR'];
+            };
+            readonly TipoSuspension: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['NINGUNA', 'TEMPORAL', 'INDEFINIDA'];
             };
             readonly TipoUsuario: {
               readonly kind: 'valueSet';
@@ -4745,6 +4769,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly tipoSuspension: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly diasSuspension: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly estado: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -4817,6 +4849,8 @@ type ContractBase = Omit<
                 readonly descripcion: { readonly column: 'descripcion' };
                 readonly penalizacionPorcentual: { readonly column: 'penalizacionPorcentual' };
                 readonly consecuencia: { readonly column: 'consecuencia' };
+                readonly tipoSuspension: { readonly column: 'tipoSuspension' };
+                readonly diasSuspension: { readonly column: 'diasSuspension' };
                 readonly estado: { readonly column: 'estado' };
                 readonly createdAt: { readonly column: 'createdAt' };
               };
@@ -4925,6 +4959,7 @@ type ContractBase = Omit<
           readonly EstadoSancion: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
+              { readonly name: 'PROGRAMADA'; readonly value: 'PROGRAMADA' },
               { readonly name: 'ACTIVA'; readonly value: 'ACTIVA' },
               { readonly name: 'FINALIZADA'; readonly value: 'FINALIZADA' },
               { readonly name: 'ABSUELTA'; readonly value: 'ABSUELTA' },
@@ -4935,6 +4970,14 @@ type ContractBase = Omit<
             readonly members: readonly [
               { readonly name: 'ACTIVA'; readonly value: 'ACTIVA' },
               { readonly name: 'INACTIVA'; readonly value: 'INACTIVA' },
+            ];
+          };
+          readonly TipoSuspension: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'NINGUNA'; readonly value: 'NINGUNA' },
+              { readonly name: 'TEMPORAL'; readonly value: 'TEMPORAL' },
+              { readonly name: 'INDEFINIDA'; readonly value: 'INDEFINIDA' },
             ];
           };
           readonly EstadoApelacion: {

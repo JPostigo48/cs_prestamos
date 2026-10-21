@@ -2,13 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
+  IsInt,
   IsNumber,
   IsString,
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { RuleStatus } from '../../domain/entities/usage-rule.js';
+import { RuleStatus, SuspensionType } from '../../domain/entities/usage-rule.js';
 
 export class CreateRuleDto {
   @ApiProperty({ type: String, maxLength: 180, example: 'Regla de uso de ejemplo' })
@@ -30,6 +32,16 @@ export class CreateRuleDto {
   @ApiProperty({ type: String, example: 'Consecuencia definida para esta regla' })
   @IsString()
   consequence!: string;
+
+  @ApiProperty({ enum: SuspensionType })
+  @IsEnum(SuspensionType)
+  suspensionType!: SuspensionType;
+
+  @ApiProperty({ type: Number, required: false, nullable: true, minimum: 0 })
+  @ValidateIf((_input, value) => value !== undefined && value !== null)
+  @IsInt()
+  @Min(0)
+  suspensionDays?: number | null;
 }
 
 export class UpdateRuleDto extends CreateRuleDto {}

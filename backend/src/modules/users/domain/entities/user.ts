@@ -10,6 +10,7 @@ export const TrustLevel = {
 export type TrustLevel = (typeof TrustLevel)[keyof typeof TrustLevel];
 
 export const SanctionStatus = {
+  PROGRAMADA: 'PROGRAMADA',
   ACTIVA: 'ACTIVA',
   FINALIZADA: 'FINALIZADA',
   ABSUELTA: 'ABSUELTA',
