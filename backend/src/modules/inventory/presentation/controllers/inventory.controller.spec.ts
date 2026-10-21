@@ -28,7 +28,7 @@ describe('InventoryController', () => {
     };
 
     const controller = new InventoryController(service as any);
-    const result = await controller.listResources();
+    const result = await controller.listResources({} as any);
 
     expect(service.listResources).toHaveBeenCalled();
     expect(result).toEqual([]);

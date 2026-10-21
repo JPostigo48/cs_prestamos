@@ -34,7 +34,7 @@ describe('Users registration request use cases', () => {
       findById: vi.fn().mockResolvedValue(pending),
       approveAndCreateUser: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
     };
-    const result = await new ApproveRegistrationRequestUseCase(repository as any).execute({ requestId: 'request-1' });
+    const result = await new ApproveRegistrationRequestUseCase(repository as any, {} as any).execute({ requestId: 'request-1' });
     expect(result.user).toEqual({ id: 'user-1' });
     expect(repository.approveAndCreateUser).toHaveBeenCalledWith('request-1');
   });

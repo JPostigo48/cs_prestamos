@@ -63,7 +63,7 @@ describe('PrismaInventoryRepository', () => {
     await operation();
     expect(builders[table][builderMethod]).toHaveBeenCalled();
     expect(builders[table].build).toHaveBeenCalled();
-    expect(runtime[runtimeMethod]).toHaveBeenCalledWith(query);
+    expect(runtime[runtimeMethod as keyof typeof runtime]).toHaveBeenCalledWith(query);
   });
 
   it('deletes a copy and returns affected rows', async () => {
