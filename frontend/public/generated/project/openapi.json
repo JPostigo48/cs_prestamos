@@ -1425,12 +1425,12 @@
         "x-implementation-status": "pending"
       }
     },
-    "/violations/{violationId}/appeals": {
+    "/sanctions/{sanctionId}/appeals": {
       "post": {
         "operationId": "ViolationsController_appeal",
         "parameters": [
           {
-            "name": "violationId",
+            "name": "sanctionId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1453,7 +1453,7 @@
             "description": ""
           }
         },
-        "summary": "Presentar apelación de un incumplimiento",
+        "summary": "Presentar apelación de una sanción",
         "tags": [
           "Reglas y términos"
         ],

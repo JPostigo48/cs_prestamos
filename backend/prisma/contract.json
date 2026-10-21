@@ -445,6 +445,13 @@
                   "kind": "scalar"
                 }
               },
+              "sancionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -493,6 +500,22 @@
                   "namespace": "public"
                 }
               },
+              "sancion": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "sancionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Sancion",
+                  "namespace": "public"
+                }
+              },
               "usuario": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -538,6 +561,9 @@
                 },
                 "resueltaPorCuentaId": {
                   "column": "resueltaPorCuentaId"
+                },
+                "sancionId": {
+                  "column": "sancionId"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -2211,6 +2237,22 @@
               }
             },
             "relations": {
+              "apelacion": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "sancionId"
+                  ]
+                },
+                "to": {
+                  "model": "Apelacion",
+                  "namespace": "public"
+                }
+              },
               "incumplimiento": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -3248,6 +3290,11 @@
                   "nativeType": "uuid",
                   "nullable": true
                 },
+                "sancionId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -3276,6 +3323,24 @@
                     ],
                     "namespaceId": "public",
                     "tableName": "incumplimientos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "sancionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "apelaciones"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "sanciones"
                   }
                 },
                 {
@@ -3360,6 +3425,11 @@
                 {
                   "columns": [
                     "incumplimientoId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "sancionId"
                   ]
                 }
               ]
@@ -5578,7 +5648,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "584506ccbd3d0d08875bec17d1f1f6c2c7b393889985422e731514167818b65d"
+    "storageHash": "3cf9d1df4dc3e1beccc614073cfd2522d8a7a9eb4aa054fce8aae35d82c9471c"
   },
   "execution": {
     "executionHash": "82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f",

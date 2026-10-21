@@ -1,6 +1,7 @@
 import type { Appeal, AppealStatus } from '../entities/appeal.js';
 
 export interface SubmitAppealData {
+  sanctionId: string;
   violationId: string;
   userId: string;
   reason: string;
@@ -9,6 +10,7 @@ export interface SubmitAppealData {
 
 export interface AppealableSanction {
   id: string;
+  violationId: string | null;
   userId: string;
   status: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
   startsAt: Date;
@@ -27,6 +29,6 @@ export abstract class AppealRepository {
   abstract create(data: SubmitAppealData): Promise<Appeal>;
   abstract findById(appealId: string): Promise<Appeal | null>;
   abstract findByViolationId(violationId: string): Promise<Appeal | null>;
-  abstract findSanctionByViolationId(violationId: string): Promise<AppealableSanction | null>;
+  abstract findSanctionById(sanctionId: string): Promise<AppealableSanction | null>;
   abstract resolve(data: ResolveAppealData): Promise<Appeal>;
 }

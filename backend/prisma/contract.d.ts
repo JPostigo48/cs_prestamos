@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'584506ccbd3d0d08875bec17d1f1f6c2c7b393889985422e731514167818b65d'>;
+  StorageHashBase<'3cf9d1df4dc3e1beccc614073cfd2522d8a7a9eb4aa054fce8aae35d82c9471c'>;
 export type ExecutionHash =
   ExecutionHashBase<'82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f'>;
 export type ProfileHash =
@@ -252,6 +252,7 @@ export type FieldOutputTypes = {
     readonly Apelacion: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['output'];
+      readonly sancionId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
       readonly motivo: CodecTypes['pg/text@1']['output'];
       readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -438,6 +439,7 @@ export type FieldInputTypes = {
     readonly Apelacion: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly incumplimientoId: CodecTypes['pg/uuid@1']['input'];
+      readonly sancionId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
       readonly motivo: CodecTypes['pg/text@1']['input'];
       readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -631,6 +633,7 @@ export type StorageColumnTypes = {
       readonly motivo: CodecTypes['pg/text@1']['output'];
       readonly resolucion: CodecTypes['pg/text@1']['output'] | null;
       readonly resueltaPorCuentaId: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly sancionId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
     };
@@ -817,6 +820,7 @@ export type StorageColumnInputTypes = {
       readonly motivo: CodecTypes['pg/text@1']['input'];
       readonly resolucion: CodecTypes['pg/text@1']['input'] | null;
       readonly resueltaPorCuentaId: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly sancionId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
     };
@@ -1127,11 +1131,12 @@ export namespace Models {
     confianzaPosterior: Numeric<5, 2>;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    apelacion: public_Apelacion | null;
     incumplimiento: public_Incumplimiento | null;
     regla: public_ReglaUso | null;
     usuario: public_Usuario;
     versionRegla: public_VersionRegla | null;
-    readonly [RelationKeys]?: 'incumplimiento' | 'regla' | 'usuario' | 'versionRegla';
+    readonly [RelationKeys]?: 'apelacion' | 'incumplimiento' | 'regla' | 'usuario' | 'versionRegla';
   };
   export type public_Prestamo = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1205,6 +1210,7 @@ export namespace Models {
   export type public_Apelacion = {
     id: CodecTypes['pg/uuid@1']['output'];
     incumplimientoId: CodecTypes['pg/uuid@1']['output'];
+    sancionId: CodecTypes['pg/uuid@1']['output'] | null;
     usuarioId: CodecTypes['pg/uuid@1']['output'];
     motivo: CodecTypes['pg/text@1']['output'];
     fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -1216,8 +1222,9 @@ export namespace Models {
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     incumplimiento: public_Incumplimiento;
     resueltaPor: public_CuentaAcceso | null;
+    sancion: public_Sancion | null;
     usuario: public_Usuario;
-    readonly [RelationKeys]?: 'incumplimiento' | 'resueltaPor' | 'usuario';
+    readonly [RelationKeys]?: 'incumplimiento' | 'resueltaPor' | 'sancion' | 'usuario';
   };
   export type public_VersionTerminos = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1389,6 +1396,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: false;
                 };
+                readonly sancionId: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: true;
+                };
                 readonly usuarioId: {
                   readonly nativeType: 'uuid';
                   readonly codecId: 'pg/uuid@1';
@@ -1445,7 +1457,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['incumplimientoId'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['incumplimientoId'] },
+                { readonly columns: readonly ['sancionId'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'apelaciones_usuarioId_estado_idx_e25db20e';
@@ -1482,6 +1497,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'incumplimientos';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'apelaciones';
+                    readonly columns: readonly ['sancionId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'sanciones';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -3142,6 +3169,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
+              readonly sancionId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
               readonly usuarioId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
@@ -3219,6 +3250,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly sancion: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Sancion';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['sancionId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly usuario: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3238,6 +3281,7 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly id: { readonly column: 'id' };
                 readonly incumplimientoId: { readonly column: 'incumplimientoId' };
+                readonly sancionId: { readonly column: 'sancionId' };
                 readonly usuarioId: { readonly column: 'usuarioId' };
                 readonly motivo: { readonly column: 'motivo' };
                 readonly fecha: { readonly column: 'fecha' };
@@ -4373,6 +4417,18 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly apelacion: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Apelacion';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['sancionId'];
+                };
+              };
               readonly incumplimiento: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;

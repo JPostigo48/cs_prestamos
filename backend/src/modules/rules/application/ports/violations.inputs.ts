@@ -7,10 +7,9 @@ export interface RegisterViolationInput {
 }
 
 export interface SubmitAppealInput {
-  violationId: string;
+  sanctionId: string;
   userId: string;
   reason: string;
-  submittedAt: Date;
 }
 
 export interface ResolveAppealInput {

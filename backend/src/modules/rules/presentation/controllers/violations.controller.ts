@@ -34,19 +34,18 @@ export class ViolationsController {
     return this.registerViolation.execute(input);
   }
 
-  @Post('violations/:violationId/appeals')
+  @Post('sanctions/:sanctionId/appeals')
   @ApiBody({ type: SubmitAppealDto })
-  @ApiOperation({ summary: 'Presentar apelación de un incumplimiento' })
+  @ApiOperation({ summary: 'Presentar apelación de una sanción' })
   appeal(
-    @Param('violationId') violationId: string,
+    @Param('sanctionId') sanctionId: string,
     @Body() input: SubmitAppealDto,
     @CurrentUser() user: AuthenticatedIdentity,
   ) {
     return this.submitAppeal.execute({
-      violationId,
+      sanctionId,
       userId: user.userId,
       reason: input.reason,
-      submittedAt: new Date(),
     });
   }
 
