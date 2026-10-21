@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExtension, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticateAccountUseCase } from '../../application/use-cases/authenticate-account.use-case.js';
 import { GetAccessAccountUseCase } from '../../application/use-cases/get-access-account.use-case.js';
 import { RegisterAccessAccountUseCase } from '../../application/use-cases/register-access-account.use-case.js';
@@ -52,6 +52,7 @@ export class AuthController {
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: RegisterAccessAccountDto })
   @ApiOperation({ summary: 'Registrar cuenta de acceso para un usuario aprobado' })
+  @ApiExtension('x-implementation-status', 'implemented')
   register(@Body() input: RegisterAccessAccountDto) {
     return this.registerAccount.execute(input).then(safeAccount);
   }
@@ -59,6 +60,7 @@ export class AuthController {
   @Post('authenticate')
   @ApiBody({ type: AuthenticateAccountDto })
   @ApiOperation({ summary: 'Autenticar cuenta de acceso' })
+  @ApiExtension('x-implementation-status', 'implemented')
   authenticate(@Body() input: AuthenticateAccountDto) {
     return this.authenticateAccount.execute(input).then((identity) => ({
       accessToken: this.jwt.sign(identity),
@@ -76,6 +78,7 @@ export class AuthController {
   @Get('accounts/:accountId')
   @ApiOperation({ summary: 'Consultar cuenta de acceso' })
   @UseGuards(AuthGuard, RolesGuard)
+  @ApiExtension('x-implementation-status', 'implemented')
   getById(
     @Param('accountId') accountId: string,
     @CurrentUser() identity: AuthenticatedIdentity,
@@ -92,6 +95,7 @@ export class AuthController {
   @Patch('accounts/:accountId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.ADMINISTRATOR)
+  @ApiExtension('x-implementation-status', 'implemented')
   update(
     @Param('accountId') accountId: string,
     @Body() input: UpdateAccessAccountDto,

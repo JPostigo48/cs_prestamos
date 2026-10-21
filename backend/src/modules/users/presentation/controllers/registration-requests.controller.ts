@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiExtension, ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
 import { ApproveRegistrationRequestUseCase } from '../../application/use-cases/approve-registration-request.use-case.js';
 import { GetRegistrationRequestUseCase } from '../../application/use-cases/get-registration-request.use-case.js';
 import { RejectRegistrationRequestUseCase } from '../../application/use-cases/reject-registration-request.use-case.js';
@@ -26,6 +26,7 @@ export class RegistrationRequestsController {
   @Post()
   @ApiBody({ type: SubmitRegistrationRequestDto })
   @ApiOperation({ summary: 'Presentar solicitud de registro' })
+  @ApiExtension('x-implementation-status', 'implemented')
   submit(@Body() dto: SubmitRegistrationRequestDto) {
     return this.submitRequest.execute({
       name: dto.name ?? dto.nombre ?? '',
@@ -38,6 +39,7 @@ export class RegistrationRequestsController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiExtension('x-implementation-status', 'implemented')
   list(@Query() query: { status?: string; institutionalId?: string; page?: number; limit?: number }) {
     return this.listRequests.execute(query);
   }
@@ -46,6 +48,7 @@ export class RegistrationRequestsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Consultar solicitud de registro' })
+  @ApiExtension('x-implementation-status', 'implemented')
   getById(@Param('requestId') requestId: string) {
     return this.getRequest.execute({ requestId });
   }
@@ -54,6 +57,7 @@ export class RegistrationRequestsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Aprobar solicitud de registro' })
+  @ApiExtension('x-implementation-status', 'implemented')
   approve(@Param('requestId') requestId: string) {
     return this.approveRequest.execute({ requestId });
   }
@@ -62,6 +66,7 @@ export class RegistrationRequestsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Rechazar solicitud de registro' })
+  @ApiExtension('x-implementation-status', 'implemented')
   reject(@Param('requestId') requestId: string, @Body() body: RejectRegistrationRequestDto) {
     return this.rejectRequest.execute({ requestId, rejectionReason: body.rejectionReason });
   }

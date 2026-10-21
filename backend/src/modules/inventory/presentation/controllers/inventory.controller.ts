@@ -165,6 +165,7 @@ export class InventoryController {
   }
 
   @Delete('copies/:copyId')
+  @ApiExtension('x-implementation-status', 'implemented')
   deleteCopy(@Param('copyId') copyId: string) {
     return this.service.deleteCopy(copyId);
   }
@@ -190,6 +191,7 @@ export class InventoryController {
   }
 
   @Get('availability')
+  @ApiExtension('x-implementation-status', 'implemented')
   getGlobalAvailability() {
     return this.service.getGlobalAvailability();
   }
