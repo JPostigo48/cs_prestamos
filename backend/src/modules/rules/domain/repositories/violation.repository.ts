@@ -1,4 +1,5 @@
 import type { Violation } from '../entities/violation.js';
+import type { SuspensionType } from '../entities/usage-rule.js';
 
 export interface RegisterViolationData {
   userId: string;
@@ -6,6 +7,8 @@ export interface RegisterViolationData {
   ruleVersionId: string;
   occurredAt: Date;
   configuredPenalty: number;
+  suspensionType: SuspensionType;
+  suspensionDays: number | null;
 }
 
 export abstract class ViolationRepository {

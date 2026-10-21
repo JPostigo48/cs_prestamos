@@ -37,13 +37,18 @@ export class PrismaAppealRepository implements AppealRepository {
       .where((row, fns) => fns.eq(row.incumplimientoId, violationId))
       .limit(1).build());
     const sanction = rows[0];
-    return sanction ? {
+    if (!sanction) return null;
+    const now = new Date();
+    const status = sanction.estado === 'ABSUELTA' ? 'ABSUELTA'
+      : sanction.fechaFin && sanction.fechaFin <= now ? 'FINALIZADA'
+      : sanction.fechaInicio > now ? 'PROGRAMADA' : 'ACTIVA';
+    return {
       id: sanction.id,
       userId: sanction.usuarioId,
-      status: sanction.estado,
+      status,
       startsAt: sanction.fechaInicio,
       endsAt: sanction.fechaFin,
-    } : null;
+    };
   }
 
   async resolve(data: ResolveAppealData): Promise<Appeal> {

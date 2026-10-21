@@ -10,7 +10,7 @@ export interface SubmitAppealData {
 export interface AppealableSanction {
   id: string;
   userId: string;
-  status: 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+  status: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
   startsAt: Date;
   endsAt: Date | null;
 }

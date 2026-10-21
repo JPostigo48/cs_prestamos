@@ -178,6 +178,10 @@
             "codecId": "pg/text@1",
             "members": [
               {
+                "name": "PROGRAMADA",
+                "value": "PROGRAMADA"
+              },
+              {
                 "name": "ACTIVA",
                 "value": "ACTIVA"
               },
@@ -222,6 +226,23 @@
               {
                 "name": "ADMINISTRADOR",
                 "value": "ADMINISTRADOR"
+              }
+            ]
+          },
+          "TipoSuspension": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "NINGUNA",
+                "value": "NINGUNA"
+              },
+              {
+                "name": "TEMPORAL",
+                "value": "TEMPORAL"
+              },
+              {
+                "name": "INDEFINIDA",
+                "value": "INDEFINIDA"
               }
             ]
           },
@@ -2753,6 +2774,13 @@
                   "kind": "scalar"
                 }
               },
+              "diasSuspension": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "estado": {
                 "nullable": false,
                 "type": {
@@ -2796,6 +2824,19 @@
                 "type": {
                   "codecId": "pg/uuid@1",
                   "kind": "scalar"
+                }
+              },
+              "tipoSuspension": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TipoSuspension",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "titulo": {
@@ -2884,6 +2925,9 @@
                 "descripcion": {
                   "column": "descripcion"
                 },
+                "diasSuspension": {
+                  "column": "diasSuspension"
+                },
                 "estado": {
                   "column": "estado"
                 },
@@ -2898,6 +2942,9 @@
                 },
                 "reglaId": {
                   "column": "reglaId"
+                },
+                "tipoSuspension": {
+                  "column": "tipoSuspension"
                 },
                 "titulo": {
                   "column": "titulo"
@@ -4719,8 +4766,8 @@
             "sanciones": {
               "checks": [
                 {
-                  "expression": "\"estado\" IN ('ACTIVA', 'FINALIZADA', 'ABSUELTA')",
-                  "name": "sanciones_estado_check_1e842a90",
+                  "expression": "\"estado\" IN ('PROGRAMADA', 'ACTIVA', 'FINALIZADA', 'ABSUELTA')",
+                  "name": "sanciones_estado_check_1de51348",
                   "prefix": "sanciones_estado_check"
                 }
               ],
@@ -5233,6 +5280,11 @@
                   "expression": "\"estado\" IN ('ACTIVA', 'INACTIVA')",
                   "name": "versiones_regla_estado_check_1cb87e59",
                   "prefix": "versiones_regla_estado_check"
+                },
+                {
+                  "expression": "\"tipoSuspension\" IN ('NINGUNA', 'TEMPORAL', 'INDEFINIDA')",
+                  "name": "versiones_regla_tipoSuspension_check_410b7d83",
+                  "prefix": "versiones_regla_tipoSuspension_check"
                 }
               ],
               "columns": {
@@ -5257,6 +5309,11 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "diasSuspension": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
                 },
                 "estado": {
                   "codecId": "pg/text@1",
@@ -5296,6 +5353,17 @@
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
                   "nullable": false
+                },
+                "tipoSuspension": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TipoSuspension",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "titulo": {
                   "codecId": "sql/varchar@1",
@@ -5466,6 +5534,7 @@
             "EstadoSancion": {
               "kind": "valueSet",
               "values": [
+                "PROGRAMADA",
                 "ACTIVA",
                 "FINALIZADA",
                 "ABSUELTA"
@@ -5487,6 +5556,14 @@
                 "ADMINISTRADOR"
               ]
             },
+            "TipoSuspension": {
+              "kind": "valueSet",
+              "values": [
+                "NINGUNA",
+                "TEMPORAL",
+                "INDEFINIDA"
+              ]
+            },
             "TipoUsuario": {
               "kind": "valueSet",
               "values": [
@@ -5501,7 +5578,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "902b5eb5f4a3ec1f8fae1702f121207c8960668d466c0131908b01a7a3b61483"
+    "storageHash": "584506ccbd3d0d08875bec17d1f1f6c2c7b393889985422e731514167818b65d"
   },
   "execution": {
     "executionHash": "82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f",

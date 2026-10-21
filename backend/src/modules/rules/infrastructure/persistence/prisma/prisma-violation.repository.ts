@@ -1,7 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type { Violation } from '../../../domain/entities/violation.js';
 import { calculateTrustPenalty } from '../../../domain/entities/violation.js';
+import { scheduleSanction } from '../../../domain/entities/sanction-schedule.js';
+import { SuspensionType } from '../../../domain/entities/usage-rule.js';
 import {
   ViolationRepository,
   type RegisterViolationData,
@@ -31,6 +33,27 @@ export class PrismaViolationRepository implements ViolationRepository {
         .where((row, fns) => fns.eq(row.confianza, previousTrust.toFixed(2)))
         .returning('id').build());
       if (!updated[0]) throw new ConflictException('La confianza cambió durante el registro; reintente.');
+      const registeredAt = new Date();
+      const pendingEndsAt: Date[] = [];
+      if (data.suspensionType === SuspensionType.TEMPORARY) {
+        const sanctions = await tx.query(this.prisma.sql.public.sanciones
+          .select('estado', 'fechaFin')
+          .where((row, fns) => fns.eq(row.usuarioId, data.userId))
+          .build());
+        for (const sanction of sanctions) {
+          if ((sanction.estado === 'ACTIVA' || sanction.estado === 'PROGRAMADA') &&
+            sanction.fechaFin && sanction.fechaFin > registeredAt) {
+            pendingEndsAt.push(sanction.fechaFin);
+          }
+        }
+      }
+      let schedule;
+      try {
+        schedule = scheduleSanction(data.suspensionType, data.suspensionDays, registeredAt, pendingEndsAt);
+      } catch (error) {
+        if (error instanceof RangeError) throw new BadRequestException(error.message);
+        throw error;
+      }
       const rows = await tx.query(this.prisma.sql.public.incumplimientos.insert([{
         usuarioId: data.userId,
         reglaId: data.ruleId,
@@ -44,9 +67,9 @@ export class PrismaViolationRepository implements ViolationRepository {
         incumplimientoId: violation.id,
         reglaId: data.ruleId,
         versionReglaId: data.ruleVersionId,
-        estado: 'ACTIVA',
-        fechaInicio: new Date(),
-        fechaFin: null,
+        estado: schedule.status,
+        fechaInicio: schedule.startsAt,
+        fechaFin: schedule.endsAt,
         confianzaAnterior: previousTrust.toFixed(2),
         confianzaPosterior: resultingTrust.toFixed(2),
       }]).returning('id').build());

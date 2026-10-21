@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { RegisterViolationInput } from '../ports/violations.inputs.js';
 import type { Violation } from '../../domain/entities/violation.js';
 import { RuleRepository } from '../../domain/repositories/rule.repository.js';
@@ -20,12 +20,17 @@ export class RegisterViolationUseCase {
     if (version.penaltyPercentage <= 0 || version.penaltyPercentage > 100) {
       throw new BadRequestException('La penalización debe estar entre 0 y 100.');
     }
+    if (!version.suspensionType) {
+      throw new ConflictException('La versión de la regla no tiene una política de suspensión configurada.');
+    }
     return this.violations.createWithPenalty({
       userId: input.userId,
       ruleId: input.ruleId,
       ruleVersionId: version.id,
       occurredAt: input.occurredAt,
       configuredPenalty: version.penaltyPercentage,
+      suspensionType: version.suspensionType,
+      suspensionDays: version.suspensionDays,
     });
   }
 }
