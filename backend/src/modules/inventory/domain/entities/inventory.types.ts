@@ -9,6 +9,7 @@ export type InventoryCategory = {
   id: string;
   nombre: string;
   tiempoMaximoPrestamoDias: number;
+  tiempoMaximoPrestamoHoras?: number;
   resourceCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -50,7 +51,7 @@ export type ResourceAvailability = {
   resourceId: string;
   available: boolean;
   totalCopies: number;
-  availableCopies: number;
-  unavailableCopies: number;
-  borrowedCopies: number;
+  disponibles: number;
+  prestados: number;
+  noDisponibles: number;
 };

@@ -520,6 +520,28 @@
           "Inventario"
         ],
         "x-implementation-status": "implemented"
+      },
+      "delete": {
+        "operationId": "InventoryController_deleteCopy",
+        "parameters": [
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
       }
     },
     "/inventory/copies/{copyId}/state": {
@@ -594,6 +616,21 @@
           "Inventario"
         ],
         "x-implementation-status": "implemented"
+      }
+    },
+    "/inventory/availability": {
+      "get": {
+        "operationId": "InventoryController_getGlobalAvailability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "pending"
       }
     },
     "/inventory/copies/{copyId}/observations": {
@@ -691,6 +728,19 @@
           }
         },
         "summary": "Presentar solicitud de registro",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "get": {
+        "operationId": "RegistrationRequestsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Usuarios"
         ],
@@ -822,6 +872,45 @@
         "x-implementation-status": "pending"
       }
     },
+    "/users/{userId}/affiliation-status": {
+      "patch": {
+        "operationId": "UsersController_updateAffiliationStatus",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
     "/users/{userId}/trust": {
       "get": {
         "operationId": "UsersController_getTrust",
@@ -841,6 +930,30 @@
           }
         },
         "summary": "Consultar perfil de confianza",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/users/{userId}/trust-profile": {
+      "get": {
+        "operationId": "UsersController_getTrustProfileByName",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Usuarios"
         ],
@@ -872,16 +985,16 @@
         "x-implementation-status": "pending"
       }
     },
-    "/loans": {
+    "/loans/reservations": {
       "post": {
-        "operationId": "LoansController_create",
+        "operationId": "LoansController_createReservationEndpoint",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateLoanDto"
+                "$ref": "#/components/schemas/CreateReservationDto"
               }
             }
           }
@@ -891,7 +1004,67 @@
             "description": ""
           }
         },
-        "summary": "Registrar préstamo",
+        "summary": "Confirmar una reserva de ejemplar",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/reservations/{reservationId}/pickup": {
+      "post": {
+        "operationId": "LoansController_pickup",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar recogida y crear el préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/reservations/{reservationId}": {
+      "delete": {
+        "operationId": "LoansController_cancelReservation",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelReservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Cancelar una reserva confirmada",
         "tags": [
           "Préstamos"
         ],
@@ -1034,7 +1207,7 @@
             "description": ""
           }
         },
-        "summary": "Registrar cuenta de acceso",
+        "summary": "Registrar cuenta de acceso para un usuario aprobado",
         "tags": [
           "Autenticación"
         ],
@@ -1086,6 +1259,28 @@
           }
         },
         "summary": "Consultar cuenta de acceso",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-implementation-status": "pending"
+      },
+      "patch": {
+        "operationId": "AuthController_update",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "tags": [
           "Autenticación"
         ],
@@ -1230,12 +1425,12 @@
         "x-implementation-status": "pending"
       }
     },
-    "/violations/{violationId}/appeals": {
+    "/sanctions/{sanctionId}/appeals": {
       "post": {
         "operationId": "ViolationsController_appeal",
         "parameters": [
           {
-            "name": "violationId",
+            "name": "sanctionId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1258,7 +1453,7 @@
             "description": ""
           }
         },
-        "summary": "Presentar apelación de un incumplimiento",
+        "summary": "Presentar apelación de una sanción",
         "tags": [
           "Reglas y términos"
         ],
@@ -1400,6 +1595,11 @@
             "type": "number",
             "minimum": 1,
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "minimum": 1,
+            "example": 168
           }
         },
         "required": [
@@ -1423,6 +1623,10 @@
             "type": "number",
             "example": 7
           },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "example": 168
+          },
           "resourceCount": {
             "type": "number",
             "example": 0
@@ -1432,6 +1636,7 @@
           "id",
           "nombre",
           "tiempoMaximoPrestamoDias",
+          "tiempoMaximoPrestamoHoras",
           "resourceCount"
         ]
       },
@@ -1447,6 +1652,11 @@
             "type": "number",
             "minimum": 1,
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "minimum": 1,
+            "example": 168
           }
         }
       },
@@ -1552,12 +1762,17 @@
           "tiempoMaximoPrestamoDias": {
             "type": "number",
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "example": 168
           }
         },
         "required": [
           "id",
           "nombre",
-          "tiempoMaximoPrestamoDias"
+          "tiempoMaximoPrestamoDias",
+          "tiempoMaximoPrestamoHoras"
         ]
       },
       "ResourceDetailResponseDto": {
@@ -1870,6 +2085,11 @@
       "SubmitRegistrationRequestDto": {
         "type": "object",
         "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
           "userType": {
             "type": "string",
             "enum": [
@@ -1879,12 +2099,12 @@
             ],
             "example": "ESTUDIANTE"
           },
-          "institutionalId": {
+          "tipoUsuario": {
             "type": "string",
             "maxLength": 80,
             "example": "20260001"
           },
-          "evidence": {
+          "identificadorInstitucional": {
             "example": [
               "Referencia de evidencia"
             ],
@@ -1898,30 +2118,13 @@
           "userType"
         ]
       },
-      "CreateLoanDto": {
+      "CreateReservationDto": {
         "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
-          "copyId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440002"
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2030-01-15T10:00:00.000Z"
-          }
-        },
-        "required": [
-          "userId",
-          "copyId",
-          "startsAt"
-        ]
+        "properties": {}
+      },
+      "CancelReservationDto": {
+        "type": "object",
+        "properties": {}
       },
       "ReturnLoanDto": {
         "type": "object",
@@ -2016,13 +2219,27 @@
           "consequence": {
             "type": "string",
             "example": "Consecuencia definida para esta regla"
+          },
+          "suspensionType": {
+            "type": "string",
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA"
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           }
         },
         "required": [
           "title",
           "description",
           "penaltyPercentage",
-          "consequence"
+          "consequence",
+          "suspensionType"
         ]
       },
       "UpdateRuleDto": {
@@ -2046,13 +2263,27 @@
           "consequence": {
             "type": "string",
             "example": "Consecuencia definida para esta regla"
+          },
+          "suspensionType": {
+            "type": "string",
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA"
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           }
         },
         "required": [
           "title",
           "description",
           "penaltyPercentage",
-          "consequence"
+          "consequence",
+          "suspensionType"
         ]
       },
       "SetRuleStatusDto": {
@@ -2099,26 +2330,14 @@
       "SubmitAppealDto": {
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "reason": {
             "type": "string",
             "maxLength": 2000,
             "example": "Solicito revisar la sanción registrada"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-09-02T10:00:00.000Z"
           }
         },
         "required": [
-          "userId",
-          "reason",
-          "submittedAt"
+          "reason"
         ]
       },
       "ResolveAppealDto": {
@@ -2136,23 +2355,11 @@
             "type": "string",
             "maxLength": 2000,
             "example": "Resultado de la revisión de la apelación"
-          },
-          "resolvedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-09-03T10:00:00.000Z"
-          },
-          "resolvedByAccountId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440006"
           }
         },
         "required": [
           "status",
-          "resolution",
-          "resolvedAt",
-          "resolvedByAccountId"
+          "resolution"
         ]
       },
       "CreateTermsVersionDto": {

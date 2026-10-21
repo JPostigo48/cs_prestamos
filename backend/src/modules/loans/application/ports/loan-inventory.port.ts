@@ -2,6 +2,7 @@ export interface CopyLoanAvailability {
   copyId: string;
   available: boolean;
   maximumLoanDays: number;
+  maximumLoanHours: number;
 }
 
 export interface ReleaseCopyInput {

@@ -5,19 +5,22 @@ import { CredentialsPort } from './application/ports/credentials.port.js';
 import { AuthenticateAccountUseCase } from './application/use-cases/authenticate-account.use-case.js';
 import { GetAccessAccountUseCase } from './application/use-cases/get-access-account.use-case.js';
 import { RegisterAccessAccountUseCase } from './application/use-cases/register-access-account.use-case.js';
+import { UpdateAccessAccountUseCase } from './application/use-cases/update-access-account.use-case.js';
 import { AccessAccountRepository } from './domain/repositories/access-account.repository.js';
 import { UsersAuthAdapter } from './infrastructure/integration/users-auth.adapter.js';
 import { PrismaAccessAccountRepository } from './infrastructure/persistence/prisma/prisma-access-account.repository.js';
 import { PendingCredentialsAdapter } from './infrastructure/security/pending-credentials.adapter.js';
 import { AuthController } from './presentation/controllers/auth.controller.js';
+import { SecurityModule } from './security.module.js';
 
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, SecurityModule],
   controllers: [AuthController],
   providers: [
     RegisterAccessAccountUseCase,
     AuthenticateAccountUseCase,
     GetAccessAccountUseCase,
+    UpdateAccessAccountUseCase,
     {
       provide: AccessAccountRepository,
       useClass: PrismaAccessAccountRepository,
@@ -31,6 +34,11 @@ import { AuthController } from './presentation/controllers/auth.controller.js';
       useClass: PendingCredentialsAdapter,
     },
   ],
-  exports: [AuthenticateAccountUseCase, GetAccessAccountUseCase],
+  exports: [
+    AuthenticateAccountUseCase,
+    GetAccessAccountUseCase,
+    UpdateAccessAccountUseCase,
+    SecurityModule,
+  ],
 })
 export class AuthModule {}

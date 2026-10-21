@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({ type: String, maxLength: 120, example: 'Equipos de laboratorio' })
@@ -15,4 +22,11 @@ export class CreateCategoryDto {
   @IsInt()
   @Min(1)
   tiempoMaximoPrestamoDias!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @ApiProperty({ type: Number, minimum: 1, example: 168, required: false })
+  @IsInt()
+  @Min(1)
+  tiempoMaximoPrestamoHoras?: number;
 }
