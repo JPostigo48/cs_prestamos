@@ -33,7 +33,7 @@ const navigation = [
             {{ item.label }}
           </RouterLink>
         </nav>
-        <RouterLink to="/login" class="inline-flex shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-700 xl:justify-self-end xl:px-4">
+        <RouterLink to="/prototype" class="inline-flex shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-700 xl:justify-self-end xl:px-4">
           <span class="xl:hidden">Acceso</span>
           <span class="hidden xl:inline">Ver prototipo de acceso</span>
         </RouterLink>
