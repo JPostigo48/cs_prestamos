@@ -9,6 +9,7 @@ export type InventoryCategory = {
   id: string;
   nombre: string;
   tiempoMaximoPrestamoDias: number;
+  tiempoMaximoPrestamoHoras?: number;
   resourceCount?: number;
   createdAt?: Date;
   updatedAt?: Date;

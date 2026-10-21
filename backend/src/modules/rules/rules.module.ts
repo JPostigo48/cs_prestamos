@@ -64,5 +64,6 @@ const useCases = [
       useClass: UsersTrustAdapter,
     },
   ],
+  exports: [TermsRepository],
 })
 export class RulesModule {}

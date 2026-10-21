@@ -86,7 +86,7 @@ export class PrismaUserRepository extends UserRepository {
       ...(user.hasCurrentAffiliation ? [] : ['VINCULACION_NO_VIGENTE']),
       ...(active ? ['SANCION_ACTIVA'] : []),
     ];
-    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, activeSanctions, trustPercentage: user.trustPercentage, trustLevel: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1' };
+    return { userId, enabled: reasons.length === 0, eligible: reasons.length === 0, reasons, hasCurrentAffiliation: user.hasCurrentAffiliation, institutionalType: user.userType, activeSanctions, trustPercentage: user.trustPercentage, trustLevel: user.trustPercentage >= 80 ? 'NIVEL_4' : user.trustPercentage >= 60 ? 'NIVEL_3' : user.trustPercentage >= 40 ? 'NIVEL_2' : 'NIVEL_1' };
   }
 
   async getTrustProfile(userId: string): Promise<UserTrustProfile> {
