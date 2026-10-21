@@ -244,11 +244,12 @@ export class PrismaReservationRepository implements ReservationRepository {
         this.prisma.sql.public.reservas
           .update({
             estado: 'CANCELADA',
-            fechaCancelacion: this.instant(new Date()),
+            fechaCancelacion: this.instant(data.cancelledAt),
             motivoCancelacion: data.reason?.trim() || null,
           })
           .where((row, fns) => fns.eq(row.id, data.reservationId))
           .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+          .where((row, fns) => fns.gte(row.fechaLimiteRecogida, this.instant(data.cancelledAt)))
           .returning(
             'id',
             'usuarioId',
@@ -276,38 +277,40 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async expire(at: Date): Promise<Reservation[]> {
-    const rows = await this.runtime().query(
-      this.prisma.sql.public.reservas
-        .update({
-          estado: 'VENCIDA',
-          fechaCancelacion: this.instant(at),
-          motivoCancelacion: 'Ventana de recogida vencida',
-        })
-        .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
-        .where((row, fns) => fns.lt(row.fechaLimiteRecogida, this.instant(at)))
-        .returning(
-          'id',
-          'usuarioId',
-          'ejemplarId',
-          'fechaSolicitada',
-          'fechaLimiteRecogida',
-          'duracionPrestamoHoras',
-          'fechaRecogida',
-          'fechaCancelacion',
-          'estado',
-          'motivoCancelacion',
-        )
-        .build(),
-    );
-    for (const row of rows) {
-      await this.runtime().query(
-        this.prisma.sql.public.ejemplares
-          .update({ estado: 'DISPONIBLE' })
-          .where((copy, fns) => fns.eq(copy.id, row.ejemplarId))
-          .where((copy, fns) => fns.eq(copy.estado, 'RESERVADO'))
+    return this.prisma.client.transaction(async (tx) => {
+      const rows = await tx.query(
+        this.prisma.sql.public.reservas
+          .update({
+            estado: 'VENCIDA',
+            fechaCancelacion: this.instant(at),
+            motivoCancelacion: 'Ventana de recogida vencida',
+          })
+          .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+          .where((row, fns) => fns.lt(row.fechaLimiteRecogida, this.instant(at)))
+          .returning(
+            'id',
+            'usuarioId',
+            'ejemplarId',
+            'fechaSolicitada',
+            'fechaLimiteRecogida',
+            'duracionPrestamoHoras',
+            'fechaRecogida',
+            'fechaCancelacion',
+            'estado',
+            'motivoCancelacion',
+          )
           .build(),
       );
-    }
-    return rows.map((row: any) => this.map(row));
+      for (const row of rows) {
+        await tx.query(
+          this.prisma.sql.public.ejemplares
+            .update({ estado: 'DISPONIBLE' })
+            .where((copy, fns) => fns.eq(copy.id, row.ejemplarId))
+            .where((copy, fns) => fns.eq(copy.estado, 'RESERVADO'))
+            .build(),
+        );
+      }
+      return rows.map((row: any) => this.map(row));
+    });
   }
 }

@@ -17,6 +17,7 @@ import { PrismaLoanRepository } from './infrastructure/persistence/prisma/prisma
 import { LoansController } from './presentation/controllers/loans.controller.js';
 import { ReservationRepository } from './domain/repositories/reservation.repository.js';
 import { PrismaReservationRepository } from './infrastructure/persistence/prisma/prisma-reservation.repository.js';
+import { ReservationExpiryService } from './infrastructure/reservation-expiry.service.js';
 import { CreateReservationUseCase } from './application/use-cases/create-reservation.use-case.js';
 import { PickupReservationUseCase } from './application/use-cases/pickup-reservation.use-case.js';
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case.js';
@@ -37,6 +38,7 @@ const useCases = [
   controllers: [LoansController],
   providers: [
     ...useCases,
+    ReservationExpiryService,
     {
       provide: LoanRepository,
       useClass: PrismaLoanRepository,

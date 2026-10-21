@@ -16,8 +16,13 @@ export class CancelReservationUseCase {
     if (reservation.status !== 'CONFIRMADA') {
       throw new ConflictException('Solo se pueden cancelar reservas confirmadas.');
     }
+    const cancelledAt = new Date();
+    if (cancelledAt > reservation.pickupDeadline) {
+      throw new ConflictException('La ventana de cancelación terminó.');
+    }
     return this.reservations.cancel({
       reservationId: input.reservationId,
+      cancelledAt,
       reason: input.reason,
     });
   }

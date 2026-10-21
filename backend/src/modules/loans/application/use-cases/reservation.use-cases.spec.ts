@@ -149,6 +149,22 @@ describe('Reservation use cases', () => {
     expect(reservations.pickup).not.toHaveBeenCalled();
   });
 
+  it('rejects cancellation after the pickup deadline', async () => {
+    const reservations = {
+      findById: vi.fn().mockResolvedValue({
+        ...reservation,
+        pickupDeadline: new Date(Date.now() - 1),
+      }),
+      cancel: vi.fn(),
+    };
+    const useCase = new CancelReservationUseCase(reservations as any);
+    await expect(useCase.execute({
+      reservationId: reservation.id,
+      userId: reservation.userId,
+    })).rejects.toThrow(ConflictException);
+    expect(reservations.cancel).not.toHaveBeenCalled();
+  });
+
   it('only allows the owner to cancel a confirmed reservation', async () => {
     const reservations = {
       findById: vi.fn().mockResolvedValue(reservation),

@@ -12,6 +12,7 @@ export interface CreateReservationData {
 
 export interface CancelReservationData {
   reservationId: string;
+  cancelledAt: Date;
   reason?: string;
 }
 
