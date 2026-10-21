@@ -42,4 +42,23 @@ export class PrismaTermsRepository implements TermsRepository {
     const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.select('id','usuarioId','versionTerminosId','fecha').where((r, f) => f.eq(r.usuarioId, userId)).build());
     return rows.map((r: any) => ({ id: r.id, userId: r.usuarioId, termsVersionId: r.versionTerminosId, acceptedAt: r.fecha }));
   }
+
+  async hasAcceptedCurrentVersion(userId: string): Promise<boolean> {
+    const versions = await this.runtime().query(
+      this.prisma.sql.public.versiones_terminos.select('id', 'numero').build(),
+    );
+    if (versions.length === 0) return false;
+    const current = versions.reduce((latest: any, version: any) =>
+      !latest || version.numero > latest.numero ? version : latest,
+    );
+    const acceptances = await this.runtime().query(
+      this.prisma.sql.public.aceptaciones_terminos
+        .select('id')
+        .where((row, fns) => fns.eq(row.usuarioId, userId))
+        .where((row, fns) => fns.eq(row.versionTerminosId, current.id))
+        .limit(1)
+        .build(),
+    );
+    return Boolean(acceptances[0]);
+  }
 }

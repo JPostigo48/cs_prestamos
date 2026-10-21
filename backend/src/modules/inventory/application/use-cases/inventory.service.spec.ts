@@ -76,6 +76,7 @@ describe('InventoryService', () => {
       id: categoryId,
       nombre: 'Libros',
       tiempoMaximoPrestamoDias: 14,
+      tiempoMaximoPrestamoHoras: 336,
       resourceCount: 0,
     });
 
@@ -87,6 +88,7 @@ describe('InventoryService', () => {
     expect(repository.createCategory).toHaveBeenCalledWith({
       nombre: 'Libros',
       tiempoMaximoPrestamoDias: 14,
+      tiempoMaximoPrestamoHoras: 336,
     });
     expect(result.nombre).toBe('Libros');
   });

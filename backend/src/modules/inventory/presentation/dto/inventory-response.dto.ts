@@ -14,6 +14,9 @@ export class CategoryResponseDto {
   @ApiProperty({ type: Number, example: 7 })
   tiempoMaximoPrestamoDias!: number;
 
+  @ApiProperty({ type: Number, example: 168 })
+  tiempoMaximoPrestamoHoras!: number;
+
   @ApiProperty({ type: Number, example: 0 })
   resourceCount!: number;
 }
@@ -50,6 +53,9 @@ class ResourceCategoryDto {
 
   @ApiProperty({ type: Number, example: 7 })
   tiempoMaximoPrestamoDias!: number;
+
+  @ApiProperty({ type: Number, example: 168 })
+  tiempoMaximoPrestamoHoras!: number;
 }
 
 export class ResourceDetailResponseDto extends ResourceResponseDto {

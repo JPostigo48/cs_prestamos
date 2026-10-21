@@ -50,6 +50,7 @@ export type UserTrustProfile = {
 export type LoanEligibility = {
   userId: string;
   enabled: boolean;
+  institutionalType: UserType;
   eligible?: boolean;
   reasons?: string[];
   hasCurrentAffiliation?: boolean;

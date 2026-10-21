@@ -1011,6 +1011,92 @@
         "x-implementation-status": "pending"
       }
     },
+    "/loans/reservations": {
+      "post": {
+        "operationId": "LoansController_createReservationEndpoint",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Confirmar una reserva de ejemplar",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/reservations/{reservationId}/pickup": {
+      "post": {
+        "operationId": "LoansController_pickup",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Registrar recogida y crear el préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
+    "/loans/reservations/{reservationId}": {
+      "delete": {
+        "operationId": "LoansController_cancelReservation",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelReservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Cancelar una reserva confirmada",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "pending"
+      }
+    },
     "/loans/active": {
       "get": {
         "operationId": "LoansController_listActive",
@@ -1535,6 +1621,11 @@
             "type": "number",
             "minimum": 1,
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "minimum": 1,
+            "example": 168
           }
         },
         "required": [
@@ -1558,6 +1649,10 @@
             "type": "number",
             "example": 7
           },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "example": 168
+          },
           "resourceCount": {
             "type": "number",
             "example": 0
@@ -1567,6 +1662,7 @@
           "id",
           "nombre",
           "tiempoMaximoPrestamoDias",
+          "tiempoMaximoPrestamoHoras",
           "resourceCount"
         ]
       },
@@ -1582,6 +1678,11 @@
             "type": "number",
             "minimum": 1,
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "minimum": 1,
+            "example": 168
           }
         }
       },
@@ -1687,12 +1788,17 @@
           "tiempoMaximoPrestamoDias": {
             "type": "number",
             "example": 7
+          },
+          "tiempoMaximoPrestamoHoras": {
+            "type": "number",
+            "example": 168
           }
         },
         "required": [
           "id",
           "nombre",
-          "tiempoMaximoPrestamoDias"
+          "tiempoMaximoPrestamoDias",
+          "tiempoMaximoPrestamoHoras"
         ]
       },
       "ResourceDetailResponseDto": {
@@ -2056,6 +2162,14 @@
           "copyId",
           "startsAt"
         ]
+      },
+      "CreateReservationDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CancelReservationDto": {
+        "type": "object",
+        "properties": {}
       },
       "ReturnLoanDto": {
         "type": "object",
