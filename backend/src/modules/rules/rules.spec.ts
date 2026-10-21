@@ -182,55 +182,53 @@ describe('Rules use cases', () => {
     expect(insertViolation).not.toHaveBeenCalled();
   });
 
-  it('prevents duplicate appeals and only allows the sanction owner to submit', async () => {
+  it('permits only the sanction owner to submit one appeal', async () => {
     const appeals = {
-      findSanctionByViolationId: vi.fn().mockResolvedValue({
-        id: 's1', userId: 'u1', status: 'ACTIVA', startsAt: new Date(), endsAt: null,
+      findSanctionById: vi.fn().mockResolvedValue({
+        id: 's1', violationId: 'v1', userId: 'u1',
+        status: 'ACTIVA', startsAt: new Date(), endsAt: null,
       }),
       findByViolationId: vi.fn().mockResolvedValue(null),
-      create: vi.fn().mockResolvedValue({ id: 'a1' }),
+      create: vi.fn().mockResolvedValue({ id: 'a1', sanctionId: 's1' }),
     };
-    const violations = { findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }) };
-    const useCase = new SubmitAppealUseCase(appeals as any, violations as any);
-    await expect(useCase.execute({ violationId: 'v1', userId: 'u2', reason: 'x', submittedAt: new Date() })).rejects.toThrow();
-    await expect(useCase.execute({ violationId: 'v1', userId: 'u1', reason: 'x', submittedAt: new Date() })).resolves.toBeDefined();
-    expect(appeals.create).toHaveBeenCalledWith(expect.objectContaining({ violationId: 'v1', userId: 'u1' }));
+    const useCase = new SubmitAppealUseCase(appeals as any);
+    const input = { sanctionId: 's1', userId: 'u1', reason: 'revision' };
+    await expect(useCase.execute({ ...input, userId: 'u2' })).rejects.toThrow();
+    await expect(useCase.execute(input)).resolves.toMatchObject({ sanctionId: 's1' });
+    expect(appeals.create).toHaveBeenCalledWith(expect.objectContaining({
+      sanctionId: 's1', violationId: 'v1', userId: 'u1',
+    }));
     appeals.findByViolationId.mockResolvedValue({ id: 'a1' });
-    await expect(useCase.execute({ violationId: 'v1', userId: 'u1', reason: 'x', submittedAt: new Date() })).rejects.toThrow();
+    await expect(useCase.execute(input)).rejects.toThrow();
   });
 
   it('rejects an appeal more than 30 days after the sanction ended', async () => {
     const appeals = {
-      findSanctionByViolationId: vi.fn().mockResolvedValue({
-        id: 's1', userId: 'u1', status: 'FINALIZADA',
+      findSanctionById: vi.fn().mockResolvedValue({
+        id: 's1', violationId: 'v1', userId: 'u1', status: 'FINALIZADA',
         startsAt: new Date('2026-08-01T00:00:00Z'), endsAt: new Date('2026-08-10T00:00:00Z'),
       }),
       findByViolationId: vi.fn().mockResolvedValue(null),
       create: vi.fn(),
     };
-    const useCase = new SubmitAppealUseCase(appeals as any, {
-      findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }),
-    } as any);
+    const useCase = new SubmitAppealUseCase(appeals as any);
     await expect(useCase.execute({
-      violationId: 'v1', userId: 'u1', reason: 'fuera de plazo',
-      submittedAt: new Date('2026-08-10T00:00:00Z'),
+      sanctionId: 's1', userId: 'u1', reason: 'fuera de plazo',
     })).rejects.toThrow('plazo');
     expect(appeals.create).not.toHaveBeenCalled();
   });
 
-  it('requires a sanction and permits an appeal within 30 days after finalization', async () => {
+  it('requires a sanction and permits appeal within 30 days of finalization', async () => {
     const appeals = {
-      findSanctionByViolationId: vi.fn().mockResolvedValue(null),
+      findSanctionById: vi.fn().mockResolvedValue(null),
       findByViolationId: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({ id: 'a1' }),
     };
-    const useCase = new SubmitAppealUseCase(appeals as any, {
-      findById: vi.fn().mockResolvedValue({ id: 'v1', userId: 'u1' }),
-    } as any);
-    const input = { violationId: 'v1', userId: 'u1', reason: 'revisión', submittedAt: new Date(0) };
+    const useCase = new SubmitAppealUseCase(appeals as any);
+    const input = { sanctionId: 's1', userId: 'u1', reason: 'revision' };
     await expect(useCase.execute(input)).rejects.toThrow('Sanción no encontrada');
-    appeals.findSanctionByViolationId.mockResolvedValue({
-      id: 's1', userId: 'u1', status: 'FINALIZADA',
+    appeals.findSanctionById.mockResolvedValue({
+      id: 's1', violationId: 'v1', userId: 'u1', status: 'FINALIZADA',
       startsAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       endsAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     });

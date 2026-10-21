@@ -14,27 +14,34 @@ export class PrismaAppealRepository implements AppealRepository {
 
   private runtime() { return this.prisma.client.runtime(); }
   private map(row: any): Appeal {
-    return { id: row.id, violationId: row.incumplimientoId, userId: row.usuarioId, reason: row.motivo, submittedAt: row.fecha, status: row.estado, resolution: row.resolucion, resolvedAt: row.fechaResolucion, resolvedByAccountId: row.resueltaPorCuentaId };
+    return { id: row.id, violationId: row.incumplimientoId, sanctionId: row.sancionId, userId: row.usuarioId, reason: row.motivo, submittedAt: row.fecha, status: row.estado, resolution: row.resolucion, resolvedAt: row.fechaResolucion, resolvedByAccountId: row.resueltaPorCuentaId };
   }
   async create(data: SubmitAppealData): Promise<Appeal> {
-    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.insert([{ incumplimientoId: data.violationId, usuarioId: data.userId, motivo: data.reason, fecha: data.submittedAt }]).returning('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
-    return this.map(rows[0]);
+    try {
+      const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.insert([{ incumplimientoId: data.violationId, sancionId: data.sanctionId, usuarioId: data.userId, motivo: data.reason, fecha: data.submittedAt }]).returning('id','incumplimientoId','sancionId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
+      return this.map(rows[0]);
+    } catch (error) {
+      if ((error as { code?: string }).code === '23505') {
+        throw new ConflictException('La sanción ya tiene una apelación.');
+      }
+      throw error;
+    }
   }
 
   async findById(appealId: string): Promise<Appeal | null> {
-    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.select('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').where((r, f) => f.eq(r.id, appealId)).limit(1).build());
+    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.select('id','incumplimientoId','sancionId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').where((r, f) => f.eq(r.id, appealId)).limit(1).build());
     return rows[0] ? this.map(rows[0]) : null;
   }
 
   async findByViolationId(violationId: string): Promise<Appeal | null> {
-    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.select('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').where((r, f) => f.eq(r.incumplimientoId, violationId)).limit(1).build());
+    const rows = await this.runtime().query(this.prisma.sql.public.apelaciones.select('id','incumplimientoId','sancionId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').where((r, f) => f.eq(r.incumplimientoId, violationId)).limit(1).build());
     return rows[0] ? this.map(rows[0]) : null;
   }
 
-  async findSanctionByViolationId(violationId: string): Promise<AppealableSanction | null> {
+  async findSanctionById(sanctionId: string): Promise<AppealableSanction | null> {
     const rows = await this.runtime().query(this.prisma.sql.public.sanciones
-      .select('id', 'usuarioId', 'estado', 'fechaInicio', 'fechaFin')
-      .where((row, fns) => fns.eq(row.incumplimientoId, violationId))
+      .select('id', 'usuarioId', 'incumplimientoId', 'estado', 'fechaInicio', 'fechaFin')
+      .where((row, fns) => fns.eq(row.id, sanctionId))
       .limit(1).build());
     const sanction = rows[0];
     if (!sanction) return null;
@@ -44,6 +51,7 @@ export class PrismaAppealRepository implements AppealRepository {
       : sanction.fechaInicio > now ? 'PROGRAMADA' : 'ACTIVA';
     return {
       id: sanction.id,
+      violationId: sanction.incumplimientoId,
       userId: sanction.usuarioId,
       status,
       startsAt: sanction.fechaInicio,
@@ -57,13 +65,15 @@ export class PrismaAppealRepository implements AppealRepository {
         .update({ estado: data.status, resolucion: data.resolution, fechaResolucion: data.resolvedAt, resueltaPorCuentaId: data.resolvedByAccountId })
         .where((r, f) => f.eq(r.id, data.appealId))
         .where((r, f) => f.eq(r.estado, 'PENDIENTE'))
-        .returning('id','incumplimientoId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
+        .returning('id','incumplimientoId','sancionId','usuarioId','motivo','fecha','estado','resolucion','fechaResolucion','resueltaPorCuentaId').build());
       const appeal = rows[0];
       if (!appeal) throw new ConflictException('La apelación ya fue resuelta o no existe.');
       if (data.status === 'ACEPTADA') {
-        const sanctions = await tx.query(this.prisma.sql.public.sanciones
-          .select('id', 'usuarioId', 'estado', 'confianzaAnterior', 'confianzaPosterior')
-          .where((r, f) => f.eq(r.incumplimientoId, appeal.incumplimientoId))
+        const sanctionQuery = this.prisma.sql.public.sanciones
+          .select('id', 'usuarioId', 'estado', 'confianzaAnterior', 'confianzaPosterior');
+        const sanctions = await tx.query((appeal.sancionId
+          ? sanctionQuery.where((r, f) => f.eq(r.id, appeal.sancionId))
+          : sanctionQuery.where((r, f) => f.eq(r.incumplimientoId, appeal.incumplimientoId)))
           .limit(1).build());
         const sanction = sanctions[0];
         if (!sanction || sanction.usuarioId !== appeal.usuarioId || sanction.estado === 'ABSUELTA') {

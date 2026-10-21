@@ -203,6 +203,7 @@ model Sancion {
   incumplimiento     Incumplimiento?      @relation("IncumplimientoSancion", fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   regla              ReglaUso?            @relation("ReglaSanciones", fields:[reglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   versionRegla       VersionRegla?        @relation("VersionSanciones", fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  apelacion           Apelacion?           @relation("SancionApelacion")
 
   @@index([usuarioId, estado])
   @@index([estado, fechaFin])
@@ -317,6 +318,7 @@ model Incumplimiento {
 model Apelacion {
   id                  Uuid                 @id @default(uuid())
   incumplimientoId    Uuid                 @unique
+  sancionId           Uuid?                @unique
   usuarioId           Uuid
   motivo              String
   fecha               Timestamptz(3)       @default(now())
@@ -329,6 +331,7 @@ model Apelacion {
   updatedAt           temporal.updatedAt()
 
   incumplimiento      Incumplimiento       @relation(fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  sancion             Sancion?             @relation("SancionApelacion", fields:[sancionId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   usuario             Usuario              @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   resueltaPor         CuentaAcceso?        @relation("CuentaResolutora", fields:[resueltaPorCuentaId], references:[id], onDelete: SetNull, onUpdate: Cascade)
 

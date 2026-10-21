@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.apelaciones.sancionId",
+    "label": "Add column \"sancionId\" to \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "sancionId",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"sancionId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "apelaciones",
+          "sancionId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"sancionId\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\" ADD COLUMN \"sancionId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"sancionId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "apelaciones",
+          "sancionId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.apelaciones.apelaciones_sancionId_key",
+    "label": "Add unique constraint on \"apelaciones\" (sancionId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "apelaciones_sancionId_key",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"apelaciones_sancionId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_sancionId_key",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"apelaciones_sancionId_key\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\" ADD CONSTRAINT \"apelaciones_sancionId_key\" UNIQUE (\"sancionId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"apelaciones_sancionId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_sancionId_key",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.apelaciones.apelaciones_sancionId_fkey",
+    "label": "Add foreign key \"apelaciones_sancionId_fkey\" on \"apelaciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "apelaciones_sancionId_fkey",
+        "table": "apelaciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"apelaciones_sancionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_sancionId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"apelaciones_sancionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"apelaciones\"\nADD CONSTRAINT \"apelaciones_sancionId_fkey\"\nFOREIGN KEY (\"sancionId\")\nREFERENCES \"public\".\"sanciones\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"apelaciones_sancionId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "apelaciones_sancionId_fkey",
+          "public",
+          "\"public\".\"apelaciones\""
+        ]
+      }
+    ]
+  }
+]

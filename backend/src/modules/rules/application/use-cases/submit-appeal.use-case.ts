@@ -2,23 +2,18 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import type { SubmitAppealInput } from '../ports/violations.inputs.js';
 import type { Appeal } from '../../domain/entities/appeal.js';
 import { AppealRepository } from '../../domain/repositories/appeal.repository.js';
-import { ViolationRepository } from '../../domain/repositories/violation.repository.js';
 
 @Injectable()
 export class SubmitAppealUseCase {
-  constructor(
-    private readonly appeals: AppealRepository,
-    private readonly violations: ViolationRepository,
-  ) {}
+  constructor(private readonly appeals: AppealRepository) {}
 
   async execute(input: SubmitAppealInput): Promise<Appeal> {
-    const violation = await this.violations.findById(input.violationId);
-    if (!violation || violation.userId !== input.userId) {
-      throw new NotFoundException('Incumplimiento no encontrado.');
-    }
-    const sanction = await this.appeals.findSanctionByViolationId(input.violationId);
+    const sanction = await this.appeals.findSanctionById(input.sanctionId);
     if (!sanction || sanction.userId !== input.userId) {
       throw new NotFoundException('Sanción no encontrada.');
+    }
+    if (!sanction.violationId) {
+      throw new ConflictException('La sanción no tiene un incumplimiento asociado.');
     }
     const submittedAt = new Date();
     const finishedAt = sanction.status === 'FINALIZADA'
@@ -31,9 +26,9 @@ export class SubmitAppealUseCase {
       (appealDeadline !== null && submittedAt > appealDeadline)) {
       throw new ConflictException('El plazo para apelar esta sanción ha terminado.');
     }
-    if (await this.appeals.findByViolationId(input.violationId)) {
+    if (await this.appeals.findByViolationId(sanction.violationId)) {
       throw new ConflictException('El incumplimiento ya tiene una apelación.');
     }
-    return this.appeals.create({ ...input, submittedAt });
+    return this.appeals.create({ ...input, violationId: sanction.violationId, submittedAt });
   }
 }
