@@ -4,6 +4,7 @@ import type { Reservation } from '../entities/reservation.js';
 export interface CreateReservationData {
   userId: string;
   copyId: string;
+  enforceSingleOpenOperation: boolean;
   requestedAt: Date;
   pickupDeadline: Date;
   loanDurationHours: number;

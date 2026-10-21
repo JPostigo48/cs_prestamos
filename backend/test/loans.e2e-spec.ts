@@ -5,6 +5,8 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module.js';
 import { HttpExceptionFilter } from '../src/shared/infrastructure/filters/http-exception.filter.js';
 import { PrismaService } from '../src/shared/infrastructure/prisma/prisma.service.js';
+import { JwtPort } from '../src/modules/auth/application/ports/jwt.port.js';
+import { AccessRole } from '../src/modules/auth/domain/entities/access-account.js';
 
 describe('Loans authorization and lifecycle (e2e)', () => {
   let app: INestApplication<App>;
@@ -15,8 +17,11 @@ describe('Loans authorization and lifecycle (e2e)', () => {
   let categoryId: string;
   let resourceId: string;
   let copyId: string;
+  let reservationId: string;
   let loanId: string;
+  let createdTermsVersionId: string | null = null;
   let token: string;
+  let administratorToken: string;
   const suffix = Date.now().toString();
   const email = `loans.e2e.${suffix}@unsa.edu.pe`;
 
@@ -34,6 +39,12 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       }),
     );
     prisma = app.get(PrismaService);
+    administratorToken = app.get(JwtPort).sign({
+      accountId: 'test-administrator',
+      userId: 'test-administrator',
+      userType: 'ADMINISTRATIVO',
+      role: AccessRole.ADMINISTRATOR,
+    });
     await app.init();
 
     const registration = await request(app.getHttpServer())
@@ -48,11 +59,13 @@ describe('Loans authorization and lifecycle (e2e)', () => {
 
     const approved = await request(app.getHttpServer())
       .post(`/users/registration-requests/${requestId}/approve`)
+      .auth(administratorToken, { type: 'bearer' })
       .expect(201);
     userId = approved.body.user.id;
 
     const account = await request(app.getHttpServer())
       .post('/auth/accounts')
+      .auth(administratorToken, { type: 'bearer' })
       .send({ userId, email, password: 'LoansE2E-password-1' })
       .expect(201);
     accountId = account.body.id;
@@ -62,6 +75,28 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       .send({ email, password: 'LoansE2E-password-1' })
       .expect(201);
     token = authenticated.body.accessToken;
+
+    const versions = await prisma.client.runtime().query(
+      prisma.sql.public.versiones_terminos.select('id', 'numero').build(),
+    );
+    let currentVersion = versions.reduce(
+      (latest: any, version: any) => !latest || version.numero > latest.numero ? version : latest,
+      null as any,
+    );
+    if (!currentVersion) {
+      const created = await request(app.getHttpServer())
+        .post('/terms/versions')
+        .auth(administratorToken, { type: 'bearer' })
+        .send({ number: 1, title: 'Términos de prueba' })
+        .expect(201);
+      createdTermsVersionId = created.body.id;
+      currentVersion = { id: created.body.id };
+    }
+    await request(app.getHttpServer())
+      .post('/terms/acceptances')
+      .auth(token, { type: 'bearer' })
+      .send({ userId, termsVersionId: currentVersion.id, acceptedAt: new Date().toISOString() })
+      .expect(201);
 
     const category = await request(app.getHttpServer())
       .post('/inventory/categories')
@@ -85,43 +120,57 @@ describe('Loans authorization and lifecycle (e2e)', () => {
     copyId = copy.body.id;
   });
 
-  it('requires authentication and derives the loan owner from the token', async () => {
+  it('requires authentication and derives the reservation owner from the token', async () => {
     await request(app.getHttpServer())
-      .post('/loans')
-      .send({ copyId, startsAt: new Date(Date.now() + 60_000).toISOString() })
+      .post('/loans/reservations')
+      .send({ copyId, requestedAt: new Date(Date.now() + 60_000).toISOString() })
       .expect(401);
 
     await request(app.getHttpServer())
-      .post('/loans')
+      .post('/loans/reservations')
       .set('Authorization', `Bearer ${token}`)
       .send({
         userId: '00000000-0000-4000-8000-000000000000',
         copyId,
-        startsAt: new Date(Date.now() + 60_000).toISOString(),
+        requestedAt: new Date(Date.now() + 60_000).toISOString(),
       })
       .expect(400);
   });
 
-  it('creates a loan, blocks an unavailable copy and protects returns', async () => {
-    const created = await request(app.getHttpServer())
-      .post('/loans')
+  it('creates a loan through pickup, blocks an unavailable copy and protects returns', async () => {
+    const requestedAt = new Date(Date.now() + 1500);
+    const reserved = await request(app.getHttpServer())
+      .post('/loans/reservations')
       .set('Authorization', `Bearer ${token}`)
       .send({
         copyId,
-        startsAt: new Date(Date.now() + 60_000).toISOString(),
+        requestedAt: requestedAt.toISOString(),
       })
+      .expect(201);
+    reservationId = reserved.body.id;
+    expect(reserved.body.userId).toBe(userId);
+
+    await request(app.getHttpServer())
+      .post('/loans/reservations')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        copyId,
+        requestedAt: new Date(Date.now() + 60_000).toISOString(),
+      })
+      .expect(409);
+
+    await request(app.getHttpServer())
+      .post(`/loans/reservations/${reservationId}/pickup`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403);
+
+    await new Promise((resolve) => setTimeout(resolve, Math.max(0, requestedAt.getTime() - Date.now() + 25)));
+    const created = await request(app.getHttpServer())
+      .post(`/loans/reservations/${reservationId}/pickup`)
+      .auth(administratorToken, { type: 'bearer' })
       .expect(201);
     loanId = created.body.id;
     expect(created.body.userId).toBe(userId);
-
-    await request(app.getHttpServer())
-      .post('/loans')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        copyId,
-        startsAt: new Date(Date.now() + 120_000).toISOString(),
-      })
-      .expect(409);
 
     await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`)
@@ -138,7 +187,7 @@ describe('Loans authorization and lifecycle (e2e)', () => {
           expect.arrayContaining([expect.objectContaining({ id: loanId })]),
         );
       });
-  });
+  }, 10000);
 
   afterAll(async () => {
     if (loanId) {
@@ -153,6 +202,15 @@ describe('Loans authorization and lifecycle (e2e)', () => {
         prisma.sql.public.prestamos
           .delete()
           .where((row, fns) => fns.eq(row.id, loanId))
+          .returning('id')
+          .build(),
+      );
+    }
+    if (reservationId) {
+      await prisma.client.runtime().query(
+        prisma.sql.public.reservas
+          .delete()
+          .where((row, fns) => fns.eq(row.id, reservationId))
           .returning('id')
           .build(),
       );
@@ -189,6 +247,24 @@ describe('Loans authorization and lifecycle (e2e)', () => {
         prisma.sql.public.cuentas_acceso
           .delete()
           .where((row, fns) => fns.eq(row.id, accountId))
+          .returning('id')
+          .build(),
+      );
+    }
+    if (userId) {
+      await prisma.client.runtime().query(
+        prisma.sql.public.aceptaciones_terminos
+          .delete()
+          .where((row, fns) => fns.eq(row.usuarioId, userId))
+          .returning('id')
+          .build(),
+      );
+    }
+    if (createdTermsVersionId) {
+      await prisma.client.runtime().query(
+        prisma.sql.public.versiones_terminos
+          .delete()
+          .where((row, fns) => fns.eq(row.id, createdTermsVersionId))
           .returning('id')
           .build(),
       );

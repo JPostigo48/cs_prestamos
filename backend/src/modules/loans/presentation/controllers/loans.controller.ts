@@ -9,13 +9,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateLoanUseCase } from '../../application/use-cases/create-loan.use-case.js';
 import { GetLoanUseCase } from '../../application/use-cases/get-loan.use-case.js';
 import { ListActiveLoansUseCase } from '../../application/use-cases/list-active-loans.use-case.js';
 import { ListOverdueLoansUseCase } from '../../application/use-cases/list-overdue-loans.use-case.js';
 import { ListUserLoanHistoryUseCase } from '../../application/use-cases/list-user-loan-history.use-case.js';
 import { ReturnLoanUseCase } from '../../application/use-cases/return-loan.use-case.js';
-import { CreateLoanDto } from '../dto/create-loan.dto.js';
 import { ReturnLoanDto } from '../dto/return-loan.dto.js';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
@@ -34,7 +32,6 @@ import { CancelReservationDto } from '../dto/cancel-reservation.dto.js';
 @UseGuards(AuthGuard)
 export class LoansController {
   constructor(
-    private readonly createLoan: CreateLoanUseCase,
     private readonly returnLoan: ReturnLoanUseCase,
     private readonly getLoan: GetLoanUseCase,
     private readonly listActiveLoans: ListActiveLoansUseCase,
@@ -44,17 +41,6 @@ export class LoansController {
     private readonly pickupReservation: PickupReservationUseCase,
     private readonly cancelReservationUseCase: CancelReservationUseCase,
   ) {}
-
-  @Post()
-  @ApiBody({ type: CreateLoanDto })
-  @ApiOperation({ summary: 'Registrar préstamo' })
-  create(@Body() input: CreateLoanDto, @CurrentUser() user: AuthenticatedIdentity) {
-    return this.createLoan.execute({
-      copyId: input.copyId,
-      startsAt: input.startsAt,
-      userId: user.userId,
-    });
-  }
 
   @Post('reservations')
   @ApiBody({ type: CreateReservationDto })
