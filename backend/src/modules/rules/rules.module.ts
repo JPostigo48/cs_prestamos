@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
-import { UsersModule } from '../users/users.module.js';
-import { UserTrustPort } from './application/ports/user-trust.port.js';
 import { AcceptTermsVersionUseCase } from './application/use-cases/accept-terms-version.use-case.js';
 import { CreateRuleUseCase } from './application/use-cases/create-rule.use-case.js';
 import { CreateTermsVersionUseCase } from './application/use-cases/create-terms-version.use-case.js';
@@ -16,7 +14,6 @@ import { AppealRepository } from './domain/repositories/appeal.repository.js';
 import { RuleRepository } from './domain/repositories/rule.repository.js';
 import { TermsRepository } from './domain/repositories/terms.repository.js';
 import { ViolationRepository } from './domain/repositories/violation.repository.js';
-import { UsersTrustAdapter } from './infrastructure/integration/users-trust.adapter.js';
 import { PrismaAppealRepository } from './infrastructure/persistence/prisma/prisma-appeal.repository.js';
 import { PrismaRuleRepository } from './infrastructure/persistence/prisma/prisma-rule.repository.js';
 import { PrismaTermsRepository } from './infrastructure/persistence/prisma/prisma-terms.repository.js';
@@ -39,7 +36,7 @@ const useCases = [
 ];
 
 @Module({
-  imports: [UsersModule, AuthModule],
+  imports: [AuthModule],
   controllers: [RulesController, ViolationsController, TermsController],
   providers: [
     ...useCases,
@@ -58,10 +55,6 @@ const useCases = [
     {
       provide: TermsRepository,
       useClass: PrismaTermsRepository,
-    },
-    {
-      provide: UserTrustPort,
-      useClass: UsersTrustAdapter,
     },
   ],
   exports: [TermsRepository],

@@ -5,10 +5,10 @@ export interface RegisterViolationData {
   ruleId: string;
   ruleVersionId: string;
   occurredAt: Date;
-  appliedPenalty: number;
+  configuredPenalty: number;
 }
 
 export abstract class ViolationRepository {
-  abstract create(data: RegisterViolationData): Promise<Violation>;
+  abstract createWithPenalty(data: RegisterViolationData): Promise<Violation>;
   abstract findById(violationId: string): Promise<Violation | null>;
 }
