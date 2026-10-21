@@ -3,6 +3,7 @@ import { PrismaService } from '../../../../../shared/infrastructure/prisma/prism
 import type { Appeal } from '../../../domain/entities/appeal.js';
 import {
   AppealRepository,
+  type AppealableSanction,
   type ResolveAppealData,
   type SubmitAppealData,
 } from '../../../domain/repositories/appeal.repository.js';
@@ -30,6 +31,21 @@ export class PrismaAppealRepository implements AppealRepository {
     return rows[0] ? this.map(rows[0]) : null;
   }
 
+  async findSanctionByViolationId(violationId: string): Promise<AppealableSanction | null> {
+    const rows = await this.runtime().query(this.prisma.sql.public.sanciones
+      .select('id', 'usuarioId', 'estado', 'fechaInicio', 'fechaFin')
+      .where((row, fns) => fns.eq(row.incumplimientoId, violationId))
+      .limit(1).build());
+    const sanction = rows[0];
+    return sanction ? {
+      id: sanction.id,
+      userId: sanction.usuarioId,
+      status: sanction.estado,
+      startsAt: sanction.fechaInicio,
+      endsAt: sanction.fechaFin,
+    } : null;
+  }
+
   async resolve(data: ResolveAppealData): Promise<Appeal> {
     return this.prisma.client.transaction(async (tx) => {
       const rows = await tx.query(this.prisma.sql.public.apelaciones
@@ -40,11 +56,41 @@ export class PrismaAppealRepository implements AppealRepository {
       const appeal = rows[0];
       if (!appeal) throw new ConflictException('La apelación ya fue resuelta o no existe.');
       if (data.status === 'ACEPTADA') {
-        await tx.query(this.prisma.sql.public.sanciones
-          .update({ estado: 'ABSUELTA' })
+        const sanctions = await tx.query(this.prisma.sql.public.sanciones
+          .select('id', 'usuarioId', 'estado', 'confianzaAnterior', 'confianzaPosterior')
           .where((r, f) => f.eq(r.incumplimientoId, appeal.incumplimientoId))
-          .where((r, f) => f.eq(r.estado, 'ACTIVA'))
+          .limit(1).build());
+        const sanction = sanctions[0];
+        if (!sanction || sanction.usuarioId !== appeal.usuarioId || sanction.estado === 'ABSUELTA') {
+          throw new ConflictException('La sanción no puede ser absuelta.');
+        }
+        const users = await tx.query(this.prisma.sql.public.usuarios
+          .select('id', 'confianza')
+          .where((r, f) => f.eq(r.id, appeal.usuarioId))
+          .limit(1).build());
+        const user = users[0];
+        if (!user) throw new ConflictException('Usuario de la sanción no encontrado.');
+        const deducted = Math.max(0, Number(sanction.confianzaAnterior) - Number(sanction.confianzaPosterior));
+        const previousTrust = Number(user.confianza);
+        const resultingTrust = Math.min(100, previousTrust + deducted);
+        const absolved = await tx.query(this.prisma.sql.public.sanciones
+          .update({ estado: 'ABSUELTA' })
+          .where((r, f) => f.eq(r.id, sanction.id))
+          .where((r, f) => f.eq(r.estado, sanction.estado))
           .returning('id').build());
+        if (!absolved[0]) throw new ConflictException('La sanción cambió durante la revisión.');
+        const updatedUsers = await tx.query(this.prisma.sql.public.usuarios
+          .update({ confianza: resultingTrust.toFixed(2) })
+          .where((r, f) => f.eq(r.id, appeal.usuarioId))
+          .where((r, f) => f.eq(r.confianza, previousTrust.toFixed(2)))
+          .returning('id').build());
+        if (!updatedUsers[0]) throw new ConflictException('La confianza cambió durante la revisión.');
+        await tx.query(this.prisma.sql.public.auditorias_usuario.insert([{
+          usuarioId: appeal.usuarioId,
+          accion: 'CONFIANZA_RESTITUIDA_POR_APELACION',
+          datosAnteriores: JSON.stringify({ confianza: previousTrust, sancionId: sanction.id }),
+          datosNuevos: JSON.stringify({ confianza: resultingTrust, sancionId: sanction.id, puntosRestituidos: resultingTrust - previousTrust }),
+        }]).returning('id').build());
       }
       return this.map(appeal);
     });

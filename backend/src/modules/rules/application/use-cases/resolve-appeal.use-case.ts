@@ -11,6 +11,6 @@ export class ResolveAppealUseCase {
     const appeal = await this.appeals.findById(input.appealId);
     if (!appeal) throw new NotFoundException('Apelación no encontrada.');
     if (appeal.status !== 'PENDIENTE') throw new ConflictException('La apelación ya fue resuelta.');
-    return this.appeals.resolve(input);
+    return this.appeals.resolve({ ...input, resolvedAt: new Date() });
   }
 }
