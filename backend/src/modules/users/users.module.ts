@@ -17,6 +17,7 @@ import { PrismaRegistrationRequestRepository } from './infrastructure/persistenc
 import { PrismaUserRepository } from './infrastructure/persistence/prisma/prisma-user.repository.js';
 import { RegistrationRequestsController } from './presentation/controllers/registration-requests.controller.js';
 import { UsersController } from './presentation/controllers/users.controller.js';
+import { SecurityModule } from '../auth/security.module.js';
 
 const useCases = [
   SubmitRegistrationRequestUseCase,
@@ -34,6 +35,7 @@ const useCases = [
 ];
 
 @Module({
+  imports: [SecurityModule],
   controllers: [RegistrationRequestsController, UsersController],
   providers: [
     ...useCases,
