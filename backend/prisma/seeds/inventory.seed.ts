@@ -160,6 +160,10 @@ export async function seedInventory() {
       { nombre: 'Libros', tiempoMaximoPrestamoDias: 14 },
       { nombre: 'Revistas', tiempoMaximoPrestamoDias: 7 },
       { nombre: 'Tesis', tiempoMaximoPrestamoDias: 21 },
+      { nombre: 'Audiovisuales', tiempoMaximoPrestamoDias: 7 },
+      { nombre: 'Equipos de Laboratorio', tiempoMaximoPrestamoDias: 3 },
+      { nombre: 'Juegos de Lógica', tiempoMaximoPrestamoDias: 7 },
+      { nombre: 'Colecciones Especiales', tiempoMaximoPrestamoDias: 14 },
     ];
 
     const categoriaMap = new Map<string, any>();
@@ -184,14 +188,79 @@ export async function seedInventory() {
         descripcion: 'Guía práctica de diseño orientado a objetos.',
       },
       {
+        categoria: 'Libros',
+        nombre: 'Estructuras de Datos y Algoritmos',
+        descripcion:
+          'Material de apoyo para cursos de programación y resolución de problemas.',
+      },
+      {
+        categoria: 'Libros',
+        nombre: 'Sistemas Operativos Modernos',
+        descripcion:
+          'Fundamentos de procesos, memoria, sistemas de archivos y concurrencia.',
+      },
+      {
+        categoria: 'Libros',
+        nombre: 'Redes de Computadoras',
+        descripcion:
+          'Conceptos de redes, protocolos y servicios para prácticas de laboratorio.',
+      },
+      {
         categoria: 'Revistas',
         nombre: 'IEEE Software',
         descripcion: 'Revista técnica con artículos de ingeniería de software.',
       },
       {
+        categoria: 'Revistas',
+        nombre: 'Computing Reviews',
+        descripcion:
+          'Selección de tendencias y revisiones sobre computación y tecnología.',
+      },
+      {
         categoria: 'Tesis',
         nombre: 'Metodología de Investigación',
         descripcion: 'Material académico de apoyo para investigación aplicada.',
+      },
+      {
+        categoria: 'Tesis',
+        nombre: 'Catálogo de Trabajos de Grado',
+        descripcion: 'Recurso sin ejemplares para validar su gestión independiente.',
+      },
+      {
+        categoria: 'Audiovisuales',
+        nombre: 'Curso de Desarrollo Web',
+        descripcion:
+          'Material audiovisual de apoyo para fundamentos de desarrollo web.',
+      },
+      {
+        categoria: 'Equipos de Laboratorio',
+        nombre: 'Kit de Desarrollo Raspberry Pi',
+        descripcion:
+          'Kit para prácticas de sistemas embebidos, redes y proyectos de hardware.',
+      },
+      {
+        categoria: 'Equipos de Laboratorio',
+        nombre: 'Placa Arduino para Prototipado',
+        descripcion:
+          'Placa y accesorios para prácticas de electrónica y computación física.',
+      },
+      {
+        categoria: 'Equipos de Laboratorio',
+        nombre: 'Laptop para Laboratorio',
+        descripcion:
+          'Equipo portátil para prácticas de programación, redes y desarrollo de software.',
+      },
+      {
+        categoria: 'Juegos de Lógica',
+        nombre: 'Ajedrez para Sala de Estudio',
+        descripcion:
+          'Juego de estrategia para actividades de razonamiento y trabajo colaborativo.',
+      },
+      {
+        categoria: 'Juegos de Lógica',
+        nombre: 'Rompecabezas de Algoritmos',
+        descripcion:
+          'Material lúdico para practicar secuencias, patrones y pensamiento lógico.',
       },
     ];
 
@@ -216,11 +285,71 @@ export async function seedInventory() {
         codigo: 'PD-001',
         estado: 'DISPONIBLE',
       },
+      {
+        key: 'Libros:Estructuras de Datos y Algoritmos',
+        codigo: 'EDA-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Libros:Estructuras de Datos y Algoritmos',
+        codigo: 'EDA-002',
+        estado: 'NO_DISPONIBLE',
+      },
+      {
+        key: 'Libros:Sistemas Operativos Modernos',
+        codigo: 'SOM-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Libros:Redes de Computadoras',
+        codigo: 'RED-001',
+        estado: 'DISPONIBLE',
+      },
       { key: 'Revistas:IEEE Software', codigo: 'SW-001', estado: 'DISPONIBLE' },
+      {
+        key: 'Revistas:Computing Reviews',
+        codigo: 'CR-001',
+        estado: 'DISPONIBLE',
+      },
       {
         key: 'Tesis:Metodología de Investigación',
         codigo: 'MI-001',
         estado: 'NO_DISPONIBLE',
+      },
+      {
+        key: 'Audiovisuales:Curso de Desarrollo Web',
+        codigo: 'WEB-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Equipos de Laboratorio:Kit de Desarrollo Raspberry Pi',
+        codigo: 'RPI-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Equipos de Laboratorio:Kit de Desarrollo Raspberry Pi',
+        codigo: 'RPI-002',
+        estado: 'NO_DISPONIBLE',
+      },
+      {
+        key: 'Equipos de Laboratorio:Placa Arduino para Prototipado',
+        codigo: 'ARD-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Equipos de Laboratorio:Laptop para Laboratorio',
+        codigo: 'LAB-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Juegos de Lógica:Ajedrez para Sala de Estudio',
+        codigo: 'AJD-001',
+        estado: 'DISPONIBLE',
+      },
+      {
+        key: 'Juegos de Lógica:Rompecabezas de Algoritmos',
+        codigo: 'LOG-001',
+        estado: 'DISPONIBLE',
       },
     ] as const;
 

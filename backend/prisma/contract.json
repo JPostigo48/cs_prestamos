@@ -12,6 +12,10 @@
       "model": "Apelacion",
       "namespace": "public"
     },
+    "auditorias_usuario": {
+      "model": "AuditoriaUsuario",
+      "namespace": "public"
+    },
     "categorias_recurso": {
       "model": "CategoriaRecurso",
       "namespace": "public"
@@ -50,6 +54,10 @@
     },
     "reglas_uso": {
       "model": "ReglaUso",
+      "namespace": "public"
+    },
+    "reservas": {
+      "model": "Reserva",
       "namespace": "public"
     },
     "sanciones": {
@@ -102,6 +110,10 @@
                 "value": "DISPONIBLE"
               },
               {
+                "name": "RESERVADO",
+                "value": "RESERVADO"
+              },
+              {
                 "name": "PRESTADO",
                 "value": "PRESTADO"
               },
@@ -141,9 +153,34 @@
               }
             ]
           },
+          "EstadoReserva": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "CONFIRMADA",
+                "value": "CONFIRMADA"
+              },
+              {
+                "name": "RECOGIDA",
+                "value": "RECOGIDA"
+              },
+              {
+                "name": "CANCELADA",
+                "value": "CANCELADA"
+              },
+              {
+                "name": "VENCIDA",
+                "value": "VENCIDA"
+              }
+            ]
+          },
           "EstadoSancion": {
             "codecId": "pg/text@1",
             "members": [
+              {
+                "name": "PROGRAMADA",
+                "value": "PROGRAMADA"
+              },
               {
                 "name": "ACTIVA",
                 "value": "ACTIVA"
@@ -151,6 +188,10 @@
               {
                 "name": "FINALIZADA",
                 "value": "FINALIZADA"
+              },
+              {
+                "name": "ABSUELTA",
+                "value": "ABSUELTA"
               }
             ]
           },
@@ -185,6 +226,23 @@
               {
                 "name": "ADMINISTRADOR",
                 "value": "ADMINISTRADOR"
+              }
+            ]
+          },
+          "TipoSuspension": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "NINGUNA",
+                "value": "NINGUNA"
+              },
+              {
+                "name": "TEMPORAL",
+                "value": "TEMPORAL"
+              },
+              {
+                "name": "INDEFINIDA",
+                "value": "INDEFINIDA"
               }
             ]
           },
@@ -387,6 +445,13 @@
                   "kind": "scalar"
                 }
               },
+              "sancionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -432,6 +497,22 @@
                 },
                 "to": {
                   "model": "CuentaAcceso",
+                  "namespace": "public"
+                }
+              },
+              "sancion": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "sancionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Sancion",
                   "namespace": "public"
                 }
               },
@@ -481,6 +562,9 @@
                 "resueltaPorCuentaId": {
                   "column": "resueltaPorCuentaId"
                 },
+                "sancionId": {
+                  "column": "sancionId"
+                },
                 "updatedAt": {
                   "column": "updatedAt"
                 },
@@ -490,6 +574,149 @@
               },
               "namespaceId": "public",
               "table": "apelaciones"
+            }
+          },
+          "AuditoriaUsuario": {
+            "fields": {
+              "accion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 80
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "datosAnteriores": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "datosNuevos": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fecha": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "motivo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "solicitudRegistroId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "usuarioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "solicitudRegistro": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "solicitudRegistroId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SolicitudRegistro",
+                  "namespace": "public"
+                }
+              },
+              "usuario": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "usuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accion": {
+                  "column": "accion"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "datosAnteriores": {
+                  "column": "datosAnteriores"
+                },
+                "datosNuevos": {
+                  "column": "datosNuevos"
+                },
+                "fecha": {
+                  "column": "fecha"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "motivo": {
+                  "column": "motivo"
+                },
+                "solicitudRegistroId": {
+                  "column": "solicitudRegistroId"
+                },
+                "usuarioId": {
+                  "column": "usuarioId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "auditorias_usuario"
             }
           },
           "CategoriaRecurso": {
@@ -523,6 +750,13 @@
               },
               "tiempoMaximoPrestamoDias": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "tiempoMaximoPrestamoHoras": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -566,6 +800,9 @@
                 },
                 "tiempoMaximoPrestamoDias": {
                   "column": "tiempoMaximoPrestamoDias"
+                },
+                "tiempoMaximoPrestamoHoras": {
+                  "column": "tiempoMaximoPrestamoHoras"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -911,6 +1148,21 @@
                 },
                 "to": {
                   "model": "Recurso",
+                  "namespace": "public"
+                }
+              },
+              "reservas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "ejemplarId"
+                  ]
+                },
+                "to": {
+                  "model": "Reserva",
                   "namespace": "public"
                 }
               }
@@ -1326,6 +1578,13 @@
                   "kind": "scalar"
                 }
               },
+              "reservaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -1374,6 +1633,22 @@
                   "namespace": "public"
                 }
               },
+              "reserva": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "reservaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Reserva",
+                  "namespace": "public"
+                }
+              },
               "usuario": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1410,6 +1685,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "reservaId": {
+                  "column": "reservaId"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1647,6 +1925,207 @@
               "table": "reglas_uso"
             }
           },
+          "Reserva": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "duracionPrestamoHoras": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "ejemplarId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoReserva",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaCancelacion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "fechaLimiteRecogida": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "fechaRecogida": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "fechaSolicitada": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "motivoCancelacion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "usuarioId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "ejemplar": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "ejemplarId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Ejemplar",
+                  "namespace": "public"
+                }
+              },
+              "prestamo": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "reservaId"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
+                  "namespace": "public"
+                }
+              },
+              "usuario": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "usuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "duracionPrestamoHoras": {
+                  "column": "duracionPrestamoHoras"
+                },
+                "ejemplarId": {
+                  "column": "ejemplarId"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaCancelacion": {
+                  "column": "fechaCancelacion"
+                },
+                "fechaLimiteRecogida": {
+                  "column": "fechaLimiteRecogida"
+                },
+                "fechaRecogida": {
+                  "column": "fechaRecogida"
+                },
+                "fechaSolicitada": {
+                  "column": "fechaSolicitada"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "motivoCancelacion": {
+                  "column": "motivoCancelacion"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "usuarioId": {
+                  "column": "usuarioId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "reservas"
+            }
+          },
           "Sancion": {
             "fields": {
               "confianzaAnterior": {
@@ -1758,6 +2237,22 @@
               }
             },
             "relations": {
+              "apelacion": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "sancionId"
+                  ]
+                },
+                "to": {
+                  "model": "Apelacion",
+                  "namespace": "public"
+                }
+              },
               "incumplimiento": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -1918,6 +2413,23 @@
                   }
                 }
               },
+              "motivoRechazo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 180
+                  }
+                }
+              },
               "tipoUsuario": {
                 "nullable": false,
                 "type": {
@@ -1947,6 +2459,21 @@
               }
             },
             "relations": {
+              "auditorias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "solicitudRegistroId"
+                  ]
+                },
+                "to": {
+                  "model": "AuditoriaUsuario",
+                  "namespace": "public"
+                }
+              },
               "evidencias": {
                 "cardinality": "1:N",
                 "on": {
@@ -1995,6 +2522,12 @@
                 },
                 "identificadorInstitucional": {
                   "column": "identificadorInstitucional"
+                },
+                "motivoRechazo": {
+                  "column": "motivoRechazo"
+                },
+                "nombre": {
+                  "column": "nombre"
                 },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
@@ -2119,6 +2652,21 @@
                   "namespace": "public"
                 }
               },
+              "auditorias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "usuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "AuditoriaUsuario",
+                  "namespace": "public"
+                }
+              },
               "cuentaAcceso": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -2162,6 +2710,21 @@
                 },
                 "to": {
                   "model": "Prestamo",
+                  "namespace": "public"
+                }
+              },
+              "reservas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "usuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "Reserva",
                   "namespace": "public"
                 }
               },
@@ -2253,6 +2816,13 @@
                   "kind": "scalar"
                 }
               },
+              "diasSuspension": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "estado": {
                 "nullable": false,
                 "type": {
@@ -2296,6 +2866,19 @@
                 "type": {
                   "codecId": "pg/uuid@1",
                   "kind": "scalar"
+                }
+              },
+              "tipoSuspension": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TipoSuspension",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "titulo": {
@@ -2384,6 +2967,9 @@
                 "descripcion": {
                   "column": "descripcion"
                 },
+                "diasSuspension": {
+                  "column": "diasSuspension"
+                },
                 "estado": {
                   "column": "estado"
                 },
@@ -2398,6 +2984,9 @@
                 },
                 "reglaId": {
                   "column": "reglaId"
+                },
+                "tipoSuspension": {
+                  "column": "tipoSuspension"
                 },
                 "titulo": {
                   "column": "titulo"
@@ -2701,6 +3290,11 @@
                   "nativeType": "uuid",
                   "nullable": true
                 },
+                "sancionId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -2729,6 +3323,24 @@
                     ],
                     "namespaceId": "public",
                     "tableName": "incumplimientos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "sancionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "apelaciones"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "sanciones"
                   }
                 },
                 {
@@ -2814,8 +3426,168 @@
                   "columns": [
                     "incumplimientoId"
                   ]
+                },
+                {
+                  "columns": [
+                    "sancionId"
+                  ]
                 }
               ]
+            },
+            "auditorias_usuario": {
+              "columns": {
+                "accion": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 80
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "datosAnteriores": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "datosNuevos": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fecha": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "motivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "solicitudRegistroId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "usuarioId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "usuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "auditorias_usuario"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuarios"
+                  }
+                },
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "solicitudRegistroId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "auditorias_usuario"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "solicitudes_registro"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "accion",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_accion_fecha_idx_10245029",
+                  "prefix": "auditorias_usuario_accion_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "solicitudRegistroId",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_solicitudRegistroId_fecha_idx_f1429454",
+                  "prefix": "auditorias_usuario_solicitudRegistroId_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "solicitudRegistroId"
+                  ],
+                  "name": "auditorias_usuario_solicitudRegistroId_idx_583e08f8",
+                  "prefix": "auditorias_usuario_solicitudRegistroId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId",
+                    "fecha"
+                  ],
+                  "name": "auditorias_usuario_usuarioId_fecha_idx_c02c2249",
+                  "prefix": "auditorias_usuario_usuarioId_fecha_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId"
+                  ],
+                  "name": "auditorias_usuario_usuarioId_idx_5f01c7d6",
+                  "prefix": "auditorias_usuario_usuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "categorias_recurso": {
               "columns": {
@@ -2848,6 +3620,11 @@
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
                   "nullable": false
+                },
+                "tiempoMaximoPrestamoHoras": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -3079,8 +3856,8 @@
             "ejemplares": {
               "checks": [
                 {
-                  "expression": "\"estado\" IN ('DISPONIBLE', 'PRESTADO', 'NO_DISPONIBLE')",
-                  "name": "ejemplares_estado_check_dcc20e51",
+                  "expression": "\"estado\" IN ('DISPONIBLE', 'RESERVADO', 'PRESTADO', 'NO_DISPONIBLE')",
+                  "name": "ejemplares_estado_check_edc0183f",
                   "prefix": "ejemplares_estado_check"
                 }
               ],
@@ -3576,6 +4353,11 @@
                   "nativeType": "uuid",
                   "nullable": false
                 },
+                "reservaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -3622,6 +4404,24 @@
                     ],
                     "namespaceId": "public",
                     "tableName": "ejemplares"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "reservaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "reservas"
                   }
                 }
               ],
@@ -3677,7 +4477,13 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "reservaId"
+                  ]
+                }
+              ]
             },
             "recursos": {
               "columns": {
@@ -3765,7 +4571,14 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "categoriaId",
+                    "nombre"
+                  ]
+                }
+              ]
             },
             "reglas_uso": {
               "columns": {
@@ -3831,11 +4644,200 @@
                 }
               ]
             },
+            "reservas": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('CONFIRMADA', 'RECOGIDA', 'CANCELADA', 'VENCIDA')",
+                  "name": "reservas_estado_check_c75da3fc",
+                  "prefix": "reservas_estado_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "duracionPrestamoHoras": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "ejemplarId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "CONFIRMADA"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoReserva",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaCancelacion": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "fechaLimiteRecogida": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "fechaRecogida": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "fechaSolicitada": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "motivoCancelacion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "usuarioId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "usuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "reservas"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuarios"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "ejemplarId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "reservas"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ejemplares"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "ejemplarId",
+                    "estado"
+                  ],
+                  "name": "reservas_ejemplarId_estado_idx_9d636bd5",
+                  "prefix": "reservas_ejemplarId_estado_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "ejemplarId"
+                  ],
+                  "name": "reservas_ejemplarId_idx_3f5f7f14",
+                  "prefix": "reservas_ejemplarId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "estado",
+                    "fechaLimiteRecogida"
+                  ],
+                  "name": "reservas_estado_fechaLimiteRecogida_idx_5e3f6ed9",
+                  "prefix": "reservas_estado_fechaLimiteRecogida_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId",
+                    "estado"
+                  ],
+                  "name": "reservas_usuarioId_estado_idx_e25db20e",
+                  "prefix": "reservas_usuarioId_estado_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId"
+                  ],
+                  "name": "reservas_usuarioId_idx_5f01c7d6",
+                  "prefix": "reservas_usuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "sanciones": {
               "checks": [
                 {
-                  "expression": "\"estado\" IN ('ACTIVA', 'FINALIZADA')",
-                  "name": "sanciones_estado_check_5348962d",
+                  "expression": "\"estado\" IN ('PROGRAMADA', 'ACTIVA', 'FINALIZADA', 'ABSUELTA')",
+                  "name": "sanciones_estado_check_1de51348",
                   "prefix": "sanciones_estado_check"
                 }
               ],
@@ -4071,6 +5073,11 @@
                   "prefix": "solicitudes_registro_estado_check"
                 },
                 {
+                  "expression": "length(btrim(\"nombre\")) >= 2",
+                  "name": "solicitudes_registro_nombre_length_check_7b391dd1",
+                  "prefix": "solicitudes_registro_nombre_length_check"
+                },
+                {
                   "expression": "\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO')",
                   "name": "solicitudes_registro_tipoUsuario_check_70fac5a9",
                   "prefix": "solicitudes_registro_tipoUsuario_check"
@@ -4127,6 +5134,19 @@
                   "nullable": true,
                   "typeParams": {
                     "length": 80
+                  }
+                },
+                "motivoRechazo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "nombre": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 180
                   }
                 },
                 "tipoUsuario": {
@@ -4207,6 +5227,16 @@
             },
             "usuarios": {
               "checks": [
+                {
+                  "expression": "confianza >= 0 AND confianza <= 100",
+                  "name": "usuarios_confianza_range_check_f2990dfd",
+                  "prefix": "usuarios_confianza_range_check"
+                },
+                {
+                  "expression": "length(btrim(\"nombre\")) >= 2",
+                  "name": "usuarios_nombre_length_check_7b391dd1",
+                  "prefix": "usuarios_nombre_length_check"
+                },
                 {
                   "expression": "\"tipoUsuario\" IN ('ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO')",
                   "name": "usuarios_tipoUsuario_check_70fac5a9",
@@ -4320,6 +5350,11 @@
                   "expression": "\"estado\" IN ('ACTIVA', 'INACTIVA')",
                   "name": "versiones_regla_estado_check_1cb87e59",
                   "prefix": "versiones_regla_estado_check"
+                },
+                {
+                  "expression": "\"tipoSuspension\" IN ('NINGUNA', 'TEMPORAL', 'INDEFINIDA')",
+                  "name": "versiones_regla_tipoSuspension_check_410b7d83",
+                  "prefix": "versiones_regla_tipoSuspension_check"
                 }
               ],
               "columns": {
@@ -4344,6 +5379,11 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "diasSuspension": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
                 },
                 "estado": {
                   "codecId": "pg/text@1",
@@ -4383,6 +5423,17 @@
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
                   "nullable": false
+                },
+                "tipoSuspension": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TipoSuspension",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "titulo": {
                   "codecId": "sql/varchar@1",
@@ -4521,6 +5572,7 @@
               "kind": "valueSet",
               "values": [
                 "DISPONIBLE",
+                "RESERVADO",
                 "PRESTADO",
                 "NO_DISPONIBLE"
               ]
@@ -4540,11 +5592,22 @@
                 "INACTIVA"
               ]
             },
+            "EstadoReserva": {
+              "kind": "valueSet",
+              "values": [
+                "CONFIRMADA",
+                "RECOGIDA",
+                "CANCELADA",
+                "VENCIDA"
+              ]
+            },
             "EstadoSancion": {
               "kind": "valueSet",
               "values": [
+                "PROGRAMADA",
                 "ACTIVA",
-                "FINALIZADA"
+                "FINALIZADA",
+                "ABSUELTA"
               ]
             },
             "EstadoSolicitud": {
@@ -4563,6 +5626,14 @@
                 "ADMINISTRADOR"
               ]
             },
+            "TipoSuspension": {
+              "kind": "valueSet",
+              "values": [
+                "NINGUNA",
+                "TEMPORAL",
+                "INDEFINIDA"
+              ]
+            },
             "TipoUsuario": {
               "kind": "valueSet",
               "values": [
@@ -4577,10 +5648,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8b3fc545ac268a096596a6f90ad53442d955beb4fe7a67062546a520c4123218"
+    "storageHash": "3cf9d1df4dc3e1beccc614073cfd2522d8a7a9eb4aa054fce8aae35d82c9471c"
   },
   "execution": {
-    "executionHash": "4f1e4890be066a85618d386c177e30a8fd4e44f43dfaeb236f358c2165dfe6e0",
+    "executionHash": "82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f",
     "mutations": {
       "defaults": [
         {
@@ -4618,6 +5689,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "apelaciones"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "auditorias_usuario"
           }
         },
         {
@@ -4818,6 +5900,32 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "reglas_uso"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "reservas"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "reservas"
           }
         },
         {

@@ -3,6 +3,7 @@ import type { InventoryCopyStatus } from '../../domain/entities/inventory.types.
 export type CreateCategoryInput = {
   nombre: string;
   tiempoMaximoPrestamoDias: number;
+  tiempoMaximoPrestamoHoras?: number;
 };
 
 export type UpdateCategoryInput = Partial<CreateCategoryInput>;

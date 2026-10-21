@@ -12,6 +12,7 @@ model CategoriaRecurso {
   id                       Uuid                 @id @default(uuid())
   nombre                   VarChar(120)         @unique
   tiempoMaximoPrestamoDias Int
+  tiempoMaximoPrestamoHoras Int?
   createdAt                Timestamptz(3)       @default(now())
   updatedAt                temporal.updatedAt()
 
@@ -34,6 +35,7 @@ model Recurso {
 
   @@index([categoriaId])
   @@index([nombre])
+  @@unique([categoriaId, nombre])
   @@map("recursos")
 }
 
@@ -49,10 +51,36 @@ model Ejemplar {
   recurso          Recurso               @relation(fields:[recursoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   observaciones    ObservacionEjemplar[]
   prestamos        Prestamo[]
+  reservas         Reserva[]
 
   @@index([recursoId, estado])
   @@index([estado])
   @@map("ejemplares")
+}
+
+model Reserva {
+  id                  Uuid           @id @default(uuid())
+  usuarioId           Uuid
+  ejemplarId          Uuid
+  fechaSolicitada     Timestamptz(3)
+  fechaLimiteRecogida Timestamptz(3)
+  duracionPrestamoHoras Int
+  fechaRecogida       Timestamptz(3)?
+  fechaCancelacion    Timestamptz(3)?
+  estado              EstadoReserva  @default(CONFIRMADA)
+  motivoCancelacion   String?
+
+  createdAt           Timestamptz(3) @default(now())
+  updatedAt           temporal.updatedAt()
+
+  usuario             Usuario        @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  ejemplar            Ejemplar       @relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  prestamo            Prestamo?
+
+  @@index([usuarioId, estado])
+  @@index([ejemplarId, estado])
+  @@index([estado, fechaLimiteRecogida])
+  @@map("reservas")
 }
 
 model ObservacionEjemplar {
@@ -73,10 +101,12 @@ model ObservacionEjemplar {
 // -----------------------------------------------------------------------------
 model SolicitudRegistro {
   id                         Uuid                   @id @default(uuid())
+  nombre                     VarChar(180)
   tipoUsuario                TipoUsuario
   identificadorInstitucional VarChar(80)?
   fechaSolicitud             Timestamptz(3)         @default(now())
   estado                     EstadoSolicitud        @default(PENDIENTE)
+  motivoRechazo              String?
   usuarioAprobadoId          Uuid?
 
   createdAt                  Timestamptz(3)         @default(now())
@@ -84,10 +114,12 @@ model SolicitudRegistro {
 
   evidencias                 EvidenciaVinculacion[]
   usuarioAprobado            Usuario?               @relation("SolicitudAprobadaUsuario", fields:[usuarioAprobadoId], references:[id], onDelete: SetNull, onUpdate: Cascade)
+  auditorias                 AuditoriaUsuario[]     @relation("AuditoriaSolicitud")
 
   @@index([estado, fechaSolicitud])
   @@index([identificadorInstitucional])
   @@index([usuarioAprobadoId])
+  @@check(expression: "length(btrim(\"nombre\")) >= 2", name: "solicitudes_registro_nombre_length_check")
   @@map("solicitudes_registro")
 }
 
@@ -118,14 +150,38 @@ model Usuario {
   solicitudesAprobadas       SolicitudRegistro[]  @relation("SolicitudAprobadaUsuario")
   sanciones                  Sancion[]
   prestamos                  Prestamo[]
+  reservas                   Reserva[]
   incumplimientos            Incumplimiento[]
   apelaciones                Apelacion[]
   aceptacionesTerminos       AceptacionTerminos[]
   cuentaAcceso               CuentaAcceso?
+  auditorias                 AuditoriaUsuario[]
 
   @@index([tipoUsuario])
   @@index([vinculacionVigente])
+  @@check(expression: "confianza >= 0 AND confianza <= 100", name: "usuarios_confianza_range_check")
+  @@check(expression: "length(btrim(\"nombre\")) >= 2", name: "usuarios_nombre_length_check")
   @@map("usuarios")
+}
+
+model AuditoriaUsuario {
+  id                  Uuid              @id @default(uuid())
+  usuarioId           Uuid?
+  solicitudRegistroId Uuid?
+  accion              VarChar(80)
+  motivo              String?
+  datosAnteriores     String?
+  datosNuevos         String?
+  fecha               Timestamptz(3)    @default(now())
+  createdAt           Timestamptz(3)    @default(now())
+
+  usuario             Usuario?         @relation(fields:[usuarioId], references:[id], onDelete: SetNull, onUpdate: Cascade)
+  solicitudRegistro   SolicitudRegistro? @relation("AuditoriaSolicitud", fields:[solicitudRegistroId], references:[id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([usuarioId, fecha])
+  @@index([solicitudRegistroId, fecha])
+  @@index([accion, fecha])
+  @@map("auditorias_usuario")
 }
 
 model Sancion {
@@ -147,6 +203,7 @@ model Sancion {
   incumplimiento     Incumplimiento?      @relation("IncumplimientoSancion", fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   regla              ReglaUso?            @relation("ReglaSanciones", fields:[reglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   versionRegla       VersionRegla?        @relation("VersionSanciones", fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  apelacion           Apelacion?           @relation("SancionApelacion")
 
   @@index([usuarioId, estado])
   @@index([estado, fechaFin])
@@ -162,6 +219,7 @@ model Prestamo {
   id          Uuid                 @id @default(uuid())
   usuarioId   Uuid
   ejemplarId  Uuid
+  reservaId   Uuid?               @unique
   fechaInicio Timestamptz(3)
   fechaFin    Timestamptz(3)
   estado      EstadoPrestamo       @default(PLANIFICADO)
@@ -171,6 +229,7 @@ model Prestamo {
 
   usuario     Usuario              @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   ejemplar    Ejemplar             @relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  reserva     Reserva?             @relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   devolucion  Devolucion?
 
   @@index([ejemplarId, estado, fechaInicio, fechaFin])
@@ -218,6 +277,8 @@ model VersionRegla {
   descripcion            String
   penalizacionPorcentual Numeric(5, 2)
   consecuencia           String
+  tipoSuspension         TipoSuspension?
+  diasSuspension         Int?
   estado                 EstadoRegla      @default(ACTIVA)
 
   createdAt              Timestamptz(3)   @default(now())
@@ -257,6 +318,7 @@ model Incumplimiento {
 model Apelacion {
   id                  Uuid                 @id @default(uuid())
   incumplimientoId    Uuid                 @unique
+  sancionId           Uuid?                @unique
   usuarioId           Uuid
   motivo              String
   fecha               Timestamptz(3)       @default(now())
@@ -269,6 +331,7 @@ model Apelacion {
   updatedAt           temporal.updatedAt()
 
   incumplimiento      Incumplimiento       @relation(fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  sancion             Sancion?             @relation("SancionApelacion", fields:[sancionId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   usuario             Usuario              @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   resueltaPor         CuentaAcceso?        @relation("CuentaResolutora", fields:[resueltaPorCuentaId], references:[id], onDelete: SetNull, onUpdate: Cascade)
 
@@ -339,8 +402,18 @@ enum EstadoEjemplar {
   @@type("pg/text@1")
 
   DISPONIBLE
+  RESERVADO
   PRESTADO
   NO_DISPONIBLE
+}
+
+enum EstadoReserva {
+  @@type("pg/text@1")
+
+  CONFIRMADA
+  RECOGIDA
+  CANCELADA
+  VENCIDA
 }
 
 enum EstadoPrestamo {
@@ -370,8 +443,10 @@ enum EstadoSolicitud {
 enum EstadoSancion {
   @@type("pg/text@1")
 
+  PROGRAMADA
   ACTIVA
   FINALIZADA
+  ABSUELTA
 }
 
 enum EstadoRegla {
@@ -379,6 +454,14 @@ enum EstadoRegla {
 
   ACTIVA
   INACTIVA
+}
+
+enum TipoSuspension {
+  @@type("pg/text@1")
+
+  NINGUNA
+  TEMPORAL
+  INDEFINIDA
 }
 
 enum EstadoApelacion {

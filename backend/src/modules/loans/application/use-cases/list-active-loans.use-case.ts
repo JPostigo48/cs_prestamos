@@ -7,7 +7,6 @@ export class ListActiveLoansUseCase {
   constructor(private readonly loans: LoanRepository) {}
 
   async execute(): Promise<Loan[]> {
-    // TODO
-    throw new Error('Not implemented');
+    return this.loans.findActive();
   }
 }

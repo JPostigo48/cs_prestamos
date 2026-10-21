@@ -7,7 +7,6 @@ export class ListActiveRulesUseCase {
   constructor(private readonly rules: RuleRepository) {}
 
   async execute(): Promise<RuleVersion[]> {
-    // TODO
-    throw new Error('Not implemented');
+    return this.rules.findActiveVersions();
   }
 }

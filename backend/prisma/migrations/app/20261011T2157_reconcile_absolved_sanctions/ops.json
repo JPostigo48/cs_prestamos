@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dropCheckConstraint.sanciones.sanciones_estado_check_5348962d",
+    "label": "Drop check constraint \"sanciones_estado_check_5348962d\" on \"sanciones\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "sanciones_estado_check_5348962d",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sanciones_estado_check_5348962d\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_5348962d",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"sanciones_estado_check_5348962d\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\" DROP CONSTRAINT \"sanciones_estado_check_5348962d\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sanciones_estado_check_5348962d\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_5348962d",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.sanciones.sanciones_estado_check_1e842a90",
+    "label": "Add check constraint \"sanciones_estado_check_1e842a90\" on \"sanciones\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "sanciones_estado_check_1e842a90",
+        "table": "sanciones"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sanciones_estado_check_1e842a90\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1e842a90",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"sanciones_estado_check_1e842a90\"",
+        "sql": "ALTER TABLE \"public\".\"sanciones\" ADD CONSTRAINT \"sanciones_estado_check_1e842a90\" CHECK (\"estado\" IN ('ACTIVA', 'FINALIZADA', 'ABSUELTA'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sanciones_estado_check_1e842a90\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sanciones_estado_check_1e842a90",
+          "public",
+          "\"public\".\"sanciones\""
+        ]
+      }
+    ]
+  }
+]
