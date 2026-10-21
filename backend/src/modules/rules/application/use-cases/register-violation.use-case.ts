@@ -1,6 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { RegisterViolationInput } from '../ports/violations.inputs.js';
-import { UserTrustPort } from '../ports/user-trust.port.js';
 import type { Violation } from '../../domain/entities/violation.js';
 import { RuleRepository } from '../../domain/repositories/rule.repository.js';
 import { ViolationRepository } from '../../domain/repositories/violation.repository.js';
@@ -10,7 +9,6 @@ export class RegisterViolationUseCase {
   constructor(
     private readonly violations: ViolationRepository,
     private readonly rules: RuleRepository,
-    private readonly users: UserTrustPort,
   ) {}
 
   async execute(input: RegisterViolationInput): Promise<Violation> {
@@ -19,17 +17,15 @@ export class RegisterViolationUseCase {
     if (!rule || !version || version.status !== 'ACTIVA') {
       throw new NotFoundException('Regla activa no encontrada.');
     }
-    const violation = await this.violations.create({
+    if (version.penaltyPercentage <= 0 || version.penaltyPercentage > 100) {
+      throw new BadRequestException('La penalización debe estar entre 0 y 100.');
+    }
+    return this.violations.createWithPenalty({
       userId: input.userId,
       ruleId: input.ruleId,
       ruleVersionId: version.id,
       occurredAt: input.occurredAt,
-      appliedPenalty: version.penaltyPercentage,
+      configuredPenalty: version.penaltyPercentage,
     });
-    await this.users.applyPenalty({
-      userId: input.userId, violationId: violation.id, ruleId: input.ruleId,
-      ruleVersionId: version.id, penaltyPercentage: version.penaltyPercentage,
-    });
-    return violation;
   }
 }

@@ -6,19 +6,89 @@ import { ResolveAppealUseCase } from './application/use-cases/resolve-appeal.use
 import { AcceptTermsVersionUseCase } from './application/use-cases/accept-terms-version.use-case.js';
 import { isEffectiveActiveSanction, PrismaUserRepository } from '../users/infrastructure/persistence/prisma/prisma-user.repository.js';
 import { PrismaAppealRepository } from './infrastructure/persistence/prisma/prisma-appeal.repository.js';
+import { PrismaViolationRepository } from './infrastructure/persistence/prisma/prisma-violation.repository.js';
+import { calculateTrustPenalty } from './domain/entities/violation.js';
 
 describe('Rules use cases', () => {
-  it('registers a violation using the current active version and applies its penalty', async () => {
+  it('registers a violation and penalty through one atomic repository operation', async () => {
     const violation = { id: 'v1', userId: 'u1', ruleId: 'r1', ruleVersionId: 'rv1', occurredAt: new Date(), appliedPenalty: 10 };
-    const violations = { create: vi.fn().mockResolvedValue(violation) };
-    const users = { applyPenalty: vi.fn().mockResolvedValue(undefined) };
+    const violations = { createWithPenalty: vi.fn().mockResolvedValue(violation) };
     const useCase = new RegisterViolationUseCase(
       violations as any,
       { findById: vi.fn().mockResolvedValue({ id: 'r1', currentVersionId: 'rv1', versions: [{ id: 'rv1', status: 'ACTIVA', penaltyPercentage: 10 }] }) } as any,
-      users as any,
     );
     await expect(useCase.execute({ userId: 'u1', ruleId: 'r1', occurredAt: violation.occurredAt })).resolves.toEqual(violation);
-    expect(users.applyPenalty).toHaveBeenCalledWith(expect.objectContaining({ violationId: 'v1', penaltyPercentage: 10 }));
+    expect(violations.createWithPenalty).toHaveBeenCalledWith(expect.objectContaining({ configuredPenalty: 10, ruleVersionId: 'rv1' }));
+  });
+
+  it('caps the applied discount at the actual remaining trust', () => {
+    expect(calculateTrustPenalty(5, 12)).toEqual({ appliedPenalty: 5, resultingTrust: 0 });
+    expect(calculateTrustPenalty(100, 12.25)).toEqual({ appliedPenalty: 12.25, resultingTrust: 87.75 });
+  });
+
+  it('records violation, trust discount, sanction and audit in one transaction', async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce([{ id: 'u1', confianza: '5.00' }])
+      .mockResolvedValueOnce([{ id: 'u1' }])
+      .mockResolvedValueOnce([{
+        id: 'v1', usuarioId: 'u1', reglaId: 'r1', versionReglaId: 'rv1',
+        fecha: new Date(), penalizacionAplicada: '5.00',
+      }])
+      .mockResolvedValueOnce([{ id: 's1' }])
+      .mockResolvedValueOnce([{ id: 'audit-1' }]);
+    const chain = (value: unknown): any => ({
+      where: () => chain(value), limit: () => chain(value),
+      returning: () => chain(value), build: () => value,
+    });
+    const insertViolation = vi.fn((_rows: any[]) => chain('violation-insert'));
+    const insertSanction = vi.fn((_rows: any[]) => chain('sanction-insert'));
+    const updateUser = vi.fn((_data: any) => chain('user-update'));
+    const prisma = {
+      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      sql: { public: {
+        usuarios: { select: () => chain('user-select'), update: updateUser },
+        incumplimientos: { insert: insertViolation },
+        sanciones: { insert: insertSanction },
+        auditorias_usuario: { insert: () => chain('audit-insert') },
+      } },
+    };
+    const repository = new PrismaViolationRepository(prisma as any);
+    const result = await repository.createWithPenalty({
+      userId: 'u1', ruleId: 'r1', ruleVersionId: 'rv1',
+      occurredAt: new Date(), configuredPenalty: 12,
+    });
+    expect(result.appliedPenalty).toBe(5);
+    expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(5);
+    expect(updateUser).toHaveBeenCalledWith({ confianza: '0.00' });
+    expect(insertViolation.mock.calls[0][0][0].penalizacionAplicada).toBe('5.00');
+    expect(insertSanction.mock.calls[0][0][0]).toMatchObject({
+      confianzaAnterior: '5.00', confianzaPosterior: '0.00', incumplimientoId: 'v1',
+    });
+  });
+
+  it('does not create a violation if trust changed concurrently', async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce([{ id: 'u1', confianza: '30.00' }])
+      .mockResolvedValueOnce([]);
+    const chain = (value: unknown): any => ({
+      where: () => chain(value), limit: () => chain(value),
+      returning: () => chain(value), build: () => value,
+    });
+    const insertViolation = vi.fn((_rows: any[]) => chain('violation-insert'));
+    const prisma = {
+      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      sql: { public: {
+        usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
+        incumplimientos: { insert: insertViolation },
+      } },
+    };
+    const repository = new PrismaViolationRepository(prisma as any);
+    await expect(repository.createWithPenalty({
+      userId: 'u1', ruleId: 'r1', ruleVersionId: 'rv1',
+      occurredAt: new Date(), configuredPenalty: 10,
+    })).rejects.toThrow('confianza cambió');
+    expect(insertViolation).not.toHaveBeenCalled();
   });
 
   it('prevents duplicate appeals and only allows the sanction owner to submit', async () => {
