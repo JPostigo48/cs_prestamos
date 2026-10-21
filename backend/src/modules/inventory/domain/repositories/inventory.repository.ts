@@ -7,13 +7,14 @@ export abstract class InventoryRepository {
   abstract createCategory(data: {
     nombre: string;
     tiempoMaximoPrestamoDias: number;
+    tiempoMaximoPrestamoHoras?: number;
   }): Promise<any>;
 
   abstract findAllCategories(): Promise<any[]>;
   abstract findCategoryById(categoryId: string): Promise<any>;
   abstract updateCategory(
     categoryId: string,
-    data: Partial<{ nombre: string; tiempoMaximoPrestamoDias: number }>,
+    data: Partial<{ nombre: string; tiempoMaximoPrestamoDias: number; tiempoMaximoPrestamoHoras: number }>,
   ): Promise<any>;
   abstract deleteCategory(categoryId: string): Promise<unknown>;
   abstract countResourcesByCategory(categoryId: string): Promise<number>;

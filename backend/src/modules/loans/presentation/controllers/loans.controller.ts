@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Delete,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -22,6 +23,11 @@ import { CurrentUser } from '../../../auth/presentation/decorators/current-user.
 import type { AuthenticatedIdentity } from '../../../auth/application/ports/auth.inputs.js';
 import { AccessRole } from '../../../auth/domain/entities/access-account.js';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator.js';
+import { CreateReservationUseCase } from '../../application/use-cases/create-reservation.use-case.js';
+import { PickupReservationUseCase } from '../../application/use-cases/pickup-reservation.use-case.js';
+import { CancelReservationUseCase } from '../../application/use-cases/cancel-reservation.use-case.js';
+import { CreateReservationDto } from '../dto/create-reservation.dto.js';
+import { CancelReservationDto } from '../dto/cancel-reservation.dto.js';
 
 @ApiTags('Préstamos')
 @Controller('loans')
@@ -34,6 +40,9 @@ export class LoansController {
     private readonly listActiveLoans: ListActiveLoansUseCase,
     private readonly listUserHistory: ListUserLoanHistoryUseCase,
     private readonly listOverdueLoans: ListOverdueLoansUseCase,
+    private readonly createReservation: CreateReservationUseCase,
+    private readonly pickupReservation: PickupReservationUseCase,
+    private readonly cancelReservationUseCase: CancelReservationUseCase,
   ) {}
 
   @Post()
@@ -43,6 +52,46 @@ export class LoansController {
     return this.createLoan.execute({
       copyId: input.copyId,
       startsAt: input.startsAt,
+      userId: user.userId,
+    });
+  }
+
+  @Post('reservations')
+  @ApiBody({ type: CreateReservationDto })
+  @ApiOperation({ summary: 'Confirmar una reserva de ejemplar' })
+  createReservationEndpoint(
+    @Body() input: CreateReservationDto,
+    @CurrentUser() user: AuthenticatedIdentity,
+  ) {
+    return this.createReservation.execute({
+      copyId: input.copyId,
+      requestedAt: new Date(input.requestedAt),
+      userId: user.userId,
+    });
+  }
+
+  @Post('reservations/:reservationId/pickup')
+  @UseGuards(RolesGuard)
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiOperation({ summary: 'Registrar recogida y crear el préstamo' })
+  pickup(@Param('reservationId') reservationId: string) {
+    return this.pickupReservation.execute({
+      reservationId,
+      pickedUpAt: new Date(),
+    });
+  }
+
+  @Delete('reservations/:reservationId')
+  @ApiBody({ type: CancelReservationDto })
+  @ApiOperation({ summary: 'Cancelar una reserva confirmada' })
+  cancelReservation(
+    @Param('reservationId') reservationId: string,
+    @Body() input: CancelReservationDto,
+    @CurrentUser() user: AuthenticatedIdentity,
+  ) {
+    return this.cancelReservationUseCase.execute({
+      reservationId,
+      reason: input.reason,
       userId: user.userId,
     });
   }

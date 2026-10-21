@@ -19,18 +19,21 @@ export class PrismaInventoryRepository extends InventoryRepository {
   async createCategory(data: {
     nombre: string;
     tiempoMaximoPrestamoDias: number;
+    tiempoMaximoPrestamoHoras?: number;
   }) {
     const query = this.prisma.sql.public.categorias_recurso
       .insert([
         {
           nombre: data.nombre,
           tiempoMaximoPrestamoDias: data.tiempoMaximoPrestamoDias,
+          tiempoMaximoPrestamoHoras: data.tiempoMaximoPrestamoHoras ?? data.tiempoMaximoPrestamoDias * 24,
         },
       ])
       .returning(
         'id',
         'nombre',
         'tiempoMaximoPrestamoDias',
+        'tiempoMaximoPrestamoHoras',
         'createdAt',
         'updatedAt',
       )
@@ -41,7 +44,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async findAllCategories() {
     const query = this.prisma.sql.public.categorias_recurso
-      .select('id', 'nombre', 'tiempoMaximoPrestamoDias')
+      .select('id', 'nombre', 'tiempoMaximoPrestamoDias', 'tiempoMaximoPrestamoHoras')
       .build();
     return await this.runtime().query(query);
   }
@@ -52,6 +55,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'id',
         'nombre',
         'tiempoMaximoPrestamoDias',
+        'tiempoMaximoPrestamoHoras',
         'createdAt',
         'updatedAt',
       )
@@ -64,13 +68,20 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async updateCategory(
     categoryId: string,
-    data: Partial<{ nombre: string; tiempoMaximoPrestamoDias: number }>,
+    data: Partial<{
+      nombre: string;
+      tiempoMaximoPrestamoDias: number;
+      tiempoMaximoPrestamoHoras: number;
+    }>,
   ) {
     const query = this.prisma.sql.public.categorias_recurso
       .update({
         ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
         ...(data.tiempoMaximoPrestamoDias !== undefined
           ? { tiempoMaximoPrestamoDias: data.tiempoMaximoPrestamoDias }
+          : {}),
+        ...(data.tiempoMaximoPrestamoHoras !== undefined
+          ? { tiempoMaximoPrestamoHoras: data.tiempoMaximoPrestamoHoras }
           : {}),
       })
       .where((row, fns) => fns.eq(row.id, categoryId))
@@ -80,6 +91,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'tiempoMaximoPrestamoDias',
         'createdAt',
         'updatedAt',
+        'tiempoMaximoPrestamoHoras',
       )
       .build();
     const rows = await this.runtime().query(query);

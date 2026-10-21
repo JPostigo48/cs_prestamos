@@ -82,6 +82,9 @@ export class InventoryService {
       id: row.id,
       nombre: row.nombre,
       tiempoMaximoPrestamoDias: row.tiempoMaximoPrestamoDias,
+      tiempoMaximoPrestamoHoras:
+        row.tiempoMaximoPrestamoHoras ??
+        row.tiempoMaximoPrestamoDias * 24,
       resourceCount: row.resourceCount ?? 0,
     };
   }
@@ -176,11 +179,23 @@ export class InventoryService {
         'tiempoMaximoPrestamoDias debe ser un entero positivo.',
       );
     }
+    const tiempoMaximoPrestamoHoras =
+      dto.tiempoMaximoPrestamoHoras ??
+      dto.tiempoMaximoPrestamoDias * 24;
+    if (
+      !Number.isInteger(tiempoMaximoPrestamoHoras) ||
+      tiempoMaximoPrestamoHoras <= 0
+    ) {
+      throw new BadRequestException(
+        'tiempoMaximoPrestamoHoras debe ser un entero positivo.',
+      );
+    }
 
     try {
       const created = await this.repository.createCategory({
         nombre,
         tiempoMaximoPrestamoDias: dto.tiempoMaximoPrestamoDias,
+        tiempoMaximoPrestamoHoras,
       });
       return this.toCategoryResponse(created[0] ?? created);
     } catch (error: any) {
@@ -226,6 +241,7 @@ export class InventoryService {
     const updateData: Partial<{
       nombre: string;
       tiempoMaximoPrestamoDias: number;
+      tiempoMaximoPrestamoHoras: number;
     }> = {};
     if (dto.nombre !== undefined) {
       const nombre = this.normalizeText(dto.nombre, 'nombre');
@@ -241,6 +257,17 @@ export class InventoryService {
         );
       }
       updateData.tiempoMaximoPrestamoDias = dto.tiempoMaximoPrestamoDias;
+    }
+    if (dto.tiempoMaximoPrestamoHoras !== undefined) {
+      if (
+        !Number.isInteger(dto.tiempoMaximoPrestamoHoras) ||
+        dto.tiempoMaximoPrestamoHoras <= 0
+      ) {
+        throw new BadRequestException(
+          'tiempoMaximoPrestamoHoras debe ser un entero positivo.',
+        );
+      }
+      updateData.tiempoMaximoPrestamoHoras = dto.tiempoMaximoPrestamoHoras;
     }
 
     const updated = await this.repository.updateCategory(
@@ -363,6 +390,9 @@ export class InventoryService {
             id: category.id,
             nombre: category.nombre,
             tiempoMaximoPrestamoDias: category.tiempoMaximoPrestamoDias,
+            tiempoMaximoPrestamoHoras:
+              category.tiempoMaximoPrestamoHoras ??
+              category.tiempoMaximoPrestamoDias * 24,
           }
         : null,
     };
@@ -496,6 +526,9 @@ export class InventoryService {
       copyId,
       available: copy.estado === 'DISPONIBLE',
       maximumLoanDays: category.tiempoMaximoPrestamoDias,
+      maximumLoanHours:
+        category.tiempoMaximoPrestamoHoras ??
+        category.tiempoMaximoPrestamoDias * 24,
     };
   }
 
