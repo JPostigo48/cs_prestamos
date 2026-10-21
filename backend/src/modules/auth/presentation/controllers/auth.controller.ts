@@ -48,8 +48,10 @@ export class AuthController {
   ) {}
 
   @Post('accounts')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: RegisterAccessAccountDto })
-  @ApiOperation({ summary: 'Registrar cuenta de acceso' })
+  @ApiOperation({ summary: 'Registrar cuenta de acceso para un usuario aprobado' })
   register(@Body() input: RegisterAccessAccountDto) {
     return this.registerAccount.execute(input).then(safeAccount);
   }

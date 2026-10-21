@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUserLoanEligibilityUseCase } from '../../application/use-cases/get-user-loan-eligibility.use-case.js';
 import { GetUserTrustProfileUseCase } from '../../application/use-cases/get-user-trust-profile.use-case.js';
@@ -7,9 +7,26 @@ import { ListUserSanctionsUseCase } from '../../application/use-cases/list-user-
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case.js';
 import { UpdateAffiliationStatusUseCase } from '../../application/use-cases/update-affiliation-status.use-case.js';
 import { UpdateAffiliationStatusDto } from '../dto/update-affiliation-status.dto.js';
+import { AccessRole } from '../../../auth/domain/entities/access-account.js';
+import type { AuthenticatedIdentity } from '../../../auth/application/ports/auth.inputs.js';
+import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator.js';
+import { Roles } from '../../../auth/presentation/decorators/roles.decorator.js';
+import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
+import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
+
+function assertSelfOrStaff(identity: AuthenticatedIdentity, userId: string): void {
+  if (
+    identity.userId !== userId &&
+    identity.role !== AccessRole.OPERATOR &&
+    identity.role !== AccessRole.ADMINISTRATOR
+  ) {
+    throw new ForbiddenException('No tiene permisos para consultar este usuario.');
+  }
+}
 
 @ApiTags('Usuarios')
 @Controller('users')
+@UseGuards(AuthGuard, RolesGuard)
 export class UsersController {
   constructor(
     private readonly getUser: GetUserUseCase,
@@ -22,17 +39,20 @@ export class UsersController {
 
   @Get(':userId')
   @ApiOperation({ summary: 'Consultar usuario' })
-  getById(@Param('userId') userId: string) {
+  getById(@Param('userId') userId: string, @CurrentUser() identity: AuthenticatedIdentity) {
+    assertSelfOrStaff(identity, userId);
     return this.getUser.execute({ userId });
   }
 
   @Get(':userId/loan-eligibility')
   @ApiOperation({ summary: 'Consultar habilitación para préstamos' })
-  getEligibility(@Param('userId') userId: string) {
+  getEligibility(@Param('userId') userId: string, @CurrentUser() identity: AuthenticatedIdentity) {
+    assertSelfOrStaff(identity, userId);
     return this.getLoanEligibility.execute({ userId });
   }
 
   @Patch(':userId/affiliation-status')
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   updateAffiliationStatus(
     @Param('userId') userId: string,
     @Body() dto: UpdateAffiliationStatusDto,
@@ -44,6 +64,7 @@ export class UsersController {
   }
 
   @Get()
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   list(@Query() query: { userType?: string; vinculacionVigente?: string; institutionalId?: string; page?: number; limit?: number }) {
     return this.listUsers.execute({
       userType: query.userType,
@@ -56,18 +77,21 @@ export class UsersController {
 
   @Get(':userId/trust')
   @ApiOperation({ summary: 'Consultar perfil de confianza' })
-  getTrust(@Param('userId') userId: string) {
+  getTrust(@Param('userId') userId: string, @CurrentUser() identity: AuthenticatedIdentity) {
+    assertSelfOrStaff(identity, userId);
     return this.getTrustProfile.execute({ userId });
   }
 
   @Get(':userId/trust-profile')
-  getTrustProfileByName(@Param('userId') userId: string) {
+  getTrustProfileByName(@Param('userId') userId: string, @CurrentUser() identity: AuthenticatedIdentity) {
+    assertSelfOrStaff(identity, userId);
     return this.getTrustProfile.execute({ userId });
   }
 
   @Get(':userId/sanctions')
   @ApiOperation({ summary: 'Consultar sanciones de un usuario' })
-  getSanctions(@Param('userId') userId: string) {
+  getSanctions(@Param('userId') userId: string, @CurrentUser() identity: AuthenticatedIdentity) {
+    assertSelfOrStaff(identity, userId);
     return this.listSanctions.execute({ userId });
   }
 }
