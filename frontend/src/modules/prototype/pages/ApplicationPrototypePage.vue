@@ -1,70 +1,19 @@
 <template>
   <!-- Marco Estilo Móvil -->
-  <div class="w-full max-w-sm h-[680px] bg-white rounded-[32px] shadow-lg overflow-hidden border border-slate-200 flex flex-col relative mx-auto mt-6">
+  <div class="w-full max-w-sm h-[680px] bg-white rounded-[32px] shadow-lg overflow-hidden border border-slate-200 flex flex-col relative mx-auto mt-6" :class="{ 'lg:hidden': showStudentDesktop }">
 
-    <!-- ================= VISTA 1: INICIO DE SESIÓN PRINCIPAL ================= -->
-    <div v-show="view === 'main'" class="flex flex-col h-full overflow-hidden">
-      <header class="bg-[#1e3a5f] text-white pt-4 pb-3 px-6 text-center rounded-b-[24px] shrink-0">
-        <div class="flex items-center justify-center mb-1">
-          <img src="/logo.png" alt="Logo" class="w-20 h-20 object-contain">
-        </div>
-        <h1 class="text-lg font-bold tracking-tight">CS Préstamos</h1>
-        <p class="text-[11px] text-blue-200">Escuela de Cs. de la Computación</p>
-      </header>
+    <LoginForm
+      v-if="view === 'main'"
+      v-model:email="emailInput"
+      v-model:password="password"
+      prototype
+      :loading="loggingIn"
+      @submit="handleLogin"
+      @google="showGoogleView"
+      @register="showRegisterView"
+    />
 
-      <main class="px-6 py-2.5 flex flex-col gap-2 flex-grow justify-center overflow-hidden">
-        <div class="text-center">
-          <h2 class="text-slate-800 font-bold text-lg mb-0.5">Inicia sesión</h2>
-          <p class="text-slate-500 text-[11px]">Usa tu cuenta institucional</p>
-        </div>
-
-        <button @click="showGoogleView" class="w-full py-2 px-4 border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition text-slate-700 text-xs font-medium flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-          <img src="/images.png" alt="Google Logo" class="w-3.5 h-3.5 object-contain"> Continuar con Google
-        </button>
-
-        <div class="flex items-center my-0.5">
-          <div class="flex-grow border-t border-slate-200"></div>
-          <span class="px-2 text-slate-400 text-[11px]">o</span>
-          <div class="flex-grow border-t border-slate-200"></div>
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <label class="text-[9px] font-bold text-slate-600 tracking-wider">CORREO INSTITUCIONAL</label>
-          <input type="text" v-model="emailInput" placeholder="usuario@unsa.edu.pe" class="w-full px-3.5 py-1.5 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-blue-500">
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <label class="text-[9px] font-bold text-slate-600 tracking-wider">CONTRASEÑA</label>
-          <div class="relative">
-            <input :type="passwordVisible ? 'text' : 'password'" v-model="password" class="w-full px-3.5 py-1.5 pr-12 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-blue-500">
-            <span @click="passwordVisible = !passwordVisible" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs cursor-pointer font-medium hover:text-slate-600 select-none">
-              {{ passwordVisible ? 'Ocultar' : 'Ver' }}
-            </span>
-          </div>
-        </div>
-
-        <button
-          @click="handleLogin"
-          :disabled="loggingIn"
-          class="w-full py-2 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer transition-all duration-200 mt-0.5"
-          :class="loggingIn ? 'bg-[#3b659c]' : 'bg-[#1e3a5f] hover:bg-[#152a45]'"
-        >
-          {{ loggingIn ? 'Ingresando...' : 'Ingresar' }}
-        </button>
-
-        <div class="text-center">
-          <a href="#" @click.prevent="showRegisterView" class="text-blue-600 text-xs font-medium hover:underline">¿No tienes cuenta? Regístrate</a>
-        </div>
-      </main>
-
-      <footer class="text-center py-2 bg-white border-t border-slate-100 text-[9px] text-slate-400 shrink-0 leading-tight px-4">
-        <p>CS Préstamos · Escuela de Ciencias de la Computación</p>
-        <p>Solo para uso del personal y estudiantes autorizados</p>
-      </footer>
-    </div>
-
-    <!-- ================= VISTA 2: ACCESO CON GOOGLE ================= -->
-    <div v-show="view === 'google'" class="flex flex-col h-full overflow-hidden">
+    <div v-if="view === 'google'" class="flex flex-col h-full overflow-hidden">
       <header class="bg-[#1e3a5f] text-white pt-4 pb-3 px-6 text-center rounded-b-[24px] shrink-0">
         <div class="flex items-center justify-center mb-1">
           <img src="/logo.png" alt="Logo" class="w-20 h-20 object-contain">
@@ -117,7 +66,7 @@
     </div>
 
     <!-- ================= VISTA 3: REGISTRO ================= -->
-    <div v-show="view === 'register'" class="flex flex-col h-full bg-white overflow-hidden">
+    <div v-if="view === 'register'" class="flex flex-col h-full bg-white overflow-hidden">
       <header class="bg-[#1e3a5f] text-white pt-4 pb-3 px-6 text-center rounded-b-[24px] shrink-0">
         <div class="flex items-center justify-center mb-1">
           <img src="/logo.png" alt="Logo" class="w-20 h-20 object-contain">
@@ -180,7 +129,7 @@
     </div>
 
     <!-- ================= VISTA 4: DASHBOARD DEL ESTUDIANTE (INICIO) ================= -->
-    <div v-show="view === 'student-home'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'student-home'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <div class="pt-5 px-6 pb-3 bg-white border-b border-slate-100 shrink-0">
         <p class="text-xs text-slate-500">Bienvenido/a,</p>
         <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">{{ currentUser?.name }}</h2>
@@ -349,7 +298,7 @@
     </div>
 
     <!-- ================= VISTA 5: CATÁLOGO UNIFICADO ================= -->
-    <div v-show="view === 'catalog'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'catalog'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <div class="pt-4 px-4 pb-3 bg-white border-b border-slate-100 shrink-0">
         <h2 class="text-sm font-extrabold text-slate-900">Catálogo de Artículos</h2>
         <p class="text-[10px] text-slate-500 mb-2">{{ filteredItems.length }} artículos encontrados</p>
@@ -465,7 +414,7 @@
     </div>
 
     <!-- ================= VISTA 6: DETALLE / HISTORIAL DEL ARTÍCULO ================= -->
-    <div v-show="view === 'item-detail'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'item-detail'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <!-- Cabecera de detalle -->
       <div class="pt-4 px-4 pb-3 bg-white border-b border-slate-100 shrink-0">
         <button @click="view = 'catalog'" class="text-xs text-blue-600 font-medium flex items-center gap-1 mb-2 hover:underline cursor-pointer">
@@ -566,7 +515,7 @@
     </div>
 
     <!-- ================= VISTA 7: PANEL DEL OPERADOR ================= -->
-    <div v-show="view === 'operator-home'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'operator-home'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <div class="pt-6 px-5 pb-3 bg-white shrink-0">
         <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">Gestión de Cierres</h2>
         <p class="text-xs text-slate-500">Revisa checklist y recibe los equipos</p>
@@ -659,7 +608,7 @@
     </div>
 
     <!-- ================= VISTA 8: ADMIN · APELACIONES ================= -->
-    <div v-show="view === 'admin-appeals'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'admin-appeals'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <div class="pt-6 px-5 pb-3 bg-white border-b border-slate-100 shrink-0">
         <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">Apelaciones Recibidas</h2>
         <p class="text-xs text-slate-500">{{ pendingAppealsCount }} pendiente(s) de revisión</p>
@@ -730,7 +679,7 @@
     </div>
 
     <!-- ================= VISTA 9: ADMIN · USUARIOS ================= -->
-    <div v-show="view === 'admin-users'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
+    <div v-if="view === 'admin-users'" class="flex flex-col h-full bg-slate-50 overflow-hidden">
       <div class="pt-6 px-5 pb-3 bg-white border-b border-slate-100 shrink-0">
         <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Gestión e Historial de Usuarios</h2>
         <p class="text-xs text-slate-500">Cambia roles, suspende cuentas o levanta suspensiones</p>
@@ -957,10 +906,40 @@
       </div>
     </div>
   </div>
+  <StudentDesktopPage
+    v-if="showStudentDesktop"
+    class="hidden lg:flex"
+    :view="view"
+    :user="currentUser"
+    :suspended="isSuspended"
+    :level="studentLevel"
+    :active-sanction="activeSanction"
+    :appeal="myAppeal"
+    :loans="myActiveLoans"
+    :items="filteredItems"
+    :catalog-items="allCatalogItems"
+    :selected-item="selectedItem"
+    :selected-category="desktopCategory"
+    :available-by-category="availableByCategory"
+    :toast="toast"
+    :appeal-open="showAppealModal"
+    v-model:search="searchQuery"
+    v-model:only-available="onlyAvailable"
+    v-model:appeal-text="appealText"
+    @home="view = 'student-home'"
+    @catalog="showDesktopCatalog"
+    @select-item="openDesktopItem"
+    @logout="showMainView"
+    @open-appeal="openAppealModal"
+    @close-appeal="closeAppealModal"
+    @submit-appeal="submitAppeal"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
+import StudentDesktopPage from '../components/StudentDesktopPage.vue'
+import LoginForm from '../../auth/components/LoginForm.vue'
 
 type ViewType =
   | 'main'
@@ -1053,7 +1032,20 @@ interface Appeal {
 
 const view = ref<ViewType>('main')
 const role = ref<Role>('student')
-const passwordVisible = ref<boolean>(false)
+type DesktopCategory = 'all' | CatalogItem['category']
+const desktopCategory = ref<DesktopCategory>('all')
+const showStudentDesktop = computed(() =>
+  role.value === 'student' && (view.value === 'student-home' || view.value === 'catalog' || view.value === 'item-detail')
+)
+const showDesktopCatalog = (category: DesktopCategory): void => {
+  desktopCategory.value = category
+  view.value = 'catalog'
+}
+const openDesktopItem = (code: string): void => {
+  const item = allCatalogItems.value.find(candidate => candidate.code === code)
+  if (item) openItemDetail(item)
+}
+
 const emailInput = ref<string>('estudiante@unsa.edu.pe')
 const password = ref<string>('1234')
 const loggingIn = ref<boolean>(false)
