@@ -14,7 +14,7 @@ El repositorio ya cuenta con una base técnica ejecutable del backend:
 - PostgreSQL reproducible mediante [`docker-compose.yml`](docker-compose.yml);
 - build, lint y pruebas configurados en [`backend/package.json`](backend/package.json).
 
-El frontend en [`frontend/`](frontend/) utiliza Vue 3, TypeScript, Vite y Tailwind CSS. `/login` conserva el prototipo de acceso sin conexión con la API. `/project` presenta planificación y diagramas derivados del repositorio, separado de los módulos de negocio. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
+El frontend en [`frontend/`](frontend/) utiliza Vue 3, TypeScript, Vite, Tailwind CSS y Lucide. `/login` autentica contra la API; `/register` presenta solicitudes de registro y `/app` consulta datos reales del usuario. `/prototype` mantiene la demostración con datos locales. `/project` presenta planificación y diagramas derivados del repositorio, separado de los módulos de negocio. El [análisis de requisitos](docs/requirements/README.md) y la [planificación](docs/planning/README.md) describen el alcance previsto; no debe interpretarse que toda funcionalidad documentada ya está implementada.
 
 ## Alcance planificado
 
@@ -32,7 +32,7 @@ La planificación contempla estudiantes, docentes y personal administrativo, tie
 
 | Área | Tecnología |
 | --- | --- |
-| Frontend | Vue 3, TypeScript, Vite y Tailwind CSS |
+| Frontend | Vue 3, TypeScript, Vite, Tailwind CSS y Lucide |
 | Backend | NestJS con TypeScript |
 | Persistencia | PostgreSQL y Prisma |
 | Pruebas | Vitest |
@@ -66,7 +66,9 @@ La planificación contempla estudiantes, docentes y personal administrativo, tie
 ├── frontend/
 │   └── src/modules/
 │       ├── auth/
-│       └── project-showcase/
+│       ├── project-showcase/
+│       ├── prototype/
+│       └── users/
 ├── scripts/generate-project-showcase.mjs
 ├── docker-compose.yml
 ├── package.json
@@ -94,7 +96,7 @@ npm run back
 npm run front
 ```
 
-`db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. El acceso sigue siendo un prototipo sin integración con el backend. Project Showcase puede actualizar sus datos y SVG con `npm run project:generate`; los requisitos de generación están en [`frontend/README.md`](frontend/README.md).
+`db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. La ruta `/login` requiere el backend en el puerto 3000; Vite redirige `/api` a ese servidor. `/prototype` continúa disponible sin backend como demostración. Project Showcase puede actualizar sus datos y SVG con `npm run project:generate`; los requisitos de generación están en [`frontend/README.md`](frontend/README.md).
 
 ## Arquitectura
 
@@ -126,7 +128,7 @@ La estructura de código integrada desde `develop` es anterior a la separación 
 
 - Implementar la lógica de negocio marcada con `// TODO` en los módulos que hoy son esqueletos.
 - Alinear el código con el bounded context `trust` definido por la documentación vigente.
-- Integrar los módulos frontend funcionales de usuarios, inventario y préstamos con la API; Project Showcase no sustituye esa implementación.
+- Completar las operaciones del frontend que todavía no están integradas, como reservas, renovaciones y los paneles de operador y administrador; Project Showcase no sustituye esa implementación.
 - Definir credenciales, proveedor y flujo definitivo de autenticación.
 - Definir los valores pendientes del modelo de confianza y las restricciones por tipo de usuario.
 - Cerrar los contratos definitivos de la API y la estrategia transaccional para préstamos concurrentes.

@@ -17,10 +17,15 @@ npm run front
 
 ## Áreas
 
-- `/login` conserva el avance de acceso como **prototipo visual** en `src/modules/auth/`. No autentica usuarios ni registra cuentas contra la API.
+- `/login` autentica con `POST /auth/authenticate`; `/register` envía solicitudes de registro y `/app` muestra el panel del usuario con datos de la API.
+- `/prototype` conserva la demostración con datos locales. Comparte el formulario visual de acceso con `/login`, pero no realiza solicitudes al backend.
 - `/project` y sus subrutas viven en `src/modules/project-showcase/`. Presentan planificación, diagramas, API, datos, equipo y flujo Git sin formar parte del dominio de préstamos.
 
-El router compartido está en `src/router.ts`; los cambios que afecten a la navegación funcional deben coordinarse con su responsable.
+El router compartido está en `src/router.ts`. `/app` requiere una sesión vigente, almacenada solo durante la sesión de la pestaña.
+
+En desarrollo, Vite redirige `/api/*` a `http://localhost:3000/*`; el backend debe estar iniciado. En despliegues sin ese proxy se necesita uno equivalente o configurar `VITE_API_BASE_URL` junto con CORS en el backend. Google y los paneles de operador y administrador aún no están integrados. El panel de usuario consulta perfil, habilitación, confianza, sanciones, préstamos e inventario. Las reservas y renovaciones todavía no se ofrecen desde esta interfaz.
+
+Para probar el acceso con datos locales, ejecuta primero el seed del backend y usa la cuenta de prueba definida en `backend/prisma/seeds/auth.seed.ts` (usuario: `seed.usuario@unsa.edu.pe`, contraseña: `SeedUsuario-2026!`). Estas credenciales son exclusivamente de desarrollo.
 
 ## Datos y diagramas
 
