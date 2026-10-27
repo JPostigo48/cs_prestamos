@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Temporal } from 'temporal-polyfill';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type {
   TermsAcceptance,
@@ -30,8 +31,8 @@ export class PrismaTermsRepository implements TermsRepository {
 
   async accept(data: AcceptTermsVersionData): Promise<TermsAcceptance> {
     try {
-      const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.insert([{ usuarioId: data.userId, versionTerminosId: data.termsVersionId, fecha: data.acceptedAt }]).returning('id','usuarioId','versionTerminosId','fecha').build());
-      return { id: rows[0].id, userId: rows[0].usuarioId, termsVersionId: rows[0].versionTerminosId, acceptedAt: rows[0].fecha };
+      const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.insert([{ usuarioId: data.userId, versionTerminosId: data.termsVersionId, fecha: Temporal.Instant.from(data.acceptedAt.toISOString()) }]).returning('id','usuarioId','versionTerminosId','fecha').build());
+      return { id: rows[0].id, userId: rows[0].usuarioId, termsVersionId: rows[0].versionTerminosId, acceptedAt: new Date(rows[0].fecha.epochMilliseconds) };
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) throw new Error('Los términos ya fueron aceptados.');
       throw error;
@@ -40,7 +41,7 @@ export class PrismaTermsRepository implements TermsRepository {
 
   async findAcceptancesByUserId(userId: string): Promise<TermsAcceptance[]> {
     const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.select('id','usuarioId','versionTerminosId','fecha').where((r, f) => f.eq(r.usuarioId, userId)).build());
-    return rows.map((r: any) => ({ id: r.id, userId: r.usuarioId, termsVersionId: r.versionTerminosId, acceptedAt: r.fecha }));
+    return rows.map((r: any) => ({ id: r.id, userId: r.usuarioId, termsVersionId: r.versionTerminosId, acceptedAt: new Date(r.fecha.epochMilliseconds) }));
   }
 
   async hasAcceptedCurrentVersion(userId: string): Promise<boolean> {

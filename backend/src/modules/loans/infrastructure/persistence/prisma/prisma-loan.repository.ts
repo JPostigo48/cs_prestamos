@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
+import { instantToDate } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
 import { Temporal } from 'temporal-polyfill';
 import type { Loan, LoanReturn } from '../../../domain/entities/loan.js';
 import {
@@ -28,14 +29,14 @@ export class PrismaLoanRepository implements LoanRepository {
       id: row.id,
       userId: row.usuarioId,
       copyId: row.ejemplarId,
-      startsAt: row.fechaInicio,
-      endsAt: row.fechaFin,
+      startsAt: instantToDate(row.fechaInicio),
+      endsAt: instantToDate(row.fechaFin),
       status: row.estado,
       return: returned
         ? {
             id: returned.id,
             loanId: returned.prestamoId,
-            returnedAt: returned.fecha,
+            returnedAt: instantToDate(returned.fecha),
             observation: returned.observacion,
           }
         : null,
@@ -119,8 +120,8 @@ export class PrismaLoanRepository implements LoanRepository {
     return rows.some(
       (row: any) =>
         row.estado !== 'FINALIZADO' &&
-        new Date(row.fechaInicio).getTime() < endsAt.getTime() &&
-        new Date(row.fechaFin).getTime() > startsAt.getTime(),
+        instantToDate(row.fechaInicio).getTime() < endsAt.getTime() &&
+        instantToDate(row.fechaFin).getTime() > startsAt.getTime(),
     );
   }
 
@@ -150,7 +151,7 @@ export class PrismaLoanRepository implements LoanRepository {
     return {
       id: row.id,
       loanId: row.prestamoId,
-      returnedAt: row.fecha,
+      returnedAt: instantToDate(row.fecha),
       observation: row.observacion,
     };
   }
@@ -215,7 +216,7 @@ export class PrismaLoanRepository implements LoanRepository {
       return {
         id: row.id,
         loanId: row.prestamoId,
-        returnedAt: row.fecha,
+        returnedAt: instantToDate(row.fecha),
         observation: row.observacion,
       };
     });

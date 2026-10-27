@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
+import { instantToDate, nullableInstantToDate } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
 import { LoanStatus, type Loan } from '../../../domain/entities/loan.js';
 import type { Reservation } from '../../../domain/entities/reservation.js';
 import {
@@ -26,11 +27,11 @@ export class PrismaReservationRepository implements ReservationRepository {
       id: row.id,
       userId: row.usuarioId,
       copyId: row.ejemplarId,
-      requestedAt: row.fechaSolicitada,
-      pickupDeadline: row.fechaLimiteRecogida,
+      requestedAt: instantToDate(row.fechaSolicitada),
+      pickupDeadline: instantToDate(row.fechaLimiteRecogida),
       loanDurationHours: row.duracionPrestamoHoras,
-      pickedUpAt: row.fechaRecogida,
-      cancelledAt: row.fechaCancelacion,
+      pickedUpAt: nullableInstantToDate(row.fechaRecogida),
+      cancelledAt: nullableInstantToDate(row.fechaCancelacion),
       status: row.estado,
       cancellationReason: row.motivoCancelacion,
       loanId,
@@ -191,6 +192,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             'ejemplarId',
             'fechaSolicitada',
             'fechaLimiteRecogida',
+            'duracionPrestamoHoras',
             'fechaRecogida',
             'fechaCancelacion',
             'estado',
@@ -229,8 +231,8 @@ export class PrismaReservationRepository implements ReservationRepository {
           id: loans[0].id,
           userId: loans[0].usuarioId,
           copyId: loans[0].ejemplarId,
-          startsAt: loans[0].fechaInicio,
-          endsAt: loans[0].fechaFin,
+          startsAt: instantToDate(loans[0].fechaInicio),
+          endsAt: instantToDate(loans[0].fechaFin),
           status: loans[0].estado as LoanStatus,
           return: null,
         },

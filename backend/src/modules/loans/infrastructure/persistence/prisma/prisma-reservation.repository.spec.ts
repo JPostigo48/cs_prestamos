@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Temporal } from 'temporal-polyfill/full';
 import { PrismaReservationRepository } from './prisma-reservation.repository.js';
 
 describe('PrismaReservationRepository', () => {
@@ -7,11 +8,11 @@ describe('PrismaReservationRepository', () => {
       id: 'reservation-1',
       usuarioId: 'user-1',
       ejemplarId: 'copy-1',
-      fechaSolicitada: new Date('2026-10-21T10:00:00.000Z'),
-      fechaLimiteRecogida: new Date('2026-10-21T10:30:00.000Z'),
+      fechaSolicitada: Temporal.Instant.from('2026-10-21T10:00:00.123Z'),
+      fechaLimiteRecogida: Temporal.Instant.from('2026-10-21T10:30:00.123Z'),
       duracionPrestamoHoras: 8,
       fechaRecogida: null,
-      fechaCancelacion: new Date('2026-10-21T10:31:00.000Z'),
+      fechaCancelacion: Temporal.Instant.from('2026-10-21T10:31:00.123Z'),
       estado: 'VENCIDA',
       motivoCancelacion: 'Ventana de recogida vencida',
     };
@@ -34,7 +35,9 @@ describe('PrismaReservationRepository', () => {
     };
     const repository = new PrismaReservationRepository(prisma as any);
     await expect(repository.expire(new Date('2026-10-21T10:31:00.000Z')))
-      .resolves.toMatchObject([{ id: 'reservation-1', status: 'VENCIDA' }]);
+      .resolves.toMatchObject([{ id: 'reservation-1', status: 'VENCIDA',
+        requestedAt: new Date('2026-10-21T10:00:00.123Z'),
+        cancelledAt: new Date('2026-10-21T10:31:00.123Z'), pickedUpAt: null }]);
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(query).toHaveBeenNthCalledWith(1, 'expire-reservations');
     expect(query).toHaveBeenNthCalledWith(2, 'release-copy');

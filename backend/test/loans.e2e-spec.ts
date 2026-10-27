@@ -6,6 +6,8 @@ import { HttpExceptionFilter } from '../src/shared/infrastructure/filters/http-e
 import { PrismaService } from '../src/shared/infrastructure/prisma/prisma.service.js';
 import { JwtPort } from '../src/modules/auth/application/ports/jwt.port.js';
 import { AccessRole } from '../src/modules/auth/domain/entities/access-account.js';
+import { ReservationRepository } from '../src/modules/loans/domain/repositories/reservation.repository.js';
+import { LoanRepository } from '../src/modules/loans/domain/repositories/loan.repository.js';
 
 describe('Loans authorization and lifecycle (e2e)', () => {
   let app: INestApplication;
@@ -18,9 +20,14 @@ describe('Loans authorization and lifecycle (e2e)', () => {
   let copyId: string;
   let reservationId: string;
   let loanId: string;
+  const additionalReservationIds: string[] = [];
+  let reservations: ReservationRepository;
+  let loans: LoanRepository;
   let createdTermsVersionId: string | null = null;
   let token: string;
   let administratorToken: string;
+  let acceptedAt: string;
+  let acceptanceId: string;
   const suffix = Date.now().toString();
   const email = `loans.e2e.${suffix}@unsa.edu.pe`;
 
@@ -38,6 +45,8 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       }),
     );
     prisma = app.get(PrismaService);
+    reservations = app.get(ReservationRepository);
+    loans = app.get(LoanRepository);
     administratorToken = app.get(JwtPort).sign({
       accountId: 'test-administrator',
       userId: 'test-administrator',
@@ -91,11 +100,14 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       createdTermsVersionId = created.body.id;
       currentVersion = { id: created.body.id };
     }
-    await request(app.getHttpServer())
+    acceptedAt = new Date().toISOString();
+    const acceptance = await request(app.getHttpServer())
       .post('/terms/acceptances')
       .auth(token, { type: 'bearer' })
-      .send({ userId, termsVersionId: currentVersion.id, acceptedAt: new Date().toISOString() })
+      .send({ userId, termsVersionId: currentVersion.id, acceptedAt })
       .expect(201);
+    acceptanceId = acceptance.body.id;
+    expect(acceptance.body.acceptedAt).toBe(acceptedAt);
 
     const category = await request(app.getHttpServer())
       .post('/inventory/categories')
@@ -117,6 +129,16 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       .send({ codigoInventario: `LOANS-COPY-${suffix}` })
       .expect(201);
     copyId = copy.body.id;
+  });
+
+  it('roundtrips acceptance date through HTTP and PostgreSQL', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/terms/users/${userId}/acceptances`)
+      .auth(token, { type: 'bearer' })
+      .expect(200);
+    expect(response.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: acceptanceId, userId, acceptedAt }),
+    ]));
   });
 
   it('requires authentication and derives the reservation owner from the token', async () => {
@@ -148,6 +170,12 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       .expect(201);
     reservationId = reserved.body.id;
     expect(reserved.body.userId).toBe(userId);
+    expect(reserved.body.requestedAt).toBe(requestedAt.toISOString());
+    expect(reserved.body.pickedUpAt).toBeNull();
+    expect(reserved.body.cancelledAt).toBeNull();
+    const persistedReservation = await reservations.findById(reservationId);
+    expect(persistedReservation?.requestedAt).toEqual(requestedAt);
+    expect(persistedReservation?.pickupDeadline.getTime()).toBe(requestedAt.getTime() + 30 * 60_000);
 
     await request(app.getHttpServer())
       .post('/loans/reservations')
@@ -170,6 +198,11 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       .expect(201);
     loanId = created.body.id;
     expect(created.body.userId).toBe(userId);
+    expect(created.body.startsAt).toBeTruthy();
+    const picked = await reservations.findById(reservationId);
+    expect(picked?.pickedUpAt).toBeInstanceOf(Date);
+    expect(picked?.loanDurationHours).toBeGreaterThan(0);
+    expect((await loans.findById(loanId))?.startsAt.toISOString()).toBe(created.body.startsAt);
 
     await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`)
@@ -183,12 +216,53 @@ describe('Loans authorization and lifecycle (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual(
-          expect.arrayContaining([expect.objectContaining({ id: loanId })]),
+          expect.arrayContaining([expect.objectContaining({ id: loanId, startsAt: created.body.startsAt, endsAt: created.body.endsAt })]),
         );
       });
+    const active = await loans.findActive();
+    expect(active.find((loan) => loan.id === loanId)?.endsAt).toBeInstanceOf(Date);
+    const interval = await loans.findById(loanId);
+    expect(await loans.findOverdue(interval!.endsAt)).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: loanId })]));
+    expect(await loans.findOverdue(new Date(interval!.endsAt.getTime() + 1)))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: loanId })]));
+    expect(await loans.hasOverlappingLoan(copyId, interval!.endsAt, new Date(interval!.endsAt.getTime() + 1))).toBe(false);
+    expect(await loans.hasOverlappingLoan(copyId, new Date(interval!.endsAt.getTime() - 1), interval!.endsAt)).toBe(true);
+
+    const returnedAt = new Date();
+    const returned = await request(app.getHttpServer())
+      .post(`/loans/${loanId}/return`).auth(administratorToken, { type: 'bearer' })
+      .send({ returnedAt: returnedAt.toISOString() }).expect(201);
+    expect(returned.body.return.returnedAt).toBe(returnedAt.toISOString());
+    expect((await loans.findById(loanId))?.return?.returnedAt).toEqual(returnedAt);
+    expect(await loans.hasOverlappingLoan(copyId, interval!.startsAt, interval!.endsAt)).toBe(false);
   }, 10000);
 
+  it('roundtrips cancelled and expired reservations with the same deadline boundary', async () => {
+    const requestedAt = new Date(Date.now() + 60_000);
+    const first = await request(app.getHttpServer()).post('/loans/reservations')
+      .auth(token, { type: 'bearer' }).send({ copyId, requestedAt: requestedAt.toISOString() }).expect(201);
+    additionalReservationIds.push(first.body.id);
+    const cancelled = await request(app.getHttpServer()).delete(`/loans/reservations/${first.body.id}`)
+      .auth(token, { type: 'bearer' }).send({ reason: 'Prueba' }).expect(200);
+    expect(cancelled.body.cancelledAt).toBeTruthy();
+    expect((await reservations.findById(first.body.id))?.cancelledAt?.toISOString()).toBe(cancelled.body.cancelledAt);
+
+    const second = await request(app.getHttpServer()).post('/loans/reservations')
+      .auth(token, { type: 'bearer' }).send({ copyId, requestedAt: requestedAt.toISOString() }).expect(201);
+    additionalReservationIds.push(second.body.id);
+    const deadline = new Date(second.body.pickupDeadline);
+    expect(await reservations.expire(deadline)).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: second.body.id })]));
+    const expired = await reservations.expire(new Date(deadline.getTime() + 1));
+    expect(expired).toEqual(expect.arrayContaining([expect.objectContaining({ id: second.body.id, status: 'VENCIDA' })]));
+    expect(expired[0].cancelledAt).toEqual(new Date(deadline.getTime() + 1));
+    expect((await reservations.findById(second.body.id))?.cancelledAt).toEqual(expired[0].cancelledAt);
+  });
+
   afterAll(async () => {
+    for (const id of additionalReservationIds) {
+      await prisma.client.runtime().query(prisma.sql.public.reservas.delete()
+        .where((row, fns) => fns.eq(row.id, id)).returning('id').build());
+    }
     if (loanId) {
       await prisma.client.runtime().query(
         prisma.sql.public.devoluciones

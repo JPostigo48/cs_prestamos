@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
+import { instantToDate, nullableInstantToDate } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
 import {
   type LoanEligibility,
   deriveTrustLevel,
@@ -107,6 +108,10 @@ export class PrismaUserRepository extends UserRepository {
 
   async listSanctions(userId: string): Promise<Sanction[]> {
     const rows = await this.runtime().query(this.prisma.sql.public.sanciones.select('id', 'usuarioId', 'incumplimientoId', 'reglaId', 'versionReglaId', 'estado', 'fechaInicio', 'fechaFin', 'confianzaAnterior', 'confianzaPosterior').where((row, fns) => fns.eq(row.usuarioId, userId)).build());
-    return rows.map((row: any) => ({ id: row.id, userId: row.usuarioId, violationId: row.incumplimientoId, ruleId: row.reglaId, ruleVersionId: row.versionReglaId, status: effectiveSanctionStatus({ status: row.estado, startsAt: row.fechaInicio, endsAt: row.fechaFin }, new Date()), startsAt: row.fechaInicio, endsAt: row.fechaFin, previousTrust: Number(row.confianzaAnterior), resultingTrust: Number(row.confianzaPosterior) }));
+    return rows.map((row: any) => {
+      const startsAt = instantToDate(row.fechaInicio);
+      const endsAt = nullableInstantToDate(row.fechaFin);
+      return { id: row.id, userId: row.usuarioId, violationId: row.incumplimientoId, ruleId: row.reglaId, ruleVersionId: row.versionReglaId, status: effectiveSanctionStatus({ status: row.estado, startsAt, endsAt }, new Date()), startsAt, endsAt, previousTrust: Number(row.confianzaAnterior), resultingTrust: Number(row.confianzaPosterior) };
+    });
   }
 }
