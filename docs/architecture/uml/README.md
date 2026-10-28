@@ -1,5 +1,7 @@
 # Modelo de dominio UML
 
+La [guía de integración frontend](../frontend-integration.md) describe la aplicación real, sus límites contractuales y verificaciones, sin modificar el modelo conceptual que sigue.
+
 [`modelo-dominio.puml`](modelo-dominio.puml) es el diagrama de clases conceptual del sistema. Está alineado con el [análisis de requisitos](../../requirements/README.md) vigente; no representa clases implementadas, tablas de PostgreSQL, DTO ni contratos de API. Las [vistas de Structurizr](../structurizr/README.md) describen los límites estratégicos y la estructura interna de cada contexto.
 
 ## Límites y agregados

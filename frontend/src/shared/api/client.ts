@@ -7,6 +7,11 @@ export class ApiError extends Error {
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '')
 
+let unauthorizedHandler: ((token: string) => void) | undefined
+export function onUnauthorized(handler: (token: string) => void): void {
+  unauthorizedHandler = handler
+}
+
 export async function apiRequest<T>(
   path: string,
   options: { token?: string; method?: string; body?: unknown; signal?: AbortSignal } = {},
@@ -29,6 +34,7 @@ export async function apiRequest<T>(
 
   const payload: unknown = await response.json().catch(() => null)
   if (!response.ok) {
+    if (response.status === 401 && options.token) unauthorizedHandler?.(options.token)
     const message = payload && typeof payload === 'object' && 'message' in payload
       ? (payload as { message: unknown }).message
       : null

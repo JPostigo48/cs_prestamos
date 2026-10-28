@@ -17,13 +17,26 @@ npm run front
 
 ## Áreas
 
-- `/login` autentica con `POST /auth/authenticate`; `/register` envía solicitudes de registro y `/app` muestra el panel del usuario con datos de la API.
-- `/prototype` conserva la demostración con datos locales. Comparte el formulario visual de acceso con `/login`, pero no realiza solicitudes al backend.
+- `/login` autentica; `/register` conserva la solicitud básica y ofrece el alta integral provisional como acción separada. `/login/google` solicita autorización mediante un contrato todavía ausente del backend, sin crear una sesión local.
+- `/app` ofrece el panel personal, catálogo, detalle, reservas y términos; `/app/loans` integra operaciones y entregas para operador y administrador. Las rutas administrativas añaden apelaciones, usuarios e inventario.
+- `/prototype` conserva la demostración con datos locales y su formulario visual original, sin solicitudes al backend. El acceso real usa un formulario aislado.
 - `/project` y sus subrutas viven en `src/modules/project-showcase/`. Presentan planificación, diagramas, API, datos, equipo y flujo Git sin formar parte del dominio de préstamos.
 
 El router compartido está en `src/router.ts`. `/app` requiere una sesión vigente, almacenada solo durante la sesión de la pestaña.
 
-En desarrollo, Vite redirige `/api/*` a `http://localhost:3000/*`; el backend debe estar iniciado. En despliegues sin ese proxy se necesita uno equivalente o configurar `VITE_API_BASE_URL` junto con CORS en el backend. Google y los paneles de operador y administrador aún no están integrados. El panel de usuario consulta perfil, habilitación, confianza, sanciones, préstamos e inventario. Las reservas y renovaciones todavía no se ofrecen desde esta interfaz.
+En desarrollo, Vite redirige `/api/*` a `http://localhost:3000/*`; el backend debe estar iniciado. En despliegues sin ese proxy se necesita uno equivalente o configurar la base pública de la API junto con CORS en el backend. La [guía de integración frontend](../docs/architecture/frontend-integration.md) documenta rutas, cobertura de pantallas, contratos existentes/provisionales, pruebas y bloqueos de publicación. Una interfaz provisional visible no significa que su endpoint ya exista. No hay renovación ni datos simulados de negocio en la aplicación real.
+
+## Verificación offline
+
+Desde la raíz del repositorio, el runner integrado de Node ejecuta las [pruebas frontend](tests/) con red interceptada exclusivamente en tests. No requiere servicios, base de datos ni generación de documentación:
+
+```powershell
+node --test frontend/tests/*.test.mjs
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
+```
+
+El estado de cada comprobación y los diagnósticos de referencia que bloquean el build oficial se registran en la [guía de integración](../docs/architecture/frontend-integration.md#verificaciones-ejecutadas-y-límites). No se excluye la referencia del chequeo ni se relajan sus opciones para obtener un resultado verde.
 
 Para probar el acceso con datos locales, ejecuta primero el seed del backend y usa la cuenta de prueba definida en `backend/prisma/seeds/auth.seed.ts` (usuario: `seed.usuario@unsa.edu.pe`, contraseña: `SeedUsuario-2026!`). Estas credenciales son exclusivamente de desarrollo.
 

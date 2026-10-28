@@ -9,6 +9,7 @@
         :error="error"
         @submit="signIn"
         @register="router.push('/register')"
+        @google="router.push('/login/google')"
       />
     </section>
   </div>
@@ -16,11 +17,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import LoginForm from '../components/LoginForm.vue'
+import { useRoute, useRouter } from 'vue-router'
+import LoginForm from '../components/RealLoginForm.vue'
 import { authenticate, saveSession } from '../api/auth-api'
+import { safeDestination } from '../access-policy'
 
 const router = useRouter()
+const route = useRoute()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -32,12 +35,8 @@ async function signIn(): Promise<void> {
   loading.value = true
   try {
     const session = await authenticate(email.value.trim(), password.value)
-    if (session.user.role !== 'USUARIO') {
-      error.value = 'El panel de operador y administrador aún no está disponible en esta interfaz.'
-      return
-    }
     saveSession(session)
-    await router.replace('/app')
+    await router.replace(safeDestination(route.query.redirect, session.user.role))
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'No se pudo iniciar sesión.'
   } finally {
