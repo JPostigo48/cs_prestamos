@@ -75,6 +75,10 @@ export interface OpenApiSchema {
   format?: string
   example?: unknown
   allOf?: OpenApiSchema[]
+  oneOf?: OpenApiSchema[]
+  anyOf?: OpenApiSchema[]
+  description?: string
+  additionalProperties?: boolean | OpenApiSchema
   enum?: string[]
   items?: OpenApiSchema
   properties?: Record<string, OpenApiSchema>
@@ -97,10 +101,41 @@ export interface OpenApiOperation {
   requestBody?: { content?: Record<string, OpenApiMediaType> }
   responses?: Record<string, { description?: string; content?: Record<string, OpenApiMediaType> }>
   'x-implementation-status'?: 'implemented' | 'pending'
+  'x-roles'?: string[]
+  'x-authentication'?: { required: boolean; scope: 'public' | 'authenticated' | 'roles' | 'custom-guards'; description: string; guards: string[] }
 }
 
 export interface OpenApiDocument {
   info?: { title?: string; version?: string }
   paths?: Record<string, Record<string, OpenApiOperation>>
   components?: { schemas?: Record<string, OpenApiSchema> }
+}
+
+export interface DbAttribute {
+  name: string
+  positional: unknown[]
+  named: Record<string, unknown>
+  raw: string
+}
+export interface DbField {
+  name: string
+  type: string
+  typeExpression: string
+  nullable: boolean
+  list: boolean
+  kind: 'scalar' | 'enum' | 'relation'
+  attributes: DbAttribute[]
+}
+export interface DbRelation {
+  source: string; field: string; target: string; inverse: string; name: string | null
+  direction: 'outgoing' | 'incoming'
+  sourceCardinality: string; targetCardinality: string
+  owner: string; fields: string[]; references: string[]
+  onDelete: string | null; onUpdate: string | null
+}
+export interface DbDocument {
+  source: string
+  models: { name: string; module: string; fields: DbField[]; attributes: DbAttribute[] }[]
+  enums: { name: string; module: string; values: { name: string; attributes: DbAttribute[] }[]; attributes: DbAttribute[] }[]
+  relations: DbRelation[]
 }

@@ -1,0 +1,5190 @@
+{
+  "source": "backend/prisma/contract.prisma",
+  "models": [
+    {
+      "name": "CategoriaRecurso",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombre",
+          "type": "VarChar",
+          "typeExpression": "VarChar(120)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "tiempoMaximoPrestamoDias",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tiempoMaximoPrestamoHoras",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "recursos",
+          "type": "Recurso",
+          "typeExpression": "Recurso",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "categorias_recurso"
+          ],
+          "named": {},
+          "raw": "@@map(\"categorias_recurso\")"
+        }
+      ]
+    },
+    {
+      "name": "Recurso",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "categoriaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombre",
+          "type": "VarChar",
+          "typeExpression": "VarChar(180)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "descripcion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "categoria",
+          "type": "CategoriaRecurso",
+          "typeExpression": "CategoriaRecurso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "categoriaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[categoriaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "ejemplares",
+          "type": "Ejemplar",
+          "typeExpression": "Ejemplar",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "categoriaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([categoriaId])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "nombre"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([nombre])"
+        },
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "categoriaId",
+              "nombre"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([categoriaId, nombre])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "recursos"
+          ],
+          "named": {},
+          "raw": "@@map(\"recursos\")"
+        }
+      ]
+    },
+    {
+      "name": "Ejemplar",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "recursoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "codigoInventario",
+          "type": "VarChar",
+          "typeExpression": "VarChar(80)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoEjemplar",
+          "typeExpression": "EstadoEjemplar",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "DISPONIBLE"
+              ],
+              "named": {},
+              "raw": "@default(DISPONIBLE)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "recurso",
+          "type": "Recurso",
+          "typeExpression": "Recurso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "recursoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[recursoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "observaciones",
+          "type": "ObservacionEjemplar",
+          "typeExpression": "ObservacionEjemplar",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "prestamos",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "reservas",
+          "type": "Reserva",
+          "typeExpression": "Reserva",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "recursoId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([recursoId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "ejemplares"
+          ],
+          "named": {},
+          "raw": "@@map(\"ejemplares\")"
+        }
+      ]
+    },
+    {
+      "name": "Reserva",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "ejemplarId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaSolicitada",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaLimiteRecogida",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "duracionPrestamoHoras",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaRecogida",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaCancelacion",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoReserva",
+          "typeExpression": "EstadoReserva",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "CONFIRMADA"
+              ],
+              "named": {},
+              "raw": "@default(CONFIRMADA)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "motivoCancelacion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "ejemplar",
+          "type": "Ejemplar",
+          "typeExpression": "Ejemplar",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "ejemplarId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "ejemplarId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([ejemplarId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado",
+              "fechaLimiteRecogida"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado, fechaLimiteRecogida])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "reservas"
+          ],
+          "named": {},
+          "raw": "@@map(\"reservas\")"
+        }
+      ]
+    },
+    {
+      "name": "ObservacionEjemplar",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "ejemplarId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "descripcion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "ejemplar",
+          "type": "Ejemplar",
+          "typeExpression": "Ejemplar",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "ejemplarId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Cascade",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[ejemplarId], references:[id], onDelete: Cascade, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "ejemplarId",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([ejemplarId, fecha])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "observaciones_ejemplar"
+          ],
+          "named": {},
+          "raw": "@@map(\"observaciones_ejemplar\")"
+        }
+      ]
+    },
+    {
+      "name": "SolicitudRegistro",
+      "module": "USUARIOS Y REGISTRO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombre",
+          "type": "VarChar",
+          "typeExpression": "VarChar(180)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tipoUsuario",
+          "type": "TipoUsuario",
+          "typeExpression": "TipoUsuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
+        },
+        {
+          "name": "identificadorInstitucional",
+          "type": "VarChar",
+          "typeExpression": "VarChar(80)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaSolicitud",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoSolicitud",
+          "typeExpression": "EstadoSolicitud",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "PENDIENTE"
+              ],
+              "named": {},
+              "raw": "@default(PENDIENTE)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "motivoRechazo",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioAprobadoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "evidencias",
+          "type": "EvidenciaVinculacion",
+          "typeExpression": "EvidenciaVinculacion",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "usuarioAprobado",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "SolicitudAprobadaUsuario"
+              ],
+              "named": {
+                "fields": [
+                  "usuarioAprobadoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "SetNull",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"SolicitudAprobadaUsuario\", fields:[usuarioAprobadoId], references:[id], onDelete: SetNull, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "auditorias",
+          "type": "AuditoriaUsuario",
+          "typeExpression": "AuditoriaUsuario",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "AuditoriaSolicitud"
+              ],
+              "named": {},
+              "raw": "@relation(\"AuditoriaSolicitud\")"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado",
+              "fechaSolicitud"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado, fechaSolicitud])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "identificadorInstitucional"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([identificadorInstitucional])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioAprobadoId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioAprobadoId])"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "length(btrim(\"nombre\")) >= 2",
+            "name": "solicitudes_registro_nombre_length_check"
+          },
+          "raw": "@@check(expression: \"length(btrim(\\\"nombre\\\")) >= 2\", name: \"solicitudes_registro_nombre_length_check\")"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "solicitudes_registro"
+          ],
+          "named": {},
+          "raw": "@@map(\"solicitudes_registro\")"
+        }
+      ]
+    },
+    {
+      "name": "EvidenciaVinculacion",
+      "module": "USUARIOS Y REGISTRO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "solicitudRegistroId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "informacion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "solicitudRegistro",
+          "type": "SolicitudRegistro",
+          "typeExpression": "SolicitudRegistro",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "solicitudRegistroId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Cascade",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[solicitudRegistroId], references:[id], onDelete: Cascade, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "solicitudRegistroId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([solicitudRegistroId])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "evidencias_vinculacion"
+          ],
+          "named": {},
+          "raw": "@@map(\"evidencias_vinculacion\")"
+        }
+      ]
+    },
+    {
+      "name": "Usuario",
+      "module": "USUARIOS Y REGISTRO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombre",
+          "type": "VarChar",
+          "typeExpression": "VarChar(180)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tipoUsuario",
+          "type": "TipoUsuario",
+          "typeExpression": "TipoUsuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
+        },
+        {
+          "name": "identificadorInstitucional",
+          "type": "VarChar",
+          "typeExpression": "VarChar(80)",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "vinculacionVigente",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "confianza",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "solicitudesAprobadas",
+          "type": "SolicitudRegistro",
+          "typeExpression": "SolicitudRegistro",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "SolicitudAprobadaUsuario"
+              ],
+              "named": {},
+              "raw": "@relation(\"SolicitudAprobadaUsuario\")"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "sanciones",
+          "type": "Sancion",
+          "typeExpression": "Sancion",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "prestamos",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "reservas",
+          "type": "Reserva",
+          "typeExpression": "Reserva",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimientos",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "apelaciones",
+          "type": "Apelacion",
+          "typeExpression": "Apelacion",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "aceptacionesTerminos",
+          "type": "AceptacionTerminos",
+          "typeExpression": "AceptacionTerminos",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "cuentaAcceso",
+          "type": "CuentaAcceso",
+          "typeExpression": "CuentaAcceso",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "auditorias",
+          "type": "AuditoriaUsuario",
+          "typeExpression": "AuditoriaUsuario",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "tipoUsuario"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([tipoUsuario])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "vinculacionVigente"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([vinculacionVigente])"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "confianza >= 0 AND confianza <= 100",
+            "name": "usuarios_confianza_range_check"
+          },
+          "raw": "@@check(expression: \"confianza >= 0 AND confianza <= 100\", name: \"usuarios_confianza_range_check\")"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "length(btrim(\"nombre\")) >= 2",
+            "name": "usuarios_nombre_length_check"
+          },
+          "raw": "@@check(expression: \"length(btrim(\\\"nombre\\\")) >= 2\", name: \"usuarios_nombre_length_check\")"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "usuarios"
+          ],
+          "named": {},
+          "raw": "@@map(\"usuarios\")"
+        }
+      ]
+    },
+    {
+      "name": "AuditoriaUsuario",
+      "module": "USUARIOS Y REGISTRO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "solicitudRegistroId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "accion",
+          "type": "VarChar",
+          "typeExpression": "VarChar(80)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "motivo",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "datosAnteriores",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "datosNuevos",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "SetNull",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: SetNull, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "solicitudRegistro",
+          "type": "SolicitudRegistro",
+          "typeExpression": "SolicitudRegistro",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "AuditoriaSolicitud"
+              ],
+              "named": {
+                "fields": [
+                  "solicitudRegistroId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Cascade",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"AuditoriaSolicitud\", fields:[solicitudRegistroId], references:[id], onDelete: Cascade, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, fecha])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "solicitudRegistroId",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([solicitudRegistroId, fecha])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "accion",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([accion, fecha])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "auditorias_usuario"
+          ],
+          "named": {},
+          "raw": "@@map(\"auditorias_usuario\")"
+        }
+      ]
+    },
+    {
+      "name": "Sancion",
+      "module": "USUARIOS Y REGISTRO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "incumplimientoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "reglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionReglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoSancion",
+          "typeExpression": "EstadoSancion",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "ACTIVA"
+              ],
+              "named": {},
+              "raw": "@default(ACTIVA)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "fechaInicio",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaFin",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "confianzaAnterior",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "confianzaPosterior",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimiento",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "IncumplimientoSancion"
+              ],
+              "named": {
+                "fields": [
+                  "incumplimientoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"IncumplimientoSancion\", fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "regla",
+          "type": "ReglaUso",
+          "typeExpression": "ReglaUso",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaSanciones"
+              ],
+              "named": {
+                "fields": [
+                  "reglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"ReglaSanciones\", fields:[reglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "versionRegla",
+          "type": "VersionRegla",
+          "typeExpression": "VersionRegla",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "VersionSanciones"
+              ],
+              "named": {
+                "fields": [
+                  "versionReglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"VersionSanciones\", fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "apelacion",
+          "type": "Apelacion",
+          "typeExpression": "Apelacion",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "SancionApelacion"
+              ],
+              "named": {},
+              "raw": "@relation(\"SancionApelacion\")"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado",
+              "fechaFin"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado, fechaFin])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "reglaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([reglaId])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "versionReglaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([versionReglaId])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "sanciones"
+          ],
+          "named": {},
+          "raw": "@@map(\"sanciones\")"
+        }
+      ]
+    },
+    {
+      "name": "Prestamo",
+      "module": "PRÉSTAMOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "ejemplarId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "reservaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaInicio",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaFin",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoPrestamo",
+          "typeExpression": "EstadoPrestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "PLANIFICADO"
+              ],
+              "named": {},
+              "raw": "@default(PLANIFICADO)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "ejemplar",
+          "type": "Ejemplar",
+          "typeExpression": "Ejemplar",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "ejemplarId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "reserva",
+          "type": "Reserva",
+          "typeExpression": "Reserva",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "reservaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "devolucion",
+          "type": "Devolucion",
+          "typeExpression": "Devolucion",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "ejemplarId",
+              "estado",
+              "fechaInicio",
+              "fechaFin"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([ejemplarId, estado, fechaInicio, fechaFin])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "fechaFin",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([fechaFin, estado])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "prestamos"
+          ],
+          "named": {},
+          "raw": "@@map(\"prestamos\")"
+        }
+      ]
+    },
+    {
+      "name": "Devolucion",
+      "module": "PRÉSTAMOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "observacion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "prestamoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Cascade",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[prestamoId], references:[id], onDelete: Cascade, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "devoluciones"
+          ],
+          "named": {},
+          "raw": "@@map(\"devoluciones\")"
+        }
+      ]
+    },
+    {
+      "name": "ReglaUso",
+      "module": "REGLAS, INCUMPLIMIENTOS Y APELACIONES",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionVigenteId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versiones",
+          "type": "VersionRegla",
+          "typeExpression": "VersionRegla",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaVersiones"
+              ],
+              "named": {},
+              "raw": "@relation(\"ReglaVersiones\")"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "versionVigente",
+          "type": "VersionRegla",
+          "typeExpression": "VersionRegla",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaVersionVigente"
+              ],
+              "named": {
+                "fields": [
+                  "versionVigenteId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"ReglaVersionVigente\", fields:[versionVigenteId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimientos",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "sanciones",
+          "type": "Sancion",
+          "typeExpression": "Sancion",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaSanciones"
+              ],
+              "named": {},
+              "raw": "@relation(\"ReglaSanciones\")"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "reglas_uso"
+          ],
+          "named": {},
+          "raw": "@@map(\"reglas_uso\")"
+        }
+      ]
+    },
+    {
+      "name": "VersionRegla",
+      "module": "REGLAS, INCUMPLIMIENTOS Y APELACIONES",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "reglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "numero",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "titulo",
+          "type": "VarChar",
+          "typeExpression": "VarChar(180)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "descripcion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "penalizacionPorcentual",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "consecuencia",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tipoSuspension",
+          "type": "TipoSuspension",
+          "typeExpression": "TipoSuspension",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
+        },
+        {
+          "name": "diasSuspension",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoRegla",
+          "typeExpression": "EstadoRegla",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "ACTIVA"
+              ],
+              "named": {},
+              "raw": "@default(ACTIVA)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "regla",
+          "type": "ReglaUso",
+          "typeExpression": "ReglaUso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaVersiones"
+              ],
+              "named": {
+                "fields": [
+                  "reglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"ReglaVersiones\", fields:[reglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "reglaVigentePara",
+          "type": "ReglaUso",
+          "typeExpression": "ReglaUso",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "ReglaVersionVigente"
+              ],
+              "named": {},
+              "raw": "@relation(\"ReglaVersionVigente\")"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimientos",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "sanciones",
+          "type": "Sancion",
+          "typeExpression": "Sancion",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "VersionSanciones"
+              ],
+              "named": {},
+              "raw": "@relation(\"VersionSanciones\")"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "reglaId",
+              "numero"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([reglaId, numero])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "reglaId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([reglaId, estado])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "versiones_regla"
+          ],
+          "named": {},
+          "raw": "@@map(\"versiones_regla\")"
+        }
+      ]
+    },
+    {
+      "name": "Incumplimiento",
+      "module": "REGLAS, INCUMPLIMIENTOS Y APELACIONES",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "reglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionReglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "penalizacionAplicada",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "regla",
+          "type": "ReglaUso",
+          "typeExpression": "ReglaUso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "reglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[reglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "versionRegla",
+          "type": "VersionRegla",
+          "typeExpression": "VersionRegla",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "versionReglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "sancion",
+          "type": "Sancion",
+          "typeExpression": "Sancion",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "IncumplimientoSancion"
+              ],
+              "named": {},
+              "raw": "@relation(\"IncumplimientoSancion\")"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "apelacion",
+          "type": "Apelacion",
+          "typeExpression": "Apelacion",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, fecha])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "reglaId",
+              "versionReglaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([reglaId, versionReglaId])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "incumplimientos"
+          ],
+          "named": {},
+          "raw": "@@map(\"incumplimientos\")"
+        }
+      ]
+    },
+    {
+      "name": "Apelacion",
+      "module": "REGLAS, INCUMPLIMIENTOS Y APELACIONES",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "incumplimientoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "sancionId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "motivo",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "estado",
+          "type": "EstadoApelacion",
+          "typeExpression": "EstadoApelacion",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "PENDIENTE"
+              ],
+              "named": {},
+              "raw": "@default(PENDIENTE)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "resolucion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaResolucion",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "resueltaPorCuentaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "incumplimiento",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "incumplimientoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "sancion",
+          "type": "Sancion",
+          "typeExpression": "Sancion",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "SancionApelacion"
+              ],
+              "named": {
+                "fields": [
+                  "sancionId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"SancionApelacion\", fields:[sancionId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "resueltaPor",
+          "type": "CuentaAcceso",
+          "typeExpression": "CuentaAcceso",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "CuentaResolutora"
+              ],
+              "named": {
+                "fields": [
+                  "resueltaPorCuentaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "SetNull",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"CuentaResolutora\", fields:[resueltaPorCuentaId], references:[id], onDelete: SetNull, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "estado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, estado])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "estado",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([estado, fecha])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "resueltaPorCuentaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([resueltaPorCuentaId])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "apelaciones"
+          ],
+          "named": {},
+          "raw": "@@map(\"apelaciones\")"
+        }
+      ]
+    },
+    {
+      "name": "VersionTerminos",
+      "module": "TÉRMINOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "numero",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "titulo",
+          "type": "VarChar",
+          "typeExpression": "VarChar(180)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "contenido",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "aceptaciones",
+          "type": "AceptacionTerminos",
+          "typeExpression": "AceptacionTerminos",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "versiones_terminos"
+          ],
+          "named": {},
+          "raw": "@@map(\"versiones_terminos\")"
+        }
+      ]
+    },
+    {
+      "name": "AceptacionTerminos",
+      "module": "TÉRMINOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionTerminosId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fecha",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "versionTerminos",
+          "type": "VersionTerminos",
+          "typeExpression": "VersionTerminos",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "versionTerminosId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[versionTerminosId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "usuarioId",
+              "versionTerminosId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([usuarioId, versionTerminosId])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "usuarioId",
+              "fecha"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([usuarioId, fecha])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "aceptaciones_terminos"
+          ],
+          "named": {},
+          "raw": "@@map(\"aceptaciones_terminos\")"
+        }
+      ]
+    },
+    {
+      "name": "CuentaAcceso",
+      "module": "AUTENTICACIÓN",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuarioId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "email",
+          "type": "VarChar",
+          "typeExpression": "VarChar(254)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "passwordHash",
+          "type": "VarChar",
+          "typeExpression": "VarChar(255)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "rol",
+          "type": "RolAcceso",
+          "typeExpression": "RolAcceso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "USUARIO"
+              ],
+              "named": {},
+              "raw": "@default(USUARIO)"
+            }
+          ],
+          "kind": "enum"
+        },
+        {
+          "name": "habilitada",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "ultimoAcceso",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "usuario",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "usuarioId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "apelacionesResueltas",
+          "type": "Apelacion",
+          "typeExpression": "Apelacion",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "CuentaResolutora"
+              ],
+              "named": {},
+              "raw": "@relation(\"CuentaResolutora\")"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "rol",
+              "habilitada"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([rol, habilitada])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "cuentas_acceso"
+          ],
+          "named": {},
+          "raw": "@@map(\"cuentas_acceso\")"
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "EstadoEjemplar",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "DISPONIBLE",
+          "attributes": []
+        },
+        {
+          "name": "RESERVADO",
+          "attributes": []
+        },
+        {
+          "name": "PRESTADO",
+          "attributes": []
+        },
+        {
+          "name": "NO_DISPONIBLE",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoReserva",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "CONFIRMADA",
+          "attributes": []
+        },
+        {
+          "name": "RECOGIDA",
+          "attributes": []
+        },
+        {
+          "name": "CANCELADA",
+          "attributes": []
+        },
+        {
+          "name": "VENCIDA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoPrestamo",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "PLANIFICADO",
+          "attributes": []
+        },
+        {
+          "name": "ACTIVO",
+          "attributes": []
+        },
+        {
+          "name": "FINALIZADO",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "TipoUsuario",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "ESTUDIANTE",
+          "attributes": []
+        },
+        {
+          "name": "DOCENTE",
+          "attributes": []
+        },
+        {
+          "name": "ADMINISTRATIVO",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoSolicitud",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "PENDIENTE",
+          "attributes": []
+        },
+        {
+          "name": "APROBADA",
+          "attributes": []
+        },
+        {
+          "name": "RECHAZADA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoSancion",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "PROGRAMADA",
+          "attributes": []
+        },
+        {
+          "name": "ACTIVA",
+          "attributes": []
+        },
+        {
+          "name": "FINALIZADA",
+          "attributes": []
+        },
+        {
+          "name": "ABSUELTA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoRegla",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "ACTIVA",
+          "attributes": []
+        },
+        {
+          "name": "INACTIVA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "TipoSuspension",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "NINGUNA",
+          "attributes": []
+        },
+        {
+          "name": "TEMPORAL",
+          "attributes": []
+        },
+        {
+          "name": "INDEFINIDA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "EstadoApelacion",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "PENDIENTE",
+          "attributes": []
+        },
+        {
+          "name": "ACEPTADA",
+          "attributes": []
+        },
+        {
+          "name": "RECHAZADA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "RolAcceso",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "USUARIO",
+          "attributes": []
+        },
+        {
+          "name": "OPERADOR",
+          "attributes": []
+        },
+        {
+          "name": "ADMINISTRADOR",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "source": "CategoriaRecurso",
+      "field": "recursos",
+      "target": "Recurso",
+      "inverse": "categoria",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Recurso",
+      "fields": [
+        "categoriaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Recurso",
+      "field": "categoria",
+      "target": "CategoriaRecurso",
+      "inverse": "recursos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Recurso",
+      "fields": [
+        "categoriaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Recurso",
+      "field": "ejemplares",
+      "target": "Ejemplar",
+      "inverse": "recurso",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Ejemplar",
+      "fields": [
+        "recursoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Ejemplar",
+      "field": "recurso",
+      "target": "Recurso",
+      "inverse": "ejemplares",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Ejemplar",
+      "fields": [
+        "recursoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Ejemplar",
+      "field": "observaciones",
+      "target": "ObservacionEjemplar",
+      "inverse": "ejemplar",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "ObservacionEjemplar",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Ejemplar",
+      "field": "prestamos",
+      "target": "Prestamo",
+      "inverse": "ejemplar",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Prestamo",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Ejemplar",
+      "field": "reservas",
+      "target": "Reserva",
+      "inverse": "ejemplar",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Reserva",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Reserva",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "reservas",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Reserva",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Reserva",
+      "field": "ejemplar",
+      "target": "Ejemplar",
+      "inverse": "reservas",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Reserva",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Reserva",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "reserva",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Prestamo",
+      "fields": [
+        "reservaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "ObservacionEjemplar",
+      "field": "ejemplar",
+      "target": "Ejemplar",
+      "inverse": "observaciones",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "ObservacionEjemplar",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "SolicitudRegistro",
+      "field": "evidencias",
+      "target": "EvidenciaVinculacion",
+      "inverse": "solicitudRegistro",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "EvidenciaVinculacion",
+      "fields": [
+        "solicitudRegistroId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "SolicitudRegistro",
+      "field": "usuarioAprobado",
+      "target": "Usuario",
+      "inverse": "solicitudesAprobadas",
+      "name": "SolicitudAprobadaUsuario",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "SolicitudRegistro",
+      "fields": [
+        "usuarioAprobadoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "SolicitudRegistro",
+      "field": "auditorias",
+      "target": "AuditoriaUsuario",
+      "inverse": "solicitudRegistro",
+      "name": "AuditoriaSolicitud",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "AuditoriaUsuario",
+      "fields": [
+        "solicitudRegistroId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "EvidenciaVinculacion",
+      "field": "solicitudRegistro",
+      "target": "SolicitudRegistro",
+      "inverse": "evidencias",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "EvidenciaVinculacion",
+      "fields": [
+        "solicitudRegistroId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "solicitudesAprobadas",
+      "target": "SolicitudRegistro",
+      "inverse": "usuarioAprobado",
+      "name": "SolicitudAprobadaUsuario",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "SolicitudRegistro",
+      "fields": [
+        "usuarioAprobadoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "sanciones",
+      "target": "Sancion",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Sancion",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "prestamos",
+      "target": "Prestamo",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Prestamo",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "reservas",
+      "target": "Reserva",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Reserva",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "incumplimientos",
+      "target": "Incumplimiento",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "apelaciones",
+      "target": "Apelacion",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Apelacion",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "aceptacionesTerminos",
+      "target": "AceptacionTerminos",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "AceptacionTerminos",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "cuentaAcceso",
+      "target": "CuentaAcceso",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..1",
+      "owner": "CuentaAcceso",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "auditorias",
+      "target": "AuditoriaUsuario",
+      "inverse": "usuario",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "AuditoriaUsuario",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AuditoriaUsuario",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "auditorias",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "AuditoriaUsuario",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AuditoriaUsuario",
+      "field": "solicitudRegistro",
+      "target": "SolicitudRegistro",
+      "inverse": "auditorias",
+      "name": "AuditoriaSolicitud",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "AuditoriaUsuario",
+      "fields": [
+        "solicitudRegistroId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Sancion",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "sanciones",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Sancion",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Sancion",
+      "field": "incumplimiento",
+      "target": "Incumplimiento",
+      "inverse": "sancion",
+      "name": "IncumplimientoSancion",
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Sancion",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Sancion",
+      "field": "regla",
+      "target": "ReglaUso",
+      "inverse": "sanciones",
+      "name": "ReglaSanciones",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Sancion",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Sancion",
+      "field": "versionRegla",
+      "target": "VersionRegla",
+      "inverse": "sanciones",
+      "name": "VersionSanciones",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Sancion",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Sancion",
+      "field": "apelacion",
+      "target": "Apelacion",
+      "inverse": "sancion",
+      "name": "SancionApelacion",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Apelacion",
+      "fields": [
+        "sancionId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "prestamos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Prestamo",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
+      "field": "ejemplar",
+      "target": "Ejemplar",
+      "inverse": "prestamos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Prestamo",
+      "fields": [
+        "ejemplarId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
+      "field": "reserva",
+      "target": "Reserva",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Prestamo",
+      "fields": [
+        "reservaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
+      "field": "devolucion",
+      "target": "Devolucion",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..1",
+      "owner": "Devolucion",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Devolucion",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "devolucion",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "1",
+      "owner": "Devolucion",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "ReglaUso",
+      "field": "versiones",
+      "target": "VersionRegla",
+      "inverse": "regla",
+      "name": "ReglaVersiones",
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "VersionRegla",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "ReglaUso",
+      "field": "versionVigente",
+      "target": "VersionRegla",
+      "inverse": "reglaVigentePara",
+      "name": "ReglaVersionVigente",
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "ReglaUso",
+      "fields": [
+        "versionVigenteId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "ReglaUso",
+      "field": "incumplimientos",
+      "target": "Incumplimiento",
+      "inverse": "regla",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "ReglaUso",
+      "field": "sanciones",
+      "target": "Sancion",
+      "inverse": "regla",
+      "name": "ReglaSanciones",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Sancion",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionRegla",
+      "field": "regla",
+      "target": "ReglaUso",
+      "inverse": "versiones",
+      "name": "ReglaVersiones",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "VersionRegla",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionRegla",
+      "field": "reglaVigentePara",
+      "target": "ReglaUso",
+      "inverse": "versionVigente",
+      "name": "ReglaVersionVigente",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "ReglaUso",
+      "fields": [
+        "versionVigenteId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionRegla",
+      "field": "incumplimientos",
+      "target": "Incumplimiento",
+      "inverse": "versionRegla",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionRegla",
+      "field": "sanciones",
+      "target": "Sancion",
+      "inverse": "versionRegla",
+      "name": "VersionSanciones",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Sancion",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "incumplimientos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "regla",
+      "target": "ReglaUso",
+      "inverse": "incumplimientos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "reglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "versionRegla",
+      "target": "VersionRegla",
+      "inverse": "incumplimientos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "sancion",
+      "target": "Sancion",
+      "inverse": "incumplimiento",
+      "name": "IncumplimientoSancion",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Sancion",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "apelacion",
+      "target": "Apelacion",
+      "inverse": "incumplimiento",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..1",
+      "owner": "Apelacion",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Apelacion",
+      "field": "incumplimiento",
+      "target": "Incumplimiento",
+      "inverse": "apelacion",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "1",
+      "owner": "Apelacion",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Apelacion",
+      "field": "sancion",
+      "target": "Sancion",
+      "inverse": "apelacion",
+      "name": "SancionApelacion",
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Apelacion",
+      "fields": [
+        "sancionId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Apelacion",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "apelaciones",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "Apelacion",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Apelacion",
+      "field": "resueltaPor",
+      "target": "CuentaAcceso",
+      "inverse": "apelacionesResueltas",
+      "name": "CuentaResolutora",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Apelacion",
+      "fields": [
+        "resueltaPorCuentaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionTerminos",
+      "field": "aceptaciones",
+      "target": "AceptacionTerminos",
+      "inverse": "versionTerminos",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "AceptacionTerminos",
+      "fields": [
+        "versionTerminosId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AceptacionTerminos",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "aceptacionesTerminos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "AceptacionTerminos",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AceptacionTerminos",
+      "field": "versionTerminos",
+      "target": "VersionTerminos",
+      "inverse": "aceptaciones",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "AceptacionTerminos",
+      "fields": [
+        "versionTerminosId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "CuentaAcceso",
+      "field": "usuario",
+      "target": "Usuario",
+      "inverse": "cuentaAcceso",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "1",
+      "owner": "CuentaAcceso",
+      "fields": [
+        "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "CuentaAcceso",
+      "field": "apelacionesResueltas",
+      "target": "Apelacion",
+      "inverse": "resueltaPor",
+      "name": "CuentaResolutora",
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Apelacion",
+      "fields": [
+        "resueltaPorCuentaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "SetNull",
+      "onUpdate": "Cascade"
+    }
+  ]
+}

@@ -8,20 +8,22 @@ const navigation = [
   { path: '/project/sprints', label: 'Sprints' },
   { path: '/project/architecture', label: 'Arquitectura' },
   { path: '/project/api', label: 'API' },
+  { path: '/project/db', label: 'DB' },
+  { path: '/project/terms', label: 'T&C' },
   { path: '/project/team', label: 'Equipo' },
   { path: '/project/git', label: 'Git' },
 ]
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
-    <header class="border-b border-slate-200 bg-white">
-      <div class="mx-auto flex max-w-[1800px] items-center gap-4 px-5 py-3 lg:gap-8 lg:px-8 xl:grid xl:grid-cols-[1fr_auto_1fr]">
+  <div class="project-layout bg-slate-50 text-slate-900">
+    <header class="project-header border-b border-slate-200 bg-white">
+      <div class="project-header-inner mx-auto flex max-w-[1800px] flex-wrap items-center gap-4 px-5 py-3 lg:gap-8 lg:px-8 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         <div class="shrink-0">
           <RouterLink to="/project" class="text-lg font-bold tracking-tight text-slate-900">CS Préstamos</RouterLink>
           <p class="text-xs font-medium uppercase tracking-[0.18em] text-blue-700">Project Showcase</p>
         </div>
-        <nav aria-label="Secciones del proyecto" class="flex min-w-0 flex-1 items-center justify-start gap-1 overflow-x-auto lg:justify-center">
+        <nav aria-label="Secciones del proyecto" class="project-navigation flex min-w-0 flex-1 flex-wrap items-center justify-start gap-1 lg:justify-center">
           <RouterLink
             v-for="item in navigation"
             :key="item.path"
@@ -40,9 +42,22 @@ const navigation = [
       </div>
     </header>
 
-    <main class="mx-auto px-5 py-10 lg:px-8" :class="route.path === '/project/architecture' ? 'max-w-[1600px]' : 'max-w-7xl'">
+    <main class="project-content mx-auto px-5 py-10 lg:px-8" :class="route.path === '/project/architecture' ? 'max-w-[1600px]' : 'max-w-7xl'">
       <RouterView />
     </main>
 
   </div>
 </template>
+
+<style scoped>
+/* Contenedor propio: ningún selector global ni modificación del ancestro compartido. */
+.project-layout { position: fixed; inset: 0; overflow: auto; overscroll-behavior: contain; }
+.project-header { position: sticky; top: 0; z-index: 40; }
+.project-content { min-width: 0; overflow-wrap: anywhere; }
+.project-content :deep(pre) { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .project-header-inner { gap: .5rem; justify-content: space-between; }
+  .project-navigation { order: 3; flex-basis: 100%; }
+  .project-navigation a { padding: .4rem .6rem; }
+}
+</style>

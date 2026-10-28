@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import AccessBadge from '../components/AccessBadge.vue'
+import { schemaPresenter } from '../services/openApiPresentation'
 import EmptyState from '../components/EmptyState.vue'
 import { useGeneratedData } from '../composables/useGeneratedData'
 import { projectDocumentation } from '../services/projectDocumentation'
-import type { OpenApiOperation, OpenApiSchema } from '../types'
+import type { OpenApiOperation } from '../types'
 
 type ImplementationStatus = 'implemented' | 'pending'
 type Endpoint = OpenApiOperation & {
@@ -27,7 +29,7 @@ const endpoints = computed<Endpoint[]>(() =>
         path,
         method: method.toUpperCase(),
         module: operation.tags?.[0] ?? 'Sin módulo',
-        status: operation['x-implementation-status'] === 'implemented' ? 'implemented' : 'pending',
+        status: operation['x-implementation-status'] === 'pending' ? 'pending' : 'implemented',
       })),
   ),
 )
@@ -49,72 +51,10 @@ const groups = computed(() => modules.value
   .map((module) => ({ module, endpoints: visibleEndpoints.value.filter((endpoint) => endpoint.module === module) }))
   .filter((group) => group.endpoints.length > 0))
 
-function resolveSchema(schema?: OpenApiSchema): OpenApiSchema | undefined {
-  if (!schema?.$ref) return schema
-  const name = schema.$ref.split('/').at(-1)
-  return name ? api.value?.components?.schemas?.[name] : undefined
-}
-
-function schemaLabel(schema?: OpenApiSchema): string {
-  if (!schema) return 'sin tipo especificado'
-  if (schema.enum?.length) return schema.enum.join(' | ')
-  if (schema.type === 'array') return `${schemaLabel(schema.items)}[]`
-  return schema.format ? `${schema.type ?? 'string'} (${schema.format})` : schema.type ?? 'sin tipo especificado'
-}
-
+const { resolveSchema, schemaLabel, mediaExamples, responseExamples } = schemaPresenter(() => api.value)
 function requestFields(endpoint: Endpoint) {
   const schema = resolveSchema(endpoint.requestBody?.content?.['application/json']?.schema)
-  return Object.entries(schema?.properties ?? {}).map(([name, property]) => ({
-    name,
-    type: schemaLabel(property),
-    required: schema?.required?.includes(name) ?? false,
-  }))
-}
-
-function exampleFromSchema(schema?: OpenApiSchema): unknown {
-  if (!schema) return undefined
-  if (schema.example !== undefined) return schema.example
-  if (schema.$ref) return exampleFromSchema(resolveSchema(schema))
-  if (schema.allOf?.length) {
-    const examples = schema.allOf.map((part) => exampleFromSchema(part)).filter((value) => value !== undefined)
-    return examples.length ? Object.assign({}, ...examples) : undefined
-  }
-  if (schema.enum?.length) return schema.enum[0]
-  if (schema.type === 'array') {
-    const item = exampleFromSchema(schema.items)
-    return item === undefined ? undefined : [item]
-  }
-  if (schema.type === 'object' || schema.properties) {
-    const entries = Object.entries(schema.properties ?? {})
-      .map(([name, property]) => [name, exampleFromSchema(property)])
-      .filter(([, value]) => value !== undefined)
-    return entries.length ? Object.fromEntries(entries) : undefined
-  }
-  return undefined
-}
-
-function mediaExample(content?: Record<string, { schema?: OpenApiSchema; example?: unknown; examples?: Record<string, { value?: unknown }> }>) {
-  if (!content) return undefined
-  const entry = content['application/json']
-    ? ['application/json', content['application/json']] as const
-    : Object.entries(content)[0]
-  if (!entry) return undefined
-  const [mediaType, media] = entry
-  const namedExample = Object.values(media.examples ?? {}).find((example) => example.value !== undefined)?.value
-  const value = media.example !== undefined
-    ? media.example
-    : namedExample !== undefined ? namedExample : exampleFromSchema(media.schema)
-  return value === undefined ? undefined : {
-    mediaType,
-    body: mediaType === 'application/json' ? JSON.stringify(value, null, 2) : String(value),
-  }
-}
-
-function responseExamples(endpoint: Endpoint) {
-  return Object.entries(endpoint.responses ?? {}).flatMap(([status, response]) => {
-    const example = mediaExample(response.content)
-    return example ? [{ status, ...example }] : []
-  })
+  return Object.entries(schema?.properties ?? {}).map(([name, property]) => ({ name, type: schemaLabel(property), required: schema?.required?.includes(name) ?? false }))
 }
 </script>
 
@@ -163,8 +103,11 @@ function responseExamples(endpoint: Endpoint) {
             <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3">
               <span class="rounded-md bg-blue-100 px-2 py-1 font-mono text-xs font-bold text-blue-800">{{ endpoint.method }}</span>
               <code class="min-w-0 flex-1 break-all text-sm font-semibold text-slate-900">{{ endpoint.path }}</code>
+              <span class="inline-flex max-w-full items-center gap-2">
               <span :class="endpoint.status === 'implemented' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'" class="rounded-full px-3 py-1 text-xs font-medium">
                 {{ endpoint.status === 'implemented' ? 'Implementado en código' : 'Pendiente' }}
+              </span>
+              <AccessBadge :operation="endpoint" />
               </span>
             </summary>
 
@@ -188,20 +131,27 @@ function responseExamples(endpoint: Endpoint) {
                   </li>
                 </ul>
                 <p v-else class="mt-1 text-slate-500">Esquema no especificado.</p>
-                <div v-if="mediaExample(endpoint.requestBody.content)" class="mt-3">
+                <div v-if="mediaExamples(endpoint.requestBody.content)[0]" class="mt-3">
                   <p class="font-medium text-slate-900">JSON de envío orientativo · sustituye los datos antes de enviarlo</p>
-                  <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ mediaExample(endpoint.requestBody.content)?.body }}</code></pre>
+                  <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ mediaExamples(endpoint.requestBody.content)[0]?.body }}</code></pre>
                 </div>
               </div>
 
               <p v-if="endpoint.responses">Códigos de respuesta declarados: {{ Object.keys(endpoint.responses).join(', ') }}</p>
               <div v-for="example in responseExamples(endpoint)" :key="`${example.status}:${example.mediaType}`">
-                <p class="font-medium text-slate-900">Respuesta {{ example.status }} · ejemplo ilustrativo ({{ example.mediaType }})</p>
-                <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ example.body }}</code></pre>
+                <p class="font-medium text-slate-900">Respuesta {{ example.status }}<span v-if="example.mediaType"> · {{ example.mediaType }}</span></p>
+                <p v-if="example.description">{{ example.description }}</p>
+                <p v-if="example.noBody" class="text-slate-500">Sin cuerpo de respuesta.</p>
+                <template v-else>
+                  <p v-if="example.body !== undefined" class="mt-2">Ejemplo ilustrativo, no datos reales:</p>
+                  <pre v-if="example.body !== undefined" class="mt-2 max-w-full overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100"><code>{{ example.body }}</code></pre>
+                  <details v-if="example.schema" class="mt-2">
+                    <summary class="cursor-pointer font-medium">Esquema de respuesta (incluye referencias y campos anidados)</summary>
+                    <pre class="mt-2 max-w-full overflow-x-auto rounded-lg bg-slate-100 p-4 text-xs"><code>{{ example.schema }}</code></pre>
+                  </details>
+                  <p v-else class="text-slate-500">Este medio no declara un esquema.</p>
+                </template>
               </div>
-              <p v-if="endpoint.responses && !responseExamples(endpoint).length" class="text-slate-500">
-                La forma de la respuesta aún no está documentada.
-              </p>
             </div>
           </details>
         </div>

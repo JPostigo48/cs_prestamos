@@ -3,10 +3,29 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { parseContract } from './project-db.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const output = join(root, 'frontend/public/generated/project')
+function generateDb() {
+  const database = parseContract(readFileSync(join(root, 'backend/prisma/contract.prisma'), 'utf8'))
+  mkdirSync(output, { recursive: true })
+  writeFileSync(join(output, 'db.json'), `${JSON.stringify(database, null, 2)}\n`)
+  process.stdout.write(`Project DB: ${database.models.length} modelos, ${database.enums.length} enums, ${database.relations.length} direcciones de relación.\n`)
+}
+if (process.argv.includes('--db-only')) {
+  generateDb()
+  process.exit(0)
+}
+// Actualización focalizada: sin diagramas, planificación ni archivos personales.
+if (process.argv.includes('--openapi-only')) {
+  mkdirSync(output, { recursive: true })
+  writeFileSync(join(output, 'openapi.json'), readFileSync(join(root, 'backend/openapi.json')))
+  process.stdout.write('Project Showcase: OpenAPI sincronizado.\n')
+  process.exit(0)
+}
 const diagramOutput = join(output, 'diagrams')
+generateDb()
 mkdirSync(diagramOutput, { recursive: true })
 
 function read(path) {
