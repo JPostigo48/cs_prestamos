@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill';
+import type { PublicTerms } from '../../../domain/entities/public-terms.js';
+import {
+  termsPolicyManifest,
+  projectPublicPolicy,
+} from '../../../domain/public-terms-policy.js';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type {
   TermsAcceptance,
@@ -15,33 +20,144 @@ import {
 export class PrismaTermsRepository implements TermsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private runtime() { return this.prisma.client.runtime(); }
+  async readPublicVersion(versionId?: string): Promise<PublicTerms | null> {
+    const sql = this.prisma.sql.public;
+    let query = sql.versiones_terminos.select(
+      'id',
+      'numero',
+      'titulo',
+      'contenido',
+      'createdAt',
+    );
+    if (versionId) query = query.where((r, f) => f.eq(r.id, versionId));
+    const rows = await this.runtime().query(query.build());
+    // El contrato no tiene fechas de vigencia programada: mayor número publicado,
+    // igual que elegibilidad. Desempate estable, incluso ante datos inválidos antiguos.
+    const row = rows.sort(
+      (a, b) => b.numero - a.numero || a.id.localeCompare(b.id),
+    )[0];
+    if (!row) return null;
+    const terms = this.mapVersion(row);
+    const manifest = termsPolicyManifest(terms);
+    const publishedAt = row.createdAt
+      ? new Date(row.createdAt.epochMilliseconds).toISOString()
+      : null;
+    if (!manifest)
+      return {
+        ...terms,
+        publishedAt,
+        policiesStatus: 'UNAVAILABLE',
+        policies: [],
+      };
+    const policies: PublicTerms['policies'] = [];
+    const versions = await this.runtime().query(
+      sql.versiones_regla
+        .select(
+          'id',
+          'reglaId',
+          'numero',
+          'titulo',
+          'descripcion',
+          'penalizacionPorcentual',
+          'consecuencia',
+          'tipoSuspension',
+          'diasSuspension',
+        )
+        .build(),
+    );
+    const byId = new Map(versions.map((version) => [version.id, version]));
+    for (const id of manifest.ids) {
+      const version = byId.get(id);
+      const policy = version && projectPublicPolicy(version, manifest.legacy);
+      if (policy) policies.push(policy);
+    }
+    return {
+      ...terms,
+      publishedAt,
+      policiesStatus:
+        policies.length === manifest.ids.length ? 'COMPLETE' : 'INCOMPLETE',
+      policies,
+    };
+  }
+
+  private runtime() {
+    return this.prisma.client.runtime();
+  }
   private mapVersion(row: any): TermsVersion {
-    return { id: row.id, number: row.numero, title: row.titulo, content: row.contenido };
+    return {
+      id: row.id,
+      number: row.numero,
+      title: row.titulo,
+      content: row.contenido,
+    };
   }
   async createVersion(data: CreateTermsVersionData): Promise<TermsVersion> {
-    const rows = await this.runtime().query(this.prisma.sql.public.versiones_terminos.insert([{ numero: data.number, titulo: data.title ?? null, contenido: data.content ?? null }]).returning('id','numero','titulo','contenido').build());
+    const rows = await this.runtime().query(
+      this.prisma.sql.public.versiones_terminos
+        .insert([
+          {
+            numero: data.number,
+            titulo: data.title ?? null,
+            contenido: data.content ?? null,
+          },
+        ])
+        .returning('id', 'numero', 'titulo', 'contenido')
+        .build(),
+    );
     return this.mapVersion(rows[0]);
   }
 
   async findVersionById(versionId: string): Promise<TermsVersion | null> {
-    const rows = await this.runtime().query(this.prisma.sql.public.versiones_terminos.select('id','numero','titulo','contenido').where((r, f) => f.eq(r.id, versionId)).limit(1).build());
+    const rows = await this.runtime().query(
+      this.prisma.sql.public.versiones_terminos
+        .select('id', 'numero', 'titulo', 'contenido')
+        .where((r, f) => f.eq(r.id, versionId))
+        .limit(1)
+        .build(),
+    );
     return rows[0] ? this.mapVersion(rows[0]) : null;
   }
 
   async accept(data: AcceptTermsVersionData): Promise<TermsAcceptance> {
     try {
-      const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.insert([{ usuarioId: data.userId, versionTerminosId: data.termsVersionId, fecha: Temporal.Instant.from(data.acceptedAt.toISOString()) }]).returning('id','usuarioId','versionTerminosId','fecha').build());
-      return { id: rows[0].id, userId: rows[0].usuarioId, termsVersionId: rows[0].versionTerminosId, acceptedAt: new Date(rows[0].fecha.epochMilliseconds) };
+      const rows = await this.runtime().query(
+        this.prisma.sql.public.aceptaciones_terminos
+          .insert([
+            {
+              usuarioId: data.userId,
+              versionTerminosId: data.termsVersionId,
+              fecha: Temporal.Instant.from(data.acceptedAt.toISOString()),
+            },
+          ])
+          .returning('id', 'usuarioId', 'versionTerminosId', 'fecha')
+          .build(),
+      );
+      return {
+        id: rows[0].id,
+        userId: rows[0].usuarioId,
+        termsVersionId: rows[0].versionTerminosId,
+        acceptedAt: new Date(rows[0].fecha.epochMilliseconds),
+      };
     } catch (error) {
-      if (String(error).toLowerCase().includes('unique')) throw new Error('Los términos ya fueron aceptados.');
+      if (String(error).toLowerCase().includes('unique'))
+        throw new Error('Los términos ya fueron aceptados.');
       throw error;
     }
   }
 
   async findAcceptancesByUserId(userId: string): Promise<TermsAcceptance[]> {
-    const rows = await this.runtime().query(this.prisma.sql.public.aceptaciones_terminos.select('id','usuarioId','versionTerminosId','fecha').where((r, f) => f.eq(r.usuarioId, userId)).build());
-    return rows.map((r: any) => ({ id: r.id, userId: r.usuarioId, termsVersionId: r.versionTerminosId, acceptedAt: new Date(r.fecha.epochMilliseconds) }));
+    const rows = await this.runtime().query(
+      this.prisma.sql.public.aceptaciones_terminos
+        .select('id', 'usuarioId', 'versionTerminosId', 'fecha')
+        .where((r, f) => f.eq(r.usuarioId, userId))
+        .build(),
+    );
+    return rows.map((r: any) => ({
+      id: r.id,
+      userId: r.usuarioId,
+      termsVersionId: r.versionTerminosId,
+      acceptedAt: new Date(r.fecha.epochMilliseconds),
+    }));
   }
 
   async hasAcceptedCurrentVersion(userId: string): Promise<boolean> {

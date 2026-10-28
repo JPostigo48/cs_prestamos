@@ -56,7 +56,9 @@ export class PrismaRuleRepository implements RuleRepository {
   }
 
   async findActiveVersions(): Promise<RuleVersion[]> {
+    const rules = await this.runtime().query(this.prisma.sql.public.reglas_uso.select('versionVigenteId').build());
+    const currentIds = new Set(rules.map((rule) => rule.versionVigenteId));
     const rows = await this.runtime().query(this.prisma.sql.public.versiones_regla.select('id','reglaId','numero','titulo','descripcion','penalizacionPorcentual','consecuencia','tipoSuspension','diasSuspension','estado').where((r, f) => f.eq(r.estado, 'ACTIVA')).build());
-    return rows.map((r: any) => this.version(r));
+    return rows.filter((row) => currentIds.has(row.id)).map((r: any) => this.version(r));
   }
 }

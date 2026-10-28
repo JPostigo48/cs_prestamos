@@ -1,5 +1,26 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
-import { ApiExtension, ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiHttpErrors } from '../../../../shared/presentation/openapi/api-http-errors.decorator.js';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiExtension,
+  ApiOperation,
+  ApiBody,
+  ApiTags,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import {
+  UsageRuleResponseDto,
+  RuleVersionResponseDto,
+} from '../dto/rules-response.dto.js';
 import { CreateRuleUseCase } from '../../application/use-cases/create-rule.use-case.js';
 import { ListActiveRulesUseCase } from '../../application/use-cases/list-active-rules.use-case.js';
 import { SetRuleStatusUseCase } from '../../application/use-cases/set-rule-status.use-case.js';
@@ -26,7 +47,9 @@ export class RulesController {
     private readonly listActiveRules: ListActiveRulesUseCase,
   ) {}
 
+  @ApiHttpErrors(400)
   @Post()
+  @ApiCreatedResponse({ type: UsageRuleResponseDto })
   @ApiBody({ type: CreateRuleDto })
   @ApiOperation({ summary: 'Registrar regla de uso' })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -34,7 +57,9 @@ export class RulesController {
     return this.createRule.execute(input);
   }
 
+  @ApiHttpErrors(400)
   @Put(':ruleId')
+  @ApiOkResponse({ type: RuleVersionResponseDto })
   @ApiBody({ type: UpdateRuleDto })
   @ApiOperation({ summary: 'Modificar regla de uso' })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -50,7 +75,9 @@ export class RulesController {
     });
   }
 
+  @ApiHttpErrors(400)
   @Patch(':ruleId/status')
+  @ApiOkResponse({ type: RuleVersionResponseDto })
   @ApiBody({ type: SetRuleStatusDto })
   @ApiOperation({ summary: 'Cambiar estado de una regla' })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -59,6 +86,7 @@ export class RulesController {
   }
 
   @Get('active')
+  @ApiOkResponse({ type: [RuleVersionResponseDto] })
   @ApiOperation({ summary: 'Consultar reglas vigentes' })
   @ApiExtension('x-implementation-status', 'implemented')
   listActive() {

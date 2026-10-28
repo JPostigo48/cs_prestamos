@@ -1,4 +1,5 @@
 import type { TermsAcceptance, TermsVersion } from '../entities/terms.js';
+import type { PublicTerms } from '../entities/public-terms.js';
 
 export interface CreateTermsVersionData {
   number: number;
@@ -13,6 +14,7 @@ export interface AcceptTermsVersionData {
 }
 
 export abstract class TermsRepository {
+  abstract readPublicVersion(versionId?: string): Promise<PublicTerms | null>;
   abstract createVersion(data: CreateTermsVersionData): Promise<TermsVersion>;
   abstract findVersionById(versionId: string): Promise<TermsVersion | null>;
   abstract accept(data: AcceptTermsVersionData): Promise<TermsAcceptance>;

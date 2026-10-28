@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ReadPublicTermsUseCase } from './application/use-cases/read-public-terms.use-case.js';
+import { PublicTermsController } from './presentation/controllers/public-terms.controller.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { AcceptTermsVersionUseCase } from './application/use-cases/accept-terms-version.use-case.js';
 import { CreateRuleUseCase } from './application/use-cases/create-rule.use-case.js';
@@ -23,6 +25,7 @@ import { TermsController } from './presentation/controllers/terms.controller.js'
 import { ViolationsController } from './presentation/controllers/violations.controller.js';
 
 const useCases = [
+  ReadPublicTermsUseCase,
   CreateRuleUseCase,
   UpdateRuleUseCase,
   SetRuleStatusUseCase,
@@ -37,7 +40,12 @@ const useCases = [
 
 @Module({
   imports: [AuthModule],
-  controllers: [RulesController, ViolationsController, TermsController],
+  controllers: [
+    RulesController,
+    ViolationsController,
+    TermsController,
+    PublicTermsController,
+  ],
   providers: [
     ...useCases,
     {

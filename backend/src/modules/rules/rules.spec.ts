@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+vi.mock('dotenv/config', () => ({}));
 import { AppealStatus } from './domain/entities/appeal.js';
 import { RegisterViolationUseCase } from './application/use-cases/register-violation.use-case.js';
 import { SubmitAppealUseCase } from './application/use-cases/submit-appeal.use-case.js';

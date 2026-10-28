@@ -1,5 +1,24 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiExtension, ApiOperation, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiHttpErrors } from '../../../../shared/presentation/openapi/api-http-errors.decorator.js';
+import {
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiExtension,
+  ApiOperation,
+  ApiBody,
+  ApiTags,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import {
+  ViolationResponseDto,
+  AppealResponseDto,
+} from '../dto/rules-response.dto.js';
 import { RegisterViolationUseCase } from '../../application/use-cases/register-violation.use-case.js';
 import { ResolveAppealUseCase } from '../../application/use-cases/resolve-appeal.use-case.js';
 import { SubmitAppealUseCase } from '../../application/use-cases/submit-appeal.use-case.js';
@@ -25,7 +44,9 @@ export class ViolationsController {
     private readonly resolveAppeal: ResolveAppealUseCase,
   ) {}
 
+  @ApiHttpErrors(400, 404, 409)
   @Post('violations')
+  @ApiCreatedResponse({ type: ViolationResponseDto })
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiBody({ type: RegisterViolationDto })
@@ -35,7 +56,12 @@ export class ViolationsController {
     return this.registerViolation.execute(input);
   }
 
+  @ApiHttpErrors(400, 404, 409)
   @Post('sanctions/:sanctionId/appeals')
+  @ApiCreatedResponse({
+    type: AppealResponseDto,
+    description: 'Solo admite sanciones del usuario autenticado.',
+  })
   @ApiBody({ type: SubmitAppealDto })
   @ApiOperation({ summary: 'Presentar apelación de una sanción' })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -51,7 +77,9 @@ export class ViolationsController {
     });
   }
 
+  @ApiHttpErrors(400, 404, 409)
   @Patch('appeals/:appealId/resolution')
+  @ApiOkResponse({ type: AppealResponseDto })
   @UseGuards(RolesGuard)
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: ResolveAppealDto })

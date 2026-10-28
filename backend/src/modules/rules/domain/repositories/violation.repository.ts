@@ -7,6 +7,7 @@ export interface RegisterViolationData {
   ruleVersionId: string;
   occurredAt: Date;
   configuredPenalty: number;
+  trustEffect?: 'DISCOUNT' | 'SET_ZERO';
   suspensionType: SuspensionType;
   suspensionDays: number | null;
 }

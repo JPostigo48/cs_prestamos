@@ -19,7 +19,7 @@ El nivel se **deriva** del porcentaje; no debe introducirse una segunda fuente d
 
 ## Acceso permitido según categoría
 
-Cada categoría guarda explícitamente los niveles a los que permite acceder. Configuración inicial aprobada:
+Cada categoría guarda explícitamente los niveles a los que permite acceder. Configuración inicial vigente para desarrollo, conforme a [términos y condiciones](terms-and-conditions.md#3-categorías-duración-y-acceso), sin acreditar aprobación institucional externa:
 
 | Categoría | Excelente | Confiable | En observación | Crítico |
 | --- | :---: | :---: | :---: | :---: |
@@ -39,7 +39,7 @@ Una devolución **puntual, completa y sin daño o incidencia** recompensa al usu
 | Libros | 10 puntos | **+1 punto** |
 | Deportes | 10 puntos | **+1 punto** |
 
-La penalización de referencia queda **persistida por categoría/política** y puede variar mediante una versión posterior. Los importes 30/10/10 corresponden a las sanciones de referencia de la maqueta aceptadas como base. No debe confundirse «10 % de la penalización» con «recuperar el 10 % de la confianza que le quede al usuario».
+La penalización de referencia debe quedar **persistida por categoría/política** y puede variar mediante una versión posterior. La fuente normativa es [términos y condiciones, sección 9](terms-and-conditions.md#9-recompensa-por-devolución-puntual-y-sin-faltas), no la maqueta. No debe confundirse «10 % de la penalización» con «recuperar el 10 % de la confianza que le quede al usuario».
 
 - Si hubo tardanza, daño, falta de piezas, pérdida o robo, **no hay recompensa** por esa devolución.
 - Si existe un único préstamo devuelto correctamente, se aplica una sola recompensa; no se recompensa una mera reserva cancelada.

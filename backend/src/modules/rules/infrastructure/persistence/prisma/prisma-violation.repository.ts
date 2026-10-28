@@ -26,7 +26,9 @@ export class PrismaViolationRepository implements ViolationRepository {
       const user = users[0];
       if (!user) throw new NotFoundException('Usuario no encontrado.');
       const previousTrust = Number(user.confianza);
-      const { appliedPenalty, resultingTrust } = calculateTrustPenalty(previousTrust, data.configuredPenalty);
+      const { appliedPenalty, resultingTrust } = calculateTrustPenalty(
+        previousTrust, data.trustEffect === 'SET_ZERO' ? previousTrust : data.configuredPenalty,
+      );
       const updated = await tx.query(this.prisma.sql.public.usuarios
         .update({ confianza: resultingTrust.toFixed(2) })
         .where((row, fns) => fns.eq(row.id, data.userId))
