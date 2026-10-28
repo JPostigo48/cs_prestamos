@@ -1,3 +1,4 @@
+import { ApiHttpErrors } from '../../../../shared/presentation/openapi/api-http-errors.decorator.js';
 import {
   Body,
   Controller,
@@ -8,14 +9,28 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiExtension, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExtension,
+  ApiBody,
+  ApiOperation,
+  ApiTags,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import {
+  AccessAccountResponseDto,
+  AuthenticationResponseDto,
+} from '../dto/auth-response.dto.js';
 import { AuthenticateAccountUseCase } from '../../application/use-cases/authenticate-account.use-case.js';
 import { GetAccessAccountUseCase } from '../../application/use-cases/get-access-account.use-case.js';
 import { RegisterAccessAccountUseCase } from '../../application/use-cases/register-access-account.use-case.js';
 import { AuthenticateAccountDto } from '../dto/authenticate-account.dto.js';
 import { RegisterAccessAccountDto } from '../dto/register-access-account.dto.js';
 import { JwtPort } from '../../application/ports/jwt.port.js';
-import { AccessRole, type AccessAccount } from '../../domain/entities/access-account.js';
+import {
+  AccessRole,
+  type AccessAccount,
+} from '../../domain/entities/access-account.js';
 import { AuthGuard } from '../guards/auth.guard.js';
 import { CurrentUser } from '../decorators/current-user.decorator.js';
 import type { AuthenticatedIdentity } from '../../application/ports/auth.inputs.js';
@@ -34,7 +49,9 @@ function configuredExpiresIn(): number {
   const match = /^(\d+)(s|m|h|d)?$/.exec(value);
   if (!match) return 3600;
   const multipliers = { s: 1, m: 60, h: 3600, d: 86400 };
-  return Number(match[1]) * (multipliers[match[2] as keyof typeof multipliers] ?? 1);
+  return (
+    Number(match[1]) * (multipliers[match[2] as keyof typeof multipliers] ?? 1)
+  );
 }
 @ApiTags('Autenticación')
 @Controller('auth')
@@ -47,17 +64,23 @@ export class AuthController {
     private readonly updateAccount: UpdateAccessAccountUseCase,
   ) {}
 
+  @ApiHttpErrors(400, 403, 404, 409)
   @Post('accounts')
+  @ApiCreatedResponse({ type: AccessAccountResponseDto })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: RegisterAccessAccountDto })
-  @ApiOperation({ summary: 'Registrar cuenta de acceso para un usuario aprobado' })
+  @ApiOperation({
+    summary: 'Registrar cuenta de acceso para un usuario aprobado',
+  })
   @ApiExtension('x-implementation-status', 'implemented')
   register(@Body() input: RegisterAccessAccountDto) {
     return this.registerAccount.execute(input).then(safeAccount);
   }
 
+  @ApiHttpErrors(400, 401, 404)
   @Post('authenticate')
+  @ApiCreatedResponse({ type: AuthenticationResponseDto })
   @ApiBody({ type: AuthenticateAccountDto })
   @ApiOperation({ summary: 'Autenticar cuenta de acceso' })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -75,7 +98,13 @@ export class AuthController {
     }));
   }
 
+  @ApiHttpErrors(403, 404)
   @Get('accounts/:accountId')
+  @ApiOkResponse({
+    type: AccessAccountResponseDto,
+    description:
+      'Cuenta propia o consultada por un administrador; nunca incluye el hash de contraseña.',
+  })
   @ApiOperation({ summary: 'Consultar cuenta de acceso' })
   @UseGuards(AuthGuard, RolesGuard)
   @ApiExtension('x-implementation-status', 'implemented')
@@ -83,16 +112,18 @@ export class AuthController {
     @Param('accountId') accountId: string,
     @CurrentUser() identity: AuthenticatedIdentity,
   ) {
-    if (
-      identity.accountId !== accountId &&
-      identity.role !== 'ADMINISTRADOR'
-    ) {
-      throw new ForbiddenException('No tiene permisos para consultar esta cuenta.');
+    if (identity.accountId !== accountId && identity.role !== 'ADMINISTRADOR') {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta cuenta.',
+      );
     }
     return this.getAccount.execute({ accountId }).then(safeAccount);
   }
 
+  @ApiHttpErrors(400, 404)
   @Patch('accounts/:accountId')
+  @ApiBody({ type: UpdateAccessAccountDto })
+  @ApiOkResponse({ type: AccessAccountResponseDto })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiExtension('x-implementation-status', 'implemented')

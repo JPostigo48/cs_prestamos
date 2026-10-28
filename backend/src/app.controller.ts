@@ -1,6 +1,12 @@
 import { Controller, Get, InternalServerErrorException } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiExtension, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiExtension,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PrismaService } from './shared/infrastructure/prisma/prisma.service.js';
+import { ApiHttpErrors } from './shared/presentation/openapi/api-http-errors.decorator.js';
 
 @ApiTags('Sistema')
 @Controller()
@@ -22,6 +28,7 @@ export class AppController {
   }
 
   @Get('health/database')
+  @ApiHttpErrors(500)
   @ApiOperation({ summary: 'Comprobar conexión con PostgreSQL' })
   @ApiOkResponse({
     schema: {
