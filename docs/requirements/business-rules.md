@@ -75,7 +75,7 @@ Las reglas de negocio expresan invariantes y restricciones del sistema de prést
 | RN-40 | Daño grave de electrónico también establece confianza en **0 %** y bloqueo indefinido hasta resolución interna o absolución. |
 | RN-41 | Las **faltas diferentes** se registran y sus descuentos y días de suspensión **se acumulan**; las suspensiones temporales se encadenan, sin solaparse. |
 | RN-42 | Los cálculos se limitan a [0, 100] y registran por separado el importe configurado y el **descuento efectivamente aplicado**, para trazabilidad y posible restitución. |
-| RN-43 | Una misma reserva cancelada por inasistencia no genera sanciones repetidas aunque el proceso automático se ejecute varias veces. |
+| RN-43 | Una misma reserva VENCIDA por inasistencia no genera sanciones repetidas aunque el proceso automático se ejecute varias veces. La cancelación válida o administrativa no genera inasistencia. |
 | RN-44 | Los términos se aceptan al registrarse; al publicarse una nueva versión, el usuario debe aceptarla antes de cualquier otra reserva o préstamo, aunque pueda seguir consultando sus datos. |
 | RN-45 | Un recurso que ya aparece en el historial de préstamos **se desactiva**, no se elimina físicamente junto con sus referencias. |
 | RN-46 | Las notificaciones se consultan **dentro de la aplicación**; no se establece en esta versión envío mediante correo, SMS u otros medios externos. |
