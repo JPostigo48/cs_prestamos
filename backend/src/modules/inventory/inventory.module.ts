@@ -3,8 +3,10 @@ import { InventoryService } from './application/use-cases/inventory.service.js';
 import { InventoryRepository } from './domain/repositories/inventory.repository.js';
 import { PrismaInventoryRepository } from './infrastructure/persistence/prisma/prisma-inventory.repository.js';
 import { InventoryController } from './presentation/controllers/inventory.controller.js';
+import { SecurityModule } from '../auth/security.module.js';
 
 @Module({
+  imports: [SecurityModule],
   controllers: [InventoryController],
   providers: [
     InventoryService,

@@ -4,8 +4,24 @@ import type {
   User,
   UserTrustProfile,
 } from '../entities/user.js';
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+
+export type ManagedUserData = Pick<
+  User,
+  'name' | 'userType' | 'institutionalId' | 'hasCurrentAffiliation'
+>;
 
 export abstract class UserRepository {
+  abstract createManaged(
+    data: ManagedUserData,
+    actor: AuditActor,
+  ): Promise<User>;
+  abstract updateManaged(
+    userId: string,
+    data: Partial<ManagedUserData>,
+    actor: AuditActor,
+    action?: string,
+  ): Promise<User>;
   abstract save(user: User): Promise<User>;
   abstract findById(userId: string): Promise<User | null>;
   abstract findByInstitutionalId(institutionalId: string): Promise<User | null>;

@@ -17,8 +17,10 @@ import { PrismaUserRepository } from './infrastructure/persistence/prisma/prisma
 import { RegistrationRequestsController } from './presentation/controllers/registration-requests.controller.js';
 import { UsersController } from './presentation/controllers/users.controller.js';
 import { SecurityModule } from '../auth/security.module.js';
+import { ManageUsersUseCase } from './application/use-cases/manage-users.use-case.js';
 
 const useCases = [
+  ManageUsersUseCase,
   SubmitRegistrationRequestUseCase,
   GetRegistrationRequestUseCase,
   ApproveRegistrationRequestUseCase,
@@ -46,9 +48,6 @@ const useCases = [
       useClass: PrismaUserRepository,
     },
   ],
-  exports: [
-    GetUserUseCase,
-    GetUserLoanEligibilityUseCase,
-  ],
+  exports: [GetUserUseCase, GetUserLoanEligibilityUseCase],
 })
 export class UsersModule {}

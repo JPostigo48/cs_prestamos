@@ -4,7 +4,10 @@ import { PrismaInventoryRepository } from './prisma-inventory.repository.js';
 describe('PrismaInventoryRepository', () => {
   const query = { sql: 'QUERY' };
   let repository: PrismaInventoryRepository;
-  let runtime: { query: ReturnType<typeof vi.fn>; execute: ReturnType<typeof vi.fn> };
+  let runtime: {
+    query: ReturnType<typeof vi.fn>;
+    execute: ReturnType<typeof vi.fn>;
+  };
   let builders: Record<string, any>;
   let prisma: any;
 
@@ -36,45 +39,176 @@ describe('PrismaInventoryRepository', () => {
           recursos: table('recursos'),
           ejemplares: table('ejemplares'),
           observaciones_ejemplar: table('observaciones_ejemplar'),
+          prestamos: table('prestamos'),
+          reservas: table('reservas'),
         },
       },
-      client: { runtime: vi.fn().mockReturnValue(runtime) },
+      client: {
+        runtime: vi.fn().mockReturnValue(runtime),
+        transaction: vi.fn((work) => work(runtime)),
+      },
     };
     repository = new PrismaInventoryRepository(prisma);
   });
 
   it.each([
-    ['createCategory', () => repository.createCategory({ nombre: 'Libros', tiempoMaximoPrestamoDias: 14 }), 'categorias_recurso', 'insert', 'query'],
-    ['findCategoryById', () => repository.findCategoryById('cat-1'), 'categorias_recurso', 'select', 'query'],
-    ['updateCategory', () => repository.updateCategory('cat-1', { nombre: 'Nuevo' }), 'categorias_recurso', 'update', 'query'],
-    ['countResourcesByCategory', () => repository.countResourcesByCategory('cat-1'), 'recursos', 'select', 'query'],
-    ['createResource', () => repository.createResource({ categoriaId: 'cat-1', nombre: 'Libro' }), 'recursos', 'insert', 'query'],
-    ['findResourceById', () => repository.findResourceById('resource-1'), 'recursos', 'select', 'query'],
-    ['updateResource', () => repository.updateResource('resource-1', { nombre: 'Nuevo' }), 'recursos', 'update', 'query'],
-    ['countCopiesByResource', () => repository.countCopiesByResource('resource-1'), 'ejemplares', 'select', 'query'],
-    ['countAvailableCopiesByResource', () => repository.countAvailableCopiesByResource('resource-1'), 'ejemplares', 'select', 'query'],
-    ['createCopy', () => repository.createCopy({ recursoId: 'resource-1', codigoInventario: 'LIB-1' }), 'ejemplares', 'insert', 'query'],
-    ['findCopiesByResource', () => repository.findCopiesByResource('resource-1'), 'ejemplares', 'select', 'query'],
-    ['findCopyById', () => repository.findCopyById('copy-1'), 'ejemplares', 'select', 'query'],
-    ['updateCopyState', () => repository.updateCopyState('copy-1', 'DISPONIBLE'), 'ejemplares', 'update', 'query'],
-    ['createObservation', () => repository.createObservation({ ejemplarId: 'copy-1', descripcion: 'Nota' }), 'observaciones_ejemplar', 'insert', 'query'],
-    ['findObservationsByCopy', () => repository.findObservationsByCopy('copy-1'), 'observaciones_ejemplar', 'select', 'query'],
-  ])('builds and executes %s through query', async (_name, operation, table, builderMethod, runtimeMethod) => {
-    await operation();
-    expect(builders[table][builderMethod]).toHaveBeenCalled();
-    expect(builders[table].build).toHaveBeenCalled();
-    expect(runtime[runtimeMethod as keyof typeof runtime]).toHaveBeenCalledWith(query);
-  });
+    [
+      'createCategory',
+      () =>
+        repository.createCategory({
+          nombre: 'Libros',
+          tiempoMaximoPrestamoDias: 14,
+        }),
+      'categorias_recurso',
+      'insert',
+      'query',
+    ],
+    [
+      'findCategoryById',
+      () => repository.findCategoryById('cat-1'),
+      'categorias_recurso',
+      'select',
+      'query',
+    ],
+    [
+      'updateCategory',
+      () => repository.updateCategory('cat-1', { nombre: 'Nuevo' }),
+      'categorias_recurso',
+      'update',
+      'query',
+    ],
+    [
+      'countResourcesByCategory',
+      () => repository.countResourcesByCategory('cat-1'),
+      'recursos',
+      'select',
+      'query',
+    ],
+    [
+      'createResource',
+      () =>
+        repository.createResource({ categoriaId: 'cat-1', nombre: 'Libro' }),
+      'recursos',
+      'insert',
+      'query',
+    ],
+    [
+      'findResourceById',
+      () => repository.findResourceById('resource-1'),
+      'recursos',
+      'select',
+      'query',
+    ],
+    [
+      'updateResource',
+      () => repository.updateResource('resource-1', { nombre: 'Nuevo' }),
+      'recursos',
+      'update',
+      'query',
+    ],
+    [
+      'countCopiesByResource',
+      () => repository.countCopiesByResource('resource-1'),
+      'ejemplares',
+      'select',
+      'query',
+    ],
+    [
+      'countAvailableCopiesByResource',
+      () => repository.countAvailableCopiesByResource('resource-1'),
+      'ejemplares',
+      'select',
+      'query',
+    ],
+    [
+      'createCopy',
+      () =>
+        repository.createCopy({
+          recursoId: 'resource-1',
+          codigoInventario: 'LIB-1',
+        }),
+      'ejemplares',
+      'insert',
+      'query',
+    ],
+    [
+      'findCopiesByResource',
+      () => repository.findCopiesByResource('resource-1'),
+      'ejemplares',
+      'select',
+      'query',
+    ],
+    [
+      'findCopyById',
+      () => repository.findCopyById('copy-1'),
+      'ejemplares',
+      'select',
+      'query',
+    ],
+    [
+      'updateCopyState',
+      () => repository.updateCopyState('copy-1', 'DISPONIBLE'),
+      'ejemplares',
+      'update',
+      'query',
+    ],
+    [
+      'createObservation',
+      () =>
+        repository.createObservation({
+          ejemplarId: 'copy-1',
+          descripcion: 'Nota',
+        }),
+      'observaciones_ejemplar',
+      'insert',
+      'query',
+    ],
+    [
+      'findObservationsByCopy',
+      () => repository.findObservationsByCopy('copy-1'),
+      'observaciones_ejemplar',
+      'select',
+      'query',
+    ],
+  ])(
+    'builds and executes %s through query',
+    async (_name, operation, table, builderMethod, runtimeMethod) => {
+      await operation();
+      expect(builders[table][builderMethod]).toHaveBeenCalled();
+      expect(builders[table].build).toHaveBeenCalled();
+      expect(
+        runtime[runtimeMethod as keyof typeof runtime],
+      ).toHaveBeenCalledWith(query);
+    },
+  );
 
-  it('deletes a copy and returns affected rows', async () => {
+  it('deactivates a copy transactionally without deleting any related records', async () => {
+    runtime.query
+      .mockResolvedValueOnce([{ id: 'copy-1', estado: 'DISPONIBLE' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'copy-1', estado: 'NO_DISPONIBLE' }]);
     await expect(repository.deleteCopy('copy-1')).resolves.toBe(1);
-    expect(builders.ejemplares.delete).toHaveBeenCalled();
+    expect(builders.ejemplares.delete).not.toHaveBeenCalled();
+    expect(builders.observaciones_ejemplar.delete).not.toHaveBeenCalled();
+    expect(builders.ejemplares.update).toHaveBeenCalledWith({
+      estado: 'NO_DISPONIBLE',
+    });
+    expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
     expect(runtime.query).toHaveBeenCalledWith(query);
   });
 
   it.each([
-    ['deleteCategory', () => repository.deleteCategory('cat-1'), 'categorias_recurso'],
-    ['deleteResource', () => repository.deleteResource('resource-1'), 'recursos'],
+    [
+      'deleteCategory',
+      () => repository.deleteCategory('cat-1'),
+      'categorias_recurso',
+    ],
+    [
+      'deleteResource',
+      () => repository.deleteResource('resource-1'),
+      'recursos',
+    ],
   ])('normalizes affected rows for %s', async (_name, operation, table) => {
     await expect(operation()).resolves.toBe(1);
     expect(builders[table].delete).toHaveBeenCalled();

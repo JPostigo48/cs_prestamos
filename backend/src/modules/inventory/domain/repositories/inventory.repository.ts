@@ -2,8 +2,18 @@ import type {
   InventoryCopyStateManaged,
   InventoryCopyStatus,
 } from '../entities/inventory.types.js';
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 
 export abstract class InventoryRepository {
+  abstract audited<T>(
+    actor: AuditActor,
+    action: string,
+    work: (repository: InventoryRepository) => Promise<T>,
+  ): Promise<T>;
+  abstract updateManagedCopy(
+    copyId: string,
+    data: { codigoInventario?: string; estado?: InventoryCopyStateManaged },
+  ): Promise<any>;
   abstract createCategory(data: {
     nombre: string;
     tiempoMaximoPrestamoDias: number;
@@ -14,7 +24,11 @@ export abstract class InventoryRepository {
   abstract findCategoryById(categoryId: string): Promise<any>;
   abstract updateCategory(
     categoryId: string,
-    data: Partial<{ nombre: string; tiempoMaximoPrestamoDias: number; tiempoMaximoPrestamoHoras: number }>,
+    data: Partial<{
+      nombre: string;
+      tiempoMaximoPrestamoDias: number;
+      tiempoMaximoPrestamoHoras: number;
+    }>,
   ): Promise<any>;
   abstract deleteCategory(categoryId: string): Promise<unknown>;
   abstract countResourcesByCategory(categoryId: string): Promise<number>;

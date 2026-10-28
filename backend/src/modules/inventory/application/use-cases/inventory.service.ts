@@ -17,16 +17,50 @@ import type {
   UpdateResourceInput,
 } from '../ports/inventory.inputs.js';
 import { InventoryRepository } from '../../domain/repositories/inventory.repository.js';
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly repository: InventoryRepository) {}
+
+  mutate<T>(
+    actor: AuditActor,
+    action: string,
+    work: (service: InventoryService) => Promise<T>,
+  ): Promise<T> {
+    return this.repository.audited(actor, action, (repository) =>
+      work(new InventoryService(repository)),
+    );
+  }
+
+  async updateCopy(copyId: string, dto: { codigoInventario: string }) {
+    await this.ensureCopyExists(copyId);
+    const codigoInventario = this.normalizeText(
+      dto.codigoInventario,
+      'codigoInventario',
+    );
+    if (!codigoInventario || codigoInventario.length > 80)
+      throw new BadRequestException('Código de inventario inválido.');
+    try {
+      return this.toCopyResponse(
+        await this.repository.updateManagedCopy(copyId, { codigoInventario }),
+      );
+    } catch (error) {
+      if (this.isUniqueViolation(error))
+        throw new ConflictException(
+          'Ya existe un ejemplar con ese código de inventario.',
+        );
+      throw error;
+    }
+  }
 
   private normalizeText(
     value: string | undefined | null,
     field: string,
   ): string | undefined {
     if (value === undefined || value === null) return undefined;
+    if (typeof value !== 'string')
+      throw new BadRequestException(`${field} debe ser texto.`);
     const trimmed = value.trim();
     if (trimmed.length === 0) {
       throw new BadRequestException(`${field} no puede estar vacío.`);
@@ -83,8 +117,7 @@ export class InventoryService {
       nombre: row.nombre,
       tiempoMaximoPrestamoDias: row.tiempoMaximoPrestamoDias,
       tiempoMaximoPrestamoHoras:
-        row.tiempoMaximoPrestamoHoras ??
-        row.tiempoMaximoPrestamoDias * 24,
+        row.tiempoMaximoPrestamoHoras ?? row.tiempoMaximoPrestamoDias * 24,
       resourceCount: row.resourceCount ?? 0,
     };
   }
@@ -110,15 +143,17 @@ export class InventoryService {
   }
 
   private async getAvailabilityCounts(resourceId: string) {
-    const [disponibles, prestados, noDisponibles] = await Promise.all([
-      this.repository.countCopiesByResourceAndState(resourceId, 'DISPONIBLE'),
-      this.repository.countCopiesByResourceAndState(resourceId, 'PRESTADO'),
-      this.repository.countCopiesByResourceAndState(
-        resourceId,
-        'NO_DISPONIBLE',
-      ),
-    ]);
-    return { disponibles, prestados, noDisponibles };
+    const [disponibles, prestados, noDisponibles, reservados] =
+      await Promise.all([
+        this.repository.countCopiesByResourceAndState(resourceId, 'DISPONIBLE'),
+        this.repository.countCopiesByResourceAndState(resourceId, 'PRESTADO'),
+        this.repository.countCopiesByResourceAndState(
+          resourceId,
+          'NO_DISPONIBLE',
+        ),
+        this.repository.countCopiesByResourceAndState(resourceId, 'RESERVADO'),
+      ]);
+    return { disponibles, prestados, noDisponibles, reservados };
   }
 
   private async mapResourceRows(rows: any[]) {
@@ -141,7 +176,10 @@ export class InventoryService {
             : null,
           available: counts.disponibles > 0,
           totalCopies:
-            counts.disponibles + counts.prestados + counts.noDisponibles,
+            counts.disponibles +
+            counts.prestados +
+            counts.noDisponibles +
+            counts.reservados,
           availableCopies: counts.disponibles,
         });
       }),
@@ -180,8 +218,7 @@ export class InventoryService {
       );
     }
     const tiempoMaximoPrestamoHoras =
-      dto.tiempoMaximoPrestamoHoras ??
-      dto.tiempoMaximoPrestamoDias * 24;
+      dto.tiempoMaximoPrestamoHoras ?? dto.tiempoMaximoPrestamoDias * 24;
     if (
       !Number.isInteger(tiempoMaximoPrestamoHoras) ||
       tiempoMaximoPrestamoHoras <= 0
@@ -245,6 +282,7 @@ export class InventoryService {
     }> = {};
     if (dto.nombre !== undefined) {
       const nombre = this.normalizeText(dto.nombre, 'nombre');
+      if (!nombre) throw new BadRequestException('nombre no puede ser nulo.');
       updateData.nombre = nombre!;
     }
     if (dto.tiempoMaximoPrestamoDias !== undefined) {
@@ -257,6 +295,9 @@ export class InventoryService {
         );
       }
       updateData.tiempoMaximoPrestamoDias = dto.tiempoMaximoPrestamoDias;
+      if (dto.tiempoMaximoPrestamoHoras === undefined)
+        updateData.tiempoMaximoPrestamoHoras =
+          dto.tiempoMaximoPrestamoDias * 24;
     }
     if (dto.tiempoMaximoPrestamoHoras !== undefined) {
       if (
@@ -270,11 +311,20 @@ export class InventoryService {
       updateData.tiempoMaximoPrestamoHoras = dto.tiempoMaximoPrestamoHoras;
     }
 
-    const updated = await this.repository.updateCategory(
-      categoryId,
-      updateData,
-    );
-    return this.toCategoryResponse(updated);
+    if (!Object.keys(updateData).length)
+      throw new BadRequestException('Debe enviar al menos un campo.');
+    try {
+      const updated = await this.repository.updateCategory(
+        categoryId,
+        updateData,
+      );
+      if (!updated) throw new NotFoundException('Categoría no encontrada.');
+      return this.toCategoryResponse(updated);
+    } catch (error) {
+      if (this.isUniqueViolation(error))
+        throw new ConflictException('Ya existe una categoría con ese nombre.');
+      throw error;
+    }
   }
 
   async deleteCategory(categoryId: string) {
@@ -299,9 +349,10 @@ export class InventoryService {
     await this.ensureCategoryExists(dto.categoriaId);
 
     const nombre = this.normalizeText(dto.nombre, 'nombre');
+    if (!nombre) throw new BadRequestException('nombre es obligatorio.');
     const descripcion =
-      dto.descripcion !== undefined
-        ? (this.normalizeText(dto.descripcion ?? '', 'descripcion') ?? null)
+      dto.descripcion !== undefined && dto.descripcion !== null
+        ? (this.normalizeText(dto.descripcion, 'descripcion') ?? null)
         : null;
 
     try {
@@ -356,9 +407,7 @@ export class InventoryService {
     const filtered =
       normalizedFilters.available === undefined
         ? mapped
-        : mapped.filter(
-            (row) => row.available === normalizedFilters.available,
-          );
+        : mapped.filter((row) => row.available === normalizedFilters.available);
     const data =
       normalizedFilters.available === undefined
         ? filtered
@@ -382,7 +431,10 @@ export class InventoryService {
         ...resource,
         available: counts.disponibles > 0,
         totalCopies:
-          counts.disponibles + counts.prestados + counts.noDisponibles,
+          counts.disponibles +
+          counts.prestados +
+          counts.noDisponibles +
+          counts.reservados,
         availableCopies: counts.disponibles,
       }),
       categoria: category
@@ -415,6 +467,8 @@ export class InventoryService {
     }
     if (dto.nombre !== undefined) {
       updateData.nombre = this.normalizeText(dto.nombre, 'nombre')!;
+      if (!updateData.nombre)
+        throw new BadRequestException('nombre no puede ser nulo.');
     }
     if (dto.descripcion !== undefined) {
       updateData.descripcion =
@@ -423,11 +477,14 @@ export class InventoryService {
           : (this.normalizeText(dto.descripcion, 'descripcion') ?? null);
     }
 
+    if (!Object.keys(updateData).length)
+      throw new BadRequestException('Debe enviar al menos un campo.');
     try {
       const updated = await this.repository.updateResource(
         resourceId,
         updateData,
       );
+      if (!updated) throw new NotFoundException('Recurso no encontrado.');
       return this.toResourceResponse(updated);
     } catch (error: any) {
       if (this.isUniqueViolation(error)) {
@@ -438,7 +495,9 @@ export class InventoryService {
       if (error instanceof HttpException || error instanceof Error) {
         throw error;
       }
-      throw new InternalServerErrorException('No se pudo actualizar el recurso.');
+      throw new InternalServerErrorException(
+        'No se pudo actualizar el recurso.',
+      );
     }
   }
 
@@ -498,7 +557,12 @@ export class InventoryService {
     if (deleted === 0) {
       throw new NotFoundException('Ejemplar no encontrado.');
     }
-    return { deleted: true, copyId };
+    return {
+      deleted: false,
+      deactivated: true,
+      copyId,
+      estado: 'NO_DISPONIBLE' as const,
+    };
   }
 
   async getCopy(copyId: string) {
@@ -573,7 +637,12 @@ export class InventoryService {
     if (copy.estado === dto.estado) {
       return this.toCopyResponse(copy);
     }
-    const updated = await this.repository.updateCopyState(copyId, dto.estado);
+    if (copy.estado === 'RESERVADO' || copy.estado === 'PRESTADO') {
+      throw new ConflictException('El ejemplar está reservado o prestado.');
+    }
+    const updated = await this.repository.updateManagedCopy(copyId, {
+      estado: dto.estado as 'DISPONIBLE' | 'NO_DISPONIBLE',
+    });
     return this.toCopyResponse(updated);
   }
 
@@ -581,7 +650,10 @@ export class InventoryService {
     await this.ensureResourceExists(resourceId);
     const counts = await this.getAvailabilityCounts(resourceId);
     const totalCopies =
-      counts.disponibles + counts.prestados + counts.noDisponibles;
+      counts.disponibles +
+      counts.prestados +
+      counts.noDisponibles +
+      counts.reservados;
     return {
       resourceId,
       available: counts.disponibles > 0,
@@ -614,7 +686,10 @@ export class InventoryService {
               : null,
             available: counts.disponibles > 0,
             totalCopies:
-              counts.disponibles + counts.prestados + counts.noDisponibles,
+              counts.disponibles +
+              counts.prestados +
+              counts.noDisponibles +
+              counts.reservados,
             availableCopies: counts.disponibles,
           }),
           disponibles: counts.disponibles,

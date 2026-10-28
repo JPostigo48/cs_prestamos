@@ -28,6 +28,7 @@ describe('InventoryService', () => {
     createCopy: ReturnType<typeof vi.fn>;
     findCopyById: ReturnType<typeof vi.fn>;
     updateCopyState: ReturnType<typeof vi.fn>;
+    updateManagedCopy: ReturnType<typeof vi.fn>;
     createObservation: ReturnType<typeof vi.fn>;
     findObservationsByCopy: ReturnType<typeof vi.fn>;
     deleteCategory: ReturnType<typeof vi.fn>;
@@ -58,6 +59,11 @@ describe('InventoryService', () => {
       createCopy: vi.fn(),
       findCopyById: vi.fn(),
       updateCopyState: vi.fn(),
+      updateManagedCopy: vi
+        .fn()
+        .mockImplementation((_id, data) =>
+          Promise.resolve({ id: copyId, ...data }),
+        ),
       createObservation: vi.fn(),
       findObservationsByCopy: vi.fn(),
       deleteCategory: vi.fn(),
@@ -196,11 +202,16 @@ describe('InventoryService', () => {
 
   it('should calculate availability', async () => {
     repository.findResourceById.mockResolvedValue({ id: resourceId });
-    repository.countCopiesByResourceAndState.mockImplementation(
-      (_id, state) =>
-        Promise.resolve(
-          state === 'DISPONIBLE' ? 2 : state === 'PRESTADO' ? 1 : 3,
-        ),
+    repository.countCopiesByResourceAndState.mockImplementation((_id, state) =>
+      Promise.resolve(
+        state === 'DISPONIBLE'
+          ? 2
+          : state === 'PRESTADO'
+            ? 1
+            : state === 'NO_DISPONIBLE'
+              ? 3
+              : 0,
+      ),
     );
 
     const result = await service.getResourceAvailability(resourceId);
@@ -263,7 +274,10 @@ describe('InventoryService', () => {
   it('translates a postgres unique violation and preserves unexpected errors', async () => {
     repository.createCategory.mockRejectedValue({ code: '23505' });
     await expect(
-      service.createCategory({ nombre: 'Libros', tiempoMaximoPrestamoDias: 14 }),
+      service.createCategory({
+        nombre: 'Libros',
+        tiempoMaximoPrestamoDias: 14,
+      }),
     ).rejects.toThrow(ConflictException);
 
     const error = new Error('database unavailable');
@@ -324,9 +338,9 @@ describe('InventoryService', () => {
     expect(repository.updateCategory).toHaveBeenCalledWith(categoryId, {
       nombre: 'Nuevo',
     });
-    await expect(
-      service.updateCategory('invalid', {}),
-    ).rejects.toThrow(BadRequestException);
+    await expect(service.updateCategory('invalid', {})).rejects.toThrow(
+      BadRequestException,
+    );
     await expect(
       service.updateCategory(categoryId, { tiempoMaximoPrestamoDias: 0 }),
     ).rejects.toThrow(BadRequestException);
@@ -348,7 +362,10 @@ describe('InventoryService', () => {
       categoriaId: categoryId,
       nombre: 'Libro',
     });
-    repository.findCategoryById.mockResolvedValue({ id: categoryId, nombre: 'Libros' });
+    repository.findCategoryById.mockResolvedValue({
+      id: categoryId,
+      nombre: 'Libros',
+    });
     repository.countCopiesByResource.mockResolvedValue(2);
     repository.countAvailableCopiesByResource.mockResolvedValue(1);
     await expect(service.getResource(resourceId)).resolves.toMatchObject({
@@ -357,7 +374,9 @@ describe('InventoryService', () => {
       categoria: expect.objectContaining({ id: categoryId }),
     });
     repository.findResourceById.mockResolvedValue(null);
-    await expect(service.getResource(resourceId)).rejects.toThrow(NotFoundException);
+    await expect(service.getResource(resourceId)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('updates resources and validates destination categories', async () => {
@@ -406,17 +425,18 @@ describe('InventoryService', () => {
       id: categoryId,
       nombre: 'Libros',
     });
-    repository.countCopiesByResourceAndState.mockImplementation(
-      (_id, state) =>
-        Promise.resolve(
-          state === 'DISPONIBLE' && (!('available' in expected) || expected.available !== false) ? 1 : 0,
-        ),
+    repository.countCopiesByResourceAndState.mockImplementation((_id, state) =>
+      Promise.resolve(
+        state === 'DISPONIBLE' &&
+          (!('available' in expected) || expected.available !== false)
+          ? 1
+          : 0,
+      ),
     );
     await service.listResources({ ...filter, page: 1, limit: 20 });
-    const expectedQuery =
-      !('available' in expected)
-        ? { ...expected, limit: 20, offset: 0 }
-        : expected;
+    const expectedQuery = !('available' in expected)
+      ? { ...expected, limit: 20, offset: 0 }
+      : expected;
     expect(repository.findAllResources).toHaveBeenCalledWith(
       expect.objectContaining(expectedQuery),
     );
@@ -447,11 +467,10 @@ describe('InventoryService', () => {
       id: categoryId,
       nombre: 'Libros',
     });
-    repository.countCopiesByResourceAndState.mockImplementation(
-      (_id, state) =>
-        Promise.resolve(
-          state === 'DISPONIBLE' ? 1 : state === 'PRESTADO' ? 2 : 3,
-        ),
+    repository.countCopiesByResourceAndState.mockImplementation((_id, state) =>
+      Promise.resolve(
+        state === 'DISPONIBLE' ? 1 : state === 'PRESTADO' ? 2 : 3,
+      ),
     );
     const result = await service.getGlobalAvailability();
     expect(result[0]).toMatchObject({
@@ -482,18 +501,27 @@ describe('InventoryService', () => {
       observaciones: [expect.objectContaining({ descripcion: 'Desgaste' })],
     });
     repository.findCopiesByResource.mockResolvedValue([
-      { id: copyId, recursoId: resourceId, codigoInventario: 'LIB-001', estado: 'DISPONIBLE' },
+      {
+        id: copyId,
+        recursoId: resourceId,
+        codigoInventario: 'LIB-001',
+        estado: 'DISPONIBLE',
+      },
     ]);
-    await expect(service.listCopiesByResource(resourceId)).resolves.toHaveLength(1);
+    await expect(
+      service.listCopiesByResource(resourceId),
+    ).resolves.toHaveLength(1);
     repository.findCopyById.mockResolvedValue(null);
     await expect(service.getCopy(copyId)).rejects.toThrow(NotFoundException);
   });
 
-  it('deletes a copy and detects a concurrent deletion', async () => {
+  it('deactivates a copy and detects a concurrent disappearance', async () => {
     repository.findCopyById.mockResolvedValue({ id: copyId });
     repository.deleteCopy.mockResolvedValue(1);
     await expect(service.deleteCopy(copyId)).resolves.toEqual({
-      deleted: true,
+      deleted: false,
+      deactivated: true,
+      estado: 'NO_DISPONIBLE',
       copyId,
     });
     repository.deleteCopy.mockResolvedValue(0);
@@ -503,8 +531,14 @@ describe('InventoryService', () => {
   it.each(['DISPONIBLE', 'NO_DISPONIBLE'] as const)(
     'updates copy state to %s',
     async (state) => {
-      repository.findCopyById.mockResolvedValue({ id: copyId, estado: state === 'DISPONIBLE' ? 'NO_DISPONIBLE' : 'DISPONIBLE' });
-      repository.updateCopyState.mockResolvedValue({ id: copyId, estado: state });
+      repository.findCopyById.mockResolvedValue({
+        id: copyId,
+        estado: state === 'DISPONIBLE' ? 'NO_DISPONIBLE' : 'DISPONIBLE',
+      });
+      repository.updateCopyState.mockResolvedValue({
+        id: copyId,
+        estado: state,
+      });
       await expect(
         service.updateCopyState(copyId, { estado: state }),
       ).resolves.toMatchObject({ estado: state });
@@ -512,7 +546,10 @@ describe('InventoryService', () => {
   );
 
   it('rejects an unmanaged copy state', async () => {
-    repository.findCopyById.mockResolvedValue({ id: copyId, estado: 'DISPONIBLE' });
+    repository.findCopyById.mockResolvedValue({
+      id: copyId,
+      estado: 'DISPONIBLE',
+    });
     await expect(
       service.updateCopyState(copyId, { estado: 'DESCONOCIDO' as any }),
     ).rejects.toThrow(UnprocessableEntityException);
@@ -538,9 +575,15 @@ describe('InventoryService', () => {
     ['listCopiesByResource', () => service.listCopiesByResource('bad')],
     ['deleteCopy', () => service.deleteCopy('bad')],
     ['getCopy', () => service.getCopy('bad')],
-    ['updateCopyState', () => service.updateCopyState('bad', { estado: 'DISPONIBLE' })],
+    [
+      'updateCopyState',
+      () => service.updateCopyState('bad', { estado: 'DISPONIBLE' }),
+    ],
     ['getResourceAvailability', () => service.getResourceAvailability('bad')],
-    ['createObservation', () => service.createObservation('bad', { descripcion: 'x' })],
+    [
+      'createObservation',
+      () => service.createObservation('bad', { descripcion: 'x' }),
+    ],
     ['listObservationsByCopy', () => service.listObservationsByCopy('bad')],
   ])('rejects invalid UUIDs in %s', async (_name, operation) => {
     await expect(operation()).rejects.toThrow(BadRequestException);

@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Temporal } from 'temporal-polyfill';
+import type { AuditActor } from '../../../../../shared/application/audit-actor.js';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type {
   InventoryCopyStateManaged,
@@ -6,14 +12,117 @@ import type {
 } from '../../../domain/entities/inventory.types.js';
 import { InventoryRepository } from '../../../domain/repositories/inventory.repository.js';
 
+type QueryRuntime = Pick<
+  ReturnType<PrismaService['client']['runtime']>,
+  'query'
+>;
+
 @Injectable()
 export class PrismaInventoryRepository extends InventoryRepository {
+  private transactionRuntime?: QueryRuntime;
   constructor(private readonly prisma: PrismaService) {
     super();
   }
 
   private runtime() {
-    return (this.prisma.client as any).runtime();
+    return this.transactionRuntime ?? this.prisma.client.runtime();
+  }
+
+  async audited<T>(
+    actor: AuditActor,
+    action: string,
+    work: (repository: InventoryRepository) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.prisma.client.transaction(async (tx) => {
+        const scoped = new PrismaInventoryRepository(this.prisma);
+        scoped.transactionRuntime = tx;
+        const result = await work(scoped);
+        await tx.query(
+          this.prisma.sql.public.auditorias_usuario
+            .insert([
+              {
+                usuarioId: actor.userId,
+                accion: action,
+                datosNuevos: JSON.stringify({ actor, result }),
+              },
+            ])
+            .returning('id')
+            .build(),
+        );
+        return result;
+      });
+    } catch (error) {
+      const code =
+        (error as { code?: string; cause?: { code?: string } })?.cause?.code ??
+        (error as { code?: string })?.code;
+      if (code === '23503' || code === '23505')
+        throw new ConflictException(
+          'La operación entra en conflicto con datos relacionados.',
+        );
+      throw error;
+    }
+  }
+
+  private async copyTransaction<T>(
+    work: (runtime: QueryRuntime) => Promise<T>,
+  ): Promise<T> {
+    return this.transactionRuntime
+      ? work(this.transactionRuntime)
+      : this.prisma.client.transaction(work);
+  }
+
+  private async lockCopy(runtime: QueryRuntime, copyId: string) {
+    const rows = await runtime.query(
+      this.prisma.sql.public.ejemplares
+        .update({ updatedAt: Temporal.Now.instant() })
+        .where((row, fns) => fns.eq(row.id, copyId))
+        .returning('id', 'recursoId', 'codigoInventario', 'estado')
+        .build(),
+    );
+    if (!rows[0]) throw new NotFoundException('Ejemplar no encontrado.');
+    return rows[0];
+  }
+
+  async updateManagedCopy(
+    copyId: string,
+    data: { codigoInventario?: string; estado?: InventoryCopyStateManaged },
+  ) {
+    return this.copyTransaction(async (runtime) => {
+      const copy = await this.lockCopy(runtime, copyId);
+      if (copy.estado === 'PRESTADO' || copy.estado === 'RESERVADO')
+        throw new ConflictException(
+          'El ejemplar tiene una operación en curso.',
+        );
+      const loans = await runtime.query(
+        this.prisma.sql.public.prestamos
+          .select('id')
+          .where((row, fns) => fns.eq(row.ejemplarId, copyId))
+          .where((row, fns) => fns.ne(row.estado, 'FINALIZADO'))
+          .limit(1)
+          .build(),
+      );
+      const reservations = await runtime.query(
+        this.prisma.sql.public.reservas
+          .select('id')
+          .where((row, fns) => fns.eq(row.ejemplarId, copyId))
+          .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+          .limit(1)
+          .build(),
+      );
+      if (loans[0] || reservations[0])
+        throw new ConflictException(
+          'El ejemplar tiene reservas o préstamos pendientes.',
+        );
+      const rows = await runtime.query(
+        this.prisma.sql.public.ejemplares
+          .update(data)
+          .where((row, fns) => fns.eq(row.id, copyId))
+          .returning('id', 'recursoId', 'codigoInventario', 'estado')
+          .build(),
+      );
+      return rows[0];
+    });
   }
 
   async createCategory(data: {
@@ -26,7 +135,9 @@ export class PrismaInventoryRepository extends InventoryRepository {
         {
           nombre: data.nombre,
           tiempoMaximoPrestamoDias: data.tiempoMaximoPrestamoDias,
-          tiempoMaximoPrestamoHoras: data.tiempoMaximoPrestamoHoras ?? data.tiempoMaximoPrestamoDias * 24,
+          tiempoMaximoPrestamoHoras:
+            data.tiempoMaximoPrestamoHoras ??
+            data.tiempoMaximoPrestamoDias * 24,
         },
       ])
       .returning(
@@ -44,7 +155,12 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async findAllCategories() {
     const query = this.prisma.sql.public.categorias_recurso
-      .select('id', 'nombre', 'tiempoMaximoPrestamoDias', 'tiempoMaximoPrestamoHoras')
+      .select(
+        'id',
+        'nombre',
+        'tiempoMaximoPrestamoDias',
+        'tiempoMaximoPrestamoHoras',
+      )
       .build();
     return await this.runtime().query(query);
   }
@@ -350,13 +466,9 @@ export class PrismaInventoryRepository extends InventoryRepository {
   }
 
   async deleteCopy(copyId: string) {
-    const query = this.prisma.sql.public.ejemplares
-      .delete()
-      .where((row, fns) => fns.eq(row.id, copyId))
-      .returning('id')
-      .build();
-    const rows = await this.runtime().query(query);
-    return rows.length;
+    // Nunca se borra físicamente: observaciones, préstamos y reservas se conservan.
+    await this.updateManagedCopy(copyId, { estado: 'NO_DISPONIBLE' });
+    return 1;
   }
 
   async updateCopyState(copyId: string, estado: InventoryCopyStateManaged) {

@@ -1,4 +1,5 @@
-export type InventoryCopyStatus = 'DISPONIBLE' | 'PRESTADO' | 'NO_DISPONIBLE';
+export type InventoryCopyStatus =
+  'DISPONIBLE' | 'RESERVADO' | 'PRESTADO' | 'NO_DISPONIBLE';
 
 export type InventoryCopyStateManaged = Extract<
   InventoryCopyStatus,
