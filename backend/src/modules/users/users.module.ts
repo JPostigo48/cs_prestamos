@@ -48,6 +48,10 @@ const useCases = [
       useClass: PrismaUserRepository,
     },
   ],
-  exports: [GetUserUseCase, GetUserLoanEligibilityUseCase],
+  exports: [
+    GetUserUseCase,
+    GetUserLoanEligibilityUseCase,
+    SubmitRegistrationRequestUseCase,
+  ],
 })
 export class UsersModule {}

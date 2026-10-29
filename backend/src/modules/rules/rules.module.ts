@@ -23,6 +23,10 @@ import { PrismaViolationRepository } from './infrastructure/persistence/prisma/p
 import { RulesController } from './presentation/controllers/rules.controller.js';
 import { TermsController } from './presentation/controllers/terms.controller.js';
 import { ViolationsController } from './presentation/controllers/violations.controller.js';
+import { SanctionsController } from './presentation/controllers/sanctions.controller.js';
+import { ManageSanctionsUseCase } from './application/use-cases/manage-sanctions.use-case.js';
+import { SanctionRepository } from './domain/repositories/sanction.repository.js';
+import { PrismaSanctionRepository } from './infrastructure/persistence/prisma/prisma-sanction.repository.js';
 
 const useCases = [
   ReadPublicTermsUseCase,
@@ -41,12 +45,15 @@ const useCases = [
 @Module({
   imports: [AuthModule],
   controllers: [
+    SanctionsController,
     RulesController,
     ViolationsController,
     TermsController,
     PublicTermsController,
   ],
   providers: [
+    ManageSanctionsUseCase,
+    { provide: SanctionRepository, useClass: PrismaSanctionRepository },
     ...useCases,
     {
       provide: RuleRepository,

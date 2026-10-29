@@ -18,10 +18,128 @@ import type {
 } from '../ports/inventory.inputs.js';
 import { InventoryRepository } from '../../domain/repositories/inventory.repository.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+import {
+  normalizeAccessoryName,
+  type CopyLoanSnapshot,
+  type ResourceAccessoryInput,
+  type ResourceLoanPolicy,
+} from '../../domain/entities/resource-configuration.js';
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly repository: InventoryRepository) {}
+
+  async getAccessories(resourceId: string) {
+    await this.ensureResourceExists(resourceId);
+    const rows = await this.repository.findResourceAccessories(resourceId);
+    return {
+      items: rows
+        .filter((row) => row.activo)
+        .map(({ id, nombre }) => ({ id, nombre }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    };
+  }
+
+  async replaceAccessories(
+    resourceId: string,
+    items: ResourceAccessoryInput[],
+  ) {
+    await this.ensureResourceExists(resourceId);
+    if (!Array.isArray(items) || items.length > 100)
+      throw new BadRequestException('Se permiten hasta 100 accesorios.');
+    const normalized = items.map((item) => {
+      if (
+        !item ||
+        (item.id !== undefined &&
+          (typeof item.id !== 'string' || !this.isUuid(item.id)))
+      )
+        throw new BadRequestException('ID de accesorio inválido.');
+      const nombre = this.normalizeText(item.nombre, 'nombre');
+      if (
+        !nombre ||
+        nombre.length > 120 ||
+        normalizeAccessoryName(nombre).length > 120
+      )
+        throw new BadRequestException(
+          'Nombre de accesorio inválido (1 a 120 caracteres).',
+        );
+      return { ...(item.id ? { id: item.id } : {}), nombre };
+    });
+    if (
+      new Set(normalized.map((item) => normalizeAccessoryName(item.nombre)))
+        .size !== normalized.length ||
+      new Set(normalized.filter((item) => item.id).map((item) => item.id))
+        .size !== normalized.filter((item) => item.id).length
+    )
+      throw new BadRequestException('No repitas IDs ni nombres de accesorios.');
+    try {
+      const rows = await this.repository.replaceResourceAccessories(
+        resourceId,
+        normalized,
+      );
+      return { items: rows.map(({ id, nombre }) => ({ id, nombre })) };
+    } catch (error) {
+      if (this.isUniqueViolation(error))
+        throw new ConflictException(
+          'El nombre ya corresponde a otro accesorio del recurso.',
+        );
+      throw error;
+    }
+  }
+
+  private async resolveLoanPolicy(resource: {
+    id: string;
+    categoriaId: string;
+    duracionPrestamoHoras?: number | null;
+  }): Promise<ResourceLoanPolicy> {
+    const category = await this.ensureCategoryExists(resource.categoriaId);
+    const durationHours = resource.duracionPrestamoHoras ?? null;
+    const effectiveDurationHours =
+      durationHours ??
+      category.tiempoMaximoPrestamoHoras ??
+      category.tiempoMaximoPrestamoDias * 24;
+    if (!Number.isInteger(effectiveDurationHours) || effectiveDurationHours < 1)
+      throw new ConflictException('La categoría no tiene una duración válida.');
+    return {
+      resourceId: resource.id,
+      categoryId: resource.categoriaId,
+      durationHours,
+      effectiveDurationHours,
+      source: durationHours === null ? 'CATEGORY' : 'RESOURCE',
+    };
+  }
+
+  async updateLoanPolicy(resourceId: string, durationHours: number | null) {
+    const resource = await this.ensureResourceExists(resourceId);
+    if (
+      durationHours !== null &&
+      (!Number.isInteger(durationHours) ||
+        durationHours < 1 ||
+        durationHours > 2147483647)
+    )
+      throw new BadRequestException(
+        'durationHours debe ser null o un entero entre 1 y 2147483647.',
+      );
+    // Valida también el fallback antes de retirar una excepción.
+    const policy = await this.resolveLoanPolicy({
+      ...resource,
+      duracionPrestamoHoras: durationHours,
+    });
+    await this.repository.updateResourceLoanPolicy(resourceId, durationHours);
+    return policy;
+  }
+
+  async getCopyLoanSnapshot(copyId: string): Promise<CopyLoanSnapshot> {
+    const copy = await this.ensureCopyExists(copyId);
+    const resource = await this.ensureResourceExists(copy.recursoId);
+    return {
+      schemaVersion: 1,
+      copyId,
+      resourceId: resource.id,
+      policy: await this.resolveLoanPolicy(resource),
+      accessories: (await this.getAccessories(resource.id)).items,
+    };
+  }
 
   mutate<T>(
     actor: AuditActor,
@@ -128,6 +246,7 @@ export class InventoryService {
       categoriaId: row.categoriaId,
       nombre: row.nombre,
       descripcion: row.descripcion ?? null,
+      durationHours: row.duracionPrestamoHoras ?? null,
       available: row.available ?? false,
       totalCopies: row.totalCopies ?? 0,
       availableCopies: row.availableCopies ?? 0,
@@ -427,6 +546,7 @@ export class InventoryService {
     );
     const counts = await this.getAvailabilityCounts(resourceId);
     return {
+      loanPolicy: await this.resolveLoanPolicy(resource),
       ...this.toResourceResponse({
         ...resource,
         available: counts.disponibles > 0,
@@ -585,14 +705,12 @@ export class InventoryService {
   async getLoanAvailability(copyId: string) {
     const copy = await this.ensureCopyExists(copyId);
     const resource = await this.ensureResourceExists(copy.recursoId);
-    const category = await this.getCategory(resource.categoriaId);
+    const policy = await this.resolveLoanPolicy(resource);
     return {
       copyId,
       available: copy.estado === 'DISPONIBLE',
-      maximumLoanDays: category.tiempoMaximoPrestamoDias,
-      maximumLoanHours:
-        category.tiempoMaximoPrestamoHoras ??
-        category.tiempoMaximoPrestamoDias * 24,
+      maximumLoanDays: policy.effectiveDurationHours / 24,
+      maximumLoanHours: policy.effectiveDurationHours,
     };
   }
 

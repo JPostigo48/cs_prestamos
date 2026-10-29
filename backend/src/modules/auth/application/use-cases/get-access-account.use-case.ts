@@ -7,6 +7,11 @@ import { AccessAccountRepository } from '../../domain/repositories/access-accoun
 export class GetAccessAccountUseCase {
   constructor(private readonly accounts: AccessAccountRepository) {}
 
+  async forUser(userId: string): Promise<AccessAccount[]> {
+    const account = await this.accounts.findByUserId(userId);
+    return account ? [account] : [];
+  }
+
   async execute(input: GetAccessAccountInput): Promise<AccessAccount> {
     const account = await this.accounts.findById(input.accountId);
     if (!account) throw new NotFoundException('Cuenta no encontrada.');

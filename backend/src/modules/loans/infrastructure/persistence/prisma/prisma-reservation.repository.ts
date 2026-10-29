@@ -3,7 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { Temporal } from 'temporal-polyfill';
+import { Temporal } from 'temporal-polyfill/full';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import {
   instantToDate,
@@ -16,6 +16,12 @@ import {
   type CancelReservationData,
   type CreateReservationData,
 } from '../../../domain/repositories/reservation.repository.js';
+import type {
+  Page,
+  ReservationsQuery,
+} from '../../../domain/repositories/loan-queries.js';
+import { captureLoanConfiguration } from '../../integration/capture-loan-configuration.js';
+import { assertTransactionalEligibility } from '../../integration/assert-transactional-eligibility.js';
 
 @Injectable()
 export class PrismaReservationRepository implements ReservationRepository {
@@ -42,6 +48,7 @@ export class PrismaReservationRepository implements ReservationRepository {
       status: row.estado,
       cancellationReason: row.motivoCancelacion,
       loanId,
+      configurationSnapshot: row.configurationSnapshot ?? null,
     };
   }
 
@@ -57,7 +64,60 @@ export class PrismaReservationRepository implements ReservationRepository {
       'fechaCancelacion',
       'estado',
       'motivoCancelacion',
+      'configurationSnapshot',
     );
+  }
+
+  async findMany(query: ReservationsQuery): Promise<Page<Reservation>> {
+    const filter = () => {
+      const base = this.select();
+      // Predicados aplicados antes de paginar y antes del conteo.
+      return base.where((row, f) =>
+        f.and(
+          ...(query.userId ? [f.eq(row.usuarioId, query.userId)] : []),
+          ...(query.copyId ? [f.eq(row.ejemplarId, query.copyId)] : []),
+          ...(query.status ? [f.eq(row.estado, query.status)] : []),
+        ),
+      );
+    };
+    const counts = await this.runtime().query(
+      this.prisma.sql.public.reservas
+        .select((_r, f) => ({ total: f.count() }))
+        .where((r, f) =>
+          f.and(
+            ...(query.userId ? [f.eq(r.usuarioId, query.userId)] : []),
+            ...(query.copyId ? [f.eq(r.ejemplarId, query.copyId)] : []),
+            ...(query.status ? [f.eq(r.estado, query.status)] : []),
+          ),
+        )
+        .build(),
+    );
+    const rows = await this.runtime().query(
+      filter()
+        .orderBy((r) => r.fechaSolicitada, { direction: 'desc' })
+        .orderBy((r) => r.id, { direction: 'asc' })
+        .limit(query.limit)
+        .offset((query.page - 1) * query.limit)
+        .build(),
+    );
+    const items = await Promise.all(
+      rows.map(async (row) => {
+        const loans = await this.runtime().query(
+          this.prisma.sql.public.prestamos
+            .select('id')
+            .where((r, f) => f.eq(r.reservaId, row.id))
+            .limit(1)
+            .build(),
+        );
+        return this.map(row, loans[0]?.id ?? null);
+      }),
+    );
+    return {
+      items,
+      total: Number(counts[0]?.total ?? 0),
+      page: query.page,
+      limit: query.limit,
+    };
   }
 
   async hasOpenReservationOrLoan(userId: string): Promise<boolean> {
@@ -97,6 +157,7 @@ export class PrismaReservationRepository implements ReservationRepository {
           throw new ConflictException(
             'El usuario no es elegible para préstamos.',
           );
+        await assertTransactionalEligibility(this.prisma, tx, data.userId, new Date());
         if (data.enforceSingleOpenOperation) {
           const reservations = await tx.query(
             this.prisma.sql.public.reservas
@@ -130,6 +191,11 @@ export class PrismaReservationRepository implements ReservationRepository {
         );
         if (!copies[0])
           throw new ConflictException('El ejemplar no está disponible.');
+        const snapshot = await captureLoanConfiguration(
+          this.prisma,
+          tx,
+          data.copyId,
+        );
         const reservations = await tx.query(
           this.prisma.sql.public.reservas
             .insert([
@@ -138,7 +204,12 @@ export class PrismaReservationRepository implements ReservationRepository {
                 ejemplarId: data.copyId,
                 fechaSolicitada: this.instant(data.requestedAt),
                 fechaLimiteRecogida: this.instant(data.pickupDeadline),
-                duracionPrestamoHoras: data.loanDurationHours,
+                duracionPrestamoHoras: snapshot.policy.effectiveDurationHours,
+                configurationSnapshot: {
+                  ...snapshot,
+                  policy: { ...snapshot.policy },
+                  accessories: snapshot.accessories.map((a) => ({ ...a })),
+                },
                 estado: 'CONFIRMADA',
                 updatedAt: this.instant(new Date()),
               },
@@ -154,6 +225,7 @@ export class PrismaReservationRepository implements ReservationRepository {
               'fechaCancelacion',
               'estado',
               'motivoCancelacion',
+              'configurationSnapshot',
             )
             .build(),
         );
@@ -207,6 +279,13 @@ export class PrismaReservationRepository implements ReservationRepository {
       const reservation = reservations[0];
       if (!reservation)
         throw new ConflictException('La reserva ya no está disponible.');
+      const users = await tx.query(this.prisma.sql.public.usuarios
+        .update({ id: reservation.usuarioId })
+        .where((r, f) => f.eq(r.id, reservation.usuarioId))
+        .where((r, f) => f.eq(r.vinculacionVigente, true))
+        .returning('id').build());
+      if (!users[0]) throw new ConflictException('El usuario no es elegible para préstamos.');
+      await assertTransactionalEligibility(this.prisma, tx, reservation.usuarioId, new Date());
       const updated = await tx.query(
         this.prisma.sql.public.reservas
           .update({
@@ -215,6 +294,12 @@ export class PrismaReservationRepository implements ReservationRepository {
           })
           .where((row, fns) => fns.eq(row.id, reservationId))
           .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+          .where((row, fns) =>
+            fns.gte(row.fechaLimiteRecogida, this.instant(pickedUpAt)),
+          )
+          .where((row, fns) =>
+            fns.lte(row.fechaSolicitada, this.instant(pickedUpAt)),
+          )
           .returning(
             'id',
             'usuarioId',
@@ -226,6 +311,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             'fechaCancelacion',
             'estado',
             'motivoCancelacion',
+            'configurationSnapshot',
           )
           .build(),
       );
@@ -248,6 +334,7 @@ export class PrismaReservationRepository implements ReservationRepository {
               usuarioId: reservation.usuarioId,
               ejemplarId: reservation.ejemplarId,
               reservaId: reservationId,
+              configurationSnapshot: reservation.configurationSnapshot ?? null,
               fechaInicio: this.instant(pickedUpAt),
               fechaFin: this.instant(
                 new Date(
@@ -267,6 +354,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             'fechaInicio',
             'fechaFin',
             'estado',
+            'configurationSnapshot',
           )
           .build(),
       );
@@ -282,6 +370,10 @@ export class PrismaReservationRepository implements ReservationRepository {
           endsAt: instantToDate(loans[0].fechaFin),
           status: loans[0].estado as LoanStatus,
           return: null,
+          configurationSnapshot:
+            (reservation.configurationSnapshot as Loan['configurationSnapshot']) ??
+            null,
+          returnChecklist: null,
         },
       };
     });
@@ -312,6 +404,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             'fechaCancelacion',
             'estado',
             'motivoCancelacion',
+            'configurationSnapshot',
           )
           .build(),
       );
@@ -352,6 +445,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             'fechaCancelacion',
             'estado',
             'motivoCancelacion',
+            'configurationSnapshot',
           )
           .build(),
       );

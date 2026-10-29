@@ -27,26 +27,8 @@ type QueryRuntime = Pick<
   'query'
 >;
 
-export function isEffectiveActiveSanction(
-  sanction: Pick<Sanction, 'status' | 'startsAt' | 'endsAt'>,
-  at: Date,
-): boolean {
-  return (
-    (sanction.status === 'ACTIVA' || sanction.status === 'PROGRAMADA') &&
-    sanction.startsAt <= at &&
-    (sanction.endsAt === null || sanction.endsAt > at)
-  );
-}
-
-export function effectiveSanctionStatus(
-  sanction: Pick<Sanction, 'status' | 'startsAt' | 'endsAt'>,
-  at: Date,
-): Sanction['status'] {
-  if (sanction.status === 'ABSUELTA') return 'ABSUELTA';
-  if (sanction.endsAt !== null && sanction.endsAt <= at) return 'FINALIZADA';
-  if (sanction.startsAt > at) return 'PROGRAMADA';
-  return 'ACTIVA';
-}
+import { effectiveSanctionStatus, isEffectiveActiveSanction } from '../../../../rules/domain/entities/sanction-schedule.js';
+export { effectiveSanctionStatus, isEffectiveActiveSanction } from '../../../../rules/domain/entities/sanction-schedule.js';
 
 @Injectable()
 export class PrismaUserRepository extends UserRepository {

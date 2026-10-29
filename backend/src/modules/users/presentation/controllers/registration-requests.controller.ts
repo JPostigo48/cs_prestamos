@@ -34,6 +34,8 @@ import { AccessRole } from '../../../auth/domain/entities/access-account.js';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator.js';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
+import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator.js';
+import type { AuthenticatedIdentity } from '../../../auth/application/ports/auth.inputs.js';
 
 @ApiTags('Usuarios')
 @Controller('users/registration-requests')
@@ -112,10 +114,17 @@ export class RegistrationRequestsController {
   @ApiCreatedResponse({ type: ApprovedRegistrationResponseDto })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
-  @ApiOperation({ summary: 'Aprobar solicitud de registro' })
+  @ApiOperation({
+    summary: 'Aprobar solicitud de registro',
+    description:
+      'OPERADOR o ADMINISTRADOR. Transacción: crea usuario con confianza inicial 75; si la solicitud es integral, crea además cuenta USUARIO y aceptación de la versión leída. Las solicitudes básicas conservan aprovisionamiento separado. No emite sesión.',
+  })
   @ApiExtension('x-implementation-status', 'implemented')
-  approve(@Param('requestId') requestId: string) {
-    return this.approveRequest.execute({ requestId });
+  approve(
+    @Param('requestId') requestId: string,
+    @CurrentUser() actor: AuthenticatedIdentity,
+  ) {
+    return this.approveRequest.execute({ requestId }, actor);
   }
 
   @ApiHttpErrors(400, 404, 409)
@@ -129,10 +138,14 @@ export class RegistrationRequestsController {
   reject(
     @Param('requestId') requestId: string,
     @Body() body: RejectRegistrationRequestDto,
+    @CurrentUser() actor: AuthenticatedIdentity,
   ) {
-    return this.rejectRequest.execute({
-      requestId,
-      rejectionReason: body.rejectionReason,
-    });
+    return this.rejectRequest.execute(
+      {
+        requestId,
+        rejectionReason: body.rejectionReason,
+      },
+      actor,
+    );
   }
 }

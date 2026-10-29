@@ -21,8 +21,16 @@ import { ReservationExpiryService } from './infrastructure/reservation-expiry.se
 import { CreateReservationUseCase } from './application/use-cases/create-reservation.use-case.js';
 import { PickupReservationUseCase } from './application/use-cases/pickup-reservation.use-case.js';
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case.js';
+import {
+  ListReservationsUseCase,
+  ListResourceHistoryUseCase,
+  SaveReturnChecklistUseCase,
+} from './application/use-cases/loan-contracts.use-cases.js';
 
 const useCases = [
+  ListReservationsUseCase,
+  ListResourceHistoryUseCase,
+  SaveReturnChecklistUseCase,
   ReturnLoanUseCase,
   GetLoanUseCase,
   ListActiveLoansUseCase,

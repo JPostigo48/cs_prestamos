@@ -3,8 +3,23 @@ import type {
   InventoryCopyStatus,
 } from '../entities/inventory.types.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+import type {
+  ResourceAccessoryInput,
+  StoredResourceAccessory,
+} from '../entities/resource-configuration.js';
 
 export abstract class InventoryRepository {
+  abstract findResourceAccessories(
+    resourceId: string,
+  ): Promise<StoredResourceAccessory[]>;
+  abstract replaceResourceAccessories(
+    resourceId: string,
+    items: ResourceAccessoryInput[],
+  ): Promise<StoredResourceAccessory[]>;
+  abstract updateResourceLoanPolicy(
+    resourceId: string,
+    durationHours: number | null,
+  ): Promise<void>;
   abstract audited<T>(
     actor: AuditActor,
     action: string,

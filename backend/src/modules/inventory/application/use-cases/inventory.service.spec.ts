@@ -365,6 +365,8 @@ describe('InventoryService', () => {
     repository.findCategoryById.mockResolvedValue({
       id: categoryId,
       nombre: 'Libros',
+      tiempoMaximoPrestamoDias: 14,
+      tiempoMaximoPrestamoHoras: null,
     });
     repository.countCopiesByResource.mockResolvedValue(2);
     repository.countAvailableCopiesByResource.mockResolvedValue(1);
@@ -372,6 +374,7 @@ describe('InventoryService', () => {
       id: resourceId,
       available: true,
       categoria: expect.objectContaining({ id: categoryId }),
+      loanPolicy: { resourceId, categoryId, durationHours: null, effectiveDurationHours: 336, source: 'CATEGORY' },
     });
     repository.findResourceById.mockResolvedValue(null);
     await expect(service.getResource(resourceId)).rejects.toThrow(

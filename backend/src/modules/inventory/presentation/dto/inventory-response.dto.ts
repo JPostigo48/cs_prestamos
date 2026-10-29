@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PageMetadataDto } from '../../../../shared/presentation/dto/http-error.dto.js';
+import { ResourceLoanPolicyResponseDto } from './resource-configuration.dto.js';
 
 const categoryId = '550e8400-e29b-41d4-a716-446655440000';
 const resourceId = '550e8400-e29b-41d4-a716-446655440001';
@@ -23,6 +24,14 @@ export class CategoryResponseDto {
 }
 
 export class ResourceResponseDto {
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    minimum: 1,
+    description: 'Excepción individual en horas; null hereda la categoría.',
+  })
+  durationHours!: number | null;
+
   @ApiProperty({ type: String, format: 'uuid', example: resourceId })
   id!: string;
 
@@ -88,6 +97,9 @@ class ResourceCategoryDto {
 }
 
 export class ResourceDetailResponseDto extends ResourceResponseDto {
+  @ApiProperty({ type: ResourceLoanPolicyResponseDto })
+  loanPolicy!: ResourceLoanPolicyResponseDto;
+
   @ApiProperty({ type: ResourceCategoryDto, nullable: true })
   categoria!: ResourceCategoryDto | null;
 }

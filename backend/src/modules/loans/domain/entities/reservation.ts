@@ -1,3 +1,5 @@
+import type { CopyLoanSnapshot } from '../../../inventory/domain/entities/resource-configuration.js';
+
 export enum ReservationStatus {
   CONFIRMED = 'CONFIRMADA',
   PICKED_UP = 'RECOGIDA',
@@ -17,4 +19,5 @@ export interface Reservation {
   status: ReservationStatus;
   cancellationReason: string | null;
   loanId: string | null;
+  configurationSnapshot?: CopyLoanSnapshot | null;
 }

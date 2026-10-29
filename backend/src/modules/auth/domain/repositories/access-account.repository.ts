@@ -1,4 +1,5 @@
 import type { AccessAccount, AccessRole } from '../entities/access-account.js';
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 
 export interface CreateAccessAccountData {
   userId: string;
@@ -21,5 +22,6 @@ export abstract class AccessAccountRepository {
   abstract update(
     accountId: string,
     data: UpdateAccessAccountData,
+    actor?: AuditActor,
   ): Promise<AccessAccount>;
 }

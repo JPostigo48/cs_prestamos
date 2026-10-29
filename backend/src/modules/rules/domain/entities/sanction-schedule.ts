@@ -1,5 +1,28 @@
 import { SuspensionType } from './usage-rule.js';
 
+type EffectiveSanction = {
+  status: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA' | 'ABSUELTA';
+  startsAt: Date;
+  endsAt: Date | null;
+};
+
+export function effectiveSanctionStatus(
+  sanction: EffectiveSanction,
+  at: Date,
+): EffectiveSanction['status'] {
+  if (sanction.status === 'ABSUELTA' || sanction.status === 'FINALIZADA')
+    return sanction.status;
+  if (sanction.endsAt !== null && sanction.endsAt <= at) return 'FINALIZADA';
+  return sanction.startsAt > at ? 'PROGRAMADA' : 'ACTIVA';
+}
+
+export function isEffectiveActiveSanction(
+  sanction: EffectiveSanction,
+  at: Date,
+): boolean {
+  return effectiveSanctionStatus(sanction, at) === 'ACTIVA';
+}
+
 export type SanctionSchedule = {
   status: 'PROGRAMADA' | 'ACTIVA' | 'FINALIZADA';
   startsAt: Date;
@@ -13,18 +36,31 @@ export function scheduleSanction(
   pendingEndsAt: readonly Date[],
 ): SanctionSchedule {
   if (type === SuspensionType.NONE) {
-    if (days !== null && days !== 0) throw new RangeError('La política sin suspensión no admite días.');
-    return { status: 'FINALIZADA', startsAt: registeredAt, endsAt: registeredAt };
+    if (days !== null && days !== 0)
+      throw new RangeError('La política sin suspensión no admite días.');
+    return {
+      status: 'FINALIZADA',
+      startsAt: registeredAt,
+      endsAt: registeredAt,
+    };
   }
   if (type === SuspensionType.INDEFINITE) {
-    if (days !== null) throw new RangeError('El bloqueo indefinido no admite días.');
+    if (days !== null)
+      throw new RangeError('El bloqueo indefinido no admite días.');
     return { status: 'ACTIVA', startsAt: registeredAt, endsAt: null };
   }
-  if (type !== SuspensionType.TEMPORARY || !Number.isSafeInteger(days) || days! <= 0) {
+  if (
+    type !== SuspensionType.TEMPORARY ||
+    !Number.isSafeInteger(days) ||
+    days! <= 0
+  ) {
     throw new RangeError('La suspensión temporal requiere días positivos.');
   }
 
-  const start = pendingEndsAt.reduce((latest, date) => Math.max(latest, date.getTime()), registeredAt.getTime());
+  const start = pendingEndsAt.reduce(
+    (latest, date) => Math.max(latest, date.getTime()),
+    registeredAt.getTime(),
+  );
   const end = start + days! * 24 * 60 * 60 * 1000;
   if (!Number.isFinite(end) || Number.isNaN(new Date(end).getTime())) {
     throw new RangeError('La duración excede el rango de fechas permitido.');

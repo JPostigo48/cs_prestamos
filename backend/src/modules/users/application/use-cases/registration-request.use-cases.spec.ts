@@ -18,31 +18,72 @@ const pending = {
 describe('Users registration request use cases', () => {
   it('creates a normalized request and rejects pending duplicates', async () => {
     const repository = {
-      findPendingByInstitutionalId: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(pending),
+      findPendingByInstitutionalId: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(pending),
       create: vi.fn().mockResolvedValue(pending),
     };
     const users = { findByInstitutionalId: vi.fn().mockResolvedValue(null) };
-    const useCase = new SubmitRegistrationRequestUseCase(repository as any, users as any);
+    const useCase = new SubmitRegistrationRequestUseCase(
+      repository as any,
+      users as any,
+    );
 
-    await useCase.execute({ name: ' Ada Lovelace ', userType: 'ESTUDIANTE', institutionalId: ' A-1 ', evidence: [' carnet '] });
-    expect(repository.create).toHaveBeenCalledWith({ name: 'Ada Lovelace', userType: 'ESTUDIANTE', institutionalId: 'A-1', evidence: ['carnet'] });
-    await expect(useCase.execute({ name: 'Otra', userType: 'ESTUDIANTE', institutionalId: 'A-1' })).rejects.toThrow(ConflictException);
+    await useCase.execute({
+      name: ' Ada Lovelace ',
+      userType: 'ESTUDIANTE',
+      institutionalId: ' A-1 ',
+      evidence: [' carnet '],
+    });
+    expect(repository.create).toHaveBeenCalledWith({
+      name: 'Ada Lovelace',
+      userType: 'ESTUDIANTE',
+      institutionalId: 'A-1',
+      evidence: ['carnet'],
+    });
+    await expect(
+      useCase.execute({
+        name: 'Otra',
+        userType: 'ESTUDIANTE',
+        institutionalId: 'A-1',
+      }),
+    ).rejects.toThrow(ConflictException);
   });
 
   it('approves only pending requests through the transactional repository operation', async () => {
     const repository = {
       findById: vi.fn().mockResolvedValue(pending),
-      approveAndCreateUser: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
+      approveAndCreateUser: vi
+        .fn()
+        .mockResolvedValue({ user: { id: 'user-1' } }),
     };
-    const result = await new ApproveRegistrationRequestUseCase(repository as any, {} as any).execute({ requestId: 'request-1' });
+    const actor = { accountId: 'reviewer-account', userId: 'reviewer-user' };
+    const result = await new ApproveRegistrationRequestUseCase(
+      repository as any,
+      {} as any,
+    ).execute({ requestId: 'request-1' }, actor);
     expect(result.user).toEqual({ id: 'user-1' });
-    expect(repository.approveAndCreateUser).toHaveBeenCalledWith('request-1');
+    expect(repository.approveAndCreateUser).toHaveBeenCalledWith(
+      'request-1',
+      actor,
+    );
   });
 
   it('rejects already processed requests and reports missing requests', async () => {
-    const repository = { findById: vi.fn().mockResolvedValue({ ...pending, status: 'APROBADA' }) };
-    await expect(new RejectRegistrationRequestUseCase(repository as any).execute({ requestId: 'request-1' })).rejects.toThrow(ConflictException);
+    const repository = {
+      findById: vi.fn().mockResolvedValue({ ...pending, status: 'APROBADA' }),
+    };
+    await expect(
+      new RejectRegistrationRequestUseCase(repository as any).execute({
+        requestId: 'request-1',
+      }),
+    ).rejects.toThrow(ConflictException);
     repository.findById.mockResolvedValue(null);
-    await expect(new RejectRegistrationRequestUseCase(repository as any).execute({ requestId: 'request-1' })).rejects.toThrow(NotFoundException);
+    await expect(
+      new RejectRegistrationRequestUseCase(repository as any).execute({
+        requestId: 'request-1',
+      }),
+    ).rejects.toThrow(NotFoundException);
   });
 });

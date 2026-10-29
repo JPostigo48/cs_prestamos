@@ -11,6 +11,11 @@ import type {
   InventoryCopyStatus,
 } from '../../../domain/entities/inventory.types.js';
 import { InventoryRepository } from '../../../domain/repositories/inventory.repository.js';
+import {
+  normalizeAccessoryName,
+  type ResourceAccessoryInput,
+  type StoredResourceAccessory,
+} from '../../../domain/entities/resource-configuration.js';
 
 type QueryRuntime = Pick<
   ReturnType<PrismaService['client']['runtime']>,
@@ -26,6 +31,117 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   private runtime() {
     return this.transactionRuntime ?? this.prisma.client.runtime();
+  }
+
+  /** Lecturas de configuración en la transacción coordinadora de préstamos. */
+  forTransaction(runtime: QueryRuntime): PrismaInventoryRepository {
+    const scoped = new PrismaInventoryRepository(this.prisma);
+    scoped.transactionRuntime = runtime;
+    return scoped;
+  }
+
+  private async lockResource(runtime: QueryRuntime, resourceId: string) {
+    const rows = await runtime.query(
+      this.prisma.sql.public.recursos
+        .update({ updatedAt: Temporal.Now.instant() })
+        .where((row, fns) => fns.eq(row.id, resourceId))
+        .returning('id')
+        .build(),
+    );
+    if (!rows[0]) throw new NotFoundException('Recurso no encontrado.');
+  }
+
+  async findResourceAccessories(
+    resourceId: string,
+  ): Promise<StoredResourceAccessory[]> {
+    return this.runtime().query(
+      this.prisma.sql.public.accesorios_recurso
+        .select('id', 'recursoId', 'nombre', 'nombreNormalizado', 'activo')
+        .where((row, fns) => fns.eq(row.recursoId, resourceId))
+        .build(),
+    );
+  }
+
+  async replaceResourceAccessories(
+    resourceId: string,
+    items: ResourceAccessoryInput[],
+  ): Promise<StoredResourceAccessory[]> {
+    return this.copyTransaction(async (runtime) => {
+      // Serializa reemplazos de la misma plantilla. No se borran IDs históricos.
+      await this.lockResource(runtime, resourceId);
+      const previous = await runtime.query(
+        this.prisma.sql.public.accesorios_recurso
+          .select('id', 'recursoId', 'nombre', 'nombreNormalizado', 'activo')
+          .where((row, fns) => fns.eq(row.recursoId, resourceId))
+          .build(),
+      );
+      const next = items.map((item) => {
+        const nombreNormalizado = normalizeAccessoryName(item.nombre);
+        const existing = item.id
+          ? previous.find((row) => row.id === item.id)
+          : previous.find((row) => row.nombreNormalizado === nombreNormalizado);
+        if (item.id && !existing)
+          throw new NotFoundException(
+            'El accesorio no pertenece a este recurso.',
+          );
+        return { ...item, nombreNormalizado, existing };
+      });
+      if (
+        new Set(next.map((item) => item.existing?.id).filter(Boolean)).size !==
+        next.filter((item) => item.existing).length
+      )
+        throw new ConflictException(
+          'Un accesorio no puede aparecer dos veces.',
+        );
+      await runtime.query(
+        this.prisma.sql.public.accesorios_recurso
+          .update({ activo: false })
+          .where((row, fns) => fns.eq(row.recursoId, resourceId))
+          .returning('id')
+          .build(),
+      );
+      const result: StoredResourceAccessory[] = [];
+      for (const item of next) {
+        const data = {
+          nombre: item.nombre,
+          nombreNormalizado: item.nombreNormalizado,
+          activo: true,
+        };
+        const table = this.prisma.sql.public.accesorios_recurso;
+        const query = item.existing
+          ? table
+              .update(data)
+              .where((row, fns) => fns.eq(row.id, item.existing!.id))
+          : table.insert([{ ...data, recursoId: resourceId }]);
+        const rows = await runtime.query(
+          query
+            .returning(
+              'id',
+              'recursoId',
+              'nombre',
+              'nombreNormalizado',
+              'activo',
+            )
+            .build(),
+        );
+        result.push(rows[0]!);
+      }
+      return result;
+    });
+  }
+
+  async updateResourceLoanPolicy(
+    resourceId: string,
+    durationHours: number | null,
+  ): Promise<void> {
+    const rows = await this.runtime().query(
+      this.prisma.sql.public.recursos
+        .update({ duracionPrestamoHoras: durationHours })
+        .where((row, fns) => fns.eq(row.id, resourceId))
+        .returning('id')
+        .build(),
+    );
+    if (!rows[0]) throw new NotFoundException('Recurso no encontrado.');
   }
 
   async audited<T>(
@@ -251,6 +367,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'categoriaId',
         'nombre',
         'descripcion',
+        'duracionPrestamoHoras',
         'createdAt',
         'updatedAt',
       )
@@ -271,6 +388,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
       'categoriaId',
       'nombre',
       'descripcion',
+      'duracionPrestamoHoras',
       'createdAt',
       'updatedAt',
     );
@@ -321,6 +439,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'categoriaId',
         'nombre',
         'descripcion',
+        'duracionPrestamoHoras',
         'createdAt',
         'updatedAt',
       )
@@ -355,6 +474,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'categoriaId',
         'nombre',
         'descripcion',
+        'duracionPrestamoHoras',
         'createdAt',
         'updatedAt',
       )

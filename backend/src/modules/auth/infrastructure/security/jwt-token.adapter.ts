@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
-import type {
-  AuthenticatedIdentity,
-} from '../../application/ports/auth.inputs.js';
+import { AccessRole } from '../../domain/entities/access-account.js';
+import { UserType } from '../../../users/domain/entities/registration-request.js';
+import type { AuthenticatedIdentity } from '../../application/ports/auth.inputs.js';
 import { JwtPort } from '../../application/ports/jwt.port.js';
 
 type JwtClaims = AuthenticatedIdentity & {
@@ -28,19 +28,26 @@ export class JwtTokenAdapter implements JwtPort {
 
   sign(identity: AuthenticatedIdentity): string {
     return jwt.sign(identity, this.secret ?? 'test-secret', {
-      expiresIn: this.expiresIn as jwt.SignOptions['expiresIn'],
+      expiresIn: /^\d+$/.test(this.expiresIn)
+        ? Number(this.expiresIn)
+        : (this.expiresIn as jwt.SignOptions['expiresIn']),
     });
   }
 
   verify(token: string): AuthenticatedIdentity {
     try {
-      const claims = jwt.verify(token, this.secret ?? 'test-secret') as JwtClaims;
+      const claims = jwt.verify(
+        token,
+        this.secret ?? 'test-secret',
+      ) as JwtClaims;
       if (
         typeof claims !== 'object' ||
         typeof claims.accountId !== 'string' ||
         typeof claims.userId !== 'string' ||
         typeof claims.userType !== 'string' ||
-        typeof claims.role !== 'string'
+        typeof claims.exp !== 'number' ||
+        !Object.values(AccessRole).includes(claims.role) ||
+        !Object.values(UserType).includes(claims.userType as UserType)
       ) {
         throw new Error('Invalid claims');
       }

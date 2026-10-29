@@ -7,6 +7,8 @@ import {
   Param,
   Patch,
   Post,
+  Put,
+  ParseUUIDPipe,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -24,6 +26,7 @@ import {
   ApiExtension,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -36,6 +39,12 @@ import { UpdateCategoryDto } from '../dto/update-category.dto.js';
 import { UpdateCopyStateDto } from '../dto/update-copy-state.dto.js';
 import { UpdateResourceDto } from '../dto/update-resource.dto.js';
 import { ListResourcesQueryDto } from '../dto/list-resources-query.dto.js';
+import {
+  ReplaceResourceAccessoriesDto,
+  ResourceAccessoriesResponseDto,
+  ResourceLoanPolicyResponseDto,
+  UpdateResourceLoanPolicyDto,
+} from '../dto/resource-configuration.dto.js';
 import {
   CategoryResponseDto,
   ResourcesPageResponseDto,
@@ -55,6 +64,85 @@ import {
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly service: InventoryService) {}
+
+  @Get('resources/:resourceId/accessories')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.USER, AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiParam({
+    name: 'resourceId',
+    type: String,
+    format: 'uuid',
+    description: 'ID del artículo (Recurso), no del ejemplar.',
+  })
+  @ApiOperation({ summary: 'F06: consultar accesorios activos del artículo' })
+  @ApiOkResponse({ type: ResourceAccessoriesResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 500)
+  @ApiExtension('x-implementation-status', 'implemented')
+  getAccessories(@Param('resourceId', new ParseUUIDPipe()) resourceId: string) {
+    return this.service.getAccessories(resourceId);
+  }
+
+  @Put('resources/:resourceId/accessories')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.ADMINISTRATOR)
+  @ApiParam({
+    name: 'resourceId',
+    type: String,
+    format: 'uuid',
+    description: 'ID del artículo, compartido por sus ejemplares.',
+  })
+  @ApiBody({ type: ReplaceResourceAccessoriesDto })
+  @ApiOperation({
+    summary:
+      'F07: reemplazar plantilla de accesorios sin borrar referencias históricas',
+  })
+  @ApiOkResponse({ type: ResourceAccessoriesResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 409, 500)
+  @ApiExtension('x-implementation-status', 'implemented')
+  replaceAccessories(
+    @Param('resourceId', new ParseUUIDPipe()) resourceId: string,
+    @Body() dto: ReplaceResourceAccessoriesDto,
+    @CurrentUser() actor: AuthenticatedIdentity,
+  ) {
+    return this.service.mutate(
+      actor,
+      'INVENTARIO_ACCESORIOS_EDITADOS',
+      (service) => service.replaceAccessories(resourceId, dto.items),
+    );
+  }
+
+  @Patch('resources/:resourceId/loan-policy')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.ADMINISTRATOR)
+  @ApiParam({
+    name: 'resourceId',
+    type: String,
+    format: 'uuid',
+    description: 'ID del artículo; no modifica la categoría.',
+  })
+  @ApiBody({ type: UpdateResourceLoanPolicyDto })
+  @ApiOperation({
+    summary: 'F13: establecer o retirar duración individual del artículo',
+    description:
+      'No aplica porcentajes ni cambia reglas versionadas. Las reservas/préstamos existentes conservan sus fechas y duración congelada. GET del recurso expone loanPolicy.',
+  })
+  @ApiOkResponse({ type: ResourceLoanPolicyResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 409, 500)
+  @ApiExtension('x-implementation-status', 'implemented')
+  updateLoanPolicy(
+    @Param('resourceId', new ParseUUIDPipe()) resourceId: string,
+    @Body() dto: UpdateResourceLoanPolicyDto,
+    @CurrentUser() actor: AuthenticatedIdentity,
+  ) {
+    return this.service.mutate(
+      actor,
+      'INVENTARIO_DURACION_EDITADA',
+      (service) => service.updateLoanPolicy(resourceId, dto.durationHours),
+    );
+  }
 
   @ApiHttpErrors(400, 409, 500)
   @Post('categories')
@@ -187,7 +275,7 @@ export class InventoryController {
     return this.service.listResources(query);
   }
 
-  @ApiHttpErrors(400, 404)
+  @ApiHttpErrors(400, 404, 409)
   @Get('resources/:resourceId')
   @ApiOperation({ summary: 'Consultar recurso' })
   @ApiOkResponse({ type: ResourceDetailResponseDto })

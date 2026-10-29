@@ -143,7 +143,19 @@ describe('CRUD controller permissions over HTTP, no DB', () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue(new AuthGuard(jwt as any))
+      .useValue(
+        new AuthGuard(
+          jwt as any,
+          {
+            findById: async (accountId: string) => ({
+              id: accountId,
+              userId: id,
+              enabled: true,
+              role: accountId.replace('account-', ''),
+            }),
+          } as any,
+        ),
+      )
       .overrideGuard(RolesGuard)
       .useValue(new RolesGuard(new Reflector()))
       .compile();

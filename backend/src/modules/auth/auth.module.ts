@@ -6,25 +6,29 @@ import { AuthenticateAccountUseCase } from './application/use-cases/authenticate
 import { GetAccessAccountUseCase } from './application/use-cases/get-access-account.use-case.js';
 import { RegisterAccessAccountUseCase } from './application/use-cases/register-access-account.use-case.js';
 import { UpdateAccessAccountUseCase } from './application/use-cases/update-access-account.use-case.js';
-import { AccessAccountRepository } from './domain/repositories/access-account.repository.js';
 import { UsersAuthAdapter } from './infrastructure/integration/users-auth.adapter.js';
-import { PrismaAccessAccountRepository } from './infrastructure/persistence/prisma/prisma-access-account.repository.js';
 import { PendingCredentialsAdapter } from './infrastructure/security/pending-credentials.adapter.js';
 import { AuthController } from './presentation/controllers/auth.controller.js';
 import { SecurityModule } from './security.module.js';
+import { FullRegistrationUseCase } from './application/use-cases/full-registration.use-case.js';
+import { RegistrationPort } from './application/ports/registration.port.js';
+import { UsersRegistrationAdapter } from './infrastructure/integration/users-registration.adapter.js';
+import { GoogleIdentityPort } from './application/ports/google-identity.port.js';
+import { GoogleIdentityAdapter } from './infrastructure/security/google-identity.adapter.js';
+import { GoogleAuthenticationUseCase } from './application/use-cases/google-authentication.use-case.js';
 
 @Module({
   imports: [UsersModule, SecurityModule],
   controllers: [AuthController],
   providers: [
+    FullRegistrationUseCase,
+    GoogleAuthenticationUseCase,
+    { provide: RegistrationPort, useClass: UsersRegistrationAdapter },
+    { provide: GoogleIdentityPort, useClass: GoogleIdentityAdapter },
     RegisterAccessAccountUseCase,
     AuthenticateAccountUseCase,
     GetAccessAccountUseCase,
     UpdateAccessAccountUseCase,
-    {
-      provide: AccessAccountRepository,
-      useClass: PrismaAccessAccountRepository,
-    },
     {
       provide: AuthUserPort,
       useClass: UsersAuthAdapter,

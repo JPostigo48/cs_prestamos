@@ -3,12 +3,21 @@ import type {
   RegistrationRequestStatus,
   UserType,
 } from '../entities/registration-request.js';
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+
+export type PendingAccessData = {
+  email: string;
+  passwordHash: string;
+  termsVersionId: string;
+  acceptedAt: Date;
+};
 
 export type CreateRegistrationRequestData = {
   name: string;
   userType: UserType;
   institutionalId: string | null;
   evidence: string[];
+  access?: PendingAccessData;
 };
 
 export type RegistrationRequestFilters = {
@@ -38,12 +47,18 @@ export abstract class RegistrationRequestRepository {
   abstract findPendingByInstitutionalId(
     institutionalId: string,
   ): Promise<RegistrationRequest | null>;
-  abstract list(filters: RegistrationRequestFilters): Promise<RegistrationRequestPage>;
-  abstract approveAndCreateUser(requestId: string): Promise<ApprovedRegistration>;
+  abstract list(
+    filters: RegistrationRequestFilters,
+  ): Promise<RegistrationRequestPage>;
+  abstract approveAndCreateUser(
+    requestId: string,
+    actor?: AuditActor,
+  ): Promise<ApprovedRegistration>;
   abstract updateStatus(
     requestId: string,
     status: RegistrationRequestStatus,
-      rejectionReason?: string,
+    rejectionReason?: string,
     approvedUserId?: string,
+    actor?: AuditActor,
   ): Promise<RegistrationRequest>;
 }

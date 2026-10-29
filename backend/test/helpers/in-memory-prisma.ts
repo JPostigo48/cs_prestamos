@@ -9,6 +9,8 @@ type Plan = {
   predicates: Predicate[];
   limit?: number;
   offset?: number;
+  count?: boolean;
+  order?: { key: string; direction: string }[];
 };
 
 /** Doble del constructor SQL y transacciones; no crea clientes ni conexiones. */
@@ -27,6 +29,18 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
               row[key] === value,
             ne: (key: string, value: unknown) => (row: Row) =>
               row[key] !== value,
+            in: (key: string, values: unknown[]) => (row: Row) =>
+              values.includes(row[key]),
+            and:
+              (...predicates: Predicate[]) =>
+              (row: Row) =>
+                predicates.every((p) => p(row)),
+            lt: (key: string, value: any) => (row: Row) =>
+              String(row[key]) < String(value),
+            lte: (key: string, value: any) => (row: Row) =>
+              String(row[key]) <= String(value),
+            gte: (key: string, value: any) => (row: Row) =>
+              String(row[key]) >= String(value),
             ilike: (key: string, value: string) => (row: Row) =>
               String(row[key])
                 .toLowerCase()
@@ -35,6 +49,17 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
         ],
       }),
     returning: () => chain(plan),
+    orderBy: (key: (row: Row) => string, options: { direction: string }) =>
+      chain({
+        ...plan,
+        order: [
+          ...(plan.order ?? []),
+          {
+            key: key(new Proxy({}, { get: (_t, k) => k })),
+            direction: options.direction,
+          },
+        ],
+      }),
     limit: (limit: number) => chain({ ...plan, limit }),
     offset: (offset: number) => chain({ ...plan, offset }),
     build: () => plan,
@@ -44,7 +69,13 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
       {},
       {
         get: (_target, table: string) => ({
-          select: () => chain({ table, operation: 'select', predicates: [] }),
+          select: (...args: any[]) =>
+            chain({
+              table,
+              operation: 'select',
+              predicates: [],
+              count: typeof args[0] === 'function',
+            }),
           insert: (data: Row[]) =>
             chain({ table, operation: 'insert', data, predicates: [] }),
           update: (data: Row) =>
@@ -67,6 +98,17 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
       const selected = rows.filter((row) =>
         plan.predicates.every((predicate) => predicate(row)),
       );
+      if (plan.operation === 'select' && plan.count)
+        return [{ total: selected.length }];
+      if (plan.operation === 'select' && plan.order)
+        selected.sort((a, b) => {
+          for (const { key, direction } of plan.order!) {
+            const comparison = String(a[key]).localeCompare(String(b[key]));
+            if (comparison)
+              return direction === 'desc' ? -comparison : comparison;
+          }
+          return 0;
+        });
       if (plan.operation === 'select')
         return selected
           .slice(
@@ -79,6 +121,23 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
       if (plan.operation === 'insert') {
         const inserted: Row[] = (plan.data as Row[]).map((data) => ({
           id: randomUUID(),
+          ...(plan.table === 'solicitudes_registro'
+            ? {
+                estado: 'PENDIENTE',
+                fechaSolicitud: new Date(),
+                usuarioAprobadoId: null,
+              }
+            : {}),
+          ...(plan.table === 'cuentas_acceso'
+            ? { habilitada: true, ultimoAcceso: null }
+            : {}),
+          ...(plan.table === 'reservas'
+            ? {
+                fechaRecogida: null,
+                fechaCancelacion: null,
+                motivoCancelacion: null,
+              }
+            : {}),
           ...data,
         }));
         const unique =
@@ -88,7 +147,42 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
               ? ['codigoInventario']
               : plan.table === 'categorias_recurso'
                 ? ['nombre']
-                : [];
+                : plan.table === 'inspecciones_devolucion' ||
+                    plan.table === 'devoluciones'
+                  ? ['prestamoId']
+                  : plan.table === 'cuentas_acceso'
+                    ? ['email', 'usuarioId']
+                    : [];
+        if (
+          plan.table === 'accesorios_recurso' &&
+          inserted.some((data) =>
+            rows.some(
+              (row) =>
+                row.recursoId === data.recursoId &&
+                row.nombreNormalizado === data.nombreNormalizado,
+            ),
+          )
+        )
+          throw Object.assign(new Error('duplicate accessory'), {
+            code: '23505',
+          });
+        if (
+          plan.table === 'solicitudes_registro' &&
+          inserted.some((data) =>
+            rows.some(
+              (row) =>
+                row.estado === 'PENDIENTE' &&
+                data.estado === 'PENDIENTE' &&
+                ((data.email != null && row.email === data.email) ||
+                  (data.identificadorInstitucional != null &&
+                    row.identificadorInstitucional ===
+                      data.identificadorInstitucional)),
+            ),
+          )
+        )
+          throw Object.assign(new Error('duplicate pending request'), {
+            code: '23505',
+          });
         if (
           inserted.some((data) =>
             unique.some(
@@ -103,6 +197,21 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
       }
       if (plan.operation === 'update') {
         const data = plan.data as Row;
+        if (
+          plan.table === 'accesorios_recurso' &&
+          selected.some((item) => {
+            const next = { ...item, ...data };
+            return rows.some(
+              (row) =>
+                row.id !== next.id &&
+                row.recursoId === next.recursoId &&
+                row.nombreNormalizado === next.nombreNormalizado,
+            );
+          })
+        )
+          throw Object.assign(new Error('duplicate accessory'), {
+            code: '23505',
+          });
         const unique =
           plan.table === 'usuarios'
             ? ['identificadorInstitucional']

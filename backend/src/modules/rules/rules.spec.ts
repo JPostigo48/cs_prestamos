@@ -81,7 +81,8 @@ describe('Rules use cases', () => {
         fecha: new Date(), penalizacionAplicada: '5.00',
       }])
       .mockResolvedValueOnce([{ id: 's1' }])
-      .mockResolvedValueOnce([{ id: 'audit-1' }]);
+      .mockResolvedValueOnce([{ id: 'audit-1' }])
+      .mockResolvedValueOnce([{ id: 'audit-2' }]);
     const chain = (value: unknown): any => ({
       where: () => chain(value), limit: () => chain(value),
       returning: () => chain(value), build: () => value,
@@ -267,11 +268,14 @@ describe('Rules use cases', () => {
   });
 
   it('resolves appeals and absolves sanctions in one transaction', async () => {
+    const { Temporal } = await import('temporal-polyfill/full');
     const query = vi.fn()
+      .mockResolvedValueOnce([{ usuarioId: 'u1' }])
+      .mockResolvedValueOnce([{ id: 'u1' }])
       .mockResolvedValueOnce([{
         id: 'a1', incumplimientoId: 'v1', usuarioId: 'u1', motivo: 'motivo',
-        fecha: new Date(), estado: 'ACEPTADA', resolucion: 'fundada',
-        fechaResolucion: new Date(), resueltaPorCuentaId: 'account-1',
+        fecha: Temporal.Now.instant(), estado: 'ACEPTADA', resolucion: 'fundada',
+        fechaResolucion: Temporal.Now.instant(), resueltaPorCuentaId: 'account-1',
       }])
       .mockResolvedValueOnce([{
         id: 's1', usuarioId: 'u1', estado: 'FINALIZADA',
@@ -291,7 +295,7 @@ describe('Rules use cases', () => {
     const prisma = {
       client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
       sql: { public: {
-        apelaciones: { update: () => chain('appeal-update') },
+        apelaciones: { select: () => chain('appeal-select'), update: () => chain('appeal-update') },
         sanciones: { select: () => chain('sanction-select'), update: () => chain('sanction-update') },
         usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
         auditorias_usuario: { insert: () => chain('audit-insert') },
@@ -308,12 +312,15 @@ describe('Rules use cases', () => {
 
     expect(result.status).toBe('ACEPTADA');
     expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledTimes(9);
+    expect(query.mock.calls[1]).toEqual(['user-update']);
     expect(query).toHaveBeenCalledWith('audit-insert');
   });
 
   it('rolls back an accepted appeal when the sanction no longer exists', async () => {
     const query = vi.fn()
+      .mockResolvedValueOnce([{ usuarioId: 'u1' }])
+      .mockResolvedValueOnce([{ id: 'u1' }])
       .mockResolvedValueOnce([{
         id: 'a1', incumplimientoId: 'v1', usuarioId: 'u1', estado: 'ACEPTADA',
       }])
@@ -325,7 +332,8 @@ describe('Rules use cases', () => {
     const prisma = {
       client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
       sql: { public: {
-        apelaciones: { update: () => chain('appeal-update') },
+        apelaciones: { select: () => chain('appeal-select'), update: () => chain('appeal-update') },
+        usuarios: { update: () => chain('user-lock') },
         sanciones: { select: () => chain('sanction-select') },
       } },
     };
@@ -334,7 +342,7 @@ describe('Rules use cases', () => {
       appealId: 'a1', status: AppealStatus.ACCEPTED, resolution: 'fundada',
       resolvedAt: new Date(), resolvedByAccountId: 'admin-1',
     })).rejects.toThrow('sanción');
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 
   it('passes the trusted resolver identity through to the repository', async () => {
