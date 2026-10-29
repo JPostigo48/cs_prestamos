@@ -4,6 +4,10 @@ import { ApiError } from '../api/client'
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError && error.status === 403)
     return 'Acceso denegado. Tu sesión sigue abierta; puedes volver a otra sección desde el menú.'
+  if (error instanceof ApiError && (error.status === 0 || error.status >= 500))
+    return 'No pudimos comunicarnos con el servicio. Intenta consultar de nuevo. Si estabas enviando una solicitud, verifica su estado antes de repetirla.'
+  if (error instanceof Error && /contrato|\bF\d{2}\b|Cannot (GET|POST|PATCH|DELETE)|\/(?:api|reservations|users|terms|resources)\b/i.test(error.message))
+    return 'Esta información no está disponible en este momento. Puedes volver a consultarla; si el problema continúa, contacta con el personal.'
   return error instanceof Error ? error.message : 'No se pudo completar la solicitud.'
 }
 

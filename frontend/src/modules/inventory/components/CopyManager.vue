@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { getCopies, createCopy, changeCopyState, type Copy } from '../api/inventory-api'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
+import StatusBadge from '../../../shared/components/StatusBadge.vue'
 const props = defineProps<{ resourceId: string; disabled?: boolean }>()
 const emit = defineEmits<{ changed: []; busy: [value: boolean] }>()
 const copies = useRemote((signal) => getCopies(props.resourceId, signal))
@@ -54,18 +55,18 @@ async function state() {
 }
 </script>
 <template>
-  <section class="stack">
+  <section class="stack copy-manager">
     <h3>Ejemplares y códigos de inventario</h3>
-    <p>La cantidad se deriva de las copias registradas, no del número editado en un formulario.</p>
+    <p class="muted">Cada ejemplar tiene un código único. Las cantidades se calculan a partir de los ejemplares registrados.</p>
     <RemoteState :loading="copies.loading.value" :error="copies.error.value" @retry="copies.refresh"
       ><p v-if="copies.data.value">Total exacto: {{ copies.data.value.length }}</p>
-      <ul class="stack">
+      <ul class="copy-list">
         <li v-for="copy in copies.data.value" :key="copy.id">
-          {{ copy.codigoInventario }} · {{ copy.estado }}
+          <div><strong>{{ copy.codigoInventario }}</strong><StatusBadge :tone="copy.estado === 'DISPONIBLE' ? 'success' : copy.estado === 'NO_DISPONIBLE' ? 'neutral' : 'warning'">{{ copy.estado.replaceAll('_', ' ') }}</StatusBadge></div>
           <button
             v-if="copy.estado === 'DISPONIBLE' || copy.estado === 'NO_DISPONIBLE'"
             type="button"
-            :disabled="sending"
+            :disabled="sending || disabled"
             @click="selected = copy"
           >
             {{ copy.estado === 'DISPONIBLE' ? 'Inhabilitar' : 'Habilitar' }}
@@ -74,7 +75,7 @@ async function state() {
       </ul>
       <p v-if="copies.data.value?.length === 0">No hay ejemplares.</p></RemoteState
     >
-    <div v-if="selected" class="panel">
+    <div v-if="selected" class="panel copy-confirmation" role="group" aria-label="Confirmar cambio de disponibilidad">
       <p>¿Cambiar disponibilidad de {{ selected.codigoInventario }}?</p>
       <button type="button" :disabled="sending" @click="selected = null">Cancelar</button
       ><button type="button" :disabled="sending" @click="state">Confirmar cambio</button>
@@ -86,9 +87,24 @@ async function state() {
           required
           maxlength="80"
           :disabled="sending" /></label
-      ><button :disabled="sending || !code.trim()">Añadir ejemplar</button>
+      ><button class="primary" :disabled="sending || disabled || !code.trim()">Añadir ejemplar</button>
     </form>
     <p v-if="error" role="alert" class="error">{{ error }}</p>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
   </section>
 </template>
+<style scoped>
+.copy-manager h3 { font-size: 15px; font-weight: 800; }
+.copy-manager p { font-size: 12px; line-height: 1.6; }
+.copy-list { list-style: none; padding: 0; }
+.copy-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
+.copy-list li > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.copy-list strong { font-family: ui-monospace, monospace; font-size: 12px; }
+.copy-list button { font-size: 11px; }
+.copy-manager .row { align-items: end; }
+.copy-manager label { flex: 1 1 200px; font-size: 12px; color: #64748b; font-weight: 600; }
+.copy-manager input { width: 100%; margin-top: 6px; }
+.copy-confirmation { background: #fffbeb; border-color: #fde68a; }
+.copy-confirmation p { margin-bottom: 12px; }
+.copy-confirmation button { margin: 0 8px 8px 0; }
+</style>

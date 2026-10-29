@@ -32,12 +32,8 @@ async function load() {
 }
 </script>
 <template>
-  <section class="panel stack">
+  <section class="panel stack contract-section">
     <h2>{{ title }}</h2>
-    <p class="muted">
-      {{ contract }} · Lectura pendiente de contrato backend. Consultar enviará la petición
-      prevista; no se utilizarán datos simulados.
-    </p>
     <button :disabled="loading" @click="load">
       {{ loading ? 'Consultando…' : 'Consultar / actualizar' }}
     </button>
@@ -45,3 +41,7 @@ async function load() {
     <slot v-if="data" :data="data"><p>Respuesta recibida.</p></slot>
   </section>
 </template>
+<style scoped>
+.contract-section h2 { font-size: 14px; }
+.contract-section > button { font-size: 12px; color: #2563eb; background: #eff6ff; border-color: #dbeafe; }
+</style>

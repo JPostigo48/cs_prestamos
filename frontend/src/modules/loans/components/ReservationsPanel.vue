@@ -10,6 +10,9 @@ import {
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
+import StatusBadge from '../../../shared/components/StatusBadge.vue'
+import { useCopyDetails } from '../../inventory/useCopyDetails'
+import { useUserDetails } from '../../users/useUserDetails'
 import { dateTime } from '../../../shared/format'
 import { ApiError } from '../../../shared/api/client'
 const props = defineProps<{ staff?: boolean }>()
@@ -21,6 +24,8 @@ const remote = useRemote(
   () => true,
   false,
 )
+const copies = useCopyDetails(() => remote.data.value?.items ?? null)
+const users = useUserDetails(() => props.staff ? remote.data.value?.items ?? null : null)
 const selected = ref<Reservation | null>(null),
   reason = ref(''),
   sending = ref(false),
@@ -57,9 +62,9 @@ async function confirm() {
 }
 </script>
 <template>
-  <section class="panel stack">
+  <section class="panel stack reservations-panel" :class="{ 'staff-reservations': staff }">
     <h2>{{ staff ? 'Entregas de reservas' : 'Mis reservas' }}</h2>
-    <p>Listado F14 pendiente de backend. Un error no significa que no existan reservas.</p>
+    <p class="muted">{{ staff ? 'Verifica las reservas confirmadas y la identidad del titular antes de entregar un equipo.' : 'Consulta tus reservas y su hora límite de recogida. Si la consulta falla, no podremos confirmar su estado.' }}</p>
     <button :disabled="remote.loading.value" @click="remote.refresh">
       Consultar / actualizar reservas
     </button>
@@ -68,15 +73,16 @@ async function confirm() {
       ><template v-if="remote.data.value">
         <p>{{ remote.data.value.total }} reservas</p>
         <div class="cards">
-          <article v-for="item in remote.data.value.items" :key="item.id" class="panel stack">
-            <h3>Reserva {{ item.id }}</h3>
-            <p>Ejemplar {{ item.copyId }} · {{ item.status }}</p>
-            <p>
-              Recogida: {{ dateTime(item.requestedAt) }} · límite
-              {{ dateTime(item.pickupDeadline) }}
-            </p>
-            <p v-if="staff">Usuario {{ item.userId }}</p>
+          <article v-for="item in remote.data.value.items" :key="item.id" class="panel stack reservation-card">
+            <h3 v-if="staff">{{ users[item.userId]?.name || 'Titular · ' + item.userId }}</h3>
+            <h3 v-else><RouterLink v-if="copies[item.copyId]" :to="'/app/catalog/' + copies[item.copyId]!.recurso.id">{{ copies[item.copyId]!.recurso.nombre }}</RouterLink><span v-else>Reserva de recurso</span></h3>
+            <StatusBadge :tone="item.status === 'CONFIRMADA' ? 'info' : 'neutral'">{{ item.status.replaceAll('_', ' ') }}</StatusBadge>
+            <p v-if="staff" class="reservation-resource"><RouterLink v-if="copies[item.copyId]" :to="'/app/catalog/' + copies[item.copyId]!.recurso.id">{{ copies[item.copyId]!.recurso.nombre }}</RouterLink><span v-else>Reserva de recurso</span></p>
+            <p class="muted">Ejemplar {{ copies[item.copyId]?.codigoInventario || item.copyId }}</p>
+            <dl class="reservation-dates"><div><dt>Hora de recogida</dt><dd>{{ dateTime(item.requestedAt) }}</dd></div><div><dt>Límite de recogida</dt><dd>{{ dateTime(item.pickupDeadline) }}</dd></div></dl>
+            <details class="muted"><summary>Referencia de reserva</summary><p>Reserva {{ item.id }}</p><p v-if="staff">Titular · {{ item.userId }}</p></details>
             <button
+              :class="{ primary: staff }"
               v-if="item.status === 'CONFIRMADA' && (staff || item.userId === session.user.id)"
               @click="select(item)"
             >
@@ -91,6 +97,8 @@ async function confirm() {
   <ModalDialog
     v-if="selected"
     :title="staff ? 'Confirmar recogida' : 'Cancelar reserva propia'"
+    :subtitle="copies[selected.copyId]?.recurso.nombre"
+    compact
     :busy="sending"
     @close="selected = null"
     ><form class="stack" @submit.prevent="confirm">
@@ -103,8 +111,35 @@ async function confirm() {
       </p>
       <div class="row">
         <button type="button" :disabled="sending" @click="selected = null">Cerrar</button
-        ><button :disabled="sending || uncertain">Confirmar</button>
+        ><button class="primary" :disabled="sending || uncertain">{{ sending ? 'Procesando…' : 'Confirmar' }}</button>
       </div>
     </form></ModalDialog
   >
 </template>
+<style scoped>
+.reservations-panel > p { font-size: 14px; }
+.reservation-card h3 { font-size: 14px; font-weight: 700; }
+.reservation-card h3 a { color: #0f172a; text-decoration: none; }
+.reservation-card > p, .reservation-card details { font-size: 12px; }
+.reservation-card button { font-size: 13px; }
+.reservation-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+.reservation-dates dt { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+.reservation-dates dd { font-size: 13px; line-height: 1.6; }
+.application .staff-reservations { border: 0; padding: 0; background: transparent; }
+.staff-reservations :deep(.cards) { grid-template-columns: minmax(0,1fr); gap: 12px; }
+.application .staff-reservations .reservation-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 24px; padding: 20px; border-radius: 12px; margin: 0; box-shadow: 0 1px 2px #0f172a0d; }
+.staff-reservations .reservation-card > * { margin: 0; }
+.staff-reservations .reservation-card h3 { grid-column: 1; font-size: 14px; }
+.staff-reservations .reservation-card > .status-badge { grid-column: 2; grid-row: 1; justify-self: end; }
+.staff-reservations .reservation-card > .muted { grid-column: 1; }
+.staff-reservations .reservation-dates { grid-column: 1; border: 0; padding-top: 0; }
+.staff-reservations .reservation-card > details { grid-column: 1; }
+.staff-reservations .reservation-resource { grid-column: 1; font-size: 13px; color: #475569; }
+.application .staff-reservations .reservation-resource a { text-decoration: none; }
+.staff-reservations .reservation-card > button { grid-column: 2; grid-row: 2 / span 4; align-self: center; font-weight: 700; }
+@media (max-width: 639px) {
+ .application .staff-reservations .reservation-card { padding: 16px; gap: 10px; }
+ .staff-reservations .reservation-card > button { grid-column: 1 / -1; grid-row: auto; width: 100%; }
+ .staff-reservations .reservation-dates { grid-column: 1 / -1; }
+}
+</style>

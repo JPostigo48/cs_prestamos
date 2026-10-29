@@ -33,10 +33,10 @@ async function submit() {
 }
 </script>
 <template>
-  <ModalDialog title="Crear cuenta de acceso" :busy="sending" @close="$emit('close')"
-    ><form class="stack" @submit.prevent="submit">
-      <p>{{ name }} · usuario {{ userId }}</p>
-      <p>
+  <ModalDialog title="Crear cuenta de acceso" :subtitle="name" compact :busy="sending" @close="$emit('close')"
+    ><form class="stack account-form" @submit.prevent="submit">
+      <details class="muted"><summary>Referencia del usuario</summary>{{ userId }}</details>
+      <p class="account-explanation">
         La aprobación de la solicitud no crea una cuenta. Esta acción crea acceso con rol USUARIO,
         sin iniciar sesión como el solicitante.
       </p>
@@ -61,10 +61,17 @@ async function submit() {
       <p v-if="confirmed" role="status" class="notice">Cuenta confirmada: {{ confirmed }}</p>
       <div class="row">
         <button type="button" :disabled="sending" @click="$emit('close')">Cerrar</button
-        ><button :disabled="sending || !!confirmed || uncertain">
+        ><button class="primary" :disabled="sending || !!confirmed || uncertain">
           Confirmar creación de cuenta
         </button>
       </div>
     </form></ModalDialog
   >
 </template>
+<style scoped>
+.account-form label { color: #475569; font-size: 12px; font-weight: 600; }
+.account-form input { display: block; width: 100%; margin-top: 6px; }
+.account-explanation { border: 1px solid #dbeafe; background: #eff6ff; color: #1e3a5f; padding: 14px; border-radius: 10px; font-size: 12px; line-height: 1.6; }
+.account-form details { font-size: 11px; }
+.account-form .row { justify-content: end; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+</style>

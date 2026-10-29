@@ -12,6 +12,7 @@ import CopyManager from './CopyManager.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import ContractSection from '../../../shared/components/ContractSection.vue'
 import { errorMessage } from '../../../shared/composables/useRemote'
+import { Package, ClipboardList, Clock, Layers } from '@lucide/vue'
 const props = defineProps<{ resource: Resource | null; categories: Category[] }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
 const id = ref(props.resource?.id ?? null),
@@ -24,6 +25,7 @@ const parts = ref(''),
   error = ref(''),
   notice = ref('')
 const copyBusy = ref(false)
+const section = ref<'basic' | 'copies' | 'parts' | 'policy'>('basic')
 const busy = computed(() => sending.value || copyBusy.value)
 const category = computed(() => props.categories.find((c) => c.id === categoryId.value))
 async function save() {
@@ -82,14 +84,16 @@ async function extra(kind: 'parts' | 'policy') {
 <template>
   <ModalDialog
     :title="id ? 'Editar artículo' : 'Nuevo artículo'"
+    :subtitle="resource?.nombre || 'Registra un recurso del catálogo'"
     :busy="busy"
     @close="emit('close')"
   >
-    <form class="stack" @submit.prevent="save">
-      <fieldset :disabled="busy" class="stack">
-        <legend>Datos básicos del recurso</legend>
-        <label>Nombre<input v-model="name" required maxlength="180" /></label
-        ><label>Descripción<textarea v-model="description" rows="3" /></label>
+    <div class="resource-editor">
+    <nav v-if="id" class="editor-tabs" aria-label="Secciones del artículo"><button :aria-pressed="section === 'basic'" :disabled="busy" @click="section = 'basic'"><Package :size="16" aria-hidden="true" /> Artículo</button><button :aria-pressed="section === 'copies'" :disabled="busy" @click="section = 'copies'"><Layers :size="16" aria-hidden="true" /> Ejemplares</button><button :aria-pressed="section === 'parts'" :disabled="busy" @click="section = 'parts'"><ClipboardList :size="16" aria-hidden="true" /> Accesorios</button><button :aria-pressed="section === 'policy'" :disabled="busy" @click="section = 'policy'"><Clock :size="16" aria-hidden="true" /> Duración</button></nav>
+    <form v-show="section === 'basic'" class="stack" @submit.prevent="save">
+      <fieldset :disabled="busy" class="basic-fields">
+        <legend>Datos del artículo</legend>
+        <label>Nombre<input v-model="name" required maxlength="180" /></label>
         <label
           >Categoría<select v-model="categoryId" required>
             <option value="">Seleccionar</option>
@@ -98,11 +102,11 @@ async function extra(kind: 'parts' | 'policy') {
             </option>
           </select></label
         >
-        <p v-if="category">
-          Duración heredada: {{ durationLabel(category) }}. Guardar el artículo no cambia su
-          categoría para otros recursos.
+        <label class="full-field">Descripción<textarea v-model="description" rows="3" /></label>
+        <p v-if="category" class="category-policy full-field"><Clock :size="16" aria-hidden="true" />
+          Duración de la categoría: {{ durationLabel(category) }}. Esta regla se hereda; guardar el artículo no modifica la categoría.
         </p>
-        <button class="primary" :disabled="sending || !name.trim() || !categoryId">
+        <button class="primary full-field" :disabled="sending || !name.trim() || !categoryId">
           Guardar datos básicos
         </button>
       </fieldset>
@@ -110,15 +114,14 @@ async function extra(kind: 'parts' | 'policy') {
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <template v-if="id"
-      ><hr />
-      <CopyManager
+      ><section v-show="section === 'copies'" class="editor-section"><CopyManager
         :key="id"
         :resource-id="id"
         :disabled="sending"
         @busy="copyBusy = $event"
         @changed="emit('changed')"
-      />
-      <ContractSection title="Accesorios actuales" contract="F06" :params="{ resourceId: id }"
+      /></section>
+      <section v-show="section === 'parts'" class="editor-section"><ContractSection title="Accesorios actuales" contract="F06" :params="{ resourceId: id }"
         ><template #default="{ data }"
           ><ul>
             <li
@@ -131,16 +134,17 @@ async function extra(kind: 'parts' | 'policy') {
         ></ContractSection
       >
       <form class="stack" @submit.prevent="extra('parts')">
-        <h3>Partes y accesorios · F07 pendiente</h3>
+        <h3>Partes y accesorios</h3>
         <label>Nombres separados por coma<textarea v-model="parts" :disabled="sending" /></label>
         <p>
-          Reemplaza la lista completa solo si el backend lo confirma. Una lista vacía solicitará
+          Esta acción reemplaza la lista completa. Una lista vacía solicitará
           eliminar los accesorios.
         </p>
-        <button :disabled="sending">Confirmar reemplazo de accesorios</button>
-      </form>
-      <form class="stack" @submit.prevent="extra('policy')">
-        <h3>Excepción individual de duración · F13 pendiente</h3>
+        <button class="primary" :disabled="sending">Confirmar reemplazo de accesorios</button>
+      </form></section>
+      <form v-show="section === 'policy'" class="stack editor-section" @submit.prevent="extra('policy')">
+        <h3>Duración del préstamo</h3>
+        <p class="category-policy">{{ category ? 'Regla de la categoría: ' + durationLabel(category) + '.' : 'Selecciona una categoría para conocer su regla.' }} La excepción se aplica únicamente a este artículo.</p>
         <label
           >Horas máximas<input
             v-model.number="hours"
@@ -149,10 +153,27 @@ async function extra(kind: 'parts' | 'policy') {
             step="1"
             required
             :disabled="sending" /></label
-        ><button :disabled="sending">Guardar excepción individual</button>
+        ><button class="primary" :disabled="sending">Guardar excepción individual</button>
       </form>
     </template>
     <p v-else>Guarda el recurso antes de añadir ejemplares o accesorios.</p>
     <button type="button" :disabled="busy" @click="emit('close')">Cerrar editor</button>
+    </div>
   </ModalDialog>
 </template>
+<style scoped>
+.editor-tabs { display: flex; gap: 4px; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; }
+.editor-tabs button { display: flex; gap: 5px; align-items: center; flex-shrink: 0; font-size: 11px; font-weight: 700; border-color: transparent; padding: 8px; }
+.editor-tabs [aria-pressed='true'] { color: #1e3a5f; background: #e8edf4; }
+.basic-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+.basic-fields legend { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: .06em; margin-bottom: 16px; }
+.resource-editor label { font-size: 12px; color: #64748b; font-weight: 700; }
+.resource-editor :is(input,select,textarea) { display: block; width: 100%; margin-top: 6px; font-weight: 400; }
+.full-field { grid-column: 1 / -1; }
+.category-policy { display: flex; align-items: start; gap: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 12px; color: #64748b; line-height: 1.6; }
+.editor-section { margin: 0 0 20px; }
+.editor-section h3 { font-size: 15px; font-weight: 800; }
+.editor-section p { font-size: 12px; line-height: 1.6; }
+.resource-editor > button:last-child { width: 100%; background: #f1f5f9; font-weight: 700; }
+@media (max-width: 375px) { .basic-fields { grid-template-columns: minmax(0, 1fr); } }
+</style>

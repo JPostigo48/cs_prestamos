@@ -366,7 +366,7 @@ test('I7: usuarios montados conservan tabla desktop y tarjetas móviles sin inve
     assert.ok(find(mounted.root, 'table', 'Persona real'))
     assert.ok(find(mounted.root, 'article', 'Persona real'))
     assert.match(text(mounted.root), /teléfono no disponible/)
-    assert.equal(findAll(mounted.root, n => n.tag === 'button' && text(n) === 'Historial').length, 2)
+    assert.equal(findAll(mounted.root, n => n.tag === 'button' && text(n).trim() === 'Historial').length, 2)
   } finally { mounted.unmount(); await flush() }
 })
 test('I7: formulario montado alterna visibilidad accesible sin enviar ni alterar contraseña', async () => {

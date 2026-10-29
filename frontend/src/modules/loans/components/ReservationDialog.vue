@@ -50,9 +50,8 @@ async function submit() {
 }
 </script>
 <template>
-  <ModalDialog title="Reservar equipo" :busy="sending" @close="emit('close')">
-    <form class="stack" @submit.prevent="submit">
-      <p>{{ resourceName }}</p>
+  <ModalDialog title="Reservar equipo" :subtitle="resourceName" :busy="sending" mobile-sheet compact @close="emit('close')">
+    <form class="stack reservation-form" @submit.prevent="submit">
       <template v-if="!result"
         ><label
           >Ejemplar disponible<select v-model="copyId" required :disabled="sending || uncertain">
@@ -80,7 +79,7 @@ async function submit() {
       </template>
       <p v-if="error" role="alert" class="error">{{ error }}</p>
       <p v-if="uncertain" class="error">
-        Resultado incierto. No repitas la operación sin verificarla con personal usando el ID si está disponible. La consulta F14 puede no estar implementada; cerrar no confirma un fallo.
+        Resultado pendiente de verificar. No repitas la operación sin consultarlo con el personal usando el identificador si está disponible. Cerrar esta ventana no cancela la solicitud.
       </p>
       <section v-if="result" class="notice" role="status">
         <h3>{{ result.status === 'CANCELADA' ? 'Cancelación confirmada' : 'Reserva confirmada' }}</h3>
@@ -98,7 +97,7 @@ async function submit() {
         <button type="button" :disabled="sending || uncertain || !humanConfirmation" @click="cancelConfirmed">Confirmar cancelación</button>
         <button type="button" :disabled="sending" @click="cancelling = false">Conservar reserva</button>
       </section>
-      <div class="row">
+      <div class="row reservation-actions">
         <button type="button" :disabled="sending" @click="emit('close')">Cerrar</button
         ><button
           v-if="!result"
@@ -111,3 +110,9 @@ async function submit() {
     </form>
   </ModalDialog>
 </template>
+<style scoped>
+.reservation-form > label { color: #64748b; font-size: 12px; font-weight: 600; }
+.reservation-form > p { font-size: 12px; line-height: 1.6; color: #64748b; }
+.reservation-actions > button { flex: 1; padding-block: 10px; font-size: 14px; font-weight: 600; }
+.reservation-actions > a { flex-basis: 100%; text-align: center; font-size: 12px; color: #2563eb; margin-top: 4px; }
+</style>

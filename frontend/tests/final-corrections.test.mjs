@@ -127,7 +127,7 @@ for (const available of [1, 0]) test(`R3: detalle con ${available} disponible y 
   try {
     await flush(); await flush()
     assert.match(text(mounted.root).replace(/\s+/g, ' '), new RegExp(`${available} disponible${available === 1 ? '' : 's'} de ${copies.length} ejemplares totales`))
-    const reserve = find(mounted.root, 'button', 'Reservar equipo para mí')
+    const reserve = find(mounted.root, 'button', available ? 'Reservar equipo para mí' : 'Sin disponibilidad por el momento')
     assert.equal(reserve.props.disabled, !available)
     if (available) {
       await event(reserve, 'click')
@@ -164,7 +164,7 @@ test('I7: inicio conserva estados independientes, sanción activa antes de categ
   const mounted = mount(component)
   try {
     await flush(); await flush()
-    assert.match(text(mounted.root), /No habilitado para préstamos/)
+    assert.match(text(mounted.root), /Préstamos no habilitados/)
     assert.match(text(mounted.root), /Confianza: 90/)
     assert.ok(text(mounted.root).indexOf('Sanción activa') < text(mounted.root).indexOf('Explorar catálogo'))
     assert.equal(findAll(mounted.root, n => n.tag === 'input' && n.props.type === 'search').length, 0)

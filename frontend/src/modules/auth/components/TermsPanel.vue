@@ -49,7 +49,7 @@ async function accept() {
 <template>
   <section class="terms-panel stack">
     <h2>Términos y condiciones</h2>
-    <p>La consulta de la versión vigente depende del contrato provisional F02.</p>
+    <p class="muted">Lee la versión vigente antes de registrar tu aceptación. Conoce las condiciones de préstamo y las posibles penalizaciones.</p>
     <button type="button" :disabled="terms.loading.value || sending" @click="load">
       Consultar términos actuales
     </button>
@@ -86,10 +86,8 @@ async function accept() {
 </template>
 <style scoped>
 .terms-panel {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1rem 0;
+  font-size: 14px;
+  line-height: 1.6;
 }
 .terms-panel h2 {
   font-weight: 700;
@@ -101,8 +99,11 @@ async function accept() {
   margin: 0.4rem 0;
 }
 .terms-panel label {
-  display: block;
+  display: flex;
+  align-items: start;
+  gap: 10px;
 }
+.terms-panel input[type='checkbox'] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 4px; accent-color: #1e3a5f; }
 .terms-content {
   max-height: 16rem;
   overflow: auto;
