@@ -114,7 +114,7 @@ export function parseContract(source) {
   }
   const modelMap = new Map(models.map(model => [model.name, model]))
   const enumNames = new Set(enums.map(item => item.name))
-  const scalarTypes = new Set(['Uuid', 'String', 'Int', 'BigInt', 'Float', 'Decimal', 'Boolean', 'DateTime', 'Json', 'Bytes', 'VarChar', 'Char', 'Text', 'Numeric', 'Timestamptz', 'Timestamp', 'Date', 'Time', 'temporal.updatedAt'])
+  const scalarTypes = new Set(['Uuid', 'String', 'Int', 'BigInt', 'Float', 'Decimal', 'Boolean', 'DateTime', 'Json', 'Jsonb', 'Bytes', 'VarChar', 'Char', 'Text', 'Numeric', 'Timestamptz', 'Timestamp', 'Date', 'Time', 'temporal.updatedAt'])
   const attr = (field, name) => field.attributes.find(item => item.name === name)
   const cardinality = field => field.list ? '0..n' : field.nullable ? '0..1' : '1'
   const relations = []

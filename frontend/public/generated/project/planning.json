@@ -3,7 +3,7 @@
   "technologies": [
     {
       "area": "Frontend",
-      "technology": "Vue 3, TypeScript, Vite y Tailwind CSS"
+      "technology": "Vue 3, TypeScript, Vite, Tailwind CSS y Lucide"
     },
     {
       "area": "Backend",

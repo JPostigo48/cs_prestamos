@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
     <button type="button" class="access-trigger" :aria-label="description" :aria-describedby="visible ? id : undefined" :aria-expanded="visible" @focus="focused = true; dismissed = false; position($event)" @blur="focused = false; pinned = false" @click.stop.prevent="position($event); toggle()">
       <LockKeyhole :size="15" aria-hidden="true" />
     </button>
-    <span v-if="visible" :id="id" role="tooltip" class="access-tooltip" :style="placement">{{ description }}<span v-if="operation['x-authentication']?.description" class="access-detail">{{ operation['x-authentication'].description }}</span></span>
+    <span v-if="visible" :id="id" role="tooltip" class="access-tooltip" :style="placement">{{ description }}<span v-if="operation['x-access-constraints'] || operation['x-authentication']?.description" class="access-detail">{{ operation['x-access-constraints'] || operation['x-authentication']?.description }}</span></span>
   </span>
   <span v-else class="public-badge">Público</span>
 </template>

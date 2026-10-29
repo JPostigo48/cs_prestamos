@@ -18,7 +18,7 @@ const Layout = await loadComponent('modules/project-showcase/ProjectLayout')
 
 test('contrato real completo: nombres, conteos, cada campo/tipo/atributo y cada relación', () => {
   const blocks = [...contract.matchAll(/^(model|enum) (\w+) \{\r?\n([\s\S]*?)^\}/gm)]
-  assert.equal(database.models.length, 19)
+  assert.equal(database.models.length, 21)
   assert.equal(database.enums.length, 10)
   for (const kind of ['model', 'enum']) assert.deepEqual(database[kind === 'model' ? 'models' : 'enums'].map(item => item.name), blocks.filter(block => block[1] === kind).map(block => block[2]))
   for (const [, kind, name, body] of blocks) {
@@ -63,6 +63,8 @@ test('contrato real completo: nombres, conteos, cada campo/tipo/atributo y cada 
 })
 
 test('fixtures Prisma Next: compuestos, listas, multiline, escapes, funciones, enums y mapeos', () => {
+  const snapshots = parseContract('model Historical { id Uuid @id snapshot Jsonb? parts Jsonb }').models[0]
+  assert.deepEqual(snapshots.fields.slice(1).map(({ type, kind, nullable }) => ({ type, kind, nullable })), [{ type: 'Jsonb', kind: 'scalar', nullable: true }, { type: 'Jsonb', kind: 'scalar', nullable: false }])
   const fixture = `// MÓDULO UNO
   model Parent {
     id Uuid @id @default(uuid())
@@ -104,7 +106,12 @@ test('fixtures Prisma Next: compuestos, listas, multiline, escapes, funciones, e
 
 test('metadata generada: público, autenticado sin roles, restringido y guard personalizado', () => {
   const operations = Object.values(api.paths).flatMap(path => Object.values(path))
-  assert.equal(operations.length, 61)
+  assert.equal(operations.length, 75)
+  for (const [path, method] of [['/loans/resource/{resourceId}/history', 'get'], ['/loans/{loanId}/return-checklist', 'post']]) {
+    assert.deepEqual(api.paths[path][method]['x-roles'], ['OPERADOR', 'ADMINISTRADOR'])
+    assert.equal(api.paths[path][method]['x-authentication'].required, true)
+  }
+  assert.equal(api.paths['/loans/reservations'].get['x-authentication'].scope, 'authenticated')
   for (const path of ['/terms/current', '/terms/versions/{versionId}']) {
     assert.equal(api.paths[path].get['x-authentication'].scope, 'public')
     assert.equal(api.paths[path].get.responses['200'].content['application/json'].schema.$ref, '#/components/schemas/PublicTermsResponseDto')
@@ -164,18 +171,18 @@ test('candado montado: hover, foco, Escape, click táctil y público sin botón'
   publicView.unmount()
 })
 
-test('páginas montadas: 61 operaciones, DB completa, búsqueda, sin resultados y fallo de carga', async () => {
+test('páginas montadas: 75 operaciones, DB completa, búsqueda, sin resultados y fallo de carga', async () => {
   globalThis.fetch = async url => ({ ok: true, json: async () => String(url).endsWith('db.json') ? database : api })
   const apiView = mount(ApiPage)
   await flush()
-  assert.equal(findAll(apiView.root, node => node.tag === 'code' && /^\//.test(text(node))).length, 61)
+  assert.equal(findAll(apiView.root, node => node.tag === 'code' && /^\//.test(text(node))).length, 75)
   assert.ok(text(apiView.root).includes('/terms/current'))
   assert.ok(text(apiView.root).includes('/terms/versions/{versionId}'))
   assert.ok(!text(apiView.root).includes('forma de la respuesta aún'))
   apiView.unmount()
   const dbView = mount(DbPage)
   await flush()
-  assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 29)
+  assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 31)
   await model(find(dbView.root, 'input'), 'CuentaAcceso')
   assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 1)
   assert.ok(text(dbView.root).includes('passwordHash')) // Solo nombre/tipo, nunca un valor.

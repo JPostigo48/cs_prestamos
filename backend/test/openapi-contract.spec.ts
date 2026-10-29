@@ -34,6 +34,7 @@ import { RulesController } from '../src/modules/rules/presentation/controllers/r
 import { TermsController } from '../src/modules/rules/presentation/controllers/terms.controller.js';
 import { PublicTermsController } from '../src/modules/rules/presentation/controllers/public-terms.controller.js';
 import { ViolationsController } from '../src/modules/rules/presentation/controllers/violations.controller.js';
+import { SanctionsController } from '../src/modules/rules/presentation/controllers/sanctions.controller.js';
 import { AppController } from '../src/app.controller.js';
 
 vi.mock('dotenv/config', () => ({}));
@@ -52,6 +53,7 @@ const controllers: Type<unknown>[] = [
   TermsController,
   PublicTermsController,
   ViolationsController,
+  SanctionsController,
 ];
 const operations = Object.entries(document.paths).flatMap(([path, item]) =>
   (['get', 'post', 'put', 'patch', 'delete'] as const).flatMap((method) =>
@@ -156,6 +158,9 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     ],
     ['loans', 'loan', 'Loan', 'LoanResponseDto', []],
     ['loans', 'loan', 'LoanReturn', 'LoanReturnResponseDto', []],
+    ['loans', 'loan', 'ReturnChecklist', 'ReturnChecklistResponseDto', []],
+    ['loans', 'loan', 'ReturnChecklistPart', 'ReturnChecklistPartResponseDto', []],
+    ['inventory', 'resource-configuration', 'CopyLoanSnapshot', 'CopyLoanSnapshotDto', []],
     ['loans', 'reservation', 'Reservation', 'ReservationResponseDto', []],
     [
       'users',

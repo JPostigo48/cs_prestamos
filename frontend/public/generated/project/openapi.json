@@ -122,6 +122,371 @@
         "security": []
       }
     },
+    "/inventory/resources/{resourceId}/accessories": {
+      "get": {
+        "operationId": "InventoryController_getAccessories",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "path",
+            "description": "ID del artículo (Recurso), no del ejemplar.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceAccessoriesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "F06: consultar accesorios activos del artículo",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "USUARIO",
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      },
+      "put": {
+        "operationId": "InventoryController_replaceAccessories",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "path",
+            "description": "ID del artículo, compartido por sus ejemplares.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceResourceAccessoriesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceAccessoriesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "F07: reemplazar plantilla de accesorios sin borrar referencias históricas",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/inventory/resources/{resourceId}/loan-policy": {
+      "patch": {
+        "description": "No aplica porcentajes ni cambia reglas versionadas. Las reservas/préstamos existentes conservan sus fechas y duración congelada. GET del recurso expone loanPolicy.",
+        "operationId": "InventoryController_updateLoanPolicy",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "path",
+            "description": "ID del artículo; no modifica la categoría.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceLoanPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceLoanPolicyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "F13: establecer o retirar duración individual del artículo",
+        "tags": [
+          "Inventario"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
     "/inventory/categories": {
       "post": {
         "operationId": "InventoryController_createCategory",
@@ -861,6 +1226,16 @@
           },
           "404": {
             "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
             "content": {
               "application/json": {
                 "schema": {
@@ -2415,6 +2790,7 @@
     },
     "/users/registration-requests/{requestId}/approve": {
       "post": {
+        "description": "OPERADOR o ADMINISTRADOR. Transacción: crea usuario con confianza inicial 75; si la solicitud es integral, crea además cuenta USUARIO y aceptación de la versión leída. Las solicitudes básicas conservan aprovisionamiento separado. No emite sesión.",
         "operationId": "RegistrationRequestsController_approve",
         "parameters": [
           {
@@ -3703,6 +4079,147 @@
       }
     },
     "/loans/reservations": {
+      "get": {
+        "description": "USUARIO: solo propias. OPERADOR/ADMINISTRADOR: listado operativo filtrable. Orden fecha solicitada descendente e ID ascendente; paginación aplicada en persistencia.",
+        "operationId": "LoansController_reservations",
+        "parameters": [
+          {
+            "name": "copyId",
+            "required": false,
+            "in": "query",
+            "description": "ID del ejemplar, no del artículo.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "USUARIO solo propio; personal puede filtrar cualquier titular.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "CONFIRMADA",
+                "RECOGIDA",
+                "CANCELADA",
+                "VENCIDA"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 21474836,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationsPageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar reservas",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-access-constraints": "USUARIO: solo reservas propias. OPERADOR y ADMINISTRADOR: consulta operativa, filtrable por titular.",
+        "x-implementation-status": "implemented",
+        "x-roles": [],
+        "x-authentication": {
+          "required": true,
+          "scope": "authenticated",
+          "description": "Cualquier usuario autenticado; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard"
+          ]
+        }
+      },
       "post": {
         "operationId": "LoansController_createReservationEndpoint",
         "parameters": [],
@@ -3785,6 +4302,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Confirmar una reserva de ejemplar",
         "tags": [
           "Préstamos"
@@ -3798,12 +4320,281 @@
           "guards": [
             "AuthGuard"
           ]
+        }
+      }
+    },
+    "/loans/resource/{resourceId}/history": {
+      "get": {
+        "description": "Solo personal operativo. No expone el historial de otros usuarios en detalle del catálogo de USUARIO. Orden inicio descendente e ID ascendente.",
+        "operationId": "LoansController_resourceHistory",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "path",
+            "description": "ID del artículo del catálogo. Incluye todos sus ejemplares, también no disponibles.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PLANIFICADO",
+                "ACTIVO",
+                "FINALIZADO"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 21474836,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanHistoryPageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
         },
         "security": [
           {
             "bearer": []
           }
-        ]
+        ],
+        "summary": "Historial de préstamos del artículo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/loans/{loanId}/return-checklist": {
+      "post": {
+        "description": "Captura única e inmutable de un préstamo ACTIVO, auditada con actor JWT y snapshot original. No devuelve el préstamo ni aplica sanciones. Reintentos con iguales partes recuperan la captura original, incluso tras devolver; diferencias devuelven 409. Sin snapshot histórico solo admite parts vacío. Faltantes exigen describir incidencia al ejecutar la devolución separada existente.",
+        "operationId": "LoansController_returnChecklist",
+        "parameters": [
+          {
+            "name": "loanId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReturnChecklistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnChecklistResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Guardar inspección de devolución",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
       }
     },
     "/loans/reservations/{reservationId}/pickup": {
@@ -3888,6 +4679,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Registrar recogida y crear el préstamo",
         "tags": [
           "Préstamos"
@@ -3905,12 +4701,7 @@
             "AuthGuard",
             "RolesGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/reservations/{reservationId}": {
@@ -3995,6 +4786,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Cancelar una reserva confirmada",
         "tags": [
           "Préstamos"
@@ -4008,12 +4804,7 @@
           "guards": [
             "AuthGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/active": {
@@ -4072,6 +4863,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Consultar préstamos activos",
         "tags": [
           "Préstamos"
@@ -4089,12 +4885,7 @@
             "AuthGuard",
             "RolesGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/overdue": {
@@ -4153,6 +4944,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Consultar préstamos vencidos",
         "tags": [
           "Préstamos"
@@ -4170,12 +4966,7 @@
             "AuthGuard",
             "RolesGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/user/{userId}/history": {
@@ -4243,6 +5034,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Consultar historial de préstamos de un usuario",
         "tags": [
           "Préstamos"
@@ -4256,12 +5052,7 @@
           "guards": [
             "AuthGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/{loanId}": {
@@ -4336,6 +5127,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Consultar préstamo",
         "tags": [
           "Préstamos"
@@ -4349,12 +5145,7 @@
           "guards": [
             "AuthGuard"
           ]
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/loans/{loanId}/return": {
@@ -4459,6 +5250,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Registrar devolución",
         "tags": [
           "Préstamos"
@@ -4476,15 +5272,354 @@
             "AuthGuard",
             "RolesGuard"
           ]
+        }
+      }
+    },
+    "/auth/google/authorization": {
+      "post": {
+        "description": "Público. Crea state/nonce/PKCE de un solo uso (5 minutos) y cookie HttpOnly SameSite=Lax. El correo es una sugerencia, nunca prueba de identidad. 503 si no se configuró el proveedor.",
+        "operationId": "AuthController_authorizeGoogle",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleAuthorizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleAuthorizationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Iniciar autorización Google institucional",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-roles": [],
+        "x-authentication": {
+          "required": false,
+          "scope": "public",
+          "description": "Público: no hay AuthGuard ni restricciones efectivas de RolesGuard.",
+          "guards": []
+        },
+        "security": [],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/auth/google/authenticate": {
+      "post": {
+        "description": "Público. Intercambia código con PKCE y valida firma RS256, issuer, audience, expiración, nonce, email_verified y dominio institucional. Exige state y cookie del mismo navegador. Solo inicia sesión para una cuenta existente, aprobada y habilitada; no crea usuarios ni privilegios.",
+        "operationId": "AuthController_exchangeGoogle",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleExchangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Completar acceso Google verificado",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-roles": [],
+        "x-authentication": {
+          "required": false,
+          "scope": "public",
+          "description": "Público: no hay AuthGuard ni restricciones efectivas de RolesGuard.",
+          "guards": []
+        },
+        "security": [],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/auth/registration-requests": {
+      "post": {
+        "description": "Público. Guarda solicitud, evidencia de imagen y aceptación de términos vigentes en una transacción. Solo guarda hash Argon2id. La aprobación O/A existente crea usuario y cuenta USUARIO y transfiere la aceptación en la misma transacción. No admite rol ni habilitación del cliente.",
+        "operationId": "AuthController_registerFull",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FullRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingRegistrationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Solicitar alta integral sin iniciar sesión",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-roles": [],
+        "x-authentication": {
+          "required": false,
+          "scope": "public",
+          "description": "Público: no hay AuthGuard ni restricciones efectivas de RolesGuard.",
+          "guards": []
+        },
+        "security": [],
+        "x-implementation-status": "implemented"
+      }
+    },
+    "/auth/accounts": {
+      "get": {
+        "description": "Solo ADMINISTRADOR. Requiere userId UUID; devuelve cero o una cuenta sin hash ni credenciales. No equivale a consultar sanciones.",
+        "operationId": "AuthController_accountsForUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "query",
+            "description": "Usuario exacto; devuelve cero o una cuenta sin credenciales.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token bearer requerido o inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar cuenta por usuario",
+        "tags": [
+          "Autenticación"
+        ],
+        "x-roles": [
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
         },
         "security": [
           {
             "bearer": []
           }
-        ]
-      }
-    },
-    "/auth/accounts": {
+        ],
+        "x-implementation-status": "implemented"
+      },
       "post": {
         "operationId": "AuthController_register",
         "parameters": [],
@@ -4713,6 +5848,16 @@
               }
             }
           },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Token bearer requerido o inválido.",
             "content": {
@@ -4783,6 +5928,7 @@
         ]
       },
       "patch": {
+        "description": "Solo ADMINISTRADOR. Guarda estado anterior, nuevo y actor en una transacción. Los JWT con rol anterior o cuenta deshabilitada se rechazan en la siguiente petición. No crea ni levanta sanciones de préstamo.",
         "operationId": "AuthController_update",
         "parameters": [
           {
@@ -4855,6 +6001,16 @@
               }
             }
           },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
             "content": {
@@ -4873,6 +6029,7 @@
             }
           }
         },
+        "summary": "Actualizar rol o acceso de una cuenta",
         "tags": [
           "Autenticación"
         ],
@@ -4894,6 +6051,519 @@
             "bearer": []
           }
         ]
+      }
+    },
+    "/appeals": {
+      "get": {
+        "description": "USUARIO: exclusivamente propias en servidor. Personal: filtros operativos. Orden fecha descendente e ID ascendente; paginación persistida.",
+        "operationId": "SanctionsController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 1
+            }
+          },
+          {
+            "name": "sanctionId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "USUARIO solo propio; personal puede filtrar cualquier usuario.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDIENTE",
+                "ACEPTADA",
+                "RECHAZADA"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealsPageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar apelaciones",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-access-constraints": "USUARIO: solo apelaciones propias. OPERADOR y ADMINISTRADOR: consulta operativa.",
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "USUARIO",
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/sanctions/{sanctionId}": {
+      "get": {
+        "description": "Titular o personal. Sin reconstruir datos desconocidos ni sustituir la versión histórica.",
+        "operationId": "SanctionsController_detail",
+        "parameters": [
+          {
+            "name": "sanctionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctionDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar sanción y fundamento histórico",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-access-constraints": "USUARIO: solo sanciones propias. OPERADOR y ADMINISTRADOR: consulta operativa.",
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "USUARIO",
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/users/{userId}/suspensions": {
+      "post": {
+        "description": "Registra actor, motivo, horario y descuento real. Cancela reservas confirmadas y libera únicamente sus ejemplares reservados, nunca préstamos activos. No deshabilita cuentas. requestId conserva idempotencia por usuario.",
+        "operationId": "SanctionsController_suspend",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctionDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspender mediante política versionada",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/sanctions/{sanctionId}/lift": {
+      "post": {
+        "description": "Finaliza estado y calendario, reencadena temporales programadas conservando duración y registra resolución/actor. No restituye confianza ni elimina incumplimiento. Reintento con igual resolución devuelve la original; distinta resolución: 409.",
+        "operationId": "SanctionsController_lift",
+        "parameters": [
+          {
+            "name": "sanctionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftSanctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctionDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Levantar suspensión sin absolver",
+        "tags": [
+          "Reglas y términos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
       }
     },
     "/rules": {
@@ -6124,6 +7794,130 @@
           "timestamp"
         ]
       },
+      "ResourceAccessoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID estable, conservado aun al retirar el accesorio."
+          },
+          "nombre": {
+            "type": "string",
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "id",
+          "nombre"
+        ]
+      },
+      "ResourceAccessoriesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Solo accesorios activos de la plantilla del artículo. Las inspecciones deben usar su snapshot, no esta lista mutable.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceAccessoryResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ResourceAccessoryInputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID existente del mismo recurso. Conservarlo al renombrar; omitirlo reutiliza un nombre normalizado previo o crea un accesorio."
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Cargador"
+          }
+        },
+        "required": [
+          "nombre"
+        ]
+      },
+      "ReplaceResourceAccessoriesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 100,
+            "description": "Lista completa, nombres normalizados e IDs únicos. [] retira todos mediante baja lógica; nunca elimina IDs históricos.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceAccessoryInputDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UpdateResourceLoanPolicyDto": {
+        "type": "object",
+        "properties": {
+          "durationHours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "nullable": true,
+            "example": 8,
+            "description": "Horas máximas de este artículo y sus ejemplares; null retira la excepción y hereda la categoría. No modifica operaciones ya creadas ni reglas de acceso o confianza."
+          }
+        },
+        "required": [
+          "durationHours"
+        ]
+      },
+      "ResourceLoanPolicyResponseDto": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "durationHours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Excepción individual; null hereda la duración de categoría."
+          },
+          "effectiveDurationHours": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Duración efectiva actual en horas, sin redondear a días. Debe congelarse al crear reserva/préstamo."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "RESOURCE",
+              "CATEGORY"
+            ],
+            "description": "RESOURCE: excepción individual; CATEGORY: horas actuales de categoría o días × 24 si las horas son null. No altera las reglas versionadas."
+          }
+        },
+        "required": [
+          "resourceId",
+          "categoryId",
+          "durationHours",
+          "effectiveDurationHours",
+          "source"
+        ]
+      },
       "CreateCategoryDto": {
         "type": "object",
         "properties": {
@@ -6246,6 +8040,12 @@
       "ResourceResponseDto": {
         "type": "object",
         "properties": {
+          "durationHours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Excepción individual en horas; null hereda la categoría."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6279,6 +8079,7 @@
           }
         },
         "required": [
+          "durationHours",
           "id",
           "categoriaId",
           "nombre",
@@ -6307,6 +8108,12 @@
       "CatalogResourceResponseDto": {
         "type": "object",
         "properties": {
+          "durationHours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Excepción individual en horas; null hereda la categoría."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6348,6 +8155,7 @@
           }
         },
         "required": [
+          "durationHours",
           "id",
           "categoriaId",
           "nombre",
@@ -6418,6 +8226,12 @@
       "ResourceDetailResponseDto": {
         "type": "object",
         "properties": {
+          "durationHours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Excepción individual en horas; null hereda la categoría."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6449,6 +8263,9 @@
             "type": "number",
             "example": 0
           },
+          "loanPolicy": {
+            "$ref": "#/components/schemas/ResourceLoanPolicyResponseDto"
+          },
           "categoria": {
             "nullable": true,
             "type": "object",
@@ -6460,6 +8277,7 @@
           }
         },
         "required": [
+          "durationHours",
           "id",
           "categoriaId",
           "nombre",
@@ -6467,6 +8285,7 @@
           "available",
           "totalCopies",
           "availableCopies",
+          "loanPolicy",
           "categoria"
         ]
       },
@@ -6759,6 +8578,12 @@
       "GlobalAvailabilityResponseDto": {
         "type": "object",
         "properties": {
+          "durationHours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Excepción individual en horas; null hereda la categoría."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6809,6 +8634,7 @@
           }
         },
         "required": [
+          "durationHours",
           "id",
           "categoriaId",
           "nombre",
@@ -7310,27 +9136,58 @@
           "currentlyPenalized"
         ]
       },
-      "CreateReservationDto": {
+      "CopyLoanSnapshotDto": {
         "type": "object",
         "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
           "copyId": {
             "type": "string",
             "format": "uuid"
           },
-          "requestedAt": {
+          "resourceId": {
             "type": "string",
-            "format": "date-time",
-            "description": "Hora futura solicitada para recogida; la ventana termina 30 minutos después."
+            "format": "uuid"
+          },
+          "policy": {
+            "description": "Política histórica capturada al crear, no configuración actual.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceLoanPolicyResponseDto"
+              }
+            ]
+          },
+          "accessories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceAccessoryResponseDto"
+            }
           }
         },
         "required": [
+          "schemaVersion",
           "copyId",
-          "requestedAt"
+          "resourceId",
+          "policy",
+          "accessories"
         ]
       },
       "ReservationResponseDto": {
         "type": "object",
         "properties": {
+          "configurationSnapshot": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CopyLoanSnapshotDto"
+              }
+            ]
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -7384,6 +9241,7 @@
           }
         },
         "required": [
+          "configurationSnapshot",
           "id",
           "userId",
           "copyId",
@@ -7395,6 +9253,36 @@
           "status",
           "cancellationReason",
           "loanId"
+        ]
+      },
+      "ReservationsPageResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
         ]
       },
       "LoanReturnResponseDto": {
@@ -7422,6 +9310,72 @@
           "loanId",
           "returnedAt",
           "observation"
+        ]
+      },
+      "ReturnChecklistPartResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "received": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accessoryId",
+          "nombre",
+          "received"
+        ]
+      },
+      "ReturnChecklistResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "loanId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Usuario operador/administrador que persistió la captura."
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "configurationSnapshot": {
+            "nullable": true,
+            "description": "null identifica operación anterior a la captura histórica; no se reconstruye el pasado.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CopyLoanSnapshotDto"
+              }
+            ]
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReturnChecklistPartResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "loanId",
+          "actorId",
+          "checkedAt",
+          "configurationSnapshot",
+          "parts"
         ]
       },
       "LoanResponseDto": {
@@ -7463,6 +9417,24 @@
                 "$ref": "#/components/schemas/LoanReturnResponseDto"
               }
             ]
+          },
+          "configurationSnapshot": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CopyLoanSnapshotDto"
+              }
+            ]
+          },
+          "returnChecklist": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReturnChecklistResponseDto"
+              }
+            ]
           }
         },
         "required": [
@@ -7472,7 +9444,95 @@
           "startsAt",
           "endsAt",
           "status",
-          "return"
+          "return",
+          "configurationSnapshot",
+          "returnChecklist"
+        ]
+      },
+      "LoanHistoryPageResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoanResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ReturnChecklistPartDto": {
+        "type": "object",
+        "properties": {
+          "accessoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "received": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accessoryId",
+          "received"
+        ]
+      },
+      "SaveReturnChecklistDto": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "maxItems": 100,
+            "description": "Todos los accesorios del snapshot, una vez cada uno. Legacy sin snapshot: únicamente []. No usar catálogo actual.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReturnChecklistPartDto"
+            }
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Instante de inspección con zona; entre inicio del préstamo y hora del servidor. Actor obtenido del JWT, nunca del cuerpo."
+          }
+        },
+        "required": [
+          "parts",
+          "checkedAt"
+        ]
+      },
+      "CreateReservationDto": {
+        "type": "object",
+        "properties": {
+          "copyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Hora futura solicitada para recogida; la ventana termina 30 minutos después."
+          }
+        },
+        "required": [
+          "copyId",
+          "requestedAt"
         ]
       },
       "CancelReservationDto": {
@@ -7503,100 +9563,47 @@
           "returnedAt"
         ]
       },
-      "RegisterAccessAccountDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "example": "usuario@unsa.edu.pe"
-          },
-          "password": {
-            "type": "string",
-            "format": "password",
-            "minLength": 8,
-            "example": "ClaveEjemplo123"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "USUARIO",
-              "OPERADOR",
-              "ADMINISTRADOR"
-            ],
-            "example": "USUARIO",
-            "description": "El caso de uso solo admite USUARIO; otros roles producen 403 incluso cuando llama un administrador."
-          }
-        },
-        "required": [
-          "userId",
-          "email",
-          "password"
-        ]
-      },
-      "AccessAccountResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "USUARIO",
-              "OPERADOR",
-              "ADMINISTRADOR"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "lastAccessAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "userId",
-          "email",
-          "role",
-          "enabled",
-          "lastAccessAt"
-        ]
-      },
-      "AuthenticateAccountDto": {
+      "GoogleAuthorizationDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
-            "example": "usuario@unsa.edu.pe"
-          },
-          "password": {
-            "type": "string",
-            "format": "password",
-            "example": "ClaveEjemplo123"
+            "description": "Sugerencia de cuenta; nunca prueba de identidad."
           }
         },
         "required": [
-          "email",
-          "password"
+          "email"
+        ]
+      },
+      "GoogleAuthorizationResponseDto": {
+        "type": "object",
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL HTTPS de Google; no inicia una sesión de aplicación."
+          }
+        },
+        "required": [
+          "authorizationUrl"
+        ]
+      },
+      "GoogleExchangeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código de autorización devuelto por Google, de un solo uso."
+          },
+          "state": {
+            "type": "string",
+            "description": "State opaco devuelto por Google. Requiere cookie HttpOnly de inicio."
+          }
+        },
+        "required": [
+          "code",
+          "state"
         ]
       },
       "AuthenticatedUserResponseDto": {
@@ -7661,6 +9668,192 @@
           "user"
         ]
       },
+      "FullRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "description": "Correo institucional @unsa.edu.pe."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "writeOnly": true
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "ESTUDIANTE",
+              "DOCENTE",
+              "ADMINISTRATIVO"
+            ]
+          },
+          "institutionalId": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "evidence": {
+            "minItems": 1,
+            "maxItems": 1,
+            "description": "Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Versión vigente leída y aceptada expresamente."
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "userType",
+          "evidence",
+          "termsVersionId"
+        ]
+      },
+      "PendingRegistrationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDIENTE"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "AccessAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "OPERADOR",
+              "ADMINISTRADOR"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "lastAccessAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "email",
+          "role",
+          "enabled",
+          "lastAccessAt"
+        ]
+      },
+      "AccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Cero o una cuenta; nunca contiene credenciales.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "RegisterAccessAccountDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@unsa.edu.pe"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 8,
+            "example": "ClaveEjemplo123"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "OPERADOR",
+              "ADMINISTRADOR"
+            ],
+            "example": "USUARIO",
+            "description": "El caso de uso solo admite USUARIO; otros roles producen 403 incluso cuando llama un administrador."
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "password"
+        ]
+      },
+      "AuthenticateAccountDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@unsa.edu.pe"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "ClaveEjemplo123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
       "UpdateAccessAccountDto": {
         "type": "object",
         "properties": {
@@ -7670,57 +9863,104 @@
               "USUARIO",
               "OPERADOR",
               "ADMINISTRADOR"
-            ],
-            "nullable": true
+            ]
           },
           "enabled": {
-            "type": "boolean",
-            "nullable": true
+            "type": "boolean"
           }
         }
       },
-      "CreateRuleDto": {
+      "AppealResponseDto": {
         "type": "object",
         "properties": {
-          "title": {
+          "id": {
             "type": "string",
-            "maxLength": 180,
-            "example": "Regla de uso de ejemplo"
+            "format": "uuid"
           },
-          "description": {
+          "violationId": {
             "type": "string",
-            "example": "Descripción de la regla de uso"
+            "format": "uuid"
           },
-          "penaltyPercentage": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100,
-            "example": 5
-          },
-          "consequence": {
+          "sanctionId": {
             "type": "string",
-            "example": "Consecuencia definida para esta regla"
+            "format": "uuid",
+            "nullable": true
           },
-          "suspensionType": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
             "type": "string",
             "enum": [
-              "NINGUNA",
-              "TEMPORAL",
-              "INDEFINIDA"
+              "PENDIENTE",
+              "ACEPTADA",
+              "RECHAZADA"
             ]
           },
-          "suspensionDays": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0
+          "resolution": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolvedByAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "required": [
-          "title",
-          "description",
-          "penaltyPercentage",
-          "consequence",
-          "suspensionType"
+          "id",
+          "violationId",
+          "sanctionId",
+          "userId",
+          "reason",
+          "submittedAt",
+          "status",
+          "resolution",
+          "resolvedAt",
+          "resolvedByAccountId"
+        ]
+      },
+      "AppealsPageResponseDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppealResponseDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "items"
         ]
       },
       "RuleVersionResponseDto": {
@@ -7781,6 +10021,267 @@
           "suspensionType",
           "suspensionDays",
           "status"
+        ]
+      },
+      "ViolationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "appliedPenalty": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "ruleId",
+          "ruleVersionId",
+          "occurredAt",
+          "appliedPenalty"
+        ]
+      },
+      "SanctionHistoryDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "action",
+          "occurredAt",
+          "actorAccountId",
+          "reason"
+        ]
+      },
+      "SanctionDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "violationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "ruleVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PROGRAMADA",
+              "ACTIVA",
+              "FINALIZADA",
+              "ABSUELTA"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "previousTrust": {
+            "type": "number"
+          },
+          "resultingTrust": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fundamento registrado; null si no existe antecedente persistido."
+          },
+          "rule": {
+            "nullable": true,
+            "description": "Versión histórica referenciada, nunca la vigente inferida.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RuleVersionResponseDto"
+              }
+            ]
+          },
+          "violation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ViolationResponseDto"
+              }
+            ]
+          },
+          "appeals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppealResponseDto"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SanctionHistoryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "violationId",
+          "ruleId",
+          "ruleVersionId",
+          "status",
+          "startsAt",
+          "endsAt",
+          "previousTrust",
+          "resultingTrust",
+          "reason",
+          "rule",
+          "violation",
+          "appeals",
+          "history"
+        ]
+      },
+      "SuspendUserDto": {
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Regla manual activa; se aplica su versión vigente, descuento y suspensión. No admite políticas automáticas sin contexto."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Clave de reintento por usuario. Igual contenido devuelve la sanción original; contenido distinto devuelve 409."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inicio esperado con zona. Si se envía debe coincidir con el calendario automático de la política; no permite programaciones arbitrarias."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Si se envía, debe coincidir con el fin calculado de la política; null solo para indefinida."
+          }
+        },
+        "required": [
+          "ruleId",
+          "reason",
+          "requestId"
+        ]
+      },
+      "LiftSanctionDto": {
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "resolution"
+        ]
+      },
+      "CreateRuleDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "example": "Regla de uso de ejemplo"
+          },
+          "description": {
+            "type": "string",
+            "example": "Descripción de la regla de uso"
+          },
+          "penaltyPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 5
+          },
+          "consequence": {
+            "type": "string",
+            "example": "Consecuencia definida para esta regla"
+          },
+          "suspensionType": {
+            "type": "string",
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA"
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "penaltyPercentage",
+          "consequence",
+          "suspensionType"
         ]
       },
       "UsageRuleResponseDto": {
@@ -7893,42 +10394,6 @@
           "occurredAt"
         ]
       },
-      "ViolationResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ruleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ruleVersionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "appliedPenalty": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "id",
-          "userId",
-          "ruleId",
-          "ruleVersionId",
-          "occurredAt",
-          "appliedPenalty"
-        ]
-      },
       "SubmitAppealDto": {
         "type": "object",
         "properties": {
@@ -7940,69 +10405,6 @@
         },
         "required": [
           "reason"
-        ]
-      },
-      "AppealResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "violationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sanctionId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDIENTE",
-              "ACEPTADA",
-              "RECHAZADA"
-            ]
-          },
-          "resolution": {
-            "type": "string",
-            "nullable": true
-          },
-          "resolvedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "resolvedByAccountId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "violationId",
-          "sanctionId",
-          "userId",
-          "reason",
-          "submittedAt",
-          "status",
-          "resolution",
-          "resolvedAt",
-          "resolvedByAccountId"
         ]
       },
       "ResolveAppealDto": {

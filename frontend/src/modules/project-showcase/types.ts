@@ -102,6 +102,7 @@ export interface OpenApiOperation {
   responses?: Record<string, { description?: string; content?: Record<string, OpenApiMediaType> }>
   'x-implementation-status'?: 'implemented' | 'pending'
   'x-roles'?: string[]
+  'x-access-constraints'?: string
   'x-authentication'?: { required: boolean; scope: 'public' | 'authenticated' | 'roles' | 'custom-guards'; description: string; guards: string[] }
 }
 

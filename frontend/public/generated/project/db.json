@@ -167,6 +167,15 @@
           "kind": "scalar"
         },
         {
+          "name": "duracionPrestamoHoras",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
           "name": "createdAt",
           "type": "Timestamptz",
           "typeExpression": "Timestamptz(3)",
@@ -226,6 +235,15 @@
           "list": true,
           "attributes": [],
           "kind": "relation"
+        },
+        {
+          "name": "accesorios",
+          "type": "AccesorioRecurso",
+          "typeExpression": "AccesorioRecurso",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -261,12 +279,178 @@
           "raw": "@@unique([categoriaId, nombre])"
         },
         {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "\"duracionPrestamoHoras\" IS NULL OR \"duracionPrestamoHoras\" BETWEEN 1 AND 2147483647",
+            "name": "recursos_duracion_individual_check"
+          },
+          "raw": "@@check(expression: \"\\\"duracionPrestamoHoras\\\" IS NULL OR \\\"duracionPrestamoHoras\\\" BETWEEN 1 AND 2147483647\", name: \"recursos_duracion_individual_check\")"
+        },
+        {
           "name": "map",
           "positional": [
             "recursos"
           ],
           "named": {},
           "raw": "@@map(\"recursos\")"
+        }
+      ]
+    },
+    {
+      "name": "AccesorioRecurso",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "recursoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombre",
+          "type": "VarChar",
+          "typeExpression": "VarChar(120)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombreNormalizado",
+          "type": "VarChar",
+          "typeExpression": "VarChar(120)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "activo",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "recurso",
+          "type": "Recurso",
+          "typeExpression": "Recurso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "recursoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[recursoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "recursoId",
+              "nombreNormalizado"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([recursoId, nombreNormalizado])"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "length(btrim(\"nombre\")) BETWEEN 1 AND 120",
+            "name": "accesorios_nombre_check"
+          },
+          "raw": "@@check(expression: \"length(btrim(\\\"nombre\\\")) BETWEEN 1 AND 120\", name: \"accesorios_nombre_check\")"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "accesorios_recurso"
+          ],
+          "named": {},
+          "raw": "@@map(\"accesorios_recurso\")"
         }
       ]
     },
@@ -479,6 +663,15 @@
               "raw": "@default(uuid())"
             }
           ],
+          "kind": "scalar"
+        },
+        {
+          "name": "configurationSnapshot",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
           "kind": "scalar"
         },
         {
@@ -942,6 +1135,42 @@
           "kind": "scalar"
         },
         {
+          "name": "email",
+          "type": "VarChar",
+          "typeExpression": "VarChar(254)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "passwordHash",
+          "type": "VarChar",
+          "typeExpression": "VarChar(255)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionTerminosId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaAceptacionTerminos",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
           "name": "createdAt",
           "type": "Timestamptz",
           "typeExpression": "Timestamptz(3)",
@@ -1021,6 +1250,31 @@
             }
           ],
           "kind": "relation"
+        },
+        {
+          "name": "versionTerminos",
+          "type": "VersionTerminos",
+          "typeExpression": "VersionTerminos",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "versionTerminosId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[versionTerminosId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -1054,6 +1308,43 @@
           ],
           "named": {},
           "raw": "@@index([usuarioAprobadoId])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "email"
+            ]
+          ],
+          "named": {
+            "where": "\"estado\" = 'PENDIENTE' AND \"email\" IS NOT NULL",
+            "unique": "true",
+            "name": "solicitudes_email_pendiente_unique"
+          },
+          "raw": "@@index([email], where: \"\\\"estado\\\" = 'PENDIENTE' AND \\\"email\\\" IS NOT NULL\", unique: true, name: \"solicitudes_email_pendiente_unique\")"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "identificadorInstitucional"
+            ]
+          ],
+          "named": {
+            "where": "\"estado\" = 'PENDIENTE' AND \"identificadorInstitucional\" IS NOT NULL",
+            "unique": "true",
+            "name": "solicitudes_identificador_pendiente_unique"
+          },
+          "raw": "@@index([identificadorInstitucional], where: \"\\\"estado\\\" = 'PENDIENTE' AND \\\"identificadorInstitucional\\\" IS NOT NULL\", unique: true, name: \"solicitudes_identificador_pendiente_unique\")"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "(\"email\" IS NULL AND \"passwordHash\" IS NULL AND \"versionTerminosId\" IS NULL AND \"fechaAceptacionTerminos\" IS NULL) OR (\"email\" IS NOT NULL AND \"versionTerminosId\" IS NOT NULL AND \"fechaAceptacionTerminos\" IS NOT NULL AND (\"passwordHash\" IS NOT NULL OR \"estado\" <> 'PENDIENTE'))",
+            "name": "solicitudes_acceso_integral_check"
+          },
+          "raw": "@@check(expression: \"(\\\"email\\\" IS NULL AND \\\"passwordHash\\\" IS NULL AND \\\"versionTerminosId\\\" IS NULL AND \\\"fechaAceptacionTerminos\\\" IS NULL) OR (\\\"email\\\" IS NOT NULL AND \\\"versionTerminosId\\\" IS NOT NULL AND \\\"fechaAceptacionTerminos\\\" IS NOT NULL AND (\\\"passwordHash\\\" IS NOT NULL OR \\\"estado\\\" <> 'PENDIENTE'))\", name: \"solicitudes_acceso_integral_check\")"
         },
         {
           "name": "check",
@@ -1332,6 +1623,15 @@
           "name": "prestamos",
           "type": "Prestamo",
           "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "inspecciones",
+          "type": "InspeccionDevolucion",
+          "typeExpression": "InspeccionDevolucion",
           "nullable": false,
           "list": true,
           "attributes": [],
@@ -2015,6 +2315,15 @@
           "kind": "scalar"
         },
         {
+          "name": "configurationSnapshot",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
           "name": "usuarioId",
           "type": "Uuid",
           "typeExpression": "Uuid",
@@ -2194,6 +2503,15 @@
           "list": false,
           "attributes": [],
           "kind": "relation"
+        },
+        {
+          "name": "inspeccion",
+          "type": "InspeccionDevolucion",
+          "typeExpression": "InspeccionDevolucion",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -2356,6 +2674,166 @@
           ],
           "named": {},
           "raw": "@@map(\"devoluciones\")"
+        }
+      ]
+    },
+    {
+      "name": "InspeccionDevolucion",
+      "module": "PRÉSTAMOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "actorId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "checkedAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "configurationSnapshot",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "parts",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "prestamoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "actor",
+          "type": "Usuario",
+          "typeExpression": "Usuario",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "actorId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[actorId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "inspecciones_devolucion"
+          ],
+          "named": {},
+          "raw": "@@map(\"inspecciones_devolucion\")"
         }
       ]
     },
@@ -3406,6 +3884,15 @@
           "list": true,
           "attributes": [],
           "kind": "relation"
+        },
+        {
+          "name": "solicitudes",
+          "type": "SolicitudRegistro",
+          "typeExpression": "SolicitudRegistro",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -4142,6 +4629,44 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "Recurso",
+      "field": "accesorios",
+      "target": "AccesorioRecurso",
+      "inverse": "recurso",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "AccesorioRecurso",
+      "fields": [
+        "recursoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AccesorioRecurso",
+      "field": "recurso",
+      "target": "Recurso",
+      "inverse": "accesorios",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "AccesorioRecurso",
+      "fields": [
+        "recursoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "Ejemplar",
       "field": "recurso",
       "target": "Recurso",
@@ -4351,6 +4876,25 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "SolicitudRegistro",
+      "field": "versionTerminos",
+      "target": "VersionTerminos",
+      "inverse": "solicitudes",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "SolicitudRegistro",
+      "fields": [
+        "versionTerminosId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "EvidenciaVinculacion",
       "field": "solicitudRegistro",
       "target": "SolicitudRegistro",
@@ -4419,6 +4963,25 @@
       "owner": "Prestamo",
       "fields": [
         "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Usuario",
+      "field": "inspecciones",
+      "target": "InspeccionDevolucion",
+      "inverse": "actor",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "InspeccionDevolucion",
+      "fields": [
+        "actorId"
       ],
       "references": [
         "id"
@@ -4750,6 +5313,25 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "Prestamo",
+      "field": "inspeccion",
+      "target": "InspeccionDevolucion",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..1",
+      "owner": "InspeccionDevolucion",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "Devolucion",
       "field": "prestamo",
       "target": "Prestamo",
@@ -4766,6 +5348,44 @@
         "id"
       ],
       "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "InspeccionDevolucion",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "inspeccion",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "1",
+      "owner": "InspeccionDevolucion",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "InspeccionDevolucion",
+      "field": "actor",
+      "target": "Usuario",
+      "inverse": "inspecciones",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "InspeccionDevolucion",
+      "fields": [
+        "actorId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
       "onUpdate": "Cascade"
     },
     {
@@ -5101,6 +5721,25 @@
       "sourceCardinality": "1",
       "targetCardinality": "0..n",
       "owner": "AceptacionTerminos",
+      "fields": [
+        "versionTerminosId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionTerminos",
+      "field": "solicitudes",
+      "target": "SolicitudRegistro",
+      "inverse": "versionTerminos",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "SolicitudRegistro",
       "fields": [
         "versionTerminosId"
       ],
