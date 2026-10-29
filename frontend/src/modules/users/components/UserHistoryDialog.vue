@@ -3,7 +3,7 @@ import { getHistory, getSanctions } from '../api/student-api'
 import { useRemote } from '../../../shared/composables/useRemote'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import RemoteState from '../../../shared/components/RemoteState.vue'
-import ContractSection from '../../../shared/components/ContractSection.vue'
+import SanctionDetails from '../../trust/components/SanctionDetails.vue'
 import { dateTime } from '../../../shared/format'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { useCopyDetails } from '../../inventory/useCopyDetails'
@@ -42,14 +42,7 @@ const copyDetails = useCopyDetails(() => loans.data.value ?? [])
             {{ sanction.endsAt ? dateTime(sanction.endsAt) : 'Fin indefinido' }}
           </p>
           <p>Confianza: {{ sanction.previousTrust }} % → {{ sanction.resultingTrust }} %</p>
-          <ContractSection
-            title="Detalle de la sanción"
-            contract="F05"
-            :params="{ sanctionId: sanction.id }"
-            ><template #default="{ data }"
-              ><p>{{ (data as { motivo?: string }).motivo || 'Motivo no disponible' }}</p></template
-            ></ContractSection
-          >
+          <SanctionDetails :sanction-id="sanction.id" />
         </article>
         <p v-if="sanctions.data.value?.length === 0">Sin sanciones registradas.</p></RemoteState
       >

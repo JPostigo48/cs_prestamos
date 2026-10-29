@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { getSession } from '../../auth/api/auth-api'
+import { isStaff } from '../../auth/access-policy'
 import {
   listReservations,
   cancelReservation,
@@ -18,12 +19,14 @@ import { ApiError } from '../../../shared/api/client'
 const props = defineProps<{ staff?: boolean }>()
 const emit = defineEmits<{ changed: [] }>()
 const session = getSession()!
+const page = ref(1)
 const remote = useRemote(
   (signal) =>
-    listReservations(props.staff ? { status: 'CONFIRMADA' } : { userId: session.user.id }, signal),
+    listReservations({ ...(props.staff && isStaff(session.user.role) ? { status: 'CONFIRMADA' } : { userId: session.user.id }), page: String(page.value), limit: '20' }, signal),
   () => true,
   false,
 )
+function move(offset: number) { page.value += offset; void remote.refresh() }
 const copies = useCopyDetails(() => remote.data.value?.items ?? null)
 const users = useUserDetails(() => props.staff ? remote.data.value?.items ?? null : null)
 const selected = ref<Reservation | null>(null),
@@ -33,6 +36,7 @@ const selected = ref<Reservation | null>(null),
   notice = ref(''),
   uncertain = ref(false)
 function select(item: Reservation) {
+  if (props.staff && !isStaff(session.user.role)) return
   selected.value = item
   reason.value = ''
   error.value = ''
@@ -40,6 +44,7 @@ function select(item: Reservation) {
 }
 async function confirm() {
   if (!selected.value || sending.value || uncertain.value) return
+  if (props.staff && !isStaff(session.user.role)) return
   sending.value = true
   error.value = ''
   try {
@@ -91,6 +96,11 @@ async function confirm() {
           </article>
         </div>
         <p v-if="!remote.data.value.items.length">No hay reservas en la respuesta recibida.</p>
+        <nav class="row" aria-label="Páginas de reservas">
+          <button :disabled="remote.loading.value || page <= 1" @click="move(-1)">Anterior</button>
+          <span>Página {{ remote.data.value.page }}</span>
+          <button :disabled="remote.loading.value || page * remote.data.value.limit >= remote.data.value.total" @click="move(1)">Siguiente</button>
+        </nav>
       </template></RemoteState
     >
   </section>

@@ -1,6 +1,5 @@
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import { authenticatedRequest, getSession } from '../../auth/api/auth-api'
-import { provisionalRequest } from '../../../shared/api/provisional-contracts'
 import { guardedMutation, mutationConfirmation } from '../../../shared/api/mutation-guard'
 
 export interface Category {
@@ -15,12 +14,21 @@ export interface Resource {
   categoriaId: string
   nombre: string
   descripcion: string | null
+  durationHours: number | null
   available: boolean
   availableCopies: number
   totalCopies: number
 }
 export interface ResourceDetail extends Resource {
   categoria: Omit<Category, 'resourceCount'> | null
+  loanPolicy: ResourceLoanPolicy
+}
+export interface ResourceLoanPolicy {
+  resourceId: string
+  categoryId: string
+  durationHours: number | null
+  effectiveDurationHours: number
+  source: 'RESOURCE' | 'CATEGORY'
 }
 export interface Copy {
   id: string
@@ -94,25 +102,32 @@ export interface Accessory {
   nombre: string
 }
 export const getAccessories = (resourceId: string, signal?: AbortSignal) =>
-  provisionalRequest<{ items: Accessory[] }>('F06', { params: { resourceId }, signal })
-export async function saveAccessories(resourceId: string, names: string[]) {
-  const result = await provisionalRequest<{ items: Accessory[] }>('F07', {
-    params: { resourceId },
-    body: { items: names.map((nombre) => ({ nombre })) },
+  authenticatedRequest<{ items: Accessory[] }>('/inventory/resources/' + encodeURIComponent(resourceId) + '/accessories', { signal }).then(result => {
+    if (!validAccessories(result)) throw new ApiError('Respuesta de accesorios incompatible.', 0)
+    return result
+  })
+export type AccessoryInput = { id?: string; nombre: string }
+const validAccessories = (result: { items: Accessory[] }) => Array.isArray(result?.items) &&
+  result.items.every(item => typeof item?.id === 'string' && !!item.id && typeof item.nombre === 'string' && !!item.nombre.trim()) &&
+  new Set(result.items.map(item => item.id)).size === result.items.length
+export async function saveAccessories(resourceId: string, input: (string | AccessoryInput)[]) {
+  const items = input.map(item => typeof item === 'string' ? { nombre: item.trim() } : { ...item, nombre: item.nombre.trim() })
+  const result = await authenticatedRequest<{ items: Accessory[] }>('/inventory/resources/' + encodeURIComponent(resourceId) + '/accessories', {
+    method: 'PUT', body: { items },
   })
   if (
-    result.items.length !== names.length ||
-    names.some((name) => !result.items.some((item) => item.nombre === name))
+    !validAccessories(result) || result.items.length !== items.length ||
+    items.some(expected => !result.items.some(item => item.nombre === expected.nombre && (!expected.id || item.id === expected.id)))
   )
     throw new ApiError('El servidor no confirmó la lista completa de accesorios.', 0)
   return result
 }
-export async function saveLoanPolicy(resourceId: string, durationHours: number) {
-  const result = await provisionalRequest<{ resourceId: string; durationHours: number }>('F13', {
-    params: { resourceId },
-    body: { durationHours },
+export async function saveLoanPolicy(resourceId: string, durationHours: number | null) {
+  const result = await authenticatedRequest<ResourceLoanPolicy>('/inventory/resources/' + encodeURIComponent(resourceId) + '/loan-policy', {
+    method: 'PATCH', body: { durationHours },
   })
-  if (result.resourceId !== resourceId || result.durationHours !== durationHours)
+  if (result?.resourceId !== resourceId || result.durationHours !== durationHours || !Number.isInteger(result.effectiveDurationHours) || result.effectiveDurationHours < 1 ||
+    (durationHours === null ? result.source !== 'CATEGORY' : result.source !== 'RESOURCE' || result.effectiveDurationHours !== durationHours))
     throw new ApiError('El servidor no confirmó la excepción solicitada.', 0)
   return result
 }

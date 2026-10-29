@@ -19,7 +19,8 @@ import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import { canAppeal } from '../appeal-policy'
-import ContractSection from '../../../shared/components/ContractSection.vue'
+import SanctionDetails from '../../trust/components/SanctionDetails.vue'
+import MyAppeals from '../../trust/components/MyAppeals.vue'
 import { dateTime } from '../../../shared/format'
 import { Star, ShieldCheck, TriangleAlert, ArrowRight } from '@lucide/vue'
 import CategoryIcon from '../../inventory/components/CategoryIcon.vue'
@@ -209,19 +210,7 @@ async function sendAppeal() {
           {{ sanction.endsAt ? date(sanction.endsAt) : 'sin fecha registrada' }}
         </p>
         <p>Confianza: {{ sanction.previousTrust }} % → {{ sanction.resultingTrust }} %</p>
-        <ContractSection
-          :key="sanction.id"
-          title="Motivo y detalles de la sanción"
-          contract="F05"
-          :params="{ sanctionId: sanction.id }"
-          ><template #default="{ data }"
-            ><p>
-              {{
-                (data as { motivo?: string }).motivo || 'El servidor no aportó un motivo detallado.'
-              }}
-            </p></template
-          ></ContractSection
-        >
+        <SanctionDetails :key="sanction.id" :sanction-id="sanction.id" />
         <p v-if="confirmedAppeal(sanction.id)" role="status">Apelación {{ confirmedAppeal(sanction.id)?.id }} confirmada · PENDIENTE</p>
         <button v-if="canAppeal(sanction)" :disabled="appealBlocked(sanction.id)" @click="openAppeal(sanction)">Apelar sanción</button>
         <button v-if="appealDraft(sanction.id) && appealBlocked(sanction.id) && !confirmedAppeal(sanction.id)" @click="openAppeal(sanction)">Ver motivo del envío pendiente</button>
@@ -229,23 +218,7 @@ async function sendAppeal() {
       <p v-if="sanctions.data.value?.length === 0">No tienes sanciones en tu historial.</p>
     </RemoteState>
   </section>
-  <ContractSection
-    title="Estado de mis apelaciones"
-    contract="F04"
-    :query="{ userId: session.user.id }"
-    ><template #default="{ data }"
-      ><p
-        v-for="appeal in (data as { items: { id: string; status: string; reason: string }[] })
-          .items"
-        :key="appeal.id"
-      >
-        {{ appeal.reason }} · {{ appeal.status }}
-      </p>
-      <p v-if="!(data as { items: unknown[] }).items.length">
-        No hay apelaciones en la respuesta recibida.
-      </p></template
-    ></ContractSection
-  >
+  <MyAppeals :user-id="session.user.id" />
   <ModalDialog v-if="appealing" title="Apelar sanción" :busy="sending" compact @close="appealing = null">
     <form class="stack appeal-form" @submit.prevent="sendAppeal">
       <div class="appeal-context"><strong>Detalle de la sanción</strong><p>Desde {{ date(appealing.startsAt) }} hasta {{ appealing.endsAt ? date(appealing.endsAt) : 'sin fecha registrada' }}.</p><p>Confianza: {{ appealing.previousTrust }} % → {{ appealing.resultingTrust }} %</p></div>

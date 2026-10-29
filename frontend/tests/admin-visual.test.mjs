@@ -61,12 +61,12 @@ test('cuenta y rol: consulta a demanda, permiso confirmado y cambio con accountI
 
 test('apelaciones: bandeja explícita, titular real, resolución con fundamento y lectura posterior', async () => {
   const calls = []
-  const appeal = { id: 'admin-visual-appeal', userId: user.id, sanctionId: null, status: 'PENDIENTE', reason: 'Argumento confirmado', submittedAt: '2026-10-20T10:00:00Z', resolution: null }
+  const appeal = { id: 'admin-visual-appeal', violationId: 'violation-real', userId: user.id, sanctionId: null, status: 'PENDIENTE', reason: 'Argumento confirmado', submittedAt: '2026-10-20T10:00:00Z', resolution: null, resolvedAt: null, resolvedByAccountId: null }
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
     if (url.includes('/users/')) return Response.json(user)
     if (options.method === 'PATCH') return Response.json({ ...appeal, status: 'ACEPTADA', resolution: 'Fundamento de prueba' })
-    return Response.json({ items: [appeal], total: 1 })
+    return Response.json({ items: [appeal], total: 1, page: 1, limit: 20 })
   }
   const app = mount(Appeals)
   try {
@@ -90,7 +90,8 @@ test('editor: artículo, ejemplares, accesorios y duración conservan guardados 
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
     if (url.includes('/copies')) return Response.json([])
-    return Response.json(resource)
+    if (url.endsWith('/accessories')) return Response.json({ items: [] })
+    return Response.json({ ...resource, loanPolicy: { resourceId: resource.id, categoryId: 'cat', durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' } })
   }
   const app = mount(Editor, { resource, categories: [category] })
   try {
@@ -100,7 +101,7 @@ test('editor: artículo, ejemplares, accesorios y duración conservan guardados 
     await event(find(app.root, 'form'), 'submit')
     assert.equal(calls.filter(c => c.options.method === 'PATCH').length, 1)
     assert.deepEqual(JSON.parse(calls.at(-1).options.body), { nombre: resource.nombre, categoriaId: 'cat', descripcion: resource.descripcion })
-    assert.ok(!calls.some(c => /accessories|loan-policy/.test(c.url)))
+    assert.ok(!calls.some(c => /accessories|loan-policy/.test(c.url) && c.options.method !== 'GET'))
     await event(find(app.root, 'button', 'Duración'), 'click')
     assert.equal(find(app.root, 'button', 'Duración').props['aria-pressed'], true)
   } finally { app.unmount() }

@@ -27,13 +27,14 @@ test('R1: editor recupera A, confirma renombre B y Nuevo A crea otro ID y asigna
   const calls = []
   globalThis.fetch = async (url, options) => {
     const method = options.method ?? 'GET'; calls.push([url, method])
+    if (url.endsWith('/accessories')) return Response.json({ resourceId: url.includes('new-A') ? 'new-A' : 'old-A', items: [] })
     if (url.endsWith('/copies')) {
       if (method === 'POST') return Response.json({ id: 'new-copy', recursoId: 'new-A', codigoInventario: 'CODE-A' })
       return Response.json([])
     }
     if (method === 'PATCH') return Response.json({ ...a, nombre: 'Renombrado B', id: 'old-A' })
     if (method === 'POST') return Response.json({ ...a, id: 'new-A' })
-    return Response.json({ ...a, id: 'old-A' })
+    return Response.json({ ...a, id: url.includes('new-A') ? 'new-A' : 'old-A', loanPolicy: { categoryId: category.id, categoryDurationHours: 48, individualDurationHours: null, effectiveDurationHours: 48, source: 'CATEGORY' } })
   }
   async function fillEditor(mounted, name = a.nombre) {
     await model(find(mounted.root, 'input'), name)
@@ -90,7 +91,7 @@ test('R1: editar un ID invalida también recuperaciones aún no consumidas', asy
   assert.equal((await inventory.saveResource(null, body)).id, 'new-unconsumed-A')
 })
 
-test('R2: pestañas controlan el DOM estable y conservan lectura F14 pendiente sin GET automáticos', async () => {
+test('R2: pestañas controlan el DOM estable y conservan lectura de reservas pendiente sin GET automáticos', async () => {
   const component = await loadComponent('modules/loans/pages/LoanOperationsPage')
   const pending = deferred(); let reads = 0
   globalThis.fetch = async url => {
@@ -110,7 +111,7 @@ test('R2: pestañas controlan el DOM estable y conservan lectura F14 pendiente s
     assert.equal(wrapper.style.display, 'none')
     await event(find(mounted.root, 'button', 'Entregas de reservas'), 'click')
     assert.equal(find(wrapper, 'button', 'Consultar / actualizar reservas').props.disabled, true)
-    pending.resolve(Response.json({ items: [], total: 0 })); await reading; await flush()
+    pending.resolve(Response.json({ items: [], total: 0, page: 1, limit: 20 })); await reading; await flush()
     assert.match(text(wrapper), /No hay reservas/); assert.equal(reads, 1)
     await event(find(mounted.root, 'button', 'Activos'), 'click')
     assert.equal(wrapper.style.display, 'none')

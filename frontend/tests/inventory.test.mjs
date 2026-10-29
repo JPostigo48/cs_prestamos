@@ -78,3 +78,36 @@ test('guardado parcial: accesorios y excepción no se confirman con respuesta in
   await assert.rejects(inventory.saveAccessories('r1', ['Cable']))
   await assert.rejects(inventory.saveLoanPolicy('r1', 12))
 })
+test('accesorios: usa resourceId, JWT, PUT real e IDs estables al renombrar', async () => {
+  const calls = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, options })
+    assert.ok(options.headers.Authorization.startsWith('Bearer '))
+    if (options.method === 'PUT') {
+      assert.deepEqual(JSON.parse(options.body), { items: [{ id: 'a1', nombre: 'Adaptador' }] })
+      return Response.json({ items: [{ id: 'a1', nombre: 'Adaptador' }] })
+    }
+    return Response.json({ items: [{ id: 'a1', nombre: 'Cargador' }] })
+  }
+  assert.deepEqual((await inventory.getAccessories('r/1')).items, [{ id: 'a1', nombre: 'Cargador' }])
+  assert.deepEqual((await inventory.saveAccessories('r/1', [{ id: 'a1', nombre: ' Adaptador ' }])).items, [{ id: 'a1', nombre: 'Adaptador' }])
+  assert.equal(calls[0].url, '/api/inventory/resources/r%2F1/accessories')
+  assert.equal(calls[1].options.method, 'PUT')
+  globalThis.fetch = async () => Response.json({ items: [{ id: 'a1', nombre: 'Adaptador' }, { id: 'a1', nombre: 'Otro' }] })
+  await assert.rejects(inventory.getAccessories('r1'), e => e.status === 0)
+})
+test('duración: confirma excepción efectiva y null hereda, propaga denegación y errores de persistencia', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/inventory/resources/r1/loan-policy')
+    assert.equal(options.method, 'PATCH')
+    const { durationHours } = JSON.parse(options.body)
+    return Response.json({ resourceId: 'r1', categoryId: 'cat1', durationHours, effectiveDurationHours: durationHours ?? 8, source: durationHours === null ? 'CATEGORY' : 'RESOURCE' })
+  }
+  assert.equal((await inventory.saveLoanPolicy('r1', 3)).effectiveDurationHours, 3)
+  assert.equal((await inventory.saveLoanPolicy('r1', null)).source, 'CATEGORY')
+  for (const status of [403, 404, 409, 500]) {
+    globalThis.fetch = async () => Response.json({ message: 'No confirmado' }, { status })
+    await assert.rejects(inventory.saveLoanPolicy('r1', 8), e => e.status === status)
+    await assert.rejects(inventory.saveAccessories('r1', []), e => e.status === status)
+  }
+})

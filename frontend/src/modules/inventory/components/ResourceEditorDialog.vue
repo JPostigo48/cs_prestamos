@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   saveResource,
   saveAccessories,
   saveLoanPolicy,
+  getAccessories,
+  getResource,
+  type AccessoryInput,
   durationLabel,
   type Category,
   type Resource,
 } from '../api/inventory-api'
 import CopyManager from './CopyManager.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
-import ContractSection from '../../../shared/components/ContractSection.vue'
-import { errorMessage } from '../../../shared/composables/useRemote'
+import RemoteState from '../../../shared/components/RemoteState.vue'
+import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
+import { getSession } from '../../auth/api/auth-api'
 import { Package, ClipboardList, Clock, Layers } from '@lucide/vue'
 const props = defineProps<{ resource: Resource | null; categories: Category[] }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
@@ -20,7 +24,7 @@ const id = ref(props.resource?.id ?? null),
   categoryId = ref(props.resource?.categoriaId ?? ''),
   description = ref(props.resource?.descripcion ?? '')
 const parts = ref(''),
-  hours = ref<number | null>(null),
+  hours = ref<number | '' | null>(null),
   sending = ref(false),
   error = ref(''),
   notice = ref('')
@@ -28,6 +32,12 @@ const copyBusy = ref(false)
 const section = ref<'basic' | 'copies' | 'parts' | 'policy'>('basic')
 const busy = computed(() => sending.value || copyBusy.value)
 const category = computed(() => props.categories.find((c) => c.id === categoryId.value))
+const canConfigure = getSession()?.user.role === 'ADMINISTRADOR'
+const accessories = useRemote(signal => id.value ? getAccessories(id.value, signal) : Promise.resolve(null), id)
+const details = useRemote(signal => id.value ? getResource(id.value, signal) : Promise.resolve(null), id)
+const existingParts = ref<AccessoryInput[]>([])
+watch(accessories.data, value => { if (value) existingParts.value = value.items.map(item => ({ ...item })) })
+watch(details.data, value => { if (value) hours.value = value.loanPolicy.durationHours })
 async function save() {
   if (busy.value) return
   sending.value = true
@@ -54,24 +64,32 @@ async function save() {
   }
 }
 async function extra(kind: 'parts' | 'policy') {
-  if (!id.value || busy.value) return
+  if (!id.value || busy.value || !canConfigure) return
   sending.value = true
   error.value = ''
   notice.value = ''
   try {
     if (kind === 'parts') {
+      if (accessories.loading.value || accessories.error.value || !accessories.data.value)
+        throw new Error('Consulta los accesorios actuales antes de reemplazarlos.')
       const names = parts.value
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
       if (new Set(names).size !== names.length) throw new Error('No repitas nombres de accesorios.')
-      await saveAccessories(id.value, names)
+      await saveAccessories(id.value, [...existingParts.value, ...names.map(nombre => ({ nombre }))])
+      parts.value = ''
+      await accessories.refresh()
       notice.value = 'Accesorios confirmados por el servidor.'
     } else {
-      if (!hours.value || !Number.isInteger(hours.value) || hours.value < 1)
+      if (details.loading.value || details.error.value || !details.data.value)
+        throw new Error('Consulta la duración actual antes de modificarla.')
+      const duration = hours.value === '' ? null : hours.value
+      if (duration !== null && (!Number.isInteger(duration) || duration < 1 || duration > 2147483647))
         throw new Error('La duración debe ser un entero positivo.')
-      await saveLoanPolicy(id.value, hours.value)
-      notice.value = 'Excepción de duración confirmada por el servidor.'
+      await saveLoanPolicy(id.value, duration)
+      await details.refresh()
+      notice.value = duration === null ? 'Herencia de categoría confirmada por el servidor.' : 'Excepción de duración confirmada por el servidor.'
     }
     emit('changed')
   } catch (cause) {
@@ -121,39 +139,41 @@ async function extra(kind: 'parts' | 'policy') {
         @busy="copyBusy = $event"
         @changed="emit('changed')"
       /></section>
-      <section v-show="section === 'parts'" class="editor-section"><ContractSection title="Accesorios actuales" contract="F06" :params="{ resourceId: id }"
-        ><template #default="{ data }"
-          ><ul>
-            <li
-              v-for="item in (data as { items: { id: string; nombre: string }[] }).items"
-              :key="item.id"
-            >
-              {{ item.nombre }}
-            </li>
-          </ul></template
-        ></ContractSection
-      >
-      <form class="stack" @submit.prevent="extra('parts')">
+      <section v-show="section === 'parts'" class="editor-section">
+      <h3>Accesorios actuales</h3>
+      <RemoteState :loading="accessories.loading.value" :error="accessories.error.value" @retry="accessories.refresh">
+        <ul><li v-for="(item, index) in existingParts" :key="item.id">
+          <label>Nombre del accesorio<input v-model="item.nombre" maxlength="120" :disabled="sending || !canConfigure" /></label>
+          <button v-if="canConfigure" type="button" :disabled="sending" :aria-label="'Retirar ' + item.nombre" @click="existingParts.splice(index, 1)">Retirar</button>
+        </li></ul>
+        <p v-if="accessories.data.value?.items.length === 0">El servidor confirmó que no hay accesorios.</p>
+      </RemoteState>
+      <p v-if="!canConfigure">Solo un administrador puede modificar accesorios y duración individual.</p>
+      <form v-if="canConfigure" class="stack" @submit.prevent="extra('parts')">
         <h3>Partes y accesorios</h3>
-        <label>Nombres separados por coma<textarea v-model="parts" :disabled="sending" /></label>
+        <label>Nuevos accesorios separados por coma<textarea v-model="parts" :disabled="sending || accessories.loading.value || !!accessories.error.value" /></label>
         <p>
           Esta acción reemplaza la lista completa. Una lista vacía solicitará
-          eliminar los accesorios.
+          retirar los accesorios sin borrar sus referencias históricas.
         </p>
-        <button class="primary" :disabled="sending">Confirmar reemplazo de accesorios</button>
+        <button class="primary" :disabled="sending || accessories.loading.value || !!accessories.error.value || !accessories.data.value">Confirmar reemplazo de accesorios</button>
       </form></section>
       <form v-show="section === 'policy'" class="stack editor-section" @submit.prevent="extra('policy')">
         <h3>Duración del préstamo</h3>
         <p class="category-policy">{{ category ? 'Regla de la categoría: ' + durationLabel(category) + '.' : 'Selecciona una categoría para conocer su regla.' }} La excepción se aplica únicamente a este artículo.</p>
+        <RemoteState :loading="details.loading.value" :error="details.error.value" @retry="details.refresh">
+          <p v-if="details.data.value">Duración efectiva guardada: {{ details.data.value.loanPolicy.effectiveDurationHours }} horas. {{ details.data.value.loanPolicy.source === 'RESOURCE' ? 'Excepción individual.' : 'Heredada de categoría.' }}</p>
+        </RemoteState>
+        <p>Deja las horas vacías para volver a heredar la categoría. Solo afecta a nuevas operaciones.</p>
         <label
           >Horas máximas<input
             v-model.number="hours"
             type="number"
             min="1"
+            max="2147483647"
             step="1"
-            required
-            :disabled="sending" /></label
-        ><button class="primary" :disabled="sending">Guardar excepción individual</button>
+            :disabled="sending || !canConfigure || details.loading.value || !!details.error.value" /></label
+        ><button v-if="canConfigure" class="primary" :disabled="sending || details.loading.value || !!details.error.value || !details.data.value">Guardar duración individual</button>
       </form>
     </template>
     <p v-else>Guarda el recurso antes de añadir ejemplares o accesorios.</p>

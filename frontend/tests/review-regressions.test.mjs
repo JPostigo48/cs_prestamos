@@ -3,12 +3,12 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { parse } from '@vue/compiler-sfc'
 import { load, testEnvironment, session } from './helpers/modules.mjs'
+import { sanction, appeal } from './helpers/trust-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const loans = await load('modules/loans/api/loans-api')
 const inventory = await load('modules/inventory/api/inventory-api')
 const access = await load('modules/auth/api/access-flows-api')
-const provisional = await load('shared/api/provisional-contracts')
 const trust = await load('modules/trust/api/trust-api')
 beforeEach(() => { testEnvironment(); auth.saveSession(session('ADMINISTRADOR')) })
 
@@ -49,10 +49,10 @@ test('altas inciertas: recurso y registro integral no se reenvían por reabrir f
 })
 
 test('apelaciones: fecha ausente o inválida se rechaza antes del ordenamiento', async () => {
-  const item = { id: 'a-review', userId: 'user-review', reason: 'Motivo', status: 'PENDIENTE' }
+  const item = appeal({ id: 'a-review' })
   for (const submittedAt of [undefined, null, 123, '', 'fecha-inválida']) {
-    globalThis.fetch = async () => Response.json({ items: [{ ...item, submittedAt }, { ...item, id: 'a-review2', submittedAt }], total: 2 })
-    await assert.rejects(provisional.provisionalRequest('F04'), e => e.status === 0)
+    globalThis.fetch = async () => Response.json({ items: [{ ...item, submittedAt }, { ...item, id: 'a-review2', submittedAt }], total: 2, page: 1, limit: 20 })
+    await assert.rejects(trust.listAppeals(), e => e.status === 0)
   }
 })
 
@@ -62,7 +62,7 @@ test('levantamiento: misma sanción ACTIVA no es éxito y bloquea otro envío in
   await assert.rejects(trust.liftSanction('sanction-review', 'Fundamento'), e => e.status === 0)
   await assert.rejects(trust.liftSanction('sanction-review', 'Fundamento'), e => e.status === 0)
   assert.equal(calls, 1)
-  globalThis.fetch = async () => Response.json({ id: 'sanction-review-confirmed', status: 'FINALIZADA' })
+  globalThis.fetch = async () => Response.json(sanction({ id: 'sanction-review-confirmed', status: 'FINALIZADA' }))
   assert.equal((await trust.liftSanction('sanction-review-confirmed', 'Fundamento')).status, 'FINALIZADA')
 })
 

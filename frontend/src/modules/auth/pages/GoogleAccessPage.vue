@@ -1,10 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { startGoogle } from '../api/access-flows-api'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { startGoogle, finishGoogle } from '../api/access-flows-api'
+import { saveSession } from '../api/auth-api'
+import { ApiError } from '../../../shared/api/client'
 import { errorMessage } from '../../../shared/composables/useRemote'
 const email = ref(''),
   error = ref(''),
   sending = ref(false)
+const router = useRouter()
+const googleError = (cause: unknown) => cause instanceof ApiError && cause.status === 503
+  ? 'El acceso con Google no está disponible o no está configurado. Usa correo y contraseña o contacta con el personal.'
+  : errorMessage(cause)
+onMounted(async () => {
+  const query = new URLSearchParams(window.location.search)
+  const code = query.get('code'), state = query.get('state')
+  if (!code && !state && !query.has('error')) return
+  window.history.replaceState(window.history.state, '', window.location.pathname)
+  if (query.has('error') || !code || !state) { error.value = 'La autorización de Google fue cancelada o es incompleta.'; return }
+  sending.value = true
+  try {
+    const session = await finishGoogle(code, state)
+    saveSession(session)
+    await router.replace('/app')
+  } catch (cause) { error.value = googleError(cause) }
+  finally { sending.value = false }
+})
 async function submit() {
   if (sending.value) return
   sending.value = true
@@ -13,7 +34,7 @@ async function submit() {
     const result = await startGoogle(email.value.trim())
     window.location.assign(result.authorizationUrl)
   } catch (cause) {
-    error.value = errorMessage(cause)
+    error.value = googleError(cause)
   } finally {
     sending.value = false
   }
@@ -28,8 +49,8 @@ async function submit() {
       <img src="/logo.png" alt="" class="mx-auto h-20 w-20 object-contain" />
       <h1 class="text-2xl font-bold text-[#1e3a5f]">Continuar con Google</h1>
       <p>
-        La integración con el proveedor está pendiente en el backend. El correo no inicia sesión por
-        sí mismo.
+        Google verificará tu identidad institucional. Necesitas una cuenta previamente aprobada;
+        el correo por sí solo no inicia sesión.
       </p>
       <label class="block"
         >Correo institucional<input

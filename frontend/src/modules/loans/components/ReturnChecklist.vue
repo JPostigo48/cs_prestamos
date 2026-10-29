@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { getCopy, getAccessories, type Accessory } from '../../inventory/api/inventory-api'
-import { saveReturnChecklist } from '../api/loans-api'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { getLoan, saveReturnChecklist, type ReturnChecklistCapture } from '../api/loans-api'
+import { ApiError } from '../../../shared/api/client'
 import { errorMessage } from '../../../shared/composables/useRemote'
 import { ClipboardCheck } from '@lucide/vue'
 const props = defineProps<{ loanId: string; copyId: string; disabled: boolean }>()
-const emit = defineEmits<{ busy: [value: boolean] }>()
-const parts = ref<Accessory[] | null>(null),
+const emit = defineEmits<{ busy: [value: boolean]; missing: [value: boolean] }>()
+const parts = ref<{ id: string; nombre: string }[] | null>(null),
   received = ref<Record<string, boolean | null>>({}),
   loading = ref(false),
   sending = ref(false),
   error = ref(''),
   notice = ref('')
+const capture = ref<ReturnChecklistCapture | null>(null)
+const active = ref(false)
+const legacy = ref(false)
+const uncertain = ref(false)
+watch(received, value => emit('missing', Object.values(value).some(v => v === false)), { deep: true })
 const controller = new AbortController()
 onBeforeUnmount(() => controller.abort())
 const complete = computed(
@@ -25,10 +30,16 @@ async function load() {
   notice.value = ''
   parts.value = null
   try {
-    const copy = await getCopy(props.copyId, controller.signal)
-    const result = await getAccessories(copy.recursoId, controller.signal)
-    parts.value = result.items
-    received.value = Object.fromEntries(result.items.map((p) => [p.id, null]))
+    const loan = await getLoan(props.loanId, controller.signal)
+    if (loan.copyId !== props.copyId || loan.configurationSnapshot === undefined || loan.returnChecklist === undefined)
+      throw new ApiError('No se confirmó la configuración histórica del préstamo.', 0)
+    active.value = loan.status === 'ACTIVO'
+    legacy.value = loan.configurationSnapshot === null
+    capture.value = loan.returnChecklist
+    parts.value = loan.configurationSnapshot?.accessories ?? []
+    received.value = Object.fromEntries(parts.value.map(p => [p.id, capture.value?.parts.find(part => part.accessoryId === p.id)?.received ?? null]))
+    uncertain.value = false
+    if (capture.value) notice.value = 'Checklist confirmado por el servidor. La captura es inmutable; guardar la inspección no devuelve el préstamo.'
   } catch (cause) {
     if (!controller.signal.aborted) error.value = errorMessage(cause)
   } finally {
@@ -37,24 +48,26 @@ async function load() {
   }
 }
 async function save() {
-  if (!complete.value || sending.value || props.disabled) return
+  if (!complete.value || sending.value || props.disabled || capture.value || !active.value || uncertain.value) return
   sending.value = true
   emit('busy', true)
   error.value = ''
   notice.value = ''
   try {
-    await saveReturnChecklist(
+    capture.value = await saveReturnChecklist(
       props.loanId,
       parts.value!.map((p) => ({ accessoryId: p.id, received: received.value[p.id] === true })),
     )
     notice.value = 'Checklist confirmado por el servidor. La devolución todavía no se ha enviado.'
   } catch (cause) {
     error.value = errorMessage(cause)
+    uncertain.value = !(cause instanceof ApiError) || cause.status === 0 || cause.status >= 500 || cause.status === 409
   } finally {
     sending.value = false
     emit('busy', false)
   }
 }
+onMounted(() => { void load() })
 </script>
 <template>
   <section class="inspection stack">
@@ -63,7 +76,9 @@ async function save() {
     <button type="button" :disabled="disabled || loading || sending" @click="load">
       {{ loading ? 'Consultando…' : 'Consultar accesorios para revisar' }}
     </button>
-    <fieldset v-if="parts" :disabled="disabled || sending" class="inspection-parts">
+    <p v-if="parts && !active" role="status">Solo los préstamos ACTIVOS permiten guardar una inspección.</p>
+    <p v-if="parts && legacy">Préstamo anterior sin configuración histórica. Solo se puede guardar un checklist vacío explícito; no se reconstruye el catálogo.</p>
+    <fieldset v-if="parts" :disabled="disabled || sending || !!capture || !active || uncertain" class="inspection-parts">
       <legend>Verifica cada parte (ninguna está marcada por defecto)</legend>
       <div v-for="part in parts" :key="part.id" class="inspection-part" role="group" :aria-labelledby="'inspection-part-' + part.id">
         <strong :id="'inspection-part-' + part.id">{{ part.nombre }}</strong>
@@ -85,15 +100,16 @@ async function save() {
           Faltante</label
         ></div>
       </div>
-      <p v-if="!parts.length">El servidor confirmó que no hay accesorios.</p>
+      <p v-if="!parts.length && !legacy">La configuración histórica no contiene accesorios.</p>
     </fieldset>
-    <button type="button" :disabled="disabled || !complete || sending || loading" @click="save">
+    <button type="button" :disabled="disabled || !complete || sending || loading || !!capture || !active || uncertain" @click="save">
       Guardar solo checklist
     </button>
     <p v-if="error" role="alert" class="error">
       {{ error }} El checklist no está confirmado. Puedes elegir explícitamente registrar solo la
       devolución básica.
     </p>
+    <p v-if="uncertain" role="status">Consulta de nuevo el préstamo para conciliar la captura antes de intentar guardar.</p>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
   </section>
 </template>

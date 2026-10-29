@@ -123,7 +123,7 @@ test('reserva incierta: doble envío y reapertura bloqueados, 409 no se reintent
   )
   assert.equal(calls, 2)
 })
-test('consultas provisionales a demanda: no ejecutan red al montar ni reintentan automáticamente', async () => {
+test('consultas a demanda: no ejecutan red al montar ni reintentan automáticamente', async () => {
   const scope = effectScope()
   let calls = 0,
     remote

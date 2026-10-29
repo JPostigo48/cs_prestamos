@@ -14,8 +14,26 @@ const version = ref<string | null>(null),
   error = ref(''),
   confirmed = ref('')
 const passwordVisible = ref(false)
+async function selectImage(event: Event) {
+  evidence.value = ''
+  error.value = ''
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 60 * 1024) {
+    error.value = 'Selecciona una imagen PNG o JPEG de hasta 60 KiB.'
+    return
+  }
+  try {
+    evidence.value = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  } catch { error.value = 'No se pudo leer la imagen.' }
+}
 async function submit() {
-  if (sending.value || !version.value || confirmed.value) return
+  if (sending.value || !version.value || !evidence.value || confirmed.value) return
   sending.value = true
   error.value = ''
   try {
@@ -39,10 +57,10 @@ async function submit() {
 </script>
 <template>
   <form class="full-registration space-y-4" @submit.prevent="submit">
-    <h2 class="text-xl font-bold">Crear cuenta · contrato pendiente</h2>
+    <h2 class="text-xl font-bold">Crear cuenta</h2>
     <p>
-      Alta integral F03, separada de la solicitud básica. No se enviarán ambas solicitudes
-      automáticamente. No hay carga de imágenes disponible; la evidencia es textual.
+      El alta queda pendiente de revisión. Al aprobarla, se creará tu cuenta de usuario.
+      Adjunta una imagen de vinculación PNG o JPEG de hasta 60 KiB y acepta los términos vigentes.
     </p>
     <fieldset :disabled="sending || !!confirmed" class="space-y-3">
       <label
@@ -74,7 +92,7 @@ async function submit() {
         </select></label
       >
       <label>Identificador institucional<input v-model="institutionalId" maxlength="80" /></label>
-      <label>Evidencia textual<textarea v-model="evidence" rows="3" /></label>
+      <label>Evidencia de vinculación<input type="file" accept="image/png,image/jpeg" required @change="selectImage" /></label>
       <TermsPanel @read="version = $event" />
     </fieldset>
     <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ error }}</p>
@@ -82,7 +100,7 @@ async function submit() {
       Solicitud {{ confirmed }} confirmada como PENDIENTE. No se ha iniciado sesión.
     </p>
     <button
-      :disabled="sending || !version || !!confirmed"
+      :disabled="sending || !version || !evidence || !!confirmed"
       class="rounded-lg bg-[#1e3a5f] px-5 py-3 text-white disabled:opacity-50"
     >
       Enviar alta integral

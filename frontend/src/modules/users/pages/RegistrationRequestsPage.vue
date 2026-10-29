@@ -101,7 +101,8 @@ async function confirm() {
            <StatusBadge :tone="item.status === 'PENDIENTE' ? 'warning' : item.status === 'APROBADA' ? 'success' : 'danger'">{{ item.status }}</StatusBadge>
            <details class="request-evidence"><summary><ClipboardList :size="16" aria-hidden="true" />Revisar evidencia de vinculación</summary><ul>
             <li v-for="(evidence, index) in item.evidence" :key="index">
-              {{ evidence.information }}
+              <img v-if="/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(evidence.information)" :src="evidence.information" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" />
+              <template v-else>{{ evidence.information }}</template>
             </li>
            </ul><p v-if="!item.evidence.length">No se adjuntó información de vinculación.</p></details>
            <p v-if="item.rejectionReason" class="request-reason">Motivo: {{ item.rejectionReason }}</p>

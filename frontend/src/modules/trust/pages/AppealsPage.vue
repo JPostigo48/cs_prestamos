@@ -7,12 +7,15 @@ import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import { dateTime } from '../../../shared/format'
 import { ApiError } from '../../../shared/api/client'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
-import ContractSection from '../../../shared/components/ContractSection.vue'
+import SanctionDetails from '../components/SanctionDetails.vue'
+import { getSession } from '../../auth/api/auth-api'
 import { useUserDetails } from '../../users/useUserDetails'
 import { Check, X, Scale } from '@lucide/vue'
 const filter = ref('PENDIENTE')
+const page = ref(1)
+const canResolve = getSession()?.user.role === 'ADMINISTRADOR'
 const remote = useRemote(
-  (signal) => listAppeals(filter.value, signal),
+  (signal) => listAppeals({ status: filter.value, page: page.value }, signal),
   () => true,
   false,
 )
@@ -24,6 +27,8 @@ const items = computed(() =>
   ),
 )
 const users = useUserDetails(() => items.value)
+async function consult() { page.value = 1; await remote.refresh() }
+async function move(delta: number) { page.value += delta; await remote.refresh() }
 const statusLabel = (status: Appeal['status']) => ({ PENDIENTE: 'Pendiente', ACEPTADA: 'Aceptada', RECHAZADA: 'Rechazada' })[status]
 const selected = ref<Appeal | null>(null),
   outcome = ref<'ACEPTADA' | 'RECHAZADA'>('ACEPTADA'),
@@ -40,7 +45,7 @@ function select(appeal: Appeal, status: 'ACEPTADA' | 'RECHAZADA') {
   uncertain.value = false
 }
 async function confirm() {
-  if (!selected.value || sending.value || uncertain.value || !resolution.value.trim()) return
+  if (!canResolve || !selected.value || sending.value || uncertain.value || !resolution.value.trim()) return
   sending.value = true
   error.value = ''
   try {
@@ -62,7 +67,7 @@ async function confirm() {
   <p class="muted">
     Revisa las solicitudes y fundamenta cada decisión.
   </p></header>
-  <form class="panel row appeals-filters" @submit.prevent="remote.refresh">
+  <form class="panel row appeals-filters" @submit.prevent="consult">
     <label
       >Estado<select v-model="filter">
         <option value="PENDIENTE">Pendientes</option>
@@ -83,10 +88,10 @@ async function confirm() {
         <div class="appeal-card-heading"><div><h2>{{ users[appeal.userId]?.name || 'Usuario ' + appeal.userId }}</h2><p class="muted">{{ users[appeal.userId]?.institutionalId || 'Identificador institucional no disponible' }}</p></div><StatusBadge :tone="appeal.status === 'PENDIENTE' ? 'warning' : appeal.status === 'ACEPTADA' ? 'success' : 'danger'">{{ statusLabel(appeal.status) }}</StatusBadge></div>
         <div class="appeal-metadata"><div><span>Fecha de apelación</span><p>{{ dateTime(appeal.submittedAt) }}</p></div><div><span>Sanción vinculada</span><p>{{ appeal.sanctionId ? 'Sanción registrada' : 'Sin referencia de sanción' }}</p></div></div>
         <div class="appeal-argument"><h3>Argumento del apelante</h3><p>{{ appeal.reason }}</p></div>
-        <details v-if="appeal.sanctionId" class="sanction-query"><summary>Consultar sanción original</summary><ContractSection title="Sanción original" contract="F05" :params="{ sanctionId: appeal.sanctionId }"><template #default="{ data }"><p>{{ (data as { motivo?: string }).motivo || 'Motivo no disponible' }}</p></template></ContractSection></details>
+        <details v-if="appeal.sanctionId" class="sanction-query"><summary>Consultar sanción original</summary><SanctionDetails :sanction-id="appeal.sanctionId" /></details>
         <div v-if="appeal.resolution" class="appeal-resolution"><h3>Resolución</h3><p>{{ appeal.resolution }}</p></div>
         <details class="appeal-reference"><summary>Referencias de la apelación</summary><p>Apelación: {{ appeal.id }}</p><p>Usuario: {{ appeal.userId }}</p><p v-if="appeal.sanctionId">Sanción: {{ appeal.sanctionId }}</p></details>
-        <div v-if="appeal.status === 'PENDIENTE'" class="appeal-actions">
+        <div v-if="canResolve && appeal.status === 'PENDIENTE'" class="appeal-actions">
           <button class="reject-action" @click="select(appeal, 'RECHAZADA')"><X :size="16" aria-hidden="true" /> Rechazar</button>
           <button class="primary" @click="select(appeal, 'ACEPTADA')"><Check :size="16" aria-hidden="true" /> Aprobar apelación</button>
         </div>
@@ -96,6 +101,7 @@ async function confirm() {
       No hay apelaciones en la respuesta recibida.
     </p></RemoteState
   >
+  <nav v-if="remote.data.value" class="row" aria-label="Páginas de apelaciones"><button :disabled="remote.loading.value || page <= 1" @click="move(-1)">Anterior</button><span>Página {{ remote.data.value.page }}</span><button :disabled="remote.loading.value || page * remote.data.value.limit >= remote.data.value.total" @click="move(1)">Siguiente</button></nav>
   <ModalDialog
     v-if="selected"
     :title="outcome === 'ACEPTADA' ? 'Aprobar apelación' : 'Rechazar apelación'"

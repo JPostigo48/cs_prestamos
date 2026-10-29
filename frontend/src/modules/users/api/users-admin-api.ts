@@ -1,6 +1,5 @@
 import { authenticatedRequest, type AccessRole } from '../../auth/api/auth-api'
 import { ApiError } from '../../../shared/api/client'
-import { provisionalRequest } from '../../../shared/api/provisional-contracts'
 import type { UserProfile } from './student-api'
 export interface Page<T> {
   items: T[]
@@ -36,11 +35,10 @@ export const listRegistrationRequests = (query: Record<string, string>, signal?:
     { signal },
   )
 export async function findAccount(userId: string, signal?: AbortSignal) {
-  const result = await provisionalRequest<{ items: SafeAccount[] }>('F10', {
-    query: { userId },
+  const result = await authenticatedRequest<{ items: SafeAccount[] }>('/auth/accounts?' + new URLSearchParams({ userId }), {
     signal,
   })
-  if (result.items.length !== 1 || result.items[0]!.userId !== userId)
+  if (!Array.isArray(result?.items) || result.items.length !== 1 || result.items[0]!.userId !== userId || !result.items[0]!.id || typeof result.items[0]!.enabled !== 'boolean' || !['USUARIO', 'OPERADOR', 'ADMINISTRADOR'].includes(result.items[0]!.role))
     throw new ApiError(
       'No se encontró una única cuenta para este usuario. No se enviará el ID de usuario como ID de cuenta.',
       409,

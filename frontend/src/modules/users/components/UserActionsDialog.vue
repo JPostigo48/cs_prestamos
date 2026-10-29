@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { findAccount, updateRole } from '../api/users-admin-api'
 import { getSanctions, type UserProfile } from '../api/student-api'
-import { suspendUser, liftSanction } from '../../trust/api/trust-api'
+import { suspendUser, liftSanction, listSuspensionRules } from '../../trust/api/trust-api'
+import { getSession } from '../../auth/api/auth-api'
+import { pendingMutation } from '../../../shared/api/mutation-guard'
+import SanctionDetails from '../../trust/components/SanctionDetails.vue'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
@@ -17,18 +20,20 @@ const account = useRemote(
   false,
 )
 const sanctions = useRemote((signal) => getSanctions(props.user.id, signal))
+const isAdmin = getSession()?.user.role === 'ADMINISTRADOR'
+const rules = useRemote(listSuspensionRules, () => isAdmin, false)
+const ruleId = ref('')
+const selectedRule = computed(() => rules.data.value?.find(rule => rule.ruleId === ruleId.value))
 const section = ref<'account' | 'suspend' | 'sanctions'>('account')
 const role = ref<'USUARIO' | 'OPERADOR'>('USUARIO'),
   reason = ref(''),
-  startsAt = ref(''),
-  endsAt = ref(''),
   sanctionId = ref(''),
   resolution = ref('')
 const sending = ref(false),
   error = ref(''),
   notice = ref('')
 async function run(action: 'role' | 'suspend' | 'lift') {
-  if (sending.value) return
+  if (sending.value || !isAdmin) return
   sending.value = true
   error.value = ''
   notice.value = ''
@@ -39,18 +44,10 @@ async function run(action: 'role' | 'suspend' | 'lift') {
       await account.refresh()
       notice.value = 'Rol actualizado. Los tokens ya emitidos no se revocan automáticamente.'
     } else if (action === 'suspend') {
-      if (!reason.value.trim() || !startsAt.value) throw new Error('Motivo e inicio obligatorios.')
-      const start = new Date(startsAt.value),
-        end = endsAt.value ? new Date(endsAt.value) : null
-      if (
-        !Number.isFinite(start.getTime()) ||
-        (end && (!Number.isFinite(end.getTime()) || end <= start))
-      )
-        throw new Error('Fechas no válidas: el fin debe ser posterior al inicio.')
+      if (!reason.value.trim() || !selectedRule.value || rules.error.value || rules.loading.value) throw new Error('Selecciona una regla vigente real y fundamenta la suspensión.')
       const result = await suspendUser(props.user.id, {
         reason: reason.value.trim(),
-        startsAt: start.toISOString(),
-        endsAt: end?.toISOString() ?? null,
+        ruleId: selectedRule.value.ruleId,
       })
       if (result.userId !== props.user.id)
         throw new Error('Respuesta de suspensión para otro usuario.')
@@ -65,7 +62,7 @@ async function run(action: 'role' | 'suspend' | 'lift') {
       )
         throw new Error('Selecciona una sanción activa/programada real y fundamenta la decisión.')
       await liftSanction(sanctionId.value, resolution.value.trim())
-      notice.value = 'Resolución de sanción confirmada por el servidor.'
+      notice.value = 'Sanción FINALIZADA. El levantamiento no restituye confianza.'
       await sanctions.refresh()
     }
     emit('changed')
@@ -78,7 +75,7 @@ async function run(action: 'role' | 'suspend' | 'lift') {
 </script>
 <template>
   <ModalDialog title="Administrar usuario" :subtitle="user.name" :busy="sending" @close="emit('close')">
-    <div class="user-administration">
+    <div v-if="isAdmin" class="user-administration">
     <div class="user-summary"><UserRound :size="22" aria-hidden="true" /><div><strong>{{ user.name }}</strong><p>{{ user.userType }} · {{ user.institutionalId || 'Sin identificador institucional' }}</p></div><StatusBadge :tone="user.trustPercentage >= 80 ? 'info' : 'warning'">{{ user.trustPercentage }} %</StatusBadge></div>
     <nav class="management-tabs" aria-label="Gestión del usuario"><button :aria-pressed="section === 'account'" :disabled="sending" @click="section = 'account'"><ShieldCheck :size="16" aria-hidden="true" /> Cuenta y rol</button><button :aria-pressed="section === 'suspend'" :disabled="sending" @click="section = 'suspend'"><Ban :size="16" aria-hidden="true" /> Suspender</button><button :aria-pressed="section === 'sanctions'" :disabled="sending" @click="section = 'sanctions'"><Scale :size="16" aria-hidden="true" /> Sanciones</button></nav>
     <section v-show="section === 'account'" class="management-section stack">
@@ -112,15 +109,20 @@ async function run(action: 'role' | 'suspend' | 'lift') {
     <form v-show="section === 'suspend'" class="management-section stack suspension-section" @submit.prevent="run('suspend')">
       <h3>Suspender usuario</h3>
       <p class="suspension-warning">La suspensión restringe los préstamos. No cambia la vinculación institucional ni deshabilita la cuenta de acceso.</p>
-      <label>Motivo<textarea v-model="reason" required maxlength="2000" /></label
-      ><label>Inicio (hora local)<input v-model="startsAt" type="datetime-local" required /></label
-      ><label
-        >Fin opcional (vacío: indefinida)<input v-model="endsAt" type="datetime-local" /></label
-      ><button class="danger-action" :disabled="sending">Confirmar solicitud de suspensión</button>
+      <button type="button" :disabled="sending || rules.loading.value" @click="rules.refresh">Consultar reglas vigentes</button>
+      <RemoteState :loading="rules.loading.value" :error="rules.error.value" @retry="rules.refresh">
+        <label>Regla versionada<select v-model="ruleId" required :disabled="sending || rules.loading.value"><option value="">Seleccionar</option><option v-for="rule in rules.data.value" :key="rule.id" :value="rule.ruleId">{{ rule.title }} · v{{ rule.number }}</option></select></label>
+        <p v-if="rules.data.value?.length === 0">No hay reglas manuales vigentes con suspensión.</p>
+        <template v-if="selectedRule"><p>{{ selectedRule.consequence }}</p><p>Tipo: {{ selectedRule.suspensionType }}<span v-if="selectedRule.suspensionDays !== null"> · {{ selectedRule.suspensionDays }} días</span>. Versión {{ selectedRule.number }}.</p></template>
+      </RemoteState>
+      <p>El servidor calcula inicio y fin según la versión vigente y las sanciones pendientes. No se permiten fechas ni duraciones arbitrarias.</p>
+      <label>Motivo<textarea v-model="reason" required maxlength="2000" :disabled="sending" /></label>
+      <p v-if="pendingMutation('suspend:' + user.id)" role="status">Resultado incierto. Conserva el motivo y consulta las sanciones antes de actuar; no se reenviará.</p>
+      <button class="danger-action" :disabled="sending || !selectedRule || !!rules.error.value || rules.loading.value || !reason.trim() || pendingMutation('suspend:' + user.id)">Confirmar solicitud de suspensión</button>
     </form>
     <form v-show="section === 'sanctions'" class="management-section stack" @submit.prevent="run('lift')">
       <h3>Levantar sanción</h3>
-      <p class="muted">Selecciona una sanción vigente y explica el motivo de la resolución.</p>
+      <p class="muted">Selecciona una sanción vigente y explica el motivo de la resolución. Finalizarla no restituye confianza.</p>
       <RemoteState
         :loading="sanctions.loading.value"
         :error="sanctions.error.value"
@@ -140,13 +142,15 @@ async function run(action: 'role' | 'suspend' | 'lift') {
           </select></label
         >
         <p v-if="sanctions.data.value?.length === 0">No hay sanciones registradas.</p></RemoteState
-      ><label>Fundamento<textarea v-model="resolution" required maxlength="2000" /></label
-      ><button class="primary" :disabled="sending || !sanctionId">Confirmar levantamiento</button>
+      ><SanctionDetails v-if="sanctionId" :key="sanctionId" :sanction-id="sanctionId" /><label>Fundamento<textarea v-model="resolution" required maxlength="2000" :disabled="sending" /></label>
+      <p v-if="sanctionId && pendingMutation('lift:' + sanctionId)" role="status">Resultado incierto. Consulta el detalle de la sanción antes de repetir.</p>
+      <button class="primary" :disabled="sending || !sanctionId || !resolution.trim() || pendingMutation('lift:' + sanctionId)">Confirmar levantamiento</button>
     </form>
     <p v-if="error" role="alert" class="error">{{ error }}</p>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <button :disabled="sending" @click="emit('close')">Cerrar</button>
     </div>
+    <p v-else role="alert">Solo administración puede gestionar suspensiones y levantamientos.</p>
   </ModalDialog>
 </template>
 <style scoped>

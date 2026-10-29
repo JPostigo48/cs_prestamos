@@ -89,7 +89,7 @@ test('checklist: no se mezcla con devolución y solo confirma las partes recibid
     const body = JSON.parse(options.body)
     assert.deepEqual(body.parts, parts)
     assert.equal('returnedAt' in body, false)
-    return Response.json({ id: 'ch1', loanId: 'l1', ...body }, { status: 201 })
+    return Response.json({ id: 'ch1', loanId: 'l1', actorId: 'operator', configurationSnapshot: { schemaVersion: 1, copyId: 'c1', resourceId: 'r1', policy: { resourceId: 'r1', categoryId: 'cat1', durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' }, accessories: [{ id: 'p1', nombre: 'Cable' }] }, ...body, parts: body.parts.map(p => ({ ...p, nombre: 'Cable' })) }, { status: 201 })
   }
   await loans.saveReturnChecklist('l1', parts)
   globalThis.fetch = async () =>

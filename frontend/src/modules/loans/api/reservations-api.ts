@@ -1,6 +1,7 @@
 import { authenticatedRequest, getSession } from '../../auth/api/auth-api'
 import { ApiError } from '../../../shared/api/client'
-import { provisionalRequest } from '../../../shared/api/provisional-contracts'
+import { isStaff } from '../../auth/access-policy'
+import { pagination, parsePage, validSnapshot, type CopyLoanSnapshot } from './loan-contracts'
 import type { Loan } from './loans-api'
 import { guardedMutation, mutationConfirmation } from '../../../shared/api/mutation-guard'
 export interface Reservation {
@@ -15,14 +16,30 @@ export interface Reservation {
   status: 'CONFIRMADA' | 'RECOGIDA' | 'CANCELADA' | 'VENCIDA'
   cancellationReason: string | null
   loanId: string | null
+  configurationSnapshot: CopyLoanSnapshot | null
 }
 export async function listReservations(query: Record<string, string>, signal?: AbortSignal) {
-  const owner = getSession()?.user.id
+  const session = getSession()
+  const owner = session?.user.id
+  const staff = isStaff(session?.user.role ?? 'USUARIO')
+  if (!owner || (!staff && query.userId && query.userId !== owner))
+    throw new ApiError('Solo puedes consultar tus propias reservas.', 403)
+  const { page, limit } = pagination(query)
+  if (query.status && !['CONFIRMADA', 'RECOGIDA', 'CANCELADA', 'VENCIDA'].includes(query.status)) throw new ApiError('Estado inválido.', 400)
   const confirmMutation = mutationConfirmation()
-  const result = await provisionalRequest<{ items: Reservation[]; total: number }>('F14', {
-    query,
-    signal,
-  })
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+  for (const key of ['status', 'userId', 'copyId']) if (query[key]) params.set(key, query[key])
+  if (!staff) params.set('userId', owner)
+  const payload = await authenticatedRequest<unknown>('/loans/reservations?' + params, { signal })
+  const result = parsePage<Reservation>(payload, value => {
+    const r = value as Reservation | null
+    return !!r && typeof r.id === 'string' && typeof r.copyId === 'string' && typeof r.userId === 'string' &&
+      typeof r.requestedAt === 'string' && typeof r.pickupDeadline === 'string' &&
+      ['CONFIRMADA', 'RECOGIDA', 'CANCELADA', 'VENCIDA'].includes(r.status) &&
+      validSnapshot(r.configurationSnapshot) && (r.configurationSnapshot === null || r.configurationSnapshot.copyId === r.copyId) &&
+      (staff || r.userId === owner) && (!query.userId || r.userId === query.userId) &&
+      (!query.copyId || r.copyId === query.copyId) && (!query.status || r.status === query.status)
+  }, page, limit)
   for (const item of result.items) {
     if (
       item.userId === owner &&

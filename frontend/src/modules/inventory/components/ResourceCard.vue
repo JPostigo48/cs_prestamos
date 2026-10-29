@@ -19,7 +19,7 @@ const route = useRoute()
       <p class="muted description">{{ resource.descripcion || 'Sin descripción registrada.' }}</p>
       <footer>
         <StatusBadge :tone="resource.availableCopies > 0 ? 'success' : 'danger'">{{ resource.availableCopies }} disponibles</StatusBadge>
-        <span v-if="category" class="duration"><Clock :size="14" aria-hidden="true" /> {{ durationLabel(category) }}</span>
+        <span v-if="category" class="duration"><Clock :size="14" aria-hidden="true" /> {{ durationLabel({ ...category, tiempoMaximoPrestamoHoras: resource.durationHours ?? category.tiempoMaximoPrestamoHoras }) }}</span>
         <span class="detail-hint" aria-hidden="true">Ver detalle →</span>
       </footer>
       <slot />

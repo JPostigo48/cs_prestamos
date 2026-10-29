@@ -12,7 +12,7 @@ export interface AuthSession {
     userType: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO'
   }
 }
-interface AuthResponse {
+export interface AuthResponse {
   accessToken: string
   tokenType: 'Bearer'
   expiresIn: number
@@ -26,6 +26,10 @@ export async function authenticate(email: string, password: string): Promise<Aut
     method: 'POST',
     body: { email, password },
   })
+  return sessionFromResponse(response)
+}
+
+export function sessionFromResponse(response: AuthResponse): AuthSession {
   if (
     !response ||
     typeof response.accessToken !== 'string' ||

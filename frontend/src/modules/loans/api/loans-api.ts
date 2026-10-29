@@ -1,7 +1,9 @@
 import { authenticatedRequest, getSession } from '../../auth/api/auth-api'
 import type { ReturnInput } from '../return-policy'
 import { ApiError } from '../../../shared/api/client'
-import { provisionalRequest } from '../../../shared/api/provisional-contracts'
+import { isStaff } from '../../auth/access-policy'
+import { pagination, parsePage, validChecklist, validLoan, validLoanConfiguration, type CopyLoanSnapshot, type ReturnChecklistCapture } from './loan-contracts'
+export type { CopyLoanSnapshot, ReturnChecklistCapture } from './loan-contracts'
 
 export interface Loan {
   id: string
@@ -11,14 +13,25 @@ export interface Loan {
   endsAt: string
   status: 'PLANIFICADO' | 'ACTIVO' | 'FINALIZADO'
   return: { returnedAt: string; observation?: string | null } | null
+  configurationSnapshot: CopyLoanSnapshot | null
+  returnChecklist: ReturnChecklistCapture | null
+}
+export async function getResourceHistory(resourceId: string, query: Record<string, string> = {}, signal?: AbortSignal) {
+  if (!isStaff(getSession()?.user.role ?? 'USUARIO')) throw new ApiError('Historial restringido al personal.', 403)
+  const { page, limit } = pagination(query)
+  if (query.status && !['PLANIFICADO', 'ACTIVO', 'FINALIZADO'].includes(query.status)) throw new ApiError('Estado inválido.', 400)
+  const params = new URLSearchParams({ page: String(page), limit: String(limit), ...(query.status ? { status: query.status } : {}) })
+  const result = await authenticatedRequest<unknown>('/loans/resource/' + encodeURIComponent(resourceId) + '/history?' + params, { signal })
+  return parsePage<Loan>(result, validLoan, page, limit)
 }
 export const getActiveLoans = (signal?: AbortSignal) =>
   authenticatedRequest<Loan[]>('/loans/active', { signal })
 export const getOverdueLoans = (signal?: AbortSignal) =>
   authenticatedRequest<Loan[]>('/loans/overdue', { signal })
-export async function getLoan(id: string): Promise<Loan> {
-  const result = await authenticatedRequest<Loan>('/loans/' + encodeURIComponent(id))
-  if (!result || result.id !== id || !['ACTIVO', 'FINALIZADO', 'PLANIFICADO'].includes(result.status)) throw new ApiError('Respuesta incompatible con el préstamo solicitado.', 0)
+export async function getLoan(id: string, signal?: AbortSignal): Promise<Loan> {
+  const result = await authenticatedRequest<Loan>('/loans/' + encodeURIComponent(id), { signal })
+  if (!result || result.id !== id || !['ACTIVO', 'FINALIZADO', 'PLANIFICADO'].includes(result.status) ||
+    !validLoanConfiguration(result as unknown as Record<string, unknown>)) throw new ApiError('Respuesta incompatible con el préstamo solicitado.', 0)
   return result
 }
 export function confirmsReturn(result: Loan | null, id: string): boolean {
@@ -35,13 +48,14 @@ export async function saveReturnChecklist(
   loanId: string,
   parts: { accessoryId: string; received: boolean }[],
 ) {
-  const result = await provisionalRequest<{
-    id: string
-    loanId: string
-    parts: { accessoryId: string; received: boolean }[]
-    checkedAt: string
-  }>('F09', { params: { loanId }, body: { parts, checkedAt: new Date().toISOString() } })
+  if (!isStaff(getSession()?.user.role ?? 'USUARIO')) throw new ApiError('Inspección restringida al personal.', 403)
+  if (new Set(parts.map(p => p.accessoryId)).size !== parts.length || parts.some(p => !p.accessoryId || typeof p.received !== 'boolean'))
+    throw new ApiError('Partes inválidas o duplicadas.', 400)
+  const result = await authenticatedRequest<ReturnChecklistCapture>('/loans/' + encodeURIComponent(loanId) + '/return-checklist', {
+    method: 'POST', body: { parts, checkedAt: new Date().toISOString() },
+  })
   if (
+    !validChecklist(result) ||
     result.loanId !== loanId ||
     result.parts.length !== parts.length ||
     parts.some(

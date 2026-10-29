@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { durationLabel, getCopies, getResource } from '../api/inventory-api'
+import { durationLabel, getAccessories, getCopies, getResource } from '../api/inventory-api'
 import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
-import ContractSection from '../../../shared/components/ContractSection.vue'
+import ResourceHistory from '../../loans/components/ResourceHistory.vue'
 import ReservationDialog from '../../loans/components/ReservationDialog.vue'
 import { getSession } from '../../auth/api/auth-api'
 import { isStaff } from '../../auth/access-policy'
-import { dateTime } from '../../../shared/format'
 import { catalogDestination } from '../catalog-query'
 const reserving = ref(false)
 const reservationChanged = ref(false)
@@ -17,6 +16,7 @@ const route = useRoute()
 const id = computed(() => String(route.params.resourceId))
 const resource = useRemote((signal) => getResource(id.value, signal), id)
 const copies = useRemote((signal) => getCopies(id.value, signal), id)
+const accessories = useRemote((signal) => getAccessories(id.value, signal), id)
 function refreshAvailability() {
   void resource.refresh()
   void copies.refresh()
@@ -54,15 +54,17 @@ function closeReservation() {
         <h2>Descripción</h2>
         <p>{{ resource.data.value.descripcion || 'Sin descripción registrada.' }}</p>
         <p v-if="resource.data.value.categoria">
-          Duración máxima: {{ durationLabel(resource.data.value.categoria) }}
+          Duración máxima: {{ durationLabel({ ...resource.data.value.categoria, tiempoMaximoPrestamoHoras: resource.data.value.loanPolicy.effectiveDurationHours }) }}
+          {{ resource.data.value.loanPolicy.source === 'RESOURCE' ? '(excepción individual)' : '(regla de categoría)' }}
         </p>
       </section>
-      <ContractSection :key="id + '-parts'" class="accessories" title="Partes y accesorios" contract="F06" :params="{ resourceId: id }">
-        <template #default="{ data }">
-          <ul class="accessory-list"><li v-for="part in (data as { items: { id: string; nombre: string }[] }).items" :key="part.id">{{ part.nombre }}</li></ul>
-          <p v-if="!(data as { items: unknown[] }).items.length">El servidor confirmó que no hay accesorios.</p>
-        </template>
-      </ContractSection>
+      <section class="panel accessories">
+        <h2>Partes y accesorios</h2>
+        <RemoteState :loading="accessories.loading.value" :error="accessories.error.value" @retry="accessories.refresh">
+          <ul class="accessory-list"><li v-for="part in accessories.data.value?.items" :key="part.id">{{ part.nombre }}</li></ul>
+          <p v-if="accessories.data.value?.items.length === 0">El servidor confirmó que no hay accesorios.</p>
+        </RemoteState>
+      </section>
       </div>
       <section class="panel stack availability-panel">
         <h2>Disponibilidad actual</h2>
@@ -101,25 +103,11 @@ function closeReservation() {
       <button @click="refreshAvailability">
         Actualizar disponibilidad
       </button>
-      <ContractSection
+      <ResourceHistory
         v-if="isStaff(session.user.role)"
         :key="id + '-history'"
-        title="Historial del artículo"
-        contract="F08"
-        :params="{ resourceId: id }"
-        ><template #default="{ data }"
-          ><p
-            v-for="loan in (data as { items: { id: string; status: string; endsAt: string }[] })
-              .items"
-            :key="loan.id"
-          >
-            {{ loan.id }} · {{ loan.status }} · {{ dateTime(loan.endsAt) }}
-          </p>
-          <p v-if="!(data as { items: unknown[] }).items.length">
-            No hay préstamos en la respuesta recibida.
-          </p></template
-        ></ContractSection
-      >
+        :resource-id="id"
+      />
       <section v-else class="panel">
         <h2>Historial del artículo</h2>
         <p>El historial de otros prestatarios está restringido al personal por privacidad.</p>

@@ -4,6 +4,7 @@ import { effectScope } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, text, event, model } from './helpers/renderer.mjs'
+import { sanction as detailedSanction, rule, ruleId } from './helpers/trust-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const client = await load('shared/api/client')
@@ -14,7 +15,7 @@ const student = await load('modules/users/api/student-api')
 const inventory = await load('modules/inventory/api/inventory-api')
 const query = await load('modules/inventory/catalog-query')
 const policy = await load('modules/loans/return-policy')
-const provisional = await load('shared/api/provisional-contracts')
+const trustContracts = await load('modules/trust/api/trust-contracts')
 const trust = await load('modules/trust/api/trust-api')
 const { useRemote } = await load('shared/composables/useRemote')
 const account = id => ({ ...session(), accessToken: 'offline-' + id, user: { ...session().user, id } })
@@ -183,25 +184,28 @@ test('I8: errores e incompatibilidad dejan disponibilidad desconocida, no cero',
   scope.stop()
 })
 test('I9: F11 rechaza finalizada, calendario inválido y periodo invertido', () => {
-  const good = { id: 's', userId: 'owner', status: 'ACTIVA', startsAt: '2026-10-28T00:00:00Z', endsAt: null }
-  assert.equal(provisional.validProvisional('F11', good), true)
-  for (const change of [{ status: 'FINALIZADA' }, { startsAt: '2026-02-30T00:00:00Z' }, { startsAt: 'invalid' }, { endsAt: '2026-01-01T00:00:00Z' }]) assert.equal(provisional.validProvisional('F11', { ...good, ...change }), false)
+  const good = detailedSanction({ id: 's', userId: 'owner', startsAt: '2026-10-28T00:00:00Z', endsAt: null, rule: rule({ suspensionType: 'INDEFINIDA', suspensionDays: null }) })
+  assert.equal(trustContracts.validSuspension(good), true)
+  for (const change of [{ status: 'FINALIZADA' }, { startsAt: '2026-02-30T00:00:00Z' }, { startsAt: 'invalid' }, { endsAt: '2026-01-01T00:00:00Z' }]) assert.equal(trustContracts.validSuspension({ ...good, ...change }), false)
 })
 test('I9: suspensión exige titular, estado y fechas de la acción; F05 exige ID solicitado', async () => {
-  const body = { reason: 'Fundamento', startsAt: new Date(Date.now() + 600000).toISOString(), endsAt: null }
+  auth.saveSession(session('ADMINISTRADOR'))
+  const body = { ruleId, reason: 'Fundamento', startsAt: new Date(Date.now() + 600000).toISOString(), endsAt: null }
   for (const [index, change] of [{ userId: 'other' }, { status: 'ACTIVA' }, { startsAt: '2025-01-01T00:00:00Z' }].entries()) {
     const userId = 'i9-' + index
-    globalThis.fetch = async () => Response.json({ id: 's', userId, status: 'PROGRAMADA', ...body, ...change })
+    globalThis.fetch = async () => Response.json(detailedSanction({ id: 's', userId, status: 'PROGRAMADA', ...body, rule: rule({ suspensionType: 'INDEFINIDA', suspensionDays: null }), ...change }))
     await assert.rejects(trust.suspendUser(userId, body), e => e.status === 0)
   }
   globalThis.fetch = async () => Response.json({ id: 'other', status: 'ACTIVA', startsAt: body.startsAt, endsAt: null })
-  await assert.rejects(provisional.provisionalRequest('F05', { params: { sanctionId: 'requested' } }), e => e.status === 0)
+  await assert.rejects(trust.getSanction('requested'), e => e.status === 0)
 })
 test('I9: confirma únicamente suspensión activa/programada con periodo exacto y vigente', async () => {
+  auth.saveSession(session('ADMINISTRADOR'))
   for (const [status, delta] of [['ACTIVA', -60000], ['PROGRAMADA', 60000]]) {
     const userId = 'i9-valid-' + status
-    const body = { reason: 'Fundamento', startsAt: new Date(Date.now() + delta).toISOString(), endsAt: new Date(Date.now() + 120000).toISOString() }
-    globalThis.fetch = async () => Response.json({ id: 'sanction-real', userId, status, startsAt: body.startsAt, endsAt: body.endsAt })
+    const startsAt = new Date(Date.now() + delta).toISOString()
+    const body = { ruleId, reason: 'Fundamento', startsAt, endsAt: new Date(Date.parse(startsAt) + 7 * 86400000).toISOString() }
+    globalThis.fetch = async () => Response.json(detailedSanction({ userId, status, startsAt: body.startsAt, endsAt: body.endsAt }))
     assert.equal((await trust.suspendUser(userId, body)).status, status)
   }
 })

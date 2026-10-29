@@ -26,6 +26,7 @@ const incident = ref(false)
 const description = ref('')
 const sending = ref(false)
 const checklistBusy = ref(false)
+const missingParts = ref(props.loan.returnChecklist?.parts.some(part => !part.received) ?? false)
 const checking = ref(false)
 const unknown = ref(hasPendingReturn(props.loan.id))
 const finished = ref(false)
@@ -38,6 +39,8 @@ async function confirm() {
   let body
   try {
     const instant = Date.now()
+    if (missingParts.value && (!incident.value || !description.value.trim()))
+      throw new ApiError('Hay partes faltantes: registra una incidencia y describe lo ocurrido antes de devolver.', 400)
     body = returnInput(new Date(instant).toISOString(), incident.value, description.value, props.loan.startsAt, instant)
   } catch (cause) {
     error.value = errorMessage(cause)
@@ -97,6 +100,7 @@ async function check() {
       :copy-id="loan.copyId"
       :disabled="sending || checking || unknown || finished"
       @busy="checklistBusy = $event"
+      @missing="missingParts = $event; if ($event) incident = true"
     />
     <form class="stack" @submit.prevent="confirm">
       <div class="return-timing" :class="{ late: clock > new Date(loan.endsAt).getTime() }"><Clock :size="18" aria-hidden="true" /><p>
@@ -109,8 +113,9 @@ async function check() {
       <details class="return-reference"><summary>Fechas y referencia del préstamo</summary><p>Límite: {{ dateTime(loan.endsAt) }}</p><p>Hora actual: {{ dateTime(new Date(clock).toISOString()) }} · {{ zone }}</p><p>Préstamo {{ loan.id }} · Usuario {{ loan.userId }}</p></details>
       <fieldset :disabled="busy || unknown || finished" class="stack return-condition">
         <legend>Condición del ejemplar</legend>
+        <p v-if="missingParts" class="error" role="status">Hay partes faltantes. La devolución requiere una descripción de incidencia; no aplica sanción automática.</p>
         <label class="condition-option" :class="{ chosen: !incident }"
-          ><input v-model="incident" name="return-condition" type="radio" :value="false" />
+          ><input v-model="incident" name="return-condition" type="radio" :value="false" :disabled="missingParts" />
           Devolución sin incidencias</label
         >
         <label class="condition-option incident-option" :class="{ chosen: incident }"
@@ -146,7 +151,7 @@ async function check() {
           v-if="!finished"
           class="primary"
           type="submit"
-          :disabled="busy || unknown || (incident && !description.trim())"
+          :disabled="busy || unknown || (incident && !description.trim()) || (missingParts && (!incident || !description.trim()))"
         >
           <Check :size="16" aria-hidden="true" />{{ sending ? 'Registrando…' : 'Confirmar solo devolución básica' }}
         </button>

@@ -38,11 +38,11 @@ test('panel: tarjetas reales, mora, detalles y resolución de ejemplar única en
 
 test('checklist: ninguna selección implícita; guarda separado y no registra devolución', async () => {
   const calls = []
+  const snapshot = { schemaVersion: 1, copyId: loan.copyId, resourceId: 'resource', policy: { resourceId: 'resource', categoryId: 'category', durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' }, accessories: [{ id: 'part', nombre: 'Cable de prueba' }] }
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
-    if (url.includes('/copies/')) return Response.json({ recursoId: 'resource' })
-    if (url.includes('/accessories')) return Response.json({ items: [{ id: 'part', nombre: 'Cable de prueba' }] })
-    return Response.json({ id: 'inspection', loanId: loan.id, parts: [{ accessoryId: 'part', received: false }], checkedAt: new Date().toISOString() })
+    if (options.method === 'GET') return Response.json({ ...loan, configurationSnapshot: snapshot, returnChecklist: null })
+    return Response.json({ id: 'inspection', loanId: loan.id, actorId: 'operator', configurationSnapshot: snapshot, parts: [{ accessoryId: 'part', nombre: 'Cable de prueba', received: false }], checkedAt: new Date().toISOString() })
   }
   const app = mount(Checklist, { loanId: loan.id, copyId: loan.copyId, disabled: false })
   try {
@@ -55,6 +55,8 @@ test('checklist: ninguna selección implícita; guarda separado y no registra de
     assert.match(text(app.root), /Checklist confirmado por el servidor/)
     assert.equal(calls.filter(call => call.options.method === 'POST').length, 1)
     assert.ok(calls.at(-1).url.endsWith('/return-checklist'))
+    assert.ok(calls.every(call => !call.url.includes('/accessories') && !call.url.includes('/copies/')))
+    assert.equal(find(app.root, 'button', 'Guardar solo checklist').props.disabled, true)
     const body = JSON.parse(calls.at(-1).options.body)
     assert.deepEqual(body.parts, [{ accessoryId: 'part', received: false }])
     assert.ok(Number.isFinite(Date.parse(body.checkedAt)))
