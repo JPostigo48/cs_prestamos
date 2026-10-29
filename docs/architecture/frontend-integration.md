@@ -2,14 +2,16 @@
 
 La aplicación Vue usa los módulos de autenticación, usuarios, inventario, préstamos y confianza. Conserva separadas la aplicación real, la referencia visual y la presentación del proyecto. Esta guía integra y reemplaza el documento de primer corte que estaba en el directorio frontend.
 
+**Actualización Fase3 (29/10/2026):** los 14 contratos originales tienen backend y consumidores reales (F02 reutilizado). El registro provisional fue retirado. Estado vigente, permisos, verificaciones y requisitos externos: [cierre de implementación](../development/phase3-closure.md). Las tablas de cobertura y los resultados de cortes anteriores más abajo son históricos, no pendientes actuales. No implican despliegue ni migraciones aplicadas.
+
 ## Arquitectura y ejecución
 
 - [Transporte HTTP único](../../frontend/src/shared/api/client.ts): base pública configurada o proxy local; bearer, cancelación y errores HTTP. No hay respuestas simuladas, servidor mock, polling ni fallback de datos en producción.
 - [Sesión y autenticación](../../frontend/src/modules/auth/api/auth-api.ts): sesión de pestaña validada, expiración, limpieza por 401 autenticado y conservación por 403. El rol de acceso no se deduce del tipo institucional ni del correo.
 - [Política de acceso](../../frontend/src/modules/auth/access-policy.ts) y [router](../../frontend/src/router.ts): ADMINISTRADOR accede a todas las operaciones de OPERADOR. Los destinos de retorno se validan mediante una allowlist. Los guards frontend no reemplazan autorización backend.
 - [Layout real](../../frontend/src/shared/layouts/AppLayout.vue): sidebar azul, cabecera blanca, navegación móvil, tarjetas, tablas con desplazamiento local, foco visible y enlace para saltar al contenido. Estilos restringidos al contenedor real o encapsulados en componentes. Sin marco de teléfono ni altura fija de aplicación.
-- [Cargas independientes](../../frontend/src/shared/composables/useRemote.ts): cancelan respuestas obsoletas, conservan error por bloque y permiten actualización manual. Las lecturas provisionales se solicitan mediante botones explícitos, no al montar ni al cambiar foco.
-- [Registro provisional central](../../frontend/src/shared/api/provisional-contracts.ts): F01–F14 son propuestas **ausentes** del backend, no contratos implementados. Valida mínimamente el cuerpo incluso con 2xx. Todas usan el transporte productivo y presentan estado HTTP/error de red o contrato incompatible.
+- [Cargas independientes](../../frontend/src/shared/composables/useRemote.ts): cancelan respuestas obsoletas, conservan error por bloque y permiten actualización manual. Las consultas operativas a demanda no reintentan automáticamente.
+- [Sección remota normal](../../frontend/src/shared/components/RemoteSection.vue): conserva presentación y consulta explícita, cancelación, carga, error, vacío configurable, reintento y detalle técnico solo en desarrollo. No conoce IDs Fxx ni rutas propuestas. Los consumidores de negocio usan sus adaptadores reales.
 - [Bloqueo de mutaciones inciertas](../../frontend/src/shared/api/mutation-guard.ts): reservas, recogida, cancelación, resoluciones, suspensión, levantamiento, alta de recurso/ejemplar y registro integral no se repiten automáticamente ni por reabrir el formulario. Conserva solo claves de operación, no cuerpos ni credenciales. Una consulta que confirma una operación permite reconciliarla; su ausencia no prueba que haya fallado. Sin lectura confirmatoria, el bloqueo incierto se mantiene durante la pestaña. El servidor no garantiza idempotencia.
 - [Fechas](../../frontend/src/shared/format.ts): salida con zona America/Lima; los formularios etiquetan la hora local del dispositivo y convierten a ISO con zona antes del envío.
 
@@ -19,7 +21,7 @@ El formulario de acceso real está aislado en [RealLoginForm.vue](../../frontend
 
 | Ruta | Acceso / función |
 | --- | --- |
-| /login, /login/google, /register | Público; autenticación propia, autorización Google provisional y solicitudes separadas |
+| /login, /login/google, /register | Público; autenticación propia, OIDC Google configurado y solicitudes separadas |
 | /app | Inicio personal de USUARIO |
 | /app/catalog, /app/catalog/:resourceId | Todos los roles autenticados; catálogo compartido y reserva propia |
 | /app/reservations | Todos los roles; reservas propias y aceptación informada de términos |

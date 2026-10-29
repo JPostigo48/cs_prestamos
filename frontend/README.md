@@ -17,14 +17,14 @@ npm run front
 
 ## Áreas
 
-- `/login` autentica; `/register` conserva la solicitud básica y ofrece el alta integral provisional como acción separada. `/login/google` solicita autorización mediante un contrato todavía ausente del backend, sin crear una sesión local.
+- `/login` autentica; `/register` conserva la solicitud básica y ofrece el alta integral como acción separada. `/login/google` usa autorización e intercambio OIDC reales del backend; requiere configuración Google y una cuenta aprobada. Véanse los [requisitos de activación](../docs/development/auth-integral.md).
 - `/app` ofrece el panel personal, catálogo, detalle, reservas y términos; `/app/loans` integra operaciones y entregas para operador y administrador. Las rutas administrativas añaden apelaciones, usuarios e inventario.
 - `/prototype` conserva la demostración con datos locales y su formulario visual original, sin solicitudes al backend. El acceso real usa un formulario aislado.
 - `/project` y sus subrutas viven en `src/modules/project-showcase/`. Presentan planificación, diagramas, API, datos, equipo y flujo Git sin formar parte del dominio de préstamos.
 
 El router compartido está en `src/router.ts`. `/app` requiere una sesión vigente, almacenada solo durante la sesión de la pestaña.
 
-En desarrollo, Vite redirige `/api/*` a `http://localhost:3000/*`; el backend debe estar iniciado. En despliegues sin ese proxy se necesita uno equivalente o configurar la base pública de la API junto con CORS en el backend. La [guía de integración frontend](../docs/architecture/frontend-integration.md) documenta rutas, cobertura de pantallas, contratos existentes/provisionales, pruebas y bloqueos de publicación. Una interfaz provisional visible no significa que su endpoint ya exista. No hay renovación ni datos simulados de negocio en la aplicación real.
+En desarrollo, Vite redirige `/api/*` a `http://localhost:3000/*`; el backend debe estar iniciado. En despliegues sin ese proxy se necesita uno equivalente o configurar la base pública de la API junto con CORS en el backend. La [guía de integración frontend](../docs/architecture/frontend-integration.md) conserva la evolución de la integración; el [cierre de contratos](../docs/development/phase3-closure.md) describe su estado vigente y requisitos externos. No hay renovación ni datos simulados de negocio en la aplicación real.
 
 ## Verificación offline
 
