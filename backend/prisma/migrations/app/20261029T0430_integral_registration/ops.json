@@ -1,0 +1,371 @@
+[
+  {
+    "id": "column.public.solicitudes_registro.email",
+    "label": "Add column \"email\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "email",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"email\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "email"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"email\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"email\" character varying(254)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"email\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "email"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.solicitudes_registro.fechaAceptacionTerminos",
+    "label": "Add column \"fechaAceptacionTerminos\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "fechaAceptacionTerminos",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"fechaAceptacionTerminos\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "fechaAceptacionTerminos"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"fechaAceptacionTerminos\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"fechaAceptacionTerminos\" timestamptz(3)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"fechaAceptacionTerminos\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "fechaAceptacionTerminos"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.solicitudes_registro.passwordHash",
+    "label": "Add column \"passwordHash\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "passwordHash",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"passwordHash\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "passwordHash"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"passwordHash\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"passwordHash\" character varying(255)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"passwordHash\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "passwordHash"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.solicitudes_registro.versionTerminosId",
+    "label": "Add column \"versionTerminosId\" to \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "versionTerminosId",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"versionTerminosId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "versionTerminosId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"versionTerminosId\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD COLUMN \"versionTerminosId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"versionTerminosId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "solicitudes_registro",
+          "versionTerminosId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.solicitudes_registro.solicitudes_acceso_integral_check_93178b99",
+    "label": "Add check constraint \"solicitudes_acceso_integral_check_93178b99\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "solicitudes_acceso_integral_check_93178b99",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"solicitudes_acceso_integral_check_93178b99\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_acceso_integral_check_93178b99",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"solicitudes_acceso_integral_check_93178b99\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\" ADD CONSTRAINT \"solicitudes_acceso_integral_check_93178b99\" CHECK ((\"email\" IS NULL AND \"passwordHash\" IS NULL AND \"versionTerminosId\" IS NULL AND \"fechaAceptacionTerminos\" IS NULL) OR (\"email\" IS NOT NULL AND \"versionTerminosId\" IS NOT NULL AND \"fechaAceptacionTerminos\" IS NOT NULL AND (\"passwordHash\" IS NOT NULL OR \"estado\" <> 'PENDIENTE')))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"solicitudes_acceso_integral_check_93178b99\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_acceso_integral_check_93178b99",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_email_pendiente_unique_8889585c",
+    "label": "Create index \"solicitudes_email_pendiente_unique_8889585c\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_email_pendiente_unique_8889585c",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_email_pendiente_unique_8889585c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_email_pendiente_unique_8889585c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_email_pendiente_unique_8889585c\"",
+        "sql": "CREATE UNIQUE INDEX \"solicitudes_email_pendiente_unique_8889585c\" ON \"public\".\"solicitudes_registro\" (\"email\") WHERE (\"estado\" = 'PENDIENTE' AND \"email\" IS NOT NULL)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_email_pendiente_unique_8889585c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_email_pendiente_unique_8889585c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_identificador_pendiente_unique_13f8e904",
+    "label": "Create index \"solicitudes_identificador_pendiente_unique_13f8e904\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_identificador_pendiente_unique_13f8e904",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_identificador_pendiente_unique_13f8e904\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_identificador_pendiente_unique_13f8e904\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_identificador_pendiente_unique_13f8e904\"",
+        "sql": "CREATE UNIQUE INDEX \"solicitudes_identificador_pendiente_unique_13f8e904\" ON \"public\".\"solicitudes_registro\" (\"identificadorInstitucional\") WHERE (\"estado\" = 'PENDIENTE' AND \"identificadorInstitucional\" IS NOT NULL)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_identificador_pendiente_unique_13f8e904\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_identificador_pendiente_unique_13f8e904\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.solicitudes_registro.solicitudes_registro_versionTerminosId_idx_37ad6954",
+    "label": "Create index \"solicitudes_registro_versionTerminosId_idx_37ad6954\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "solicitudes_registro_versionTerminosId_idx_37ad6954",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"solicitudes_registro_versionTerminosId_idx_37ad6954\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_versionTerminosId_idx_37ad6954\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"solicitudes_registro_versionTerminosId_idx_37ad6954\"",
+        "sql": "CREATE INDEX \"solicitudes_registro_versionTerminosId_idx_37ad6954\" ON \"public\".\"solicitudes_registro\" (\"versionTerminosId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"solicitudes_registro_versionTerminosId_idx_37ad6954\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"solicitudes_registro_versionTerminosId_idx_37ad6954\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.solicitudes_registro.solicitudes_registro_versionTerminosId_fkey",
+    "label": "Add foreign key \"solicitudes_registro_versionTerminosId_fkey\" on \"solicitudes_registro\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "solicitudes_registro_versionTerminosId_fkey",
+        "table": "solicitudes_registro"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"solicitudes_registro_versionTerminosId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_versionTerminosId_fkey",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"solicitudes_registro_versionTerminosId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"solicitudes_registro\"\nADD CONSTRAINT \"solicitudes_registro_versionTerminosId_fkey\"\nFOREIGN KEY (\"versionTerminosId\")\nREFERENCES \"public\".\"versiones_terminos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"solicitudes_registro_versionTerminosId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "solicitudes_registro_versionTerminosId_fkey",
+          "public",
+          "\"public\".\"solicitudes_registro\""
+        ]
+      }
+    ]
+  }
+]

@@ -26,17 +26,37 @@ model Recurso {
   categoriaId Uuid
   nombre      VarChar(180)
   descripcion String?
+  duracionPrestamoHoras Int?
 
   createdAt   Timestamptz(3)       @default(now())
   updatedAt   temporal.updatedAt()
 
   categoria   CategoriaRecurso     @relation(fields:[categoriaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   ejemplares  Ejemplar[]
+  accesorios  AccesorioRecurso[]
 
   @@index([categoriaId])
   @@index([nombre])
   @@unique([categoriaId, nombre])
+  @@check(expression: "\"duracionPrestamoHoras\" IS NULL OR \"duracionPrestamoHoras\" BETWEEN 1 AND 2147483647", name: "recursos_duracion_individual_check")
   @@map("recursos")
+}
+
+// Plantilla compartida por los ejemplares. Nunca borrar filas al retirar accesorios.
+model AccesorioRecurso {
+  id Uuid @id @default(uuid())
+  recursoId Uuid
+  nombre VarChar(120)
+  nombreNormalizado VarChar(120)
+  activo Boolean @default(true)
+  createdAt Timestamptz(3) @default(now())
+  updatedAt temporal.updatedAt()
+
+  recurso Recurso @relation(fields:[recursoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([recursoId, nombreNormalizado])
+  @@check(expression: "length(btrim(\"nombre\")) BETWEEN 1 AND 120", name: "accesorios_nombre_check")
+  @@map("accesorios_recurso")
 }
 
 model Ejemplar {
@@ -60,6 +80,7 @@ model Ejemplar {
 
 model Reserva {
   id                  Uuid           @id @default(uuid())
+  configurationSnapshot Jsonb?
   usuarioId           Uuid
   ejemplarId          Uuid
   fechaSolicitada     Timestamptz(3)
@@ -108,6 +129,10 @@ model SolicitudRegistro {
   estado                     EstadoSolicitud        @default(PENDIENTE)
   motivoRechazo              String?
   usuarioAprobadoId          Uuid?
+  email                      VarChar(254)?
+  passwordHash               VarChar(255)?
+  versionTerminosId          Uuid?
+  fechaAceptacionTerminos    Timestamptz(3)?
 
   createdAt                  Timestamptz(3)         @default(now())
   updatedAt                  temporal.updatedAt()
@@ -115,10 +140,14 @@ model SolicitudRegistro {
   evidencias                 EvidenciaVinculacion[]
   usuarioAprobado            Usuario?               @relation("SolicitudAprobadaUsuario", fields:[usuarioAprobadoId], references:[id], onDelete: SetNull, onUpdate: Cascade)
   auditorias                 AuditoriaUsuario[]     @relation("AuditoriaSolicitud")
+  versionTerminos            VersionTerminos?       @relation(fields:[versionTerminosId], references:[id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([estado, fechaSolicitud])
   @@index([identificadorInstitucional])
   @@index([usuarioAprobadoId])
+  @@index([email], where: "\"estado\" = 'PENDIENTE' AND \"email\" IS NOT NULL", unique: true, name: "solicitudes_email_pendiente_unique")
+  @@index([identificadorInstitucional], where: "\"estado\" = 'PENDIENTE' AND \"identificadorInstitucional\" IS NOT NULL", unique: true, name: "solicitudes_identificador_pendiente_unique")
+  @@check(expression: "(\"email\" IS NULL AND \"passwordHash\" IS NULL AND \"versionTerminosId\" IS NULL AND \"fechaAceptacionTerminos\" IS NULL) OR (\"email\" IS NOT NULL AND \"versionTerminosId\" IS NOT NULL AND \"fechaAceptacionTerminos\" IS NOT NULL AND (\"passwordHash\" IS NOT NULL OR \"estado\" <> 'PENDIENTE'))", name: "solicitudes_acceso_integral_check")
   @@check(expression: "length(btrim(\"nombre\")) >= 2", name: "solicitudes_registro_nombre_length_check")
   @@map("solicitudes_registro")
 }
@@ -150,6 +179,7 @@ model Usuario {
   solicitudesAprobadas       SolicitudRegistro[]  @relation("SolicitudAprobadaUsuario")
   sanciones                  Sancion[]
   prestamos                  Prestamo[]
+  inspecciones               InspeccionDevolucion[]
   reservas                   Reserva[]
   incumplimientos            Incumplimiento[]
   apelaciones                Apelacion[]
@@ -217,6 +247,7 @@ model Sancion {
 // -----------------------------------------------------------------------------
 model Prestamo {
   id          Uuid                 @id @default(uuid())
+  configurationSnapshot Jsonb?
   usuarioId   Uuid
   ejemplarId  Uuid
   reservaId   Uuid?               @unique
@@ -231,6 +262,7 @@ model Prestamo {
   ejemplar    Ejemplar             @relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   reserva     Reserva?             @relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   devolucion  Devolucion?
+  inspeccion  InspeccionDevolucion?
 
   @@index([ejemplarId, estado, fechaInicio, fechaFin])
   @@index([usuarioId, estado])
@@ -249,6 +281,22 @@ model Devolucion {
   prestamo    Prestamo       @relation(fields:[prestamoId], references:[id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("devoluciones")
+}
+
+// Captura única e inmutable; guardar no ejecuta la devolución.
+model InspeccionDevolucion {
+  id Uuid @id @default(uuid())
+  prestamoId Uuid @unique
+  actorId Uuid
+  checkedAt Timestamptz(3)
+  configurationSnapshot Jsonb?
+  parts Jsonb
+  createdAt Timestamptz(3) @default(now())
+
+  prestamo Prestamo @relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  actor Usuario @relation(fields:[actorId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("inspecciones_devolucion")
 }
 
 // -----------------------------------------------------------------------------
@@ -353,6 +401,7 @@ model VersionTerminos {
   createdAt    Timestamptz(3)       @default(now())
 
   aceptaciones AceptacionTerminos[]
+  solicitudes  SolicitudRegistro[]
 
   @@map("versiones_terminos")
 }

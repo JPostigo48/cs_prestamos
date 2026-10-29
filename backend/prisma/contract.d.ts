@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'3cf9d1df4dc3e1beccc614073cfd2522d8a7a9eb4aa054fce8aae35d82c9471c'>;
+  StorageHashBase<'e0c33fd71c119cb158d4634873f0d3f93f716172178cc687acbf5c5f982ff904'>;
 export type ExecutionHash =
-  ExecutionHashBase<'82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f'>;
+  ExecutionHashBase<'9fa8e22e199b9a1ac5ba015b1f193b89ae249c043c4c652c1ce485f9b9b8bde2'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -242,6 +242,15 @@ type DefaultLiteralValue<CodecId extends string, Encoded> = CodecId extends keyo
 
 export type FieldOutputTypes = {
   readonly public: {
+    readonly AccesorioRecurso: {
+      readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly recursoId: CodecTypes['pg/uuid@1']['output'];
+      readonly nombre: Varchar<120>;
+      readonly nombreNormalizado: Varchar<120>;
+      readonly activo: CodecTypes['pg/bool@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly AceptacionTerminos: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
@@ -323,6 +332,15 @@ export type FieldOutputTypes = {
       readonly penalizacionAplicada: Numeric<5, 2>;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
+    readonly InspeccionDevolucion: {
+      readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly prestamoId: CodecTypes['pg/uuid@1']['output'];
+      readonly actorId: CodecTypes['pg/uuid@1']['output'];
+      readonly checkedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
+      readonly parts: CodecTypes['pg/jsonb@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly ObservacionEjemplar: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['output'];
@@ -332,6 +350,7 @@ export type FieldOutputTypes = {
     };
     readonly Prestamo: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['output'];
       readonly reservaId: CodecTypes['pg/uuid@1']['output'] | null;
@@ -346,6 +365,7 @@ export type FieldOutputTypes = {
       readonly categoriaId: CodecTypes['pg/uuid@1']['output'];
       readonly nombre: Varchar<180>;
       readonly descripcion: CodecTypes['pg/text@1']['output'] | null;
+      readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -357,6 +377,7 @@ export type FieldOutputTypes = {
     };
     readonly Reserva: {
       readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['output'];
       readonly fechaSolicitada: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -392,6 +413,10 @@ export type FieldOutputTypes = {
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
       readonly motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly email: Varchar<254> | null;
+      readonly passwordHash: Varchar<255> | null;
+      readonly versionTerminosId: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly fechaAceptacionTerminos: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -429,6 +454,15 @@ export type FieldOutputTypes = {
 };
 export type FieldInputTypes = {
   readonly public: {
+    readonly AccesorioRecurso: {
+      readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly recursoId: CodecTypes['pg/uuid@1']['input'];
+      readonly nombre: CodecTypes['sql/varchar@1']['input'];
+      readonly nombreNormalizado: CodecTypes['sql/varchar@1']['input'];
+      readonly activo: CodecTypes['pg/bool@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly AceptacionTerminos: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
@@ -510,6 +544,15 @@ export type FieldInputTypes = {
       readonly penalizacionAplicada: CodecTypes['pg/numeric@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
+    readonly InspeccionDevolucion: {
+      readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly prestamoId: CodecTypes['pg/uuid@1']['input'];
+      readonly actorId: CodecTypes['pg/uuid@1']['input'];
+      readonly checkedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
+      readonly parts: CodecTypes['pg/jsonb@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly ObservacionEjemplar: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['input'];
@@ -519,6 +562,7 @@ export type FieldInputTypes = {
     };
     readonly Prestamo: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['input'];
       readonly reservaId: CodecTypes['pg/uuid@1']['input'] | null;
@@ -533,6 +577,7 @@ export type FieldInputTypes = {
       readonly categoriaId: CodecTypes['pg/uuid@1']['input'];
       readonly nombre: CodecTypes['sql/varchar@1']['input'];
       readonly descripcion: CodecTypes['pg/text@1']['input'] | null;
+      readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -544,6 +589,7 @@ export type FieldInputTypes = {
     };
     readonly Reserva: {
       readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['input'];
       readonly fechaSolicitada: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -579,6 +625,10 @@ export type FieldInputTypes = {
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
       readonly motivoRechazo: CodecTypes['pg/text@1']['input'] | null;
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly email: CodecTypes['sql/varchar@1']['input'] | null;
+      readonly passwordHash: CodecTypes['sql/varchar@1']['input'] | null;
+      readonly versionTerminosId: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly fechaAceptacionTerminos: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -616,6 +666,15 @@ export type FieldInputTypes = {
 };
 export type StorageColumnTypes = {
   readonly public: {
+    readonly accesorios_recurso: {
+      readonly activo: CodecTypes['pg/bool@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly nombre: Varchar<120>;
+      readonly nombreNormalizado: Varchar<120>;
+      readonly recursoId: CodecTypes['pg/uuid@1']['output'];
+      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly aceptaciones_terminos: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -697,6 +756,15 @@ export type StorageColumnTypes = {
       readonly usuarioId: CodecTypes['pg/uuid@1']['output'];
       readonly versionReglaId: CodecTypes['pg/uuid@1']['output'];
     };
+    readonly inspecciones_devolucion: {
+      readonly actorId: CodecTypes['pg/uuid@1']['output'];
+      readonly checkedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly id: CodecTypes['pg/uuid@1']['output'];
+      readonly parts: CodecTypes['pg/jsonb@1']['output'];
+      readonly prestamoId: CodecTypes['pg/uuid@1']['output'];
+    };
     readonly observaciones_ejemplar: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly descripcion: CodecTypes['pg/text@1']['output'];
@@ -705,6 +773,7 @@ export type StorageColumnTypes = {
       readonly id: CodecTypes['pg/uuid@1']['output'];
     };
     readonly prestamos: {
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['output'];
       readonly estado: 'PLANIFICADO' | 'ACTIVO' | 'FINALIZADO';
@@ -719,6 +788,7 @@ export type StorageColumnTypes = {
       readonly categoriaId: CodecTypes['pg/uuid@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly descripcion: CodecTypes['pg/text@1']['output'] | null;
+      readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['output'] | null;
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly nombre: Varchar<180>;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -730,6 +800,7 @@ export type StorageColumnTypes = {
       readonly versionVigenteId: CodecTypes['pg/uuid@1']['output'] | null;
     };
     readonly reservas: {
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['output'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['output'];
@@ -759,15 +830,19 @@ export type StorageColumnTypes = {
     };
     readonly solicitudes_registro: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly email: Varchar<254> | null;
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+      readonly fechaAceptacionTerminos: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
       readonly identificadorInstitucional: Varchar<80> | null;
       readonly motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
       readonly nombre: Varchar<180>;
+      readonly passwordHash: Varchar<255> | null;
       readonly tipoUsuario: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly versionTerminosId: CodecTypes['pg/uuid@1']['output'] | null;
     };
     readonly usuarios: {
       readonly confianza: Numeric<5, 2>;
@@ -803,6 +878,15 @@ export type StorageColumnTypes = {
 };
 export type StorageColumnInputTypes = {
   readonly public: {
+    readonly accesorios_recurso: {
+      readonly activo: CodecTypes['pg/bool@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly nombre: CodecTypes['sql/varchar@1']['input'];
+      readonly nombreNormalizado: CodecTypes['sql/varchar@1']['input'];
+      readonly recursoId: CodecTypes['pg/uuid@1']['input'];
+      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly aceptaciones_terminos: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly fecha: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -884,6 +968,15 @@ export type StorageColumnInputTypes = {
       readonly usuarioId: CodecTypes['pg/uuid@1']['input'];
       readonly versionReglaId: CodecTypes['pg/uuid@1']['input'];
     };
+    readonly inspecciones_devolucion: {
+      readonly actorId: CodecTypes['pg/uuid@1']['input'];
+      readonly checkedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly id: CodecTypes['pg/uuid@1']['input'];
+      readonly parts: CodecTypes['pg/jsonb@1']['input'];
+      readonly prestamoId: CodecTypes['pg/uuid@1']['input'];
+    };
     readonly observaciones_ejemplar: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly descripcion: CodecTypes['pg/text@1']['input'];
@@ -892,6 +985,7 @@ export type StorageColumnInputTypes = {
       readonly id: CodecTypes['pg/uuid@1']['input'];
     };
     readonly prestamos: {
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['input'];
       readonly estado: 'PLANIFICADO' | 'ACTIVO' | 'FINALIZADO';
@@ -906,6 +1000,7 @@ export type StorageColumnInputTypes = {
       readonly categoriaId: CodecTypes['pg/uuid@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly descripcion: CodecTypes['pg/text@1']['input'] | null;
+      readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['input'] | null;
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly nombre: CodecTypes['sql/varchar@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -917,6 +1012,7 @@ export type StorageColumnInputTypes = {
       readonly versionVigenteId: CodecTypes['pg/uuid@1']['input'] | null;
     };
     readonly reservas: {
+      readonly configurationSnapshot: CodecTypes['pg/jsonb@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly duracionPrestamoHoras: CodecTypes['pg/int4@1']['input'];
       readonly ejemplarId: CodecTypes['pg/uuid@1']['input'];
@@ -946,15 +1042,19 @@ export type StorageColumnInputTypes = {
     };
     readonly solicitudes_registro: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly email: CodecTypes['sql/varchar@1']['input'] | null;
       readonly estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+      readonly fechaAceptacionTerminos: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly fechaSolicitud: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
       readonly identificadorInstitucional: CodecTypes['sql/varchar@1']['input'] | null;
       readonly motivoRechazo: CodecTypes['pg/text@1']['input'] | null;
       readonly nombre: CodecTypes['sql/varchar@1']['input'];
+      readonly passwordHash: CodecTypes['sql/varchar@1']['input'] | null;
       readonly tipoUsuario: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly usuarioAprobadoId: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly versionTerminosId: CodecTypes['pg/uuid@1']['input'] | null;
     };
     readonly usuarios: {
       readonly confianza: CodecTypes['pg/numeric@1']['input'];
@@ -1005,11 +1105,24 @@ export namespace Models {
     categoriaId: CodecTypes['pg/uuid@1']['output'];
     nombre: Varchar<180>;
     descripcion: CodecTypes['pg/text@1']['output'] | null;
+    duracionPrestamoHoras: CodecTypes['pg/int4@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    accesorios: public_AccesorioRecurso[];
     categoria: public_CategoriaRecurso;
     ejemplares: public_Ejemplar[];
-    readonly [RelationKeys]?: 'categoria' | 'ejemplares';
+    readonly [RelationKeys]?: 'accesorios' | 'categoria' | 'ejemplares';
+  };
+  export type public_AccesorioRecurso = {
+    id: CodecTypes['pg/uuid@1']['output'];
+    recursoId: CodecTypes['pg/uuid@1']['output'];
+    nombre: Varchar<120>;
+    nombreNormalizado: Varchar<120>;
+    activo: CodecTypes['pg/bool@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    recurso: public_Recurso;
+    readonly [RelationKeys]?: 'recurso';
   };
   export type public_Ejemplar = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1026,6 +1139,7 @@ export namespace Models {
   };
   export type public_Reserva = {
     id: CodecTypes['pg/uuid@1']['output'];
+    configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
     usuarioId: CodecTypes['pg/uuid@1']['output'];
     ejemplarId: CodecTypes['pg/uuid@1']['output'];
     fechaSolicitada: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -1060,12 +1174,17 @@ export namespace Models {
     estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
     motivoRechazo: CodecTypes['pg/text@1']['output'] | null;
     usuarioAprobadoId: CodecTypes['pg/uuid@1']['output'] | null;
+    email: Varchar<254> | null;
+    passwordHash: Varchar<255> | null;
+    versionTerminosId: CodecTypes['pg/uuid@1']['output'] | null;
+    fechaAceptacionTerminos: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     auditorias: public_AuditoriaUsuario[];
     evidencias: public_EvidenciaVinculacion[];
     usuarioAprobado: public_Usuario | null;
-    readonly [RelationKeys]?: 'auditorias' | 'evidencias' | 'usuarioAprobado';
+    versionTerminos: public_VersionTerminos | null;
+    readonly [RelationKeys]?: 'auditorias' | 'evidencias' | 'usuarioAprobado' | 'versionTerminos';
   };
   export type public_EvidenciaVinculacion = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1089,6 +1208,7 @@ export namespace Models {
     auditorias: public_AuditoriaUsuario[];
     cuentaAcceso: public_CuentaAcceso | null;
     incumplimientos: public_Incumplimiento[];
+    inspecciones: public_InspeccionDevolucion[];
     prestamos: public_Prestamo[];
     reservas: public_Reserva[];
     sanciones: public_Sancion[];
@@ -1099,6 +1219,7 @@ export namespace Models {
       | 'auditorias'
       | 'cuentaAcceso'
       | 'incumplimientos'
+      | 'inspecciones'
       | 'prestamos'
       | 'reservas'
       | 'sanciones'
@@ -1140,6 +1261,7 @@ export namespace Models {
   };
   export type public_Prestamo = {
     id: CodecTypes['pg/uuid@1']['output'];
+    configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
     usuarioId: CodecTypes['pg/uuid@1']['output'];
     ejemplarId: CodecTypes['pg/uuid@1']['output'];
     reservaId: CodecTypes['pg/uuid@1']['output'] | null;
@@ -1150,9 +1272,10 @@ export namespace Models {
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     devolucion: public_Devolucion | null;
     ejemplar: public_Ejemplar;
+    inspeccion: public_InspeccionDevolucion | null;
     reserva: public_Reserva | null;
     usuario: public_Usuario;
-    readonly [RelationKeys]?: 'devolucion' | 'ejemplar' | 'reserva' | 'usuario';
+    readonly [RelationKeys]?: 'devolucion' | 'ejemplar' | 'inspeccion' | 'reserva' | 'usuario';
   };
   export type public_Devolucion = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1162,6 +1285,18 @@ export namespace Models {
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     prestamo: public_Prestamo;
     readonly [RelationKeys]?: 'prestamo';
+  };
+  export type public_InspeccionDevolucion = {
+    id: CodecTypes['pg/uuid@1']['output'];
+    prestamoId: CodecTypes['pg/uuid@1']['output'];
+    actorId: CodecTypes['pg/uuid@1']['output'];
+    checkedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    configurationSnapshot: CodecTypes['pg/jsonb@1']['output'] | null;
+    parts: CodecTypes['pg/jsonb@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    actor: public_Usuario;
+    prestamo: public_Prestamo;
+    readonly [RelationKeys]?: 'actor' | 'prestamo';
   };
   export type public_ReglaUso = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1233,7 +1368,8 @@ export namespace Models {
     contenido: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     aceptaciones: public_AceptacionTerminos[];
-    readonly [RelationKeys]?: 'aceptaciones';
+    solicitudes: public_SolicitudRegistro[];
+    readonly [RelationKeys]?: 'aceptaciones' | 'solicitudes';
   };
   export type public_AceptacionTerminos = {
     id: CodecTypes['pg/uuid@1']['output'];
@@ -1265,6 +1401,7 @@ export declare const models: {
   public: {
     CategoriaRecurso: Models.public_CategoriaRecurso;
     Recurso: Models.public_Recurso;
+    AccesorioRecurso: Models.public_AccesorioRecurso;
     Ejemplar: Models.public_Ejemplar;
     Reserva: Models.public_Reserva;
     ObservacionEjemplar: Models.public_ObservacionEjemplar;
@@ -1275,6 +1412,7 @@ export declare const models: {
     Sancion: Models.public_Sancion;
     Prestamo: Models.public_Prestamo;
     Devolucion: Models.public_Devolucion;
+    InspeccionDevolucion: Models.public_InspeccionDevolucion;
     ReglaUso: Models.public_ReglaUso;
     VersionRegla: Models.public_VersionRegla;
     Incumplimiento: Models.public_Incumplimiento;
@@ -1303,6 +1441,77 @@ type ContractBase = Omit<
         readonly kind: 'postgres-schema';
         readonly entries: {
           readonly table: {
+            readonly accesorios_recurso: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: false;
+                };
+                readonly recursoId: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: false;
+                };
+                readonly nombre: {
+                  readonly nativeType: 'character varying';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 120 };
+                };
+                readonly nombreNormalizado: {
+                  readonly nativeType: 'character varying';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 120 };
+                };
+                readonly activo: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', true>;
+                  };
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                };
+                readonly updatedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['recursoId', 'nombreNormalizado'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'accesorios_recurso_recursoId_idx_24de29ee';
+                  readonly prefix: 'accesorios_recurso_recursoId_idx';
+                  readonly columns: readonly ['recursoId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'accesorios_recurso';
+                    readonly columns: readonly ['recursoId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'recursos';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly aceptaciones_terminos: {
               columns: {
                 readonly id: {
@@ -2074,6 +2283,84 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly inspecciones_devolucion: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: false;
+                };
+                readonly prestamoId: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: false;
+                };
+                readonly actorId: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: false;
+                };
+                readonly checkedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                };
+                readonly configurationSnapshot: {
+                  readonly nativeType: 'jsonb';
+                  readonly codecId: 'pg/jsonb@1';
+                  readonly nullable: true;
+                };
+                readonly parts: {
+                  readonly nativeType: 'jsonb';
+                  readonly codecId: 'pg/jsonb@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['prestamoId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'inspecciones_devolucion_actorId_idx_a58f6b4b';
+                  readonly prefix: 'inspecciones_devolucion_actorId_idx';
+                  readonly columns: readonly ['actorId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'inspecciones_devolucion';
+                    readonly columns: readonly ['prestamoId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'prestamos';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'inspecciones_devolucion';
+                    readonly columns: readonly ['actorId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'usuarios';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly observaciones_ejemplar: {
               columns: {
                 readonly id: {
@@ -2143,6 +2430,11 @@ type ContractBase = Omit<
                   readonly nativeType: 'uuid';
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: false;
+                };
+                readonly configurationSnapshot: {
+                  readonly nativeType: 'jsonb';
+                  readonly codecId: 'pg/jsonb@1';
+                  readonly nullable: true;
                 };
                 readonly usuarioId: {
                   readonly nativeType: 'uuid';
@@ -2289,6 +2581,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly duracionPrestamoHoras: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -2382,6 +2679,11 @@ type ContractBase = Omit<
                   readonly nativeType: 'uuid';
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: false;
+                };
+                readonly configurationSnapshot: {
+                  readonly nativeType: 'jsonb';
+                  readonly codecId: 'pg/jsonb@1';
+                  readonly nullable: true;
                 };
                 readonly usuarioId: {
                   readonly nativeType: 'uuid';
@@ -2718,6 +3020,29 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: true;
                 };
+                readonly email: {
+                  readonly nativeType: 'character varying';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly length: 254 };
+                };
+                readonly passwordHash: {
+                  readonly nativeType: 'character varying';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly length: 255 };
+                };
+                readonly versionTerminosId: {
+                  readonly nativeType: 'uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: true;
+                };
+                readonly fechaAceptacionTerminos: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -2752,6 +3077,26 @@ type ContractBase = Omit<
                   readonly columns: readonly ['usuarioAprobadoId'];
                   readonly unique: false;
                 },
+                {
+                  readonly name: 'solicitudes_email_pendiente_unique_8889585c';
+                  readonly prefix: 'solicitudes_email_pendiente_unique';
+                  readonly columns: readonly ['email'];
+                  readonly where: '"estado" = \'PENDIENTE\' AND "email" IS NOT NULL';
+                  readonly unique: true;
+                },
+                {
+                  readonly name: 'solicitudes_identificador_pendiente_unique_13f8e904';
+                  readonly prefix: 'solicitudes_identificador_pendiente_unique';
+                  readonly columns: readonly ['identificadorInstitucional'];
+                  readonly where: '"estado" = \'PENDIENTE\' AND "identificadorInstitucional" IS NOT NULL';
+                  readonly unique: true;
+                },
+                {
+                  readonly name: 'solicitudes_registro_versionTerminosId_idx_37ad6954';
+                  readonly prefix: 'solicitudes_registro_versionTerminosId_idx';
+                  readonly columns: readonly ['versionTerminosId'];
+                  readonly unique: false;
+                },
               ];
               foreignKeys: readonly [
                 {
@@ -2763,6 +3108,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'usuarios';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'solicitudes_registro';
+                    readonly columns: readonly ['versionTerminosId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'versiones_terminos';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -3035,6 +3392,10 @@ type ContractBase = Omit<
       readonly model: 'CategoriaRecurso';
     };
     readonly recursos: { readonly namespace: 'public' & NamespaceId; readonly model: 'Recurso' };
+    readonly accesorios_recurso: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'AccesorioRecurso';
+    };
     readonly ejemplares: { readonly namespace: 'public' & NamespaceId; readonly model: 'Ejemplar' };
     readonly reservas: { readonly namespace: 'public' & NamespaceId; readonly model: 'Reserva' };
     readonly observaciones_ejemplar: {
@@ -3059,6 +3420,10 @@ type ContractBase = Omit<
     readonly devoluciones: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Devolucion';
+    };
+    readonly inspecciones_devolucion: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'InspeccionDevolucion';
     };
     readonly reglas_uso: { readonly namespace: 'public' & NamespaceId; readonly model: 'ReglaUso' };
     readonly versiones_regla: {
@@ -3090,6 +3455,80 @@ type ContractBase = Omit<
     readonly namespaces: {
       readonly public: {
         readonly models: {
+          readonly AccesorioRecurso: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly recursoId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly nombre: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 120 };
+                };
+              };
+              readonly nombreNormalizado: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 120 };
+                };
+              };
+              readonly activo: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly recurso: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Recurso';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['recursoId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'accesorios_recurso';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly recursoId: { readonly column: 'recursoId' };
+                readonly nombre: { readonly column: 'nombre' };
+                readonly nombreNormalizado: { readonly column: 'nombreNormalizado' };
+                readonly activo: { readonly column: 'activo' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
           readonly AceptacionTerminos: {
             readonly fields: {
               readonly id: {
@@ -3874,6 +4313,85 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly InspeccionDevolucion: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly prestamoId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly actorId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly checkedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly configurationSnapshot: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
+              };
+              readonly parts: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly actor: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Usuario';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['actorId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly prestamo: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Prestamo';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['prestamoId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'inspecciones_devolucion';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly prestamoId: { readonly column: 'prestamoId' };
+                readonly actorId: { readonly column: 'actorId' };
+                readonly checkedAt: { readonly column: 'checkedAt' };
+                readonly configurationSnapshot: { readonly column: 'configurationSnapshot' };
+                readonly parts: { readonly column: 'parts' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
           readonly ObservacionEjemplar: {
             readonly fields: {
               readonly id: {
@@ -3936,6 +4454,10 @@ type ContractBase = Omit<
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly configurationSnapshot: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
               };
               readonly usuarioId: {
                 readonly nullable: false;
@@ -4010,6 +4532,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly inspeccion: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InspeccionDevolucion';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['prestamoId'];
+                };
+              };
               readonly reserva: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4040,6 +4574,7 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly id: { readonly column: 'id' };
+                readonly configurationSnapshot: { readonly column: 'configurationSnapshot' };
                 readonly usuarioId: { readonly column: 'usuarioId' };
                 readonly ejemplarId: { readonly column: 'ejemplarId' };
                 readonly reservaId: { readonly column: 'reservaId' };
@@ -4073,6 +4608,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly duracionPrestamoHoras: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4090,6 +4629,17 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly accesorios: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'AccesorioRecurso';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['recursoId'];
+                };
+              };
               readonly categoria: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4122,6 +4672,7 @@ type ContractBase = Omit<
                 readonly categoriaId: { readonly column: 'categoriaId' };
                 readonly nombre: { readonly column: 'nombre' };
                 readonly descripcion: { readonly column: 'descripcion' };
+                readonly duracionPrestamoHoras: { readonly column: 'duracionPrestamoHoras' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -4216,6 +4767,10 @@ type ContractBase = Omit<
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly configurationSnapshot: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
               };
               readonly usuarioId: {
                 readonly nullable: false;
@@ -4328,6 +4883,7 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly id: { readonly column: 'id' };
+                readonly configurationSnapshot: { readonly column: 'configurationSnapshot' };
                 readonly usuarioId: { readonly column: 'usuarioId' };
                 readonly ejemplarId: { readonly column: 'ejemplarId' };
                 readonly fechaSolicitada: { readonly column: 'fechaSolicitada' };
@@ -4543,6 +5099,34 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
+              readonly email: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 254 };
+                };
+              };
+              readonly passwordHash: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 255 };
+                };
+              };
+              readonly versionTerminosId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly fechaAceptacionTerminos: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4594,6 +5178,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly versionTerminos: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'VersionTerminos';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['versionTerminosId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'solicitudes_registro';
@@ -4609,6 +5205,10 @@ type ContractBase = Omit<
                 readonly estado: { readonly column: 'estado' };
                 readonly motivoRechazo: { readonly column: 'motivoRechazo' };
                 readonly usuarioAprobadoId: { readonly column: 'usuarioAprobadoId' };
+                readonly email: { readonly column: 'email' };
+                readonly passwordHash: { readonly column: 'passwordHash' };
+                readonly versionTerminosId: { readonly column: 'versionTerminosId' };
+                readonly fechaAceptacionTerminos: { readonly column: 'fechaAceptacionTerminos' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -4723,6 +5323,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['usuarioId'];
+                };
+              };
+              readonly inspecciones: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InspeccionDevolucion';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['actorId'];
                 };
               };
               readonly prestamos: {
@@ -4955,6 +5566,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['versionTerminosId'];
                 };
               };
+              readonly solicitudes: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SolicitudRegistro';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['versionTerminosId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'versiones_terminos';
@@ -5082,6 +5704,23 @@ type ContractBase = Omit<
         {
           readonly ref: {
             readonly namespace: 'public';
+            readonly table: 'accesorios_recurso';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'accesorios_recurso';
+            readonly column: 'updatedAt';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };
+          readonly onUpdate: { readonly kind: 'generator'; readonly id: 'instantNow' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
             readonly table: 'aceptaciones_terminos';
             readonly column: 'id';
           };
@@ -5183,6 +5822,14 @@ type ContractBase = Omit<
           readonly ref: {
             readonly namespace: 'public';
             readonly table: 'incumplimientos';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'inspecciones_devolucion';
             readonly column: 'id';
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };

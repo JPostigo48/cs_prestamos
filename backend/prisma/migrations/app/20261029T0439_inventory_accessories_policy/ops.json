@@ -1,0 +1,248 @@
+[
+  {
+    "id": "table.accesorios_recurso",
+    "label": "Create table \"accesorios_recurso\"",
+    "summary": "Creates table \"accesorios_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "accesorios_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"accesorios_recurso\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"accesorios_recurso\"",
+        "sql": "CREATE TABLE \"public\".\"accesorios_recurso\" (\n  \"activo\" bool DEFAULT true NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"nombre\" character varying(120) NOT NULL,\n  \"nombreNormalizado\" character varying(120) NOT NULL,\n  \"recursoId\" uuid NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"accesorios_nombre_check_a992a93f\" CHECK (length(btrim(\"nombre\")) BETWEEN 1 AND 120)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"accesorios_recurso\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.recursos.duracionPrestamoHoras",
+    "label": "Add column \"duracionPrestamoHoras\" to \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "duracionPrestamoHoras",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"duracionPrestamoHoras\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "recursos",
+          "duracionPrestamoHoras"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"duracionPrestamoHoras\"",
+        "sql": "ALTER TABLE \"public\".\"recursos\" ADD COLUMN \"duracionPrestamoHoras\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"duracionPrestamoHoras\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "recursos",
+          "duracionPrestamoHoras"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.accesorios_recurso.accesorios_recurso_recursoId_nombreNormalizado_key",
+    "label": "Add unique constraint on \"accesorios_recurso\" (recursoId, nombreNormalizado)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "accesorios_recurso_recursoId_nombreNormalizado_key",
+        "table": "accesorios_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"accesorios_recurso_recursoId_nombreNormalizado_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "accesorios_recurso_recursoId_nombreNormalizado_key",
+          "public",
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"accesorios_recurso_recursoId_nombreNormalizado_key\"",
+        "sql": "ALTER TABLE \"public\".\"accesorios_recurso\" ADD CONSTRAINT \"accesorios_recurso_recursoId_nombreNormalizado_key\" UNIQUE (\"recursoId\", \"nombreNormalizado\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"accesorios_recurso_recursoId_nombreNormalizado_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "accesorios_recurso_recursoId_nombreNormalizado_key",
+          "public",
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.recursos.recursos_duracion_individual_check_986e56a0",
+    "label": "Add check constraint \"recursos_duracion_individual_check_986e56a0\" on \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "recursos_duracion_individual_check_986e56a0",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"recursos_duracion_individual_check_986e56a0\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_duracion_individual_check_986e56a0",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"recursos_duracion_individual_check_986e56a0\"",
+        "sql": "ALTER TABLE \"public\".\"recursos\" ADD CONSTRAINT \"recursos_duracion_individual_check_986e56a0\" CHECK (\"duracionPrestamoHoras\" IS NULL OR \"duracionPrestamoHoras\" BETWEEN 1 AND 2147483647)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"recursos_duracion_individual_check_986e56a0\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "recursos_duracion_individual_check_986e56a0",
+          "public",
+          "\"public\".\"recursos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.accesorios_recurso.accesorios_recurso_recursoId_idx_24de29ee",
+    "label": "Create index \"accesorios_recurso_recursoId_idx_24de29ee\" on \"accesorios_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "accesorios_recurso_recursoId_idx_24de29ee",
+        "table": "accesorios_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"accesorios_recurso_recursoId_idx_24de29ee\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"accesorios_recurso_recursoId_idx_24de29ee\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"accesorios_recurso_recursoId_idx_24de29ee\"",
+        "sql": "CREATE INDEX \"accesorios_recurso_recursoId_idx_24de29ee\" ON \"public\".\"accesorios_recurso\" (\"recursoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"accesorios_recurso_recursoId_idx_24de29ee\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"accesorios_recurso_recursoId_idx_24de29ee\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.accesorios_recurso.accesorios_recurso_recursoId_fkey",
+    "label": "Add foreign key \"accesorios_recurso_recursoId_fkey\" on \"accesorios_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "accesorios_recurso_recursoId_fkey",
+        "table": "accesorios_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"accesorios_recurso_recursoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "accesorios_recurso_recursoId_fkey",
+          "public",
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"accesorios_recurso_recursoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"accesorios_recurso\"\nADD CONSTRAINT \"accesorios_recurso_recursoId_fkey\"\nFOREIGN KEY (\"recursoId\")\nREFERENCES \"public\".\"recursos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"accesorios_recurso_recursoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "accesorios_recurso_recursoId_fkey",
+          "public",
+          "\"public\".\"accesorios_recurso\""
+        ]
+      }
+    ]
+  }
+]

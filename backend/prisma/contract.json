@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "accesorios_recurso": {
+      "model": "AccesorioRecurso",
+      "namespace": "public"
+    },
     "aceptaciones_terminos": {
       "model": "AceptacionTerminos",
       "namespace": "public"
@@ -38,6 +42,10 @@
     },
     "incumplimientos": {
       "model": "Incumplimiento",
+      "namespace": "public"
+    },
+    "inspecciones_devolucion": {
+      "model": "InspeccionDevolucion",
       "namespace": "public"
     },
     "observaciones_ejemplar": {
@@ -265,6 +273,113 @@
           }
         },
         "models": {
+          "AccesorioRecurso": {
+            "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 120
+                  }
+                }
+              },
+              "nombreNormalizado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 120
+                  }
+                }
+              },
+              "recursoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "recurso": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "recursoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Recurso",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "activo": {
+                  "column": "activo"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "nombre": {
+                  "column": "nombre"
+                },
+                "nombreNormalizado": {
+                  "column": "nombreNormalizado"
+                },
+                "recursoId": {
+                  "column": "recursoId"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "accesorios_recurso"
+            }
+          },
           "AceptacionTerminos": {
             "fields": {
               "createdAt": {
@@ -1435,6 +1550,126 @@
               "table": "incumplimientos"
             }
           },
+          "InspeccionDevolucion": {
+            "fields": {
+              "actorId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "checkedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "configurationSnapshot": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "parts": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "prestamoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "actor": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "actorId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              },
+              "prestamo": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "prestamoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actorId": {
+                  "column": "actorId"
+                },
+                "checkedAt": {
+                  "column": "checkedAt"
+                },
+                "configurationSnapshot": {
+                  "column": "configurationSnapshot"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "parts": {
+                  "column": "parts"
+                },
+                "prestamoId": {
+                  "column": "prestamoId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "inspecciones_devolucion"
+            }
+          },
           "ObservacionEjemplar": {
             "fields": {
               "createdAt": {
@@ -1521,6 +1756,13 @@
           },
           "Prestamo": {
             "fields": {
+              "configurationSnapshot": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1633,6 +1875,22 @@
                   "namespace": "public"
                 }
               },
+              "inspeccion": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "prestamoId"
+                  ]
+                },
+                "to": {
+                  "model": "InspeccionDevolucion",
+                  "namespace": "public"
+                }
+              },
               "reserva": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -1668,6 +1926,9 @@
             },
             "storage": {
               "fields": {
+                "configurationSnapshot": {
+                  "column": "configurationSnapshot"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -1726,6 +1987,13 @@
                   "kind": "scalar"
                 }
               },
+              "duracionPrestamoHoras": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -1752,6 +2020,21 @@
               }
             },
             "relations": {
+              "accesorios": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "recursoId"
+                  ]
+                },
+                "to": {
+                  "model": "AccesorioRecurso",
+                  "namespace": "public"
+                }
+              },
               "categoria": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1794,6 +2077,9 @@
                 },
                 "descripcion": {
                   "column": "descripcion"
+                },
+                "duracionPrestamoHoras": {
+                  "column": "duracionPrestamoHoras"
                 },
                 "id": {
                   "column": "id"
@@ -1927,6 +2213,13 @@
           },
           "Reserva": {
             "fields": {
+              "configurationSnapshot": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -2085,6 +2378,9 @@
             },
             "storage": {
               "fields": {
+                "configurationSnapshot": {
+                  "column": "configurationSnapshot"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -2373,6 +2669,16 @@
                   }
                 }
               },
+              "email": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 254
+                  }
+                }
+              },
               "estado": {
                 "nullable": false,
                 "type": {
@@ -2384,6 +2690,16 @@
                   "entityName": "EstadoSolicitud",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "fechaAceptacionTerminos": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
                 }
               },
               "fechaSolicitud": {
@@ -2430,6 +2746,16 @@
                   }
                 }
               },
+              "passwordHash": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 255
+                  }
+                }
+              },
               "tipoUsuario": {
                 "nullable": false,
                 "type": {
@@ -2451,6 +2777,13 @@
                 }
               },
               "usuarioAprobadoId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "versionTerminosId": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/uuid@1",
@@ -2504,6 +2837,22 @@
                   "model": "Usuario",
                   "namespace": "public"
                 }
+              },
+              "versionTerminos": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "versionTerminosId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "VersionTerminos",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -2511,8 +2860,14 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "email": {
+                  "column": "email"
+                },
                 "estado": {
                   "column": "estado"
+                },
+                "fechaAceptacionTerminos": {
+                  "column": "fechaAceptacionTerminos"
                 },
                 "fechaSolicitud": {
                   "column": "fechaSolicitud"
@@ -2529,6 +2884,9 @@
                 "nombre": {
                   "column": "nombre"
                 },
+                "passwordHash": {
+                  "column": "passwordHash"
+                },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
                 },
@@ -2537,6 +2895,9 @@
                 },
                 "usuarioAprobadoId": {
                   "column": "usuarioAprobadoId"
+                },
+                "versionTerminosId": {
+                  "column": "versionTerminosId"
                 }
               },
               "namespaceId": "public",
@@ -2695,6 +3056,21 @@
                 },
                 "to": {
                   "model": "Incumplimiento",
+                  "namespace": "public"
+                }
+              },
+              "inspecciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "actorId"
+                  ]
+                },
+                "to": {
+                  "model": "InspeccionDevolucion",
                   "namespace": "public"
                 }
               },
@@ -3055,6 +3431,21 @@
                   "model": "AceptacionTerminos",
                   "namespace": "public"
                 }
+              },
+              "solicitudes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "versionTerminosId"
+                  ]
+                },
+                "to": {
+                  "model": "SolicitudRegistro",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -3088,6 +3479,112 @@
       "public": {
         "entries": {
           "table": {
+            "accesorios_recurso": {
+              "checks": [
+                {
+                  "expression": "length(btrim(\"nombre\")) BETWEEN 1 AND 120",
+                  "name": "accesorios_nombre_check_a992a93f",
+                  "prefix": "accesorios_nombre_check"
+                }
+              ],
+              "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "nombre": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 120
+                  }
+                },
+                "nombreNormalizado": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 120
+                  }
+                },
+                "recursoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "recursoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "accesorios_recurso"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "recursos"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "recursoId"
+                  ],
+                  "name": "accesorios_recurso_recursoId_idx_24de29ee",
+                  "prefix": "accesorios_recurso_recursoId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "recursoId",
+                    "nombreNormalizado"
+                  ]
+                }
+              ]
+            },
             "aceptaciones_terminos": {
               "columns": {
                 "createdAt": {
@@ -4203,6 +4700,115 @@
               },
               "uniques": []
             },
+            "inspecciones_devolucion": {
+              "columns": {
+                "actorId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "checkedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "configurationSnapshot": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "parts": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "prestamoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "prestamoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "inspecciones_devolucion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "actorId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "inspecciones_devolucion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuarios"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "actorId"
+                  ],
+                  "name": "inspecciones_devolucion_actorId_idx_a58f6b4b",
+                  "prefix": "inspecciones_devolucion_actorId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "prestamoId"
+                  ]
+                }
+              ]
+            },
             "observaciones_ejemplar": {
               "columns": {
                 "createdAt": {
@@ -4300,6 +4906,11 @@
                 }
               ],
               "columns": {
+                "configurationSnapshot": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -4486,6 +5097,13 @@
               ]
             },
             "recursos": {
+              "checks": [
+                {
+                  "expression": "\"duracionPrestamoHoras\" IS NULL OR \"duracionPrestamoHoras\" BETWEEN 1 AND 2147483647",
+                  "name": "recursos_duracion_individual_check_986e56a0",
+                  "prefix": "recursos_duracion_individual_check"
+                }
+              ],
               "columns": {
                 "categoriaId": {
                   "codecId": "pg/uuid@1",
@@ -4507,6 +5125,11 @@
                 "descripcion": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "duracionPrestamoHoras": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
                   "nullable": true
                 },
                 "id": {
@@ -4653,6 +5276,11 @@
                 }
               ],
               "columns": {
+                "configurationSnapshot": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -5068,6 +5696,11 @@
             "solicitudes_registro": {
               "checks": [
                 {
+                  "expression": "(\"email\" IS NULL AND \"passwordHash\" IS NULL AND \"versionTerminosId\" IS NULL AND \"fechaAceptacionTerminos\" IS NULL) OR (\"email\" IS NOT NULL AND \"versionTerminosId\" IS NOT NULL AND \"fechaAceptacionTerminos\" IS NOT NULL AND (\"passwordHash\" IS NOT NULL OR \"estado\" <> 'PENDIENTE'))",
+                  "name": "solicitudes_acceso_integral_check_93178b99",
+                  "prefix": "solicitudes_acceso_integral_check"
+                },
+                {
                   "expression": "\"estado\" IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')",
                   "name": "solicitudes_registro_estado_check_e1c39414",
                   "prefix": "solicitudes_registro_estado_check"
@@ -5096,6 +5729,14 @@
                     "precision": 3
                   }
                 },
+                "email": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 254
+                  }
+                },
                 "estado": {
                   "codecId": "pg/text@1",
                   "default": {
@@ -5109,6 +5750,14 @@
                     "entityName": "EstadoSolicitud",
                     "namespaceId": "public",
                     "plane": "storage"
+                  }
+                },
+                "fechaAceptacionTerminos": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
                   }
                 },
                 "fechaSolicitud": {
@@ -5149,6 +5798,14 @@
                     "length": 180
                   }
                 },
+                "passwordHash": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 255
+                  }
+                },
                 "tipoUsuario": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -5166,6 +5823,11 @@
                   "nullable": false
                 },
                 "usuarioAprobadoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "versionTerminosId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
                   "nullable": true
@@ -5189,9 +5851,45 @@
                     "namespaceId": "public",
                     "tableName": "usuarios"
                   }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "versionTerminosId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "solicitudes_registro"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "versiones_terminos"
+                  }
                 }
               ],
               "indexes": [
+                {
+                  "columns": [
+                    "email"
+                  ],
+                  "name": "solicitudes_email_pendiente_unique_8889585c",
+                  "prefix": "solicitudes_email_pendiente_unique",
+                  "unique": true,
+                  "where": "\"estado\" = 'PENDIENTE' AND \"email\" IS NOT NULL"
+                },
+                {
+                  "columns": [
+                    "identificadorInstitucional"
+                  ],
+                  "name": "solicitudes_identificador_pendiente_unique_13f8e904",
+                  "prefix": "solicitudes_identificador_pendiente_unique",
+                  "unique": true,
+                  "where": "\"estado\" = 'PENDIENTE' AND \"identificadorInstitucional\" IS NOT NULL"
+                },
                 {
                   "columns": [
                     "estado",
@@ -5215,6 +5913,14 @@
                   ],
                   "name": "solicitudes_registro_usuarioAprobadoId_idx_7a4e46d6",
                   "prefix": "solicitudes_registro_usuarioAprobadoId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "versionTerminosId"
+                  ],
+                  "name": "solicitudes_registro_versionTerminosId_idx_37ad6954",
+                  "prefix": "solicitudes_registro_versionTerminosId_idx",
                   "unique": false
                 }
               ],
@@ -5648,12 +6354,38 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "3cf9d1df4dc3e1beccc614073cfd2522d8a7a9eb4aa054fce8aae35d82c9471c"
+    "storageHash": "e0c33fd71c119cb158d4634873f0d3f93f716172178cc687acbf5c5f982ff904"
   },
   "execution": {
-    "executionHash": "82514f7a44380b74d1069a7f8b30d67febdf5f4712296aaea0e0ce37b034141f",
+    "executionHash": "9fa8e22e199b9a1ac5ba015b1f193b89ae249c043c4c652c1ce485f9b9b8bde2",
     "mutations": {
       "defaults": [
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "accesorios_recurso"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "accesorios_recurso"
+          }
+        },
         {
           "onCreate": {
             "id": "uuidv4",
@@ -5811,6 +6543,17 @@
             "column": "id",
             "namespace": "public",
             "table": "incumplimientos"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "inspecciones_devolucion"
           }
         },
         {

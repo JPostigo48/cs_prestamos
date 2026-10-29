@@ -1,0 +1,290 @@
+[
+  {
+    "id": "table.inspecciones_devolucion",
+    "label": "Create table \"inspecciones_devolucion\"",
+    "summary": "Creates table \"inspecciones_devolucion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "inspecciones_devolucion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"inspecciones_devolucion\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"inspecciones_devolucion\"",
+        "sql": "CREATE TABLE \"public\".\"inspecciones_devolucion\" (\n  \"actorId\" uuid NOT NULL,\n  \"checkedAt\" timestamptz(3) NOT NULL,\n  \"configurationSnapshot\" jsonb,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"parts\" jsonb NOT NULL,\n  \"prestamoId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"inspecciones_devolucion\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.prestamos.configurationSnapshot",
+    "label": "Add column \"configurationSnapshot\" to \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "configurationSnapshot",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"configurationSnapshot\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "prestamos",
+          "configurationSnapshot"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"configurationSnapshot\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\" ADD COLUMN \"configurationSnapshot\" jsonb"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"configurationSnapshot\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "prestamos",
+          "configurationSnapshot"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.reservas.configurationSnapshot",
+    "label": "Add column \"configurationSnapshot\" to \"reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "configurationSnapshot",
+        "table": "reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"configurationSnapshot\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "reservas",
+          "configurationSnapshot"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"configurationSnapshot\"",
+        "sql": "ALTER TABLE \"public\".\"reservas\" ADD COLUMN \"configurationSnapshot\" jsonb"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"configurationSnapshot\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "reservas",
+          "configurationSnapshot"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.inspecciones_devolucion.inspecciones_devolucion_prestamoId_key",
+    "label": "Add unique constraint on \"inspecciones_devolucion\" (prestamoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "inspecciones_devolucion_prestamoId_key",
+        "table": "inspecciones_devolucion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"inspecciones_devolucion_prestamoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_prestamoId_key",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"inspecciones_devolucion_prestamoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"inspecciones_devolucion\" ADD CONSTRAINT \"inspecciones_devolucion_prestamoId_key\" UNIQUE (\"prestamoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"inspecciones_devolucion_prestamoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_prestamoId_key",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.inspecciones_devolucion.inspecciones_devolucion_actorId_idx_a58f6b4b",
+    "label": "Create index \"inspecciones_devolucion_actorId_idx_a58f6b4b\" on \"inspecciones_devolucion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "inspecciones_devolucion_actorId_idx_a58f6b4b",
+        "table": "inspecciones_devolucion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"inspecciones_devolucion_actorId_idx_a58f6b4b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inspecciones_devolucion_actorId_idx_a58f6b4b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"inspecciones_devolucion_actorId_idx_a58f6b4b\"",
+        "sql": "CREATE INDEX \"inspecciones_devolucion_actorId_idx_a58f6b4b\" ON \"public\".\"inspecciones_devolucion\" (\"actorId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"inspecciones_devolucion_actorId_idx_a58f6b4b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inspecciones_devolucion_actorId_idx_a58f6b4b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.inspecciones_devolucion.inspecciones_devolucion_prestamoId_fkey",
+    "label": "Add foreign key \"inspecciones_devolucion_prestamoId_fkey\" on \"inspecciones_devolucion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "inspecciones_devolucion_prestamoId_fkey",
+        "table": "inspecciones_devolucion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"inspecciones_devolucion_prestamoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_prestamoId_fkey",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"inspecciones_devolucion_prestamoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"inspecciones_devolucion\"\nADD CONSTRAINT \"inspecciones_devolucion_prestamoId_fkey\"\nFOREIGN KEY (\"prestamoId\")\nREFERENCES \"public\".\"prestamos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"inspecciones_devolucion_prestamoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_prestamoId_fkey",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.inspecciones_devolucion.inspecciones_devolucion_actorId_fkey",
+    "label": "Add foreign key \"inspecciones_devolucion_actorId_fkey\" on \"inspecciones_devolucion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "inspecciones_devolucion_actorId_fkey",
+        "table": "inspecciones_devolucion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"inspecciones_devolucion_actorId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_actorId_fkey",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"inspecciones_devolucion_actorId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"inspecciones_devolucion\"\nADD CONSTRAINT \"inspecciones_devolucion_actorId_fkey\"\nFOREIGN KEY (\"actorId\")\nREFERENCES \"public\".\"usuarios\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"inspecciones_devolucion_actorId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inspecciones_devolucion_actorId_fkey",
+          "public",
+          "\"public\".\"inspecciones_devolucion\""
+        ]
+      }
+    ]
+  }
+]
