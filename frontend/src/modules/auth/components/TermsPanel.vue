@@ -34,7 +34,7 @@ const acceptedNotice = computed(() => {
   const acceptance = currentAcceptance.value
   const current = terms.data.value
   if (!acceptance || !current) return null
-  return `Ya aceptaste la versión ${current.number} el ${dateTime(acceptance.acceptedAt)}`
+  return `Ya aceptaste los términos y condiciones el ${dateTime(acceptance.acceptedAt)}`
 })
 async function markReadIfFits() {
   await nextTick()
@@ -104,7 +104,6 @@ async function accept() {
     </button>
     <RemoteState :loading="loading" :error="loadError" @retry="load">
       <template v-if="terms.data.value">
-        <p v-if="acceptedNotice" role="status" class="notice">{{ acceptedNotice }}</p>
         <template v-if="showTerms">
           <h3>{{ terms.data.value.title }} · versión {{ terms.data.value.number }}</h3>
           <div
@@ -132,6 +131,7 @@ async function accept() {
             </button>
           </template>
         </template>
+        <p v-if="acceptedNotice" role="status" class="notice">{{ acceptedNotice }}</p>
       </template>
     </RemoteState>
     <p v-if="error" role="alert" class="error">{{ error }}</p>
