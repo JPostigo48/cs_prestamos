@@ -2,7 +2,7 @@ import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
-import { mount, flush, find, findAll, event } from './helpers/renderer.mjs'
+import { mount, flush, find, findAll, event, text } from './helpers/renderer.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const layout = await loadComponent('shared/layouts/AppLayout')
@@ -15,12 +15,18 @@ async function open(role, path = '/app') {
   return { ...mount(layout, {}, [router]), router }
 }
 
-for (const [role, count] of [['USUARIO', 3], ['OPERADOR', 4], ['ADMINISTRADOR', 7]]) {
+for (const [role, count] of [['USUARIO', 4], ['OPERADOR', 4], ['ADMINISTRADOR', 7]]) {
   test(`layout ${role}: Más conserva destinos y Salir elimina la sesión real`, async () => {
     const app = await open(role)
     try {
       const nav = findAll(app.root, n => n.props.id === 'app-navigation')[0]
       assert.equal(findAll(nav, n => n.tag === 'a').length, count)
+      if (role === 'USUARIO') {
+        assert.ok(find(nav, 'a', 'Mi historial'))
+        assert.equal(find(nav, 'a', 'Mi historial').props.href, '/app/history')
+      } else {
+        assert.equal(findAll(nav, n => n.tag === 'a' && text(n).includes('Mi historial')).length, 0)
+      }
       await event(find(app.root, 'button', 'Más'), 'click')
       assert.equal(findAll(app.root, n => n.props.class === 'content-shell')[0].props.inert, true)
       await event(findAll(app.root, n => n.props['aria-label'] === 'Cerrar navegación')[0], 'click')

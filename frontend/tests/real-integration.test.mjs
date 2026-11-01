@@ -48,6 +48,7 @@ test('política: tres roles, rutas directas y destinos seguros', () => {
     assert.equal(policy.canAccess('/app/admin/catalog', role), role === 'ADMINISTRADOR')
     assert.equal(policy.canAccess('/app/registrations', role), role !== 'USUARIO')
     assert.equal(policy.canAccess('/app/reservations', role), true)
+    assert.equal(policy.canAccess('/app/history', role), role === 'USUARIO')
     for (const unsafe of ['https://evil.invalid', '//evil.invalid', '/app/../login', '/app/denied', '/login', '/app\\evil', ['/app'], '/app/unknown']) {
       assert.equal(policy.safeDestination(unsafe, role), policy.homeFor(role))
     }
