@@ -755,7 +755,7 @@ type Role = 'student' | 'operator' | 'admin'
 interface HistoryRecord { 
   user: string; 
   date: string; 
-  status: string 
+  status: 'LOANED' | 'RETURNED'
 }
 
 interface CatalogItem { 
@@ -764,6 +764,7 @@ interface CatalogItem {
   code: string; 
   name: string; 
   description: string; 
+  stockText: string;
   availableCount: number; 
   totalCount: number; 
   maxTime: string; 
@@ -789,7 +790,7 @@ interface LoanRecord {
   category?: string; 
   date: string; 
   daysLeft?: number; 
-  status: string 
+  status: 'LOANED' | 'RETURNED'
 }
 
 interface OperatorLoan { 
@@ -806,7 +807,7 @@ interface AppUser {
   name: string; 
   email: string; 
   phone: string; 
-  role: string; 
+  role: 'Estudiante' | 'Operador' | 'Admin'; 
   suspended: boolean; 
   loans: LoanRecord[]; 
   sanctions: SanctionRecord[] 
@@ -829,7 +830,7 @@ interface Appeal {
 
 // --- Props (Recibidas desde ApplicationPrototypePage) ---
 const props = defineProps<{
-  view: string
+  view: ViewType
   role: Role
   user: AppUser | null
   suspended: boolean
@@ -871,7 +872,7 @@ const emit = defineEmits<{
   openAppeal: []
   closeAppeal: []
   submitAppeal: []
-  switchView: [view: string]
+  switchView: [view: ViewType]
   resolveAppeal: [appeal: Appeal, approve: boolean]
   toggleSuspension: [user: AppUser]
   changeRole: [user: AppUser, newRole: string]
@@ -894,6 +895,11 @@ const userSearch = defineModel<string>('userSearch', { required: true })
 const operatorTab = defineModel<'active' | 'overdue'>('operatorTab', { required: true })
 const checkedParts = defineModel<string[]>('checkedParts', { required: true })
 const onTime = defineModel<boolean>('onTime', { required: true })
+
+type ViewType =
+  | 'main' | 'google' | 'register'
+  | 'student-home' | 'catalog' | 'item-detail'
+  | 'operator-home' | 'admin-appeals' | 'admin-users' | 'admin-catalog'
 
 // --- Constantes Estáticas ---
 const categories: { key: Category; label: string }[] = [
