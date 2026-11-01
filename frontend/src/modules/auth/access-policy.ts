@@ -9,6 +9,7 @@ export function canAccess(path: string, role: AccessRole): boolean {
   if (path === '/app') return role === 'USUARIO'
   if (path === '/app/loans') return isStaff(role)
   if (path === '/app/reservations') return true
+  if (path === '/app/history') return role === 'USUARIO'
   if (path === '/app/registrations') return isStaff(role)
   if (/^\/app\/admin\/(appeals|users|catalog)$/.test(path)) return role === 'ADMINISTRADOR'
   return path === '/app/denied' || path === '/app/catalog' || /^\/app\/catalog\/[^/]+$/.test(path)

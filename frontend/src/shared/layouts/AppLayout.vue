@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { House, Library, CalendarDays, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, X, LogOut } from '@lucide/vue'
+import { House, Library, CalendarDays, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, X, LogOut, History } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearSession, getSession } from '../../modules/auth/api/auth-api'
 import { isStaff } from '../../modules/auth/access-policy'
@@ -28,6 +28,7 @@ const links = [
     { to: '/app/registrations', label: 'Solicitudes de registro', short: 'Solicitudes', icon: ClipboardList },
   ] : []),
   { to: '/app/reservations', label: 'Mis reservas y términos', short: 'Reservas', icon: CalendarDays },
+  ...(session?.user.role === 'USUARIO' ? [{ to: '/app/history', label: 'Mi historial', short: 'Historial', icon: History }] : []),
 ]
 const secondaryCurrent = computed(() => links.slice(3).find((link) => isCurrent(link.to)))
 let desktopQuery: MediaQueryList | undefined
