@@ -30,6 +30,7 @@ export const requestFullRegistration = (body: {
   password: string
   userType: string
   institutionalId?: string
+  phone?: string
   evidence: string[]
   termsVersionId: string
 }) => guardedMutation('full-registration', async () => {

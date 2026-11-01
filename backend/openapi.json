@@ -5275,6 +5275,206 @@
         }
       }
     },
+    "/loans/{loanId}/evidence": {
+      "post": {
+        "operationId": "LoansController_uploadEvidence",
+        "parameters": [
+          {
+            "name": "loanId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "files"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ENTREGA",
+                      "DEVOLUCION",
+                      "DANO",
+                      "PERDIDA"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LoanEvidenceResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token bearer requerido o inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Adjuntar evidencias fotográficas al préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      },
+      "get": {
+        "operationId": "LoansController_listEvidence",
+        "parameters": [
+          {
+            "name": "loanId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LoanEvidenceResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token bearer requerido o inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar evidencias del préstamo",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [],
+        "x-authentication": {
+          "required": true,
+          "scope": "authenticated",
+          "description": "Cualquier usuario autenticado; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard"
+          ]
+        }
+      }
+    },
     "/auth/google/authorization": {
       "post": {
         "description": "Público. Crea state/nonce/PKCE de un solo uso (5 minutos) y cookie HttpOnly SameSite=Lax. El correo es una sugerencia, nunca prueba de identidad. 503 si no se configuró el proveedor.",
@@ -8702,6 +8902,11 @@
             "maxLength": 80,
             "nullable": true
           },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true
+          },
           "evidence": {
             "nullable": true,
             "type": "array",
@@ -8751,6 +8956,10 @@
             "type": "string",
             "nullable": true
           },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
           "requestedAt": {
             "type": "string",
             "format": "date-time"
@@ -8784,6 +8993,7 @@
           "name",
           "userType",
           "institutionalId",
+          "phone",
           "requestedAt",
           "status",
           "rejectionReason",
@@ -8843,6 +9053,10 @@
             "type": "string",
             "nullable": true
           },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
           "hasCurrentAffiliation": {
             "type": "boolean"
           },
@@ -8857,6 +9071,7 @@
           "name",
           "userType",
           "institutionalId",
+          "phone",
           "hasCurrentAffiliation",
           "trustPercentage"
         ]
@@ -8907,6 +9122,11 @@
             "nullable": true,
             "maxLength": 80
           },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true
+          },
           "hasCurrentAffiliation": {
             "type": "boolean",
             "default": true
@@ -8937,6 +9157,11 @@
             "type": "string",
             "nullable": true,
             "maxLength": 80
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true
           },
           "hasCurrentAffiliation": {
             "type": "boolean",
@@ -9563,6 +9788,69 @@
           "returnedAt"
         ]
       },
+      "LoanEvidenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "loanId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "ENTREGA",
+              "DEVOLUCION",
+              "DANO",
+              "PERDIDA"
+            ]
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadedByAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "id",
+          "loanId",
+          "type",
+          "originalName",
+          "mimeType",
+          "sizeBytes",
+          "hash",
+          "description",
+          "uploadedByAccountId",
+          "createdAt",
+          "url"
+        ]
+      },
       "GoogleAuthorizationDto": {
         "type": "object",
         "properties": {
@@ -9699,6 +9987,10 @@
           "institutionalId": {
             "type": "string",
             "maxLength": 80
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20
           },
           "evidence": {
             "minItems": 1,

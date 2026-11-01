@@ -1081,6 +1081,15 @@
           "kind": "scalar"
         },
         {
+          "name": "telefono",
+          "type": "VarChar",
+          "typeExpression": "VarChar(20)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
           "name": "fechaSolicitud",
           "type": "Timestamptz",
           "typeExpression": "Timestamptz(3)",
@@ -1536,6 +1545,15 @@
               "raw": "@unique"
             }
           ],
+          "kind": "scalar"
+        },
+        {
+          "name": "telefono",
+          "type": "VarChar",
+          "typeExpression": "VarChar(20)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
           "kind": "scalar"
         },
         {
@@ -2505,6 +2523,15 @@
           "kind": "relation"
         },
         {
+          "name": "evidencias",
+          "type": "EvidenciaPrestamo",
+          "typeExpression": "EvidenciaPrestamo",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
           "name": "inspeccion",
           "type": "InspeccionDevolucion",
           "typeExpression": "InspeccionDevolucion",
@@ -2674,6 +2701,220 @@
           ],
           "named": {},
           "raw": "@@map(\"devoluciones\")"
+        }
+      ]
+    },
+    {
+      "name": "EvidenciaPrestamo",
+      "module": "PRÉSTAMOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tipo",
+          "type": "TipoEvidenciaPrestamo",
+          "typeExpression": "TipoEvidenciaPrestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
+        },
+        {
+          "name": "ruta",
+          "type": "VarChar",
+          "typeExpression": "VarChar(500)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "nombreOriginal",
+          "type": "VarChar",
+          "typeExpression": "VarChar(255)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "mimeType",
+          "type": "VarChar",
+          "typeExpression": "VarChar(100)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "tamanoBytes",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "hash",
+          "type": "VarChar",
+          "typeExpression": "VarChar(64)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "descripcion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "cargadoPorCuentaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "prestamoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "cargadoPor",
+          "type": "CuentaAcceso",
+          "typeExpression": "CuentaAcceso",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "EvidenciasPrestamoCargadas"
+              ],
+              "named": {
+                "fields": [
+                  "cargadoPorCuentaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(\"EvidenciasPrestamoCargadas\", fields:[cargadoPorCuentaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "index",
+          "positional": [
+            [
+              "prestamoId",
+              "tipo",
+              "createdAt"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([prestamoId, tipo, createdAt])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "cargadoPorCuentaId",
+              "createdAt"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([cargadoPorCuentaId, createdAt])"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "evidencias_prestamo"
+          ],
+          "named": {},
+          "raw": "@@map(\"evidencias_prestamo\")"
         }
       ]
     },
@@ -4239,6 +4480,24 @@
           "kind": "relation"
         },
         {
+          "name": "evidenciasCargadas",
+          "type": "EvidenciaPrestamo",
+          "typeExpression": "EvidenciaPrestamo",
+          "nullable": false,
+          "list": true,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [
+                "EvidenciasPrestamoCargadas"
+              ],
+              "named": {},
+              "raw": "@relation(\"EvidenciasPrestamoCargadas\")"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
           "name": "apelacionesResueltas",
           "type": "Apelacion",
           "typeExpression": "Apelacion",
@@ -4359,6 +4618,38 @@
         },
         {
           "name": "FINALIZADO",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "TipoEvidenciaPrestamo",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "ENTREGA",
+          "attributes": []
+        },
+        {
+          "name": "DEVOLUCION",
+          "attributes": []
+        },
+        {
+          "name": "DANO",
+          "attributes": []
+        },
+        {
+          "name": "PERDIDA",
           "attributes": []
         }
       ],
@@ -5314,6 +5605,25 @@
     },
     {
       "source": "Prestamo",
+      "field": "evidencias",
+      "target": "EvidenciaPrestamo",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "EvidenciaPrestamo",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
       "field": "inspeccion",
       "target": "InspeccionDevolucion",
       "inverse": "prestamo",
@@ -5348,6 +5658,44 @@
         "id"
       ],
       "onDelete": "Cascade",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "EvidenciaPrestamo",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "evidencias",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "EvidenciaPrestamo",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "EvidenciaPrestamo",
+      "field": "cargadoPor",
+      "target": "CuentaAcceso",
+      "inverse": "evidenciasCargadas",
+      "name": "EvidenciasPrestamoCargadas",
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "EvidenciaPrestamo",
+      "fields": [
+        "cargadoPorCuentaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
       "onUpdate": "Cascade"
     },
     {
@@ -5799,6 +6147,25 @@
       "owner": "CuentaAcceso",
       "fields": [
         "usuarioId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "CuentaAcceso",
+      "field": "evidenciasCargadas",
+      "target": "EvidenciaPrestamo",
+      "inverse": "cargadoPor",
+      "name": "EvidenciasPrestamoCargadas",
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "EvidenciaPrestamo",
+      "fields": [
+        "cargadoPorCuentaId"
       ],
       "references": [
         "id"

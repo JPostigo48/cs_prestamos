@@ -82,8 +82,21 @@ Configura en `.env`:
 DATABASE_URL=postgresql://...
 JWT_SECRET=un-secreto-largo-y-aleatorio
 JWT_EXPIRES_IN=3600s
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=tu-clave-privada
 PORT=3000
 ```
+
+Las evidencias de préstamos usan el bucket privado `loan-evidence` de Supabase
+Storage. El backend guarda en Neon los metadatos y la ruta del objeto, y genera
+URLs firmadas de corta duración al consultarlas. Se aceptan imágenes JPEG, PNG
+y WebP de hasta 5 MB por archivo. La clave `SUPABASE_SERVICE_ROLE_KEY` solo
+debe existir en el backend y nunca en el frontend.
+
+Para aplicar el cambio de esquema en Neon, revisa y ejecuta la migración
+[`20261101T2231_add_phone_and_loan_evidence`](prisma/migrations/app/20261101T2231_add_phone_and_loan_evidence/migration.ts)
+con el procedimiento autorizado del proyecto. La migración agrega el teléfono
+opcional del usuario y la tabla `evidencias_prestamo`.
 
 El JWT contiene `accountId`, `userId`, `userType` y `role`. Las rutas protegidas
 deben usar `AuthGuard`; para autorización por rol se combinan `@Roles(...)` y
@@ -96,6 +109,10 @@ Endpoints disponibles:
 - `GET /auth/accounts/:accountId`: consulta propia o administrativa.
 - `PATCH /auth/accounts/:accountId`: cambio administrativo de rol o habilitación;
   requiere `ADMINISTRADOR`.
+- `POST /loans/:loanId/evidence`: carga una o varias imágenes mediante
+  `multipart/form-data`, usando los campos `type`, `description` y `files`.
+- `GET /loans/:loanId/evidence`: consulta las evidencias con URLs firmadas;
+  requiere autorización sobre el préstamo.
 
 La actualización administrativa registra el cambio en `AuditoriaUsuario`.
 La protección de Users, Rules, Inventory y Loans debe aplicarse según la matriz
