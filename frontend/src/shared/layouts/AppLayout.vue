@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { House, Library, CalendarDays, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, Search, X, LogOut } from '@lucide/vue'
+import { House, Library, CalendarDays, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, X, LogOut } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearSession, getSession } from '../../modules/auth/api/auth-api'
 import { isStaff } from '../../modules/auth/access-policy'
@@ -11,7 +11,6 @@ const route = useRoute()
 const menuOpen = ref(false)
 const content = ref<HTMLElement | null>(null)
 const menuToggle = ref<HTMLButtonElement | null>(null)
-const search = ref('')
 const roleLabel = session?.user.role === 'ADMINISTRADOR' ? 'Administrador' : session?.user.role === 'OPERADOR' ? 'Operador' : 'Usuario'
 const isCurrent = (to: string) => route.path === to || (to === '/app/catalog' && route.path.startsWith('/app/catalog/'))
 const links = [
@@ -83,11 +82,7 @@ function logout() {
       <div class="content-shell" :inert="menuOpen || undefined">
         <header class="app-header">
           <strong class="brand mobile-only"><img src="/logo.png" alt="" />CS Préstamos</strong>
-          <form v-if="route.path === '/app'" class="header-search" @submit.prevent="router.push({ path: '/app/catalog', query: { search: search.trim() || undefined } })">
-            <label class="sr-only" for="header-resource-search">Buscar recursos</label><Search class="search-icon" :size="16" aria-hidden="true" /><input id="header-resource-search" v-model="search" type="search" maxlength="120" placeholder="Buscar recursos en catálogo…" />
-            <button type="submit" class="sr-only">Buscar</button>
-          </form>
-          <span v-else class="header-title">Panel Institucional</span>
+          <span class="header-title">Panel Institucional</span>
           <span class="identity"><span>{{ session?.user.email }}</span><small>{{ roleLabel }}</small></span>
           <button class="logout" type="button" @click="logout"><LogOut :size="16" aria-hidden="true" /><span>Salir</span></button>
         </header>
@@ -174,10 +169,6 @@ body.real-app-active { min-width: 0; }
 }
 .application .content-shell { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .application .sidebar-brand { width: auto; height: var(--app-header-height); flex-shrink: 0; margin: 0 -12px 16px; padding: 0 16px; border-bottom: 1px solid #ffffff1a; }
-.application .header-search { position: relative; display: flex; flex: 1; min-width: 0; max-width: 470px; align-items: center; }
-.application .header-search .search-icon { position: absolute; left: 12px; color: #94a3b8; pointer-events: none; }
-.application .app-header .header-search input[type='search'] { min-width: 0; width: 100%; height: 42px; padding: 10px 12px 10px 40px; background: #f8fafc; border-color: #cbd5e1; border-radius: 6px; font-size: 14px; }
-.application .header-search button:focus-visible { position: absolute; width: auto; height: auto; margin: 0; clip-path: none; right: 4px; overflow: visible; }
 .application .mobile-only { display: none; }
 .application .app-body > nav {
   width: var(--app-sidebar-width);
@@ -422,7 +413,7 @@ body.real-app-active { min-width: 0; }
   .application .menu-toggle {
     display: flex;
   }
-  .application .identity, .application .header-search, .application .header-title, .application .app-header > button { display: none; }
+  .application .identity, .application .header-title, .application .app-header > button { display: none; }
   .application .mobile-menu-heading { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px 16px; }
   .application .mobile-menu-heading button { display: flex; padding: 10px; border: 0; color: white; background: transparent; }
   .application .mobile-account { overflow-wrap: anywhere; margin-top: 12px; }

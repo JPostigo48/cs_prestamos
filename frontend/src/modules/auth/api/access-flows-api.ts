@@ -51,3 +51,18 @@ export async function acceptTerms(userId: string, termsVersionId: string) {
     throw new ApiError('El servidor no confirmó la aceptación.', 0)
   return result
 }
+export interface TermsAcceptance {
+  id: string
+  userId: string
+  termsVersionId: string
+  acceptedAt: string
+}
+export async function getMyAcceptances(userId: string, signal?: AbortSignal) {
+  const result = await authenticatedRequest<TermsAcceptance[]>(
+    '/terms/users/' + userId + '/acceptances',
+    { signal },
+  )
+  if (!Array.isArray(result))
+    throw new ApiError('No se pudo leer el historial de aceptaciones.', 0)
+  return result
+}
