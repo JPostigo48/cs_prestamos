@@ -22,6 +22,7 @@ export class SubmitRegistrationRequestUseCase {
     if (!input.userType)
       throw new BadRequestException('userType es obligatorio.');
     const institutionalId = input.institutionalId?.trim() || null;
+    const phone = input.phone?.trim() || null;
     if (institutionalId) {
       const linkedUser =
         await this.users.findByInstitutionalId(institutionalId);
@@ -39,6 +40,7 @@ export class SubmitRegistrationRequestUseCase {
       name,
       userType: input.userType,
       institutionalId,
+      phone,
       evidence: (input.evidence ?? [])
         .map((item) => item.trim())
         .filter(Boolean),

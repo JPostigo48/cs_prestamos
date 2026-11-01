@@ -36,6 +36,10 @@
       "model": "Ejemplar",
       "namespace": "public"
     },
+    "evidencias_prestamo": {
+      "model": "EvidenciaPrestamo",
+      "namespace": "public"
+    },
     "evidencias_vinculacion": {
       "model": "EvidenciaVinculacion",
       "namespace": "public"
@@ -234,6 +238,27 @@
               {
                 "name": "ADMINISTRADOR",
                 "value": "ADMINISTRADOR"
+              }
+            ]
+          },
+          "TipoEvidenciaPrestamo": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ENTREGA",
+                "value": "ENTREGA"
+              },
+              {
+                "name": "DEVOLUCION",
+                "value": "DEVOLUCION"
+              },
+              {
+                "name": "DANO",
+                "value": "DANO"
+              },
+              {
+                "name": "PERDIDA",
+                "value": "PERDIDA"
               }
             ]
           },
@@ -1027,6 +1052,21 @@
                   "namespace": "public"
                 }
               },
+              "evidenciasCargadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "cargadoPorCuentaId"
+                  ]
+                },
+                "to": {
+                  "model": "EvidenciaPrestamo",
+                  "namespace": "public"
+                }
+              },
               "usuario": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1305,6 +1345,181 @@
               },
               "namespaceId": "public",
               "table": "ejemplares"
+            }
+          },
+          "EvidenciaPrestamo": {
+            "fields": {
+              "cargadoPorCuentaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "hash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 64
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "mimeType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 100
+                  }
+                }
+              },
+              "nombreOriginal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 255
+                  }
+                }
+              },
+              "prestamoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "ruta": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 500
+                  }
+                }
+              },
+              "tamanoBytes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "tipo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TipoEvidenciaPrestamo",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              }
+            },
+            "relations": {
+              "cargadoPor": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "cargadoPorCuentaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CuentaAcceso",
+                  "namespace": "public"
+                }
+              },
+              "prestamo": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "prestamoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "cargadoPorCuentaId": {
+                  "column": "cargadoPorCuentaId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
+                },
+                "hash": {
+                  "column": "hash"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "mimeType": {
+                  "column": "mimeType"
+                },
+                "nombreOriginal": {
+                  "column": "nombreOriginal"
+                },
+                "prestamoId": {
+                  "column": "prestamoId"
+                },
+                "ruta": {
+                  "column": "ruta"
+                },
+                "tamanoBytes": {
+                  "column": "tamanoBytes"
+                },
+                "tipo": {
+                  "column": "tipo"
+                }
+              },
+              "namespaceId": "public",
+              "table": "evidencias_prestamo"
             }
           },
           "EvidenciaVinculacion": {
@@ -1872,6 +2087,21 @@
                 },
                 "to": {
                   "model": "Ejemplar",
+                  "namespace": "public"
+                }
+              },
+              "evidencias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "prestamoId"
+                  ]
+                },
+                "to": {
+                  "model": "EvidenciaPrestamo",
                   "namespace": "public"
                 }
               },
@@ -2756,6 +2986,16 @@
                   }
                 }
               },
+              "telefono": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 20
+                  }
+                }
+              },
               "tipoUsuario": {
                 "nullable": false,
                 "type": {
@@ -2887,6 +3127,9 @@
                 "passwordHash": {
                   "column": "passwordHash"
                 },
+                "telefono": {
+                  "column": "telefono"
+                },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
                 },
@@ -2951,6 +3194,16 @@
                   "kind": "scalar",
                   "typeParams": {
                     "length": 180
+                  }
+                }
+              },
+              "telefono": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 20
                   }
                 }
               },
@@ -3151,6 +3404,9 @@
                 },
                 "nombre": {
                   "column": "nombre"
+                },
+                "telefono": {
+                  "column": "telefono"
                 },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
@@ -4469,6 +4725,178 @@
                   ]
                 }
               ]
+            },
+            "evidencias_prestamo": {
+              "checks": [
+                {
+                  "expression": "\"tipo\" IN ('ENTREGA', 'DEVOLUCION', 'DANO', 'PERDIDA')",
+                  "name": "evidencias_prestamo_tipo_check_a8b33710",
+                  "prefix": "evidencias_prestamo_tipo_check"
+                }
+              ],
+              "columns": {
+                "cargadoPorCuentaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "hash": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 64
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "mimeType": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 100
+                  }
+                },
+                "nombreOriginal": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 255
+                  }
+                },
+                "prestamoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "ruta": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 500
+                  }
+                },
+                "tamanoBytes": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "tipo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TipoEvidenciaPrestamo",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "prestamoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "evidencias_prestamo"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "cargadoPorCuentaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "evidencias_prestamo"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "cuentas_acceso"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "cargadoPorCuentaId",
+                    "createdAt"
+                  ],
+                  "name": "evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c",
+                  "prefix": "evidencias_prestamo_cargadoPorCuentaId_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "cargadoPorCuentaId"
+                  ],
+                  "name": "evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9",
+                  "prefix": "evidencias_prestamo_cargadoPorCuentaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "prestamoId"
+                  ],
+                  "name": "evidencias_prestamo_prestamoId_idx_8ecc28bd",
+                  "prefix": "evidencias_prestamo_prestamoId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "prestamoId",
+                    "tipo",
+                    "createdAt"
+                  ],
+                  "name": "evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c",
+                  "prefix": "evidencias_prestamo_prestamoId_tipo_createdAt_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "evidencias_vinculacion": {
               "columns": {
@@ -5806,6 +6234,14 @@
                     "length": 255
                   }
                 },
+                "telefono": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 20
+                  }
+                },
                 "tipoUsuario": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -5990,6 +6426,14 @@
                   "nullable": false,
                   "typeParams": {
                     "length": 180
+                  }
+                },
+                "telefono": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 20
                   }
                 },
                 "tipoUsuario": {
@@ -6332,6 +6776,15 @@
                 "ADMINISTRADOR"
               ]
             },
+            "TipoEvidenciaPrestamo": {
+              "kind": "valueSet",
+              "values": [
+                "ENTREGA",
+                "DEVOLUCION",
+                "DANO",
+                "PERDIDA"
+              ]
+            },
             "TipoSuspension": {
               "kind": "valueSet",
               "values": [
@@ -6354,10 +6807,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e0c33fd71c119cb158d4634873f0d3f93f716172178cc687acbf5c5f982ff904"
+    "storageHash": "833c09d2fe681e01204af9ee9e6fbdb340ef038337911aad829bcef29d48d409"
   },
   "execution": {
-    "executionHash": "9fa8e22e199b9a1ac5ba015b1f193b89ae249c043c4c652c1ce485f9b9b8bde2",
+    "executionHash": "eefc38df0b3933d4b37822bc7c6c73fd4f2d9ed7350a29adaa05287d416a3837",
     "mutations": {
       "defaults": [
         {
@@ -6521,6 +6974,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "ejemplares"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "evidencias_prestamo"
           }
         },
         {

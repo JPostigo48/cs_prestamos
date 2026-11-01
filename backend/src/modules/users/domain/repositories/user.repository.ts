@@ -9,7 +9,7 @@ import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 export type ManagedUserData = Pick<
   User,
   'name' | 'userType' | 'institutionalId' | 'hasCurrentAffiliation'
->;
+> & { phone?: string | null };
 
 export abstract class UserRepository {
   abstract createManaged(

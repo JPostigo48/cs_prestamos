@@ -47,6 +47,7 @@ export type User = {
   name: string;
   userType: UserType;
   institutionalId: string | null;
+  phone: string | null;
   hasCurrentAffiliation: boolean;
   trustPercentage: number;
 };

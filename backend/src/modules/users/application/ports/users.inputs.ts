@@ -4,6 +4,7 @@ export type SubmitRegistrationRequestInput = {
   name: string;
   userType: UserType;
   institutionalId?: string;
+  phone?: string;
   evidence?: string[];
 };
 
