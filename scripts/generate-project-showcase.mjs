@@ -24,6 +24,12 @@ if (process.argv.includes('--openapi-only')) {
   process.stdout.write('Project Showcase: OpenAPI sincronizado.\n')
   process.exit(0)
 }
+if (process.argv.includes('--team-only')) {
+  mkdirSync(output, { recursive: true })
+  generateTeam()
+  process.stdout.write('Project Showcase: avances académicos sincronizados.\n')
+  process.exit(0)
+}
 const diagramOutput = join(output, 'diagrams')
 generateDb()
 mkdirSync(diagramOutput, { recursive: true })
@@ -129,42 +135,25 @@ json('git.json', {
   source: 'docs/planning/git-workflow.md',
 })
 
-const teamSource = 'docs/planning/README.md'
-const roster = table(section(read(teamSource), '## Equipo y responsabilidades principales'))
-  .map(([name, responsibility, area]) => ({ name, responsibility, area }))
-const teamSprints = sprints.map((sprint) => {
-  const progressRows = rawTable(section(read(sprint.source), '## Estado actual'))
-  const progressByName = new Map(progressRows.map(([name, update, pending, link]) => {
-    const evidence = link?.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/)
-    return [plain(name), {
-      update: plain(update ?? ''),
-      pending: plain(pending ?? ''),
-      evidence: evidence ? { label: evidence[1], url: evidence[2] } : null,
-    }]
-  }))
-  return {
-    sprint: sprint.sprint,
-    name: sprint.name,
-    status: sprint.status,
-    source: sprint.source,
-    members: roster.map((member) => {
-      const assignment = sprint.members.find((item) => item.name === member.name)
-      const progress = progressByName.get(member.name)
-      return {
-        ...member,
-        responsibility: assignment?.responsibility ?? member.responsibility,
-        update: progress?.update ?? '',
-        pending: progress?.pending ?? '',
-        evidence: progress?.evidence ?? null,
-      }
-    }),
-  }
-})
-json('team.json', {
-  currentSprint: sprints.filter((sprint) => sprint.status === 'in_progress').at(-1)?.sprint ?? null,
-  source: teamSource,
-  sprints: teamSprints,
-})
+function generateTeam() {
+  const source = 'docs/planning/academic-progress.md'
+  const markdown = read(source)
+  const members = table(section(markdown, '## Integrantes'))
+    .map(([initials, name]) => ({ initials, name }))
+  const milestones = rawTable(section(markdown, '## Entregas'))
+    .map(([id, title, kind, date, status, outcome, ...updates]) => ({
+      id, title, kind, date: date || null, status, outcome,
+      progress: Object.fromEntries(members.map((member, index) => [
+        member.initials, updates[index].split('<br>').map((point) => point.trim()),
+      ])),
+    }))
+  json('team.json', {
+    source,
+    members,
+    milestones,
+  })
+}
+generateTeam()
 
 const diagrams = [
   { title: 'Modelo de dominio', source: 'docs/architecture/uml/modelo-dominio.puml', file: 'modelo-dominio.svg', type: 'Dominio' },
