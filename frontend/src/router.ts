@@ -34,6 +34,7 @@ export const router = createRouter({
           path: 'reservations',
           component: () => import('./modules/loans/pages/ReservationsPage.vue'),
         },
+        { path: 'history', component: () => import('./modules/loans/pages/MyHistoryPage.vue') },
         {
           path: 'admin/catalog',
           component: () => import('./modules/inventory/pages/InventoryManagementPage.vue'),

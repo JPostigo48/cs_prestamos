@@ -166,7 +166,8 @@ test('I7: inicio conserva estados independientes, sanción activa antes de categ
   try {
     await flush(); await flush()
     assert.match(text(mounted.root), /Préstamos no habilitados/)
-    assert.match(text(mounted.root), /Confianza: 90/)
+    assert.match(text(mounted.root), /90 %/)
+    assert.match(text(mounted.root), /Confiable/)
     assert.ok(text(mounted.root).indexOf('Sanción activa') < text(mounted.root).indexOf('Explorar catálogo'))
     assert.equal(findAll(mounted.root, n => n.tag === 'input' && n.props.type === 'search').length, 0)
     await event(find(mounted.root, 'button', 'Volver a intentar'), 'click'); await flush()

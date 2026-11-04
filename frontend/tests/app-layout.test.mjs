@@ -2,7 +2,7 @@ import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
-import { mount, flush, find, findAll, event, model } from './helpers/renderer.mjs'
+import { mount, flush, find, findAll, event, text } from './helpers/renderer.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const layout = await loadComponent('shared/layouts/AppLayout')
@@ -15,12 +15,18 @@ async function open(role, path = '/app') {
   return { ...mount(layout, {}, [router]), router }
 }
 
-for (const [role, count] of [['USUARIO', 3], ['OPERADOR', 4], ['ADMINISTRADOR', 7]]) {
+for (const [role, count] of [['USUARIO', 4], ['OPERADOR', 4], ['ADMINISTRADOR', 7]]) {
   test(`layout ${role}: Más conserva destinos y Salir elimina la sesión real`, async () => {
     const app = await open(role)
     try {
       const nav = findAll(app.root, n => n.props.id === 'app-navigation')[0]
       assert.equal(findAll(nav, n => n.tag === 'a').length, count)
+      if (role === 'USUARIO') {
+        assert.ok(find(nav, 'a', 'Mi historial'))
+        assert.equal(find(nav, 'a', 'Mi historial').props.href, '/app/history')
+      } else {
+        assert.equal(findAll(nav, n => n.tag === 'a' && text(n).includes('Mi historial')).length, 0)
+      }
       await event(find(app.root, 'button', 'Más'), 'click')
       assert.equal(findAll(app.root, n => n.props.class === 'content-shell')[0].props.inert, true)
       await event(findAll(app.root, n => n.props['aria-label'] === 'Cerrar navegación')[0], 'click')
@@ -34,17 +40,15 @@ for (const [role, count] of [['USUARIO', 3], ['OPERADOR', 4], ['ADMINISTRADOR', 
   })
 }
 
-test('detalle mantiene Catálogo seleccionado sin marcar Inicio; buscar conserva el contrato de ruta', async () => {
+test('detalle mantiene Catálogo seleccionado sin marcar Inicio; la cabecera no duplica el buscador', async () => {
   const app = await open('USUARIO', '/app/catalog/resource-test')
   try {
     const nav = findAll(app.root, n => n.props.id === 'app-navigation')[0]
     const catalog = find(nav, 'a', 'Catálogo')
     assert.equal(catalog.props['aria-current'], 'location')
     assert.equal(find(nav, 'a', 'Inicio').props['aria-current'], undefined)
-    await app.router.push('/app'); await flush()
-    await model(find(app.root, 'input'), '  proyector  ')
-    await event(find(app.root, 'form'), 'submit'); await flush()
-    assert.equal(app.router.currentRoute.value.fullPath, '/app/catalog?search=proyector')
+    assert.equal(findAll(app.root, n => n.tag === 'form').length, 0)
+    assert.equal(findAll(app.root, n => n.props.id === 'app-header-search').length, 0)
   } finally { app.unmount() }
 })
 
