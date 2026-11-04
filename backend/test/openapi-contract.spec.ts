@@ -36,6 +36,7 @@ import { PublicTermsController } from '../src/modules/rules/presentation/control
 import { ViolationsController } from '../src/modules/rules/presentation/controllers/violations.controller.js';
 import { SanctionsController } from '../src/modules/rules/presentation/controllers/sanctions.controller.js';
 import { AppController } from '../src/app.controller.js';
+import { ReservationSettingsController } from '../src/modules/system/presentation/reservation-settings.controller.js';
 
 vi.mock('dotenv/config', () => ({}));
 
@@ -44,6 +45,7 @@ const document = JSON.parse(
 ) as OpenAPIObject;
 const controllers: Type<unknown>[] = [
   AppController,
+  ReservationSettingsController,
   AuthController,
   InventoryController,
   UsersController,
@@ -68,6 +70,15 @@ function schema(name: string): SchemaObject {
 }
 
 describe('Contrato OpenAPI generado desde Nest', () => {
+  it('documenta configuración autenticada, edición ADMIN y migración pendiente 503', () => {
+    const settings = document.paths['/system/reservation-settings']!;
+    expect((settings.get as DocumentedOperation)['x-authentication']).toMatchObject({ required: true });
+    expect((settings.patch as DocumentedOperation)['x-roles']).toEqual(['ADMINISTRADOR']);
+    expect(settings.get!.responses['503']).toBeDefined();
+    expect(settings.patch!.responses['503']).toBeDefined();
+    expect(document.paths['/loans/reservations']!.post!.responses['503']).toBeDefined();
+    expect(schema('ReservationSettingsResponseDto').properties).toHaveProperty('scheduleStatus');
+  });
   it('publica términos sin autenticación y con matriz estructurada y versión histórica', () => {
     for (const path of ['/terms/current', '/terms/versions/{versionId}']) {
       const operation = document.paths[path]!.get! as DocumentedOperation;
@@ -278,6 +289,7 @@ describe('Contrato OpenAPI generado desde Nest', () => {
       'institutionalId',
       'name',
       'nombre',
+      'phone',
       'tipoUsuario',
       'userType',
     ]);
@@ -288,6 +300,7 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     expect(
       schema('SubmitRegistrationRequestDto').properties!.evidencias,
     ).toMatchObject({ type: 'array', items: { type: 'string' } });
+    expect(schema('SubmitRegistrationRequestDto').required ?? []).not.toContain('phone');
     expect(schema('UpdateAccessAccountDto').properties).toHaveProperty(
       'enabled',
     );

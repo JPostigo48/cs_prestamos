@@ -3,6 +3,7 @@ import { Temporal } from 'temporal-polyfill/full';
 import { PrismaReservationRepository } from './prisma-reservation.repository.js';
 import { ConflictException } from '@nestjs/common';
 import { inMemoryPrisma } from '../../../../../../test/helpers/in-memory-prisma.js';
+import * as noShow from '../../integration/reservation-no-show.js';
 
 describe('PrismaReservationRepository', () => {
   it.each([true, false])(
@@ -19,7 +20,6 @@ describe('PrismaReservationRepository', () => {
           copyId: 'copy',
           enforceSingleOpenOperation,
           requestedAt: new Date(),
-          pickupDeadline: new Date(),
           loanDurationHours: 8,
         }),
       ).rejects.toThrow(ConflictException);
@@ -43,11 +43,17 @@ describe('PrismaReservationRepository', () => {
     };
     const query = vi
       .fn()
+      .mockResolvedValueOnce([{ id: 'user-1' }])
       .mockResolvedValueOnce([row])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: 'copy-1' }]);
+    const register = vi.spyOn(noShow, 'registerReservationNoShow').mockResolvedValue(undefined);
     const chain = (value: string): any => ({
       where: () => chain(value),
       returning: () => chain(value),
+      limit: () => chain(value),
+      orderBy: () => chain(value),
       build: () => value,
     });
     const tx = { query };
@@ -56,11 +62,13 @@ describe('PrismaReservationRepository', () => {
         callback(tx),
     );
     const prisma = {
-      client: { transaction },
+      client: { transaction, runtime: () => ({ query: vi.fn().mockResolvedValue([row]) }) },
       sql: {
         public: {
-          reservas: { update: () => chain('expire-reservations') },
+          reservas: { update: () => chain('expire-reservations'), select: () => chain('select-reservations') },
           ejemplares: { update: () => chain('release-copy') },
+          usuarios: { update: () => chain('lock-user') },
+          prestamos: { select: () => chain('active-loans') },
         },
       },
     };
@@ -77,7 +85,10 @@ describe('PrismaReservationRepository', () => {
       },
     ]);
     expect(transaction).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenNthCalledWith(1, 'expire-reservations');
-    expect(query).toHaveBeenNthCalledWith(2, 'release-copy');
+    expect(query).toHaveBeenNthCalledWith(1, 'lock-user');
+    expect(query).toHaveBeenNthCalledWith(2, 'expire-reservations');
+    expect(query).toHaveBeenNthCalledWith(5, 'release-copy');
+    expect(register).toHaveBeenCalledExactlyOnceWith(prisma, tx, row, new Date('2026-10-21T10:31:00.000Z'));
+    register.mockRestore();
   });
 });

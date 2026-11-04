@@ -59,6 +59,7 @@ export class RegistrationRequestsController {
       name: dto.name ?? dto.nombre ?? '',
       userType: dto.userType ?? dto.tipoUsuario!,
       institutionalId: dto.institutionalId ?? dto.identificadorInstitucional,
+      phone: dto.phone,
       evidence: dto.evidence ?? dto.evidencias,
     });
   }

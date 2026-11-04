@@ -7,7 +7,6 @@ export interface CreateReservationData {
   copyId: string;
   enforceSingleOpenOperation: boolean;
   requestedAt: Date;
-  pickupDeadline: Date;
   loanDurationHours: number;
 }
 

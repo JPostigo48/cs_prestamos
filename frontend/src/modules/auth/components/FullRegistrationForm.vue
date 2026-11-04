@@ -8,6 +8,7 @@ const name = ref(''),
   password = ref(''),
   userType = ref('ESTUDIANTE'),
   institutionalId = ref(''),
+  phone = ref(''),
   evidence = ref('')
 const version = ref<string | null>(null),
   sending = ref(false),
@@ -43,6 +44,7 @@ async function submit() {
       password: password.value,
       userType: userType.value,
       ...(institutionalId.value.trim() ? { institutionalId: institutionalId.value.trim() } : {}),
+      ...(phone.value.trim() ? { phone: phone.value.trim() } : {}),
       evidence: [evidence.value.trim()].filter(Boolean),
       termsVersionId: version.value,
     })
@@ -92,6 +94,7 @@ async function submit() {
         </select></label
       >
       <label>Identificador institucional<input v-model="institutionalId" maxlength="80" /></label>
+      <label>Teléfono<input v-model="phone" type="tel" maxlength="20" autocomplete="tel" /></label>
       <label>Evidencia de vinculación<input type="file" accept="image/png,image/jpeg" required @change="selectImage" /></label>
       <TermsPanel @read="version = $event" />
     </fieldset>

@@ -4,16 +4,21 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
   Param,
   Post,
   Delete,
   Query,
   ParseUUIDPipe,
   UseGuards,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiExtension,
   ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiTags,
   ApiCreatedResponse,
@@ -28,6 +33,7 @@ import {
 import { ReservationStatus } from '../../domain/entities/reservation.js';
 import {
   LoanResponseDto,
+  LoanEvidenceResponseDto,
   ReservationResponseDto,
 } from '../dto/loans-response.dto.js';
 import { GetLoanUseCase } from '../../application/use-cases/get-loan.use-case.js';
@@ -47,6 +53,8 @@ import { PickupReservationUseCase } from '../../application/use-cases/pickup-res
 import { CancelReservationUseCase } from '../../application/use-cases/cancel-reservation.use-case.js';
 import { CreateReservationDto } from '../dto/create-reservation.dto.js';
 import { CancelReservationDto } from '../dto/cancel-reservation.dto.js';
+import { UploadLoanEvidenceDto } from '../dto/upload-loan-evidence.dto.js';
+import { UploadLoanEvidenceUseCase } from '../../application/use-cases/upload-loan-evidence.use-case.js';
 import {
   ListReservationsUseCase,
   ListResourceHistoryUseCase,
@@ -77,6 +85,7 @@ export class LoansController {
     private readonly createReservation: CreateReservationUseCase,
     private readonly pickupReservation: PickupReservationUseCase,
     private readonly cancelReservationUseCase: CancelReservationUseCase,
+    private readonly uploadLoanEvidence: UploadLoanEvidenceUseCase,
     private readonly listReservations: ListReservationsUseCase,
     private readonly listResourceHistory: ListResourceHistoryUseCase,
     private readonly saveChecklist: SaveReturnChecklistUseCase,
@@ -89,12 +98,12 @@ export class LoansController {
   @ApiQuery({ name: 'userId', required: false, type: String, format: 'uuid', description: 'USUARIO solo propio; personal puede filtrar cualquier titular.' })
   @ApiQuery({ name: 'copyId', required: false, type: String, format: 'uuid', description: 'ID del ejemplar, no del artículo.' })
   @ApiExtension('x-access-constraints', 'USUARIO: solo reservas propias. OPERADOR y ADMINISTRADOR: consulta operativa, filtrable por titular.')
-  @ApiHttpErrors(400, 401, 403)
+  @ApiHttpErrors(400, 401, 403, 503)
   @ApiOkResponse({ type: ReservationsPageResponseDto })
   @ApiOperation({
     summary: 'Listar reservas',
     description:
-      'USUARIO: solo propias. OPERADOR/ADMINISTRADOR: listado operativo filtrable. Orden fecha solicitada descendente e ID ascendente; paginación aplicada en persistencia.',
+      'USUARIO: solo propias. OPERADOR/ADMINISTRADOR: listado operativo filtrable. CONFIRMADA corresponde a activas; sin estado conserva historial, incluida VENCIDA. Antes de consultar procesa vencimientos con sanción LEVE única; fallo de política/persistencia devuelve 503. Orden fecha solicitada descendente e ID ascendente; paginación aplicada en persistencia.',
   })
   @ApiExtension('x-implementation-status', 'implemented')
   reservations(
@@ -158,7 +167,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(400, 404, 409)
+  @ApiHttpErrors(400, 404, 409, 503)
   @Post('reservations')
   @ApiCreatedResponse({ type: ReservationResponseDto })
   @ApiBody({ type: CreateReservationDto })
@@ -175,7 +184,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(404, 409)
+  @ApiHttpErrors(404, 409, 503)
   @Post('reservations/:reservationId/pickup')
   @ApiCreatedResponse({ type: LoanResponseDto })
   @UseGuards(RolesGuard)
@@ -189,7 +198,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(400, 409)
+  @ApiHttpErrors(400, 409, 503)
   @Delete('reservations/:reservationId')
   @ApiOkResponse({
     type: ReservationResponseDto,
@@ -287,6 +296,67 @@ export class LoansController {
       loanId,
       returnedAt: input.returnedAt,
       observation: input.observation,
+    });
+  }
+
+  @Post(':loanId/evidence')
+  @HttpCode(200)
+  @UseGuards(RolesGuard)
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['type', 'files'],
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['ENTREGA', 'DEVOLUCION', 'DANO', 'PERDIDA'],
+        },
+        description: { type: 'string', maxLength: 1000 },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
+  @ApiOkResponse({ type: [LoanEvidenceResponseDto] })
+  @ApiOperation({ summary: 'Adjuntar evidencias fotográficas al préstamo' })
+  @ApiExtension('x-implementation-status', 'implemented')
+  uploadEvidence(
+    @Param('loanId', new ParseUUIDPipe()) loanId: string,
+    @Body() input: UploadLoanEvidenceDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @CurrentUser() user: AuthenticatedIdentity,
+  ) {
+    return this.uploadLoanEvidence.execute({
+      loanId,
+      type: input.type,
+      description: input.description,
+      files,
+      accountId: user.accountId,
+    });
+  }
+
+  @Get(':loanId/evidence')
+  @ApiOkResponse({ type: [LoanEvidenceResponseDto] })
+  @ApiOperation({ summary: 'Consultar evidencias del préstamo' })
+  @ApiExtension('x-implementation-status', 'implemented')
+  listEvidence(
+    @Param('loanId', new ParseUUIDPipe()) loanId: string,
+    @CurrentUser() user: AuthenticatedIdentity,
+  ) {
+    return this.getLoan.execute({ loanId }).then((loan) => {
+      if (loan.userId !== user.userId && user.role === AccessRole.USER) {
+        throw new ForbiddenException('No tiene permisos para consultar este préstamo.');
+      }
+      return this.uploadLoanEvidence.list(loanId);
     });
   }
 }

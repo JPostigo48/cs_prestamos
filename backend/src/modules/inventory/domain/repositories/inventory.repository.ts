@@ -3,12 +3,20 @@ import type {
   InventoryCopyStatus,
 } from '../entities/inventory.types.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+import type { CategoryPolicyConfiguration } from '../../../rules/domain/category-policy.js';
+import type { CategoryDeletionPreview } from '../entities/category-deletion.js';
 import type {
   ResourceAccessoryInput,
   StoredResourceAccessory,
 } from '../entities/resource-configuration.js';
 
 export abstract class InventoryRepository {
+  abstract getCategoryPolicies(
+    categoryId: string,
+  ): Promise<CategoryPolicyConfiguration>;
+  abstract previewCategoryDeletion(
+    categoryId: string,
+  ): Promise<CategoryDeletionPreview>;
   abstract findResourceAccessories(
     resourceId: string,
   ): Promise<StoredResourceAccessory[]>;
@@ -31,6 +39,8 @@ export abstract class InventoryRepository {
   ): Promise<any>;
   abstract createCategory(data: {
     nombre: string;
+    descripcion?: string | null;
+    activo?: boolean;
     tiempoMaximoPrestamoDias: number;
     tiempoMaximoPrestamoHoras?: number;
   }): Promise<any>;
@@ -41,6 +51,8 @@ export abstract class InventoryRepository {
     categoryId: string,
     data: Partial<{
       nombre: string;
+      descripcion: string | null;
+      activo: boolean;
       tiempoMaximoPrestamoDias: number;
       tiempoMaximoPrestamoHoras: number;
     }>,
@@ -50,6 +62,7 @@ export abstract class InventoryRepository {
 
   abstract createResource(data: {
     categoriaId: string;
+    activo?: boolean;
     nombre: string;
     descripcion?: string | null;
   }): Promise<any>;
@@ -70,6 +83,7 @@ export abstract class InventoryRepository {
     resourceId: string,
     data: Partial<{
       categoriaId: string;
+      activo: boolean;
       nombre: string;
       descripcion?: string | null;
     }>,

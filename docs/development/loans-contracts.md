@@ -1,5 +1,7 @@
 # Préstamos F08/F09/F14 — contrato y traspaso a trust
 
+**Configuración operativa actual:** la espera para nuevas reservas es persistida y editable por ADMINISTRADOR (valor inicial 30 minutos), con horario semanal opcional en America/Lima. Contrato UI, migración pendiente y límites: [configuración de reservas](../architecture/reservation-settings-api.md). Los plazos e instantáneas anteriores no se recalculan.
+
 **Cierre posterior:** mecanismo provisional retirado y OpenAPI/Showcase sincronizados a 75 operaciones. Resultados vigentes y límites: [cierre final](phase3-closure.md). Las verificaciones de implementación siguientes conservan su contexto histórico; migraciones no aplicadas.
 
 ## Rutas y consumidores
@@ -26,7 +28,7 @@ La [migración nativa aditiva](../../backend/prisma/migrations/app/20261029T0544
 
 Resueltos F08/F09/F14 y posteriormente F04/F05/F11/F12; el registro provisional está vacío. El contrato actualizado de trust y sus límites están en [`auth-integral.md`](auth-integral.md). Para otras consecuencias de préstamos seguir usando [LoanRepository](../../backend/src/modules/loans/domain/repositories/loan.repository.ts), [Loan/ReturnChecklist](../../backend/src/modules/loans/domain/entities/loan.ts), [ReservationRepository](../../backend/src/modules/loans/domain/repositories/reservation.repository.ts) y los registros de devolución/inspección, sin releer configuración actual ni multiplicar efectos en reintentos.
 
-La [aplicación manual de incumplimientos](../../backend/src/modules/rules/application/use-cases/register-violation.use-case.ts:26) sigue rechazando LATENESS/NO_SHOW porque necesita contexto de préstamo/reserva; F11 también los rechaza y no conecta un flujo automático ficticio. La suspensión manual usa su versión efectiva y clave de reintento auditada en la misma transacción que confianza y cancelación/liberación de reservas. No se añadió un despachador de sanciones ni una nueva política. Crear/recoger reserva ahora bloquea al usuario y comprueba sus sanciones efectivas dentro de la transacción; la suspensión no cierra préstamos activos ni libera sus ejemplares.
+La [aplicación manual de incumplimientos](../../backend/src/modules/rules/application/use-cases/register-violation.use-case.ts:26) sigue rechazando LATENESS/NO_SHOW porque necesita contexto de préstamo/reserva; F11 también los rechaza y no conecta un flujo automático ficticio. La suspensión manual usa su versión efectiva y clave de reintento auditada en la misma transacción que confianza y cancelación/liberación de reservas. El [vencimiento automático posterior](../architecture/reservation-expiry.md) sí conecta el contexto de reserva al registro existente, siempre LEVE y una sola vez; su migración adicional se aplicó con autorización el 2026-11-04, con esquema y política publicada verificados por lectura, sin prueba sancionadora real. No se añade una nueva política ni se habilita el registro manual de NO_SHOW. Crear/recoger reserva ahora bloquea al usuario y comprueba sus sanciones efectivas dentro de la transacción; la suspensión no cierra préstamos activos ni libera sus ejemplares.
 
 ## Verificación y límites
 

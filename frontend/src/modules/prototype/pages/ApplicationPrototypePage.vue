@@ -962,7 +962,6 @@ const loanCategory = computed<CatalogItem['category']>(() => {
   return found ? found.category : 'electricos' 
 })
 
-const loanCategoryLabel = computed(() => categoryLabels[loanCategory.value])
 const currentSanction = computed(() => sanctionRules[loanCategory.value])
 
 const isOperator = computed(() => role.value === 'operator')

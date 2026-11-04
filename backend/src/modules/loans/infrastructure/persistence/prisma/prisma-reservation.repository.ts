@@ -2,6 +2,8 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  HttpException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill/full';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
@@ -20,8 +22,14 @@ import type {
   Page,
   ReservationsQuery,
 } from '../../../domain/repositories/loan-queries.js';
-import { captureLoanConfiguration } from '../../integration/capture-loan-configuration.js';
+import {
+  captureLoanConfiguration,
+  assertActiveInventory,
+} from '../../integration/capture-loan-configuration.js';
 import { assertTransactionalEligibility } from '../../integration/assert-transactional-eligibility.js';
+import { readReservationSettings } from '../../../../system/infrastructure/prisma-reservation-settings.repository.js';
+import { calculatePickupDeadline, INSTITUTION_TIME_ZONE } from '../../../../system/domain/reservation-settings.js';
+import { registerReservationNoShow } from '../../integration/reservation-no-show.js';
 
 @Injectable()
 export class PrismaReservationRepository implements ReservationRepository {
@@ -65,10 +73,12 @@ export class PrismaReservationRepository implements ReservationRepository {
       'estado',
       'motivoCancelacion',
       'configurationSnapshot',
+      'createdAt',
     );
   }
 
   async findMany(query: ReservationsQuery): Promise<Page<Reservation>> {
+    await this.expire(new Date());
     const filter = () => {
       const base = this.select();
       // Predicados aplicados antes de paginar y antes del conteo.
@@ -121,6 +131,7 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async hasOpenReservationOrLoan(userId: string): Promise<boolean> {
+    await this.expire(new Date());
     const reservations = await this.runtime().query(
       this.prisma.sql.public.reservas
         .select('id')
@@ -142,6 +153,7 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async create(data: CreateReservationData): Promise<Reservation> {
+    await this.expire(new Date());
     try {
       const rows = await this.prisma.client.transaction(async (tx) => {
         // Todos los tipos de usuario se serializan con la baja administrativa.
@@ -157,7 +169,12 @@ export class PrismaReservationRepository implements ReservationRepository {
           throw new ConflictException(
             'El usuario no es elegible para préstamos.',
           );
-        await assertTransactionalEligibility(this.prisma, tx, data.userId, new Date());
+        await assertTransactionalEligibility(
+          this.prisma,
+          tx,
+          data.userId,
+          new Date(),
+        );
         if (data.enforceSingleOpenOperation) {
           const reservations = await tx.query(
             this.prisma.sql.public.reservas
@@ -196,6 +213,11 @@ export class PrismaReservationRepository implements ReservationRepository {
           tx,
           data.copyId,
         );
+        const settings = await readReservationSettings(this.prisma, tx, true);
+        const pickupDeadline = calculatePickupDeadline(
+          data.requestedAt,
+          settings,
+        );
         const reservations = await tx.query(
           this.prisma.sql.public.reservas
             .insert([
@@ -203,10 +225,20 @@ export class PrismaReservationRepository implements ReservationRepository {
                 usuarioId: data.userId,
                 ejemplarId: data.copyId,
                 fechaSolicitada: this.instant(data.requestedAt),
-                fechaLimiteRecogida: this.instant(data.pickupDeadline),
+                fechaLimiteRecogida: this.instant(pickupDeadline),
                 duracionPrestamoHoras: snapshot.policy.effectiveDurationHours,
                 configurationSnapshot: {
                   ...snapshot,
+                  reservationSettings: {
+                    version: settings.version,
+                    pickupWaitMinutes: settings.pickupWaitMinutes,
+                    weeklySchedule:
+                      settings.weeklySchedule?.map((d) => ({
+                        ...d,
+                        intervals: d.intervals.map((i) => ({ ...i })),
+                      })) ?? null,
+                    timeZone: INSTITUTION_TIME_ZONE,
+                  },
                   policy: { ...snapshot.policy },
                   accessories: snapshot.accessories.map((a) => ({ ...a })),
                 },
@@ -237,16 +269,13 @@ export class PrismaReservationRepository implements ReservationRepository {
       });
       return this.map(rows);
     } catch (error) {
-      if (
-        error instanceof ConflictException ||
-        error instanceof InternalServerErrorException
-      )
-        throw error;
+      if (error instanceof HttpException) throw error;
       throw new ConflictException('No se pudo crear la reserva.');
     }
   }
 
   async findById(reservationId: string): Promise<Reservation | null> {
+    await this.expire(new Date());
     const rows = await this.runtime().query(
       this.select()
         .where((row, fns) => fns.eq(row.id, reservationId))
@@ -268,6 +297,7 @@ export class PrismaReservationRepository implements ReservationRepository {
     reservationId: string,
     pickedUpAt: Date,
   ): Promise<{ reservation: Reservation; loan: Loan }> {
+    await this.expire(pickedUpAt);
     return this.prisma.client.transaction(async (tx) => {
       const reservations = await tx.query(
         this.select()
@@ -279,13 +309,24 @@ export class PrismaReservationRepository implements ReservationRepository {
       const reservation = reservations[0];
       if (!reservation)
         throw new ConflictException('La reserva ya no está disponible.');
-      const users = await tx.query(this.prisma.sql.public.usuarios
-        .update({ id: reservation.usuarioId })
-        .where((r, f) => f.eq(r.id, reservation.usuarioId))
-        .where((r, f) => f.eq(r.vinculacionVigente, true))
-        .returning('id').build());
-      if (!users[0]) throw new ConflictException('El usuario no es elegible para préstamos.');
-      await assertTransactionalEligibility(this.prisma, tx, reservation.usuarioId, new Date());
+      const users = await tx.query(
+        this.prisma.sql.public.usuarios
+          .update({ id: reservation.usuarioId })
+          .where((r, f) => f.eq(r.id, reservation.usuarioId))
+          .where((r, f) => f.eq(r.vinculacionVigente, true))
+          .returning('id')
+          .build(),
+      );
+      if (!users[0])
+        throw new ConflictException(
+          'El usuario no es elegible para préstamos.',
+        );
+      await assertTransactionalEligibility(
+        this.prisma,
+        tx,
+        reservation.usuarioId,
+        new Date(),
+      );
       const updated = await tx.query(
         this.prisma.sql.public.reservas
           .update({
@@ -327,6 +368,7 @@ export class PrismaReservationRepository implements ReservationRepository {
       );
       if (!copies[0])
         throw new ConflictException('El ejemplar ya no está reservado.');
+      await assertActiveInventory(this.prisma, tx, reservation.ejemplarId);
       const loans = await tx.query(
         this.prisma.sql.public.prestamos
           .insert([
@@ -422,43 +464,104 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async expire(at: Date): Promise<Reservation[]> {
-    return this.prisma.client.transaction(async (tx) => {
-      const rows = await tx.query(
-        this.prisma.sql.public.reservas
-          .update({
-            estado: 'VENCIDA',
-            fechaCancelacion: this.instant(at),
-            motivoCancelacion: 'Ventana de recogida vencida',
-          })
-          .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
-          .where((row, fns) =>
-            fns.lt(row.fechaLimiteRecogida, this.instant(at)),
-          )
-          .returning(
-            'id',
-            'usuarioId',
-            'ejemplarId',
-            'fechaSolicitada',
-            'fechaLimiteRecogida',
-            'duracionPrestamoHoras',
-            'fechaRecogida',
-            'fechaCancelacion',
-            'estado',
-            'motivoCancelacion',
-            'configurationSnapshot',
-          )
+    try {
+      const candidates = await this.runtime().query(
+        this.select()
+          .where((r, f) => f.eq(r.estado, 'CONFIRMADA'))
+          .where((r, f) => f.lt(r.fechaLimiteRecogida, this.instant(at)))
+          .orderBy((r) => r.usuarioId, { direction: 'asc' })
+          .orderBy((r) => r.id, { direction: 'asc' })
           .build(),
       );
-      for (const row of rows) {
-        await tx.query(
-          this.prisma.sql.public.ejemplares
-            .update({ estado: 'DISPONIBLE' })
-            .where((copy, fns) => fns.eq(copy.id, row.ejemplarId))
-            .where((copy, fns) => fns.eq(copy.estado, 'RESERVADO'))
-            .build(),
-        );
+      const expired: Reservation[] = [];
+      for (const candidate of candidates) {
+        const result = await this.prisma.client.transaction(async (tx) => {
+          // Mismo orden que pickup/create/sanciones: usuario -> reserva -> ejemplar.
+          const users = await tx.query(
+            this.prisma.sql.public.usuarios
+              .update({ id: candidate.usuarioId })
+              .where((r, f) => f.eq(r.id, candidate.usuarioId))
+              .returning('id')
+              .build(),
+          );
+          if (!users[0])
+            throw new ServiceUnavailableException(
+              'No se pudo bloquear el titular de la reserva.',
+            );
+          const rows = await tx.query(
+            this.prisma.sql.public.reservas
+              .update({
+                estado: 'VENCIDA',
+                fechaCancelacion: this.instant(at),
+                motivoCancelacion: 'Ventana de recogida vencida',
+              })
+              .where((row, fns) => fns.eq(row.id, candidate.id))
+              .where((row, fns) => fns.eq(row.estado, 'CONFIRMADA'))
+              .where((row, fns) =>
+                fns.lt(row.fechaLimiteRecogida, this.instant(at)),
+              )
+              .returning(
+                'id',
+                'usuarioId',
+                'ejemplarId',
+                'fechaSolicitada',
+                'fechaLimiteRecogida',
+                'duracionPrestamoHoras',
+                'fechaRecogida',
+                'fechaCancelacion',
+                'estado',
+                'motivoCancelacion',
+                'configurationSnapshot',
+                'createdAt',
+              )
+              .build(),
+          );
+          const row = rows[0];
+          if (!row) return null; // Otro worker, recogida o cancelación ya la procesó.
+          const loans = await tx.query(
+            this.prisma.sql.public.prestamos
+              .select('id')
+              .where((r, f) => f.eq(r.ejemplarId, row.ejemplarId))
+              .where((r, f) => f.eq(r.estado, 'ACTIVO'))
+              .limit(1)
+              .build(),
+          );
+          const otherReservations = await tx.query(
+            this.prisma.sql.public.reservas
+              .select('id')
+              .where((r, f) => f.eq(r.ejemplarId, row.ejemplarId))
+              .where((r, f) => f.eq(r.estado, 'CONFIRMADA'))
+              .limit(1)
+              .build(),
+          );
+          if (loans[0] || otherReservations[0])
+            throw new ServiceUnavailableException(
+              'El ejemplar de la reserva requiere revisión.',
+            );
+          const copies = await tx.query(
+            this.prisma.sql.public.ejemplares
+              .update({ estado: 'DISPONIBLE' })
+              .where((copy, fns) => fns.eq(copy.id, row.ejemplarId))
+              .where((copy, fns) => fns.eq(copy.estado, 'RESERVADO'))
+              .returning('id')
+              .build(),
+          );
+          if (!copies[0])
+            throw new ServiceUnavailableException(
+              'El ejemplar ya no está reservado.',
+            );
+          await registerReservationNoShow(this.prisma, tx, row, at);
+          return this.map(row);
+        });
+        if (result) expired.push(result);
       }
-      return rows.map((row: any) => this.map(row));
-    });
+      return expired;
+    } catch (error) {
+      // Incluye esquema pendiente/tabla ausente: no filtrar SQL ni devolver un éxito parcial.
+      throw new ServiceUnavailableException(
+        'No se pudo completar el vencimiento y su sanción. Reintente más tarde.',
+        { cause: error },
+      );
+    }
   }
 }

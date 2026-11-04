@@ -22,9 +22,11 @@ import { canAppeal } from '../appeal-policy'
 import SanctionDetails from '../../trust/components/SanctionDetails.vue'
 import MyAppeals from '../../trust/components/MyAppeals.vue'
 import { dateTime } from '../../../shared/format'
-import { Star, ShieldCheck, TriangleAlert, ArrowRight } from '@lucide/vue'
+import { ShieldCheck, TriangleAlert, ArrowRight } from '@lucide/vue'
 import CategoryIcon from '../../inventory/components/CategoryIcon.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
+import TrustMeter from '../../trust/components/TrustMeter.vue'
+defineProps<{ personalOnly?: boolean }>()
 const eligibilityReasons: Record<string, string> = {
   VINCULACION_NO_VIGENTE: 'Vinculación institucional no vigente',
   SANCION_ACTIVA: 'Sanción activa',
@@ -36,7 +38,7 @@ const eligibility = useRemote((signal) => getEligibility(session.user.id, signal
 const trust = useRemote((signal) => getTrust(session.user.id, signal))
 const sanctions = useRemote((signal) => getSanctions(session.user.id, signal))
 const loans = useRemote((signal) => getHistory(session.user.id, signal))
-const categories = useRemote(getCategories)
+const categories = useRemote(signal => getCategories(signal, true))
 const availability = useRemote(getGlobalAvailability)
 const copies = useCopyDetails(loans.data)
 const currentLoans = computed(
@@ -72,51 +74,58 @@ async function sendAppeal() {
 
 <template>
   <section class="student-welcome">
-    <p class="muted greeting">Bienvenido/a,</p>
-    <h1>{{ profile.data.value?.name || 'Mi cuenta' }}</h1>
-    <div class="student-status">
-      <div aria-label="Perfil">
-      <RemoteState
-        :loading="profile.loading.value"
-        :error="profile.error.value"
-        @retry="profile.refresh"
-        ><details class="profile-details"><summary>Mi perfil</summary><dl v-if="profile.data.value" class="profile-grid">
-          <div><dt>Nombre</dt><dd>{{ profile.data.value.name }}</dd></div>
-          <div><dt>Correo de acceso</dt><dd>{{ session.user.email }}</dd></div>
-          <div><dt>Tipo de usuario</dt><dd>{{ profile.data.value.userType }}</dd></div>
-          <div><dt>Identificación institucional</dt><dd>{{ profile.data.value.institutionalId || 'No registrada' }}</dd></div>
-          <div><dt>Vinculación institucional</dt><dd>{{ profile.data.value.hasCurrentAffiliation ? 'Vigente' : 'No vigente' }}</dd></div>
-        </dl></details></RemoteState
-      >
+    <div class="welcome-grid">
+      <div class="welcome-head">
+        <p class="muted greeting">Bienvenido/a,</p>
+        <h1>{{ profile.data.value?.name || 'Mi cuenta' }}</h1>
       </div>
-      <div aria-label="Habilitación para préstamos">
-      <RemoteState
-        :loading="eligibility.loading.value"
-        :error="eligibility.error.value"
-        @retry="eligibility.refresh"
-      >
-        <details><summary><StatusBadge :tone="eligibility.data.value?.enabled ? 'success' : 'danger'"><ShieldCheck v-if="eligibility.data.value?.enabled" :size="13" aria-hidden="true" /><TriangleAlert v-else :size="13" aria-hidden="true" />
-          {{
-            eligibility.data.value?.enabled
-              ? 'Préstamos habilitados'
-              : 'Préstamos no habilitados'
-          }}
-        </StatusBadge></summary>
-        <p>Habilitación para préstamos; no indica el estado de la cuenta de acceso.</p>
-        <p class="muted">La reserva también valida términos, cupo y disponibilidad.</p>
-        <ul>
-          <li v-for="item in eligibility.data.value?.reasons" :key="item">
-            {{ eligibilityReasons[item] || item }}
-          </li>
-        </ul></details>
-      </RemoteState>
+      <div class="trust-card" aria-label="Confianza">
+        <RemoteState :loading="trust.loading.value" :error="trust.error.value" @retry="trust.refresh"
+          ><TrustMeter
+            v-if="trust.data.value"
+            :percentage="trust.data.value.percentage"
+            :level="trust.data.value.level"
+            :currently-penalized="trust.data.value.currentlyPenalized"
+          /></RemoteState
+        >
       </div>
-      <div aria-label="Confianza">
-      <RemoteState :loading="trust.loading.value" :error="trust.error.value" @retry="trust.refresh"
-        ><details v-if="trust.data.value"><summary><StatusBadge :tone="trust.data.value.percentage >= 80 ? 'info' : trust.data.value.percentage >= 50 ? 'warning' : 'danger'"><Star :size="13" aria-hidden="true" />
-          Confianza: {{ trust.data.value.percentage }} %
-        </StatusBadge></summary><p>{{ trust.data.value.level.replaceAll('_', ' ') }}</p></details></RemoteState
-      >
+      <div class="student-status">
+        <div aria-label="Perfil">
+        <RemoteState
+          :loading="profile.loading.value"
+          :error="profile.error.value"
+          @retry="profile.refresh"
+          ><details class="profile-details"><summary>Mi perfil</summary><dl v-if="profile.data.value" class="profile-grid">
+            <div><dt>Nombre</dt><dd>{{ profile.data.value.name }}</dd></div>
+            <div><dt>Correo de acceso</dt><dd>{{ session.user.email }}</dd></div>
+            <div><dt>Tipo de usuario</dt><dd>{{ profile.data.value.userType }}</dd></div>
+            <div><dt>Identificación institucional</dt><dd>{{ profile.data.value.institutionalId || 'No registrada' }}</dd></div>
+            <div><dt>Vinculación institucional</dt><dd>{{ profile.data.value.hasCurrentAffiliation ? 'Vigente' : 'No vigente' }}</dd></div>
+          </dl></details></RemoteState
+        >
+        </div>
+        <div aria-label="Habilitación para préstamos">
+        <RemoteState
+          :loading="eligibility.loading.value"
+          :error="eligibility.error.value"
+          @retry="eligibility.refresh"
+        >
+          <details><summary><StatusBadge :tone="eligibility.data.value?.enabled ? 'success' : 'danger'"><ShieldCheck v-if="eligibility.data.value?.enabled" :size="13" aria-hidden="true" /><TriangleAlert v-else :size="13" aria-hidden="true" />
+            {{
+              eligibility.data.value?.enabled
+                ? 'Préstamos habilitados'
+                : 'Préstamos no habilitados'
+            }}
+          </StatusBadge></summary>
+          <p>Habilitación para préstamos; no indica el estado de la cuenta de acceso.</p>
+          <p class="muted">La reserva también valida términos, cupo y disponibilidad.</p>
+          <ul>
+            <li v-for="item in eligibility.data.value?.reasons" :key="item">
+              {{ eligibilityReasons[item] || item }}
+            </li>
+          </ul></details>
+        </RemoteState>
+        </div>
       </div>
     </div>
   </section>
@@ -128,7 +137,7 @@ async function sendAppeal() {
     <button v-if="canAppeal(sanction)" :disabled="appealBlocked(sanction.id)" @click="openAppeal(sanction)">Apelar sanción</button>
     <p>Los detalles y las apelaciones están disponibles en el historial de sanciones.</p>
   </section>
-  <section class="student-catalog">
+  <section v-if="!personalOnly" class="student-catalog">
     <div class="student-section-heading"><h2>Explorar catálogo</h2><RouterLink to="/app/catalog">Ver todo <ArrowRight :size="14" aria-hidden="true" /></RouterLink></div>
     <RemoteState
       :loading="categories.loading.value"
@@ -151,7 +160,7 @@ async function sendAppeal() {
     </RemoteState>
     <p v-if="availability.error.value" class="error" role="alert">Disponibilidad desconocida. {{ availability.error.value }} <button @click="availability.refresh">Reintentar disponibilidad</button></p>
   </section>
-  <section class="student-loans">
+  <section v-if="!personalOnly" class="student-loans">
     <div class="student-section-heading"><h2>Mis préstamos activos</h2><span class="muted">{{ loans.data.value ? currentLoans.length : '—' }} activos</span></div>
     <RemoteState :loading="loans.loading.value" :error="loans.error.value" @retry="loans.refresh">
       <div v-if="currentLoans.length" class="table-wrap desktop-only student-loan-table">
@@ -247,9 +256,12 @@ async function sendAppeal() {
 </template>
 <style scoped>
 .student-welcome { margin-bottom: 28px; }
+.welcome-grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "trust" "status"; gap: 10px; align-items: start; }
+.welcome-head { grid-area: head; min-width: 0; }
+.trust-card { grid-area: trust; min-width: 0; width: 100%; max-width: 420px; background: transparent; border-radius: 12px; padding: 14px 16px; }
 .greeting { font-size: 14px; margin-bottom: 4px; }
 .student-welcome h1 { margin-bottom: 10px; line-height: 1.2; }
-.student-status { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: start; font-size: 14px; }
+.student-status { grid-area: status; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: start; font-size: 14px; }
 .student-status > div { min-width: 0; max-width: 100%; }
 .student-status > div:first-child { order: 3; flex-basis: 100%; margin-top: 4px; }
 .student-status details[open] { max-width: 440px; }
@@ -302,6 +314,15 @@ async function sendAppeal() {
 .loan-copy { font-size: 12px; margin-top: 4px; }
 .loan-deadline { border-top: 1px solid #f1f5f9; padding-top: 12px; font-size: 12px; }
 .student-loan-table td:first-child a { text-decoration: none; color: #0f172a; font-weight: 600; }
+@media (min-width: 900px) {
+  .welcome-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-areas: "head trust" "status trust";
+    column-gap: 24px;
+    row-gap: 8px;
+  }
+  .trust-card { max-width: none; }
+}
 @media (max-width: 1023px) {
   .student-welcome { margin-bottom: 20px; }
   .student-section-heading { gap: 8px; margin-bottom: 10px; }

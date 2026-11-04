@@ -4,6 +4,7 @@ import { isStaff } from '../../auth/access-policy'
 import { pagination, parsePage, validSnapshot, type CopyLoanSnapshot } from './loan-contracts'
 import type { Loan } from './loans-api'
 import { guardedMutation, mutationConfirmation } from '../../../shared/api/mutation-guard'
+import { validInstant } from '../../../shared/api/calendar'
 export interface Reservation {
   id: string
   userId: string
@@ -55,7 +56,7 @@ export async function listReservations(query: Record<string, string>, signal?: A
 export async function createReservation(copyId: string, requestedAt: string) {
   const owner = getSession()?.user.id
   const instant = new Date(requestedAt)
-  if (!copyId || !Number.isFinite(instant.getTime()) || instant.getTime() <= Date.now())
+  if (!copyId || !validInstant(requestedAt) || !Number.isFinite(instant.getTime()) || instant.getTime() <= Date.now())
     throw new ApiError('Selecciona un ejemplar y una fecha futura.', 400)
   return guardedMutation('reserve:' + copyId, async () => {
     const result = await authenticatedRequest<Reservation>('/loans/reservations', {

@@ -15,7 +15,7 @@ export function catalogDestination(query: Record<string, unknown>, management = 
   const filters: Record<string, string> = {}
   for (const name of ['search', 'categoryId', 'available', 'page', 'limit'])
     if (typeof query[name] === 'string') filters[name] = query[name]
-  return { path: management ? '/app/admin/catalog' : '/app/catalog', query: filters }
+  return { path: management ? '/app/admin/inventory' : '/app/catalog', query: filters }
 }
 export function resourceDestination(id: string, query: Record<string, unknown>, management = false) {
   return { path: '/app/catalog/' + encodeURIComponent(id), query: { ...catalogDestination(query).query, origin: management ? 'management' : 'catalog' } }

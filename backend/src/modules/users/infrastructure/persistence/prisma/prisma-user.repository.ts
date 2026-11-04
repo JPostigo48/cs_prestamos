@@ -76,6 +76,7 @@ export class PrismaUserRepository extends UserRepository {
       name: row.nombre,
       userType: row.tipoUsuario,
       institutionalId: row.identificadorInstitucional,
+      phone: row.telefono,
       hasCurrentAffiliation: row.vinculacionVigente,
       trustPercentage: Number(row.confianza),
     };
@@ -112,6 +113,7 @@ export class PrismaUserRepository extends UserRepository {
               nombre: data.name,
               tipoUsuario: data.userType,
               identificadorInstitucional: data.institutionalId,
+              telefono: data.phone ?? null,
               vinculacionVigente: data.hasCurrentAffiliation,
               confianza: '75.00',
             },
@@ -121,6 +123,7 @@ export class PrismaUserRepository extends UserRepository {
             'nombre',
             'tipoUsuario',
             'identificadorInstitucional',
+            'telefono',
             'vinculacionVigente',
             'confianza',
           )
@@ -165,6 +168,7 @@ export class PrismaUserRepository extends UserRepository {
             'nombre',
             'tipoUsuario',
             'identificadorInstitucional',
+            'telefono',
             'vinculacionVigente',
             'confianza',
           )
@@ -209,6 +213,7 @@ export class PrismaUserRepository extends UserRepository {
             ...(data.institutionalId !== undefined
               ? { identificadorInstitucional: data.institutionalId }
               : {}),
+            ...(data.phone !== undefined ? { telefono: data.phone } : {}),
             ...(data.hasCurrentAffiliation !== undefined
               ? { vinculacionVigente: data.hasCurrentAffiliation }
               : {}),
@@ -219,6 +224,7 @@ export class PrismaUserRepository extends UserRepository {
             'nombre',
             'tipoUsuario',
             'identificadorInstitucional',
+            'telefono',
             'vinculacionVigente',
             'confianza',
           )
@@ -247,6 +253,7 @@ export class PrismaUserRepository extends UserRepository {
             nombre: user.name,
             tipoUsuario: user.userType,
             identificadorInstitucional: user.institutionalId,
+            telefono: user.phone,
             vinculacionVigente: user.hasCurrentAffiliation,
             confianza: user.trustPercentage.toFixed(2),
           },
@@ -256,6 +263,7 @@ export class PrismaUserRepository extends UserRepository {
           'nombre',
           'tipoUsuario',
           'identificadorInstitucional',
+          'telefono',
           'vinculacionVigente',
           'confianza',
         )
@@ -272,6 +280,7 @@ export class PrismaUserRepository extends UserRepository {
           'nombre',
           'tipoUsuario',
           'identificadorInstitucional',
+          'telefono',
           'vinculacionVigente',
           'confianza',
         )
@@ -290,6 +299,7 @@ export class PrismaUserRepository extends UserRepository {
           'nombre',
           'tipoUsuario',
           'identificadorInstitucional',
+          'telefono',
           'vinculacionVigente',
           'confianza',
         )
@@ -318,6 +328,7 @@ export class PrismaUserRepository extends UserRepository {
     userType?: string;
     hasCurrentAffiliation?: boolean;
     institutionalId?: string;
+    phone?: string;
     page: number;
     limit: number;
   }) {
@@ -326,6 +337,7 @@ export class PrismaUserRepository extends UserRepository {
       'nombre',
       'tipoUsuario',
       'identificadorInstitucional',
+      'telefono',
       'vinculacionVigente',
       'confianza',
     );

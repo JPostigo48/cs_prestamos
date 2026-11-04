@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { durationLabel, getAccessories, getCopies, getResource } from '../api/inventory-api'
 import { useRemote } from '../../../shared/composables/useRemote'
@@ -9,6 +9,11 @@ import ReservationDialog from '../../loans/components/ReservationDialog.vue'
 import { getSession } from '../../auth/api/auth-api'
 import { isStaff } from '../../auth/access-policy'
 import { catalogDestination } from '../catalog-query'
+import { listReservations } from '../../loans/api/reservations-api'
+import { validLoan } from '../../loans/api/loan-contracts'
+import { getHistory } from '../../users/api/student-api'
+import { ApiError } from '../../../shared/api/client'
+import AlertHint from '../../../shared/components/AlertHint.vue'
 const reserving = ref(false)
 const reservationChanged = ref(false)
 const session = getSession()!
@@ -17,9 +22,44 @@ const id = computed(() => String(route.params.resourceId))
 const resource = useRemote((signal) => getResource(id.value, signal), id)
 const copies = useRemote((signal) => getCopies(id.value, signal), id)
 const accessories = useRemote((signal) => getAccessories(id.value, signal), id)
+const currentOperation = useRemote(async (signal) => {
+  const [reservations, loans] = await Promise.all([
+    listReservations({ userId: session.user.id, status: 'CONFIRMADA', page: '1', limit: '1' }, signal),
+    getHistory(session.user.id, signal),
+  ])
+  if (!Array.isArray(loans) || loans.some((loan) => !validLoan(loan) || loan.userId !== session.user.id))
+    throw new ApiError('No se pudo confirmar el estado de tus préstamos.', 0)
+  return {
+    reservation: reservations.total > 0,
+    loan: loans.some((loan) => loan.status === 'ACTIVO' || loan.status === 'PLANIFICADO'),
+  }
+}, id)
+const reservationBlockedMessage = computed(() => {
+  if (currentOperation.loading.value) return 'Consultando tus reservas y préstamos.'
+  if (currentOperation.error.value || !currentOperation.data.value) return 'No pudimos comprobar tus operaciones. Actualiza la disponibilidad para reintentar.'
+  if (currentOperation.data.value.reservation) return 'Ya tienes una reserva activa.'
+  if (currentOperation.data.value.loan) return 'Ya tienes un préstamo activo o pendiente de entrega.'
+  return ''
+})
+const canReserve = computed(() => !reservationBlockedMessage.value && resource.data.value?.available !== false
+  && !resource.loading.value && !resource.error.value && !copies.loading.value && !copies.error.value
+  && !!copies.data.value?.some((copy) => copy.estado === 'DISPONIBLE'))
+async function openReservation() {
+  if (!canReserve.value) return
+  await currentOperation.refresh()
+  if (canReserve.value) reserving.value = true
+}
+function refreshCurrentOperation() { void currentOperation.refresh() }
+onMounted(() => window.addEventListener('focus', refreshCurrentOperation))
+onBeforeUnmount(() => window.removeEventListener('focus', refreshCurrentOperation))
+function reservationUpdated() {
+  reservationChanged.value = true
+  refreshCurrentOperation()
+}
 function refreshAvailability() {
   void resource.refresh()
   void copies.refresh()
+  refreshCurrentOperation()
 }
 function closeReservation() {
   reserving.value = false
@@ -27,6 +67,7 @@ function closeReservation() {
     reservationChanged.value = false
     void copies.refresh()
     void resource.refresh()
+    refreshCurrentOperation()
   }
 }
 </script>
@@ -76,13 +117,19 @@ function closeReservation() {
         </div>
         <p v-else>Consulta de ejemplares necesaria para conocer el total exacto.</p>
         <div v-if="copies.data.value && !copies.error.value && !copies.loading.value" class="availability-track" aria-hidden="true"><div :style="{ width: (copies.data.value.length ? copies.data.value.filter(c => c.estado === 'DISPONIBLE').length / copies.data.value.length * 100 : 0) + '%' }" /></div>
+        <div class="reservation-control">
         <button
           class="primary"
-          :disabled="copies.loading.value || !!copies.error.value || !copies.data.value?.some((c) => c.estado === 'DISPONIBLE')"
-          @click="reserving = true"
+          :disabled="!canReserve"
+          :aria-describedby="reservationBlockedMessage ? 'reservation-blocked-status' : undefined"
+          @click="openReservation"
         >
-          {{ copies.data.value && !copies.error.value && !copies.loading.value && !copies.data.value.some(c => c.estado === 'DISPONIBLE') ? 'Sin disponibilidad por el momento' : 'Reservar equipo para mí' }}
+          Reservar ejemplar
         </button>
+        <AlertHint v-if="reservationBlockedMessage" :message="reservationBlockedMessage" label="Por qué no puedo reservar" />
+        </div>
+        <span v-if="reservationBlockedMessage" id="reservation-blocked-status" class="sr-only" role="status">{{ reservationBlockedMessage }}</span>
+        <p v-if="resource.data.value.available === false">No disponible para nuevas reservas. La actividad del recurso/categoría y las políticas se revalidan en el servidor.</p>
       </section>
       </div>
       <section class="panel">
@@ -109,7 +156,7 @@ function closeReservation() {
         :resource-id="id"
       />
       <section v-else class="panel">
-        <h2>Historial del artículo</h2>
+        <h2>Historial del recurso</h2>
         <p>El historial de otros prestatarios está restringido al personal por privacidad.</p>
       </section>
       <ReservationDialog
@@ -118,7 +165,7 @@ function closeReservation() {
         :copies="copies.data.value ?? []"
         :resource-name="resource.data.value.nombre"
         @close="closeReservation"
-        @created="reservationChanged = true"
+        @created="reservationUpdated"
       />
     </template>
   </RemoteState>
@@ -137,6 +184,8 @@ function closeReservation() {
 .accessory-list li::before { content: ''; height: 6px; width: 6px; flex-shrink: 0; border-radius: 50%; background: #3b82f6; }
 .availability-panel { padding: 28px; }
 .availability-panel button { width: 100%; padding-block: 12px; font-weight: 700; }
+.reservation-control { display: flex; align-items: center; gap: 8px; }
+.reservation-control > .primary { flex: 1; }
 .availability-summary { display: flex; align-items: center; gap: 16px; }
 .available-number { display: block; font-size: 56px; line-height: 1.2; color: #059669; }
 .availability-track { height: 8px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-block: 20px; }

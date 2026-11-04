@@ -6,11 +6,19 @@ export interface Terms {
   number: number
   title: string
   content: string
+  publishedAt?: string | null
 }
-export async function getCurrentTerms(signal?: AbortSignal) {
-  const result = await apiRequest<Terms>('/terms/current', { signal })
+function readableTerms(result: Terms) {
   if (!result?.id || !Number.isInteger(result.number) || result.number < 1 || !result.title?.trim() || !result.content?.trim())
     throw new ApiError('No hay una versión de términos legible disponible. Contacta con el personal.', 422)
+  return result
+}
+export async function getCurrentTerms(signal?: AbortSignal) {
+  return readableTerms(await apiRequest<Terms>('/terms/current', { signal }))
+}
+export async function getTermsVersion(versionId: string, signal?: AbortSignal) {
+  const result = readableTerms(await apiRequest<Terms>('/terms/versions/' + encodeURIComponent(versionId), { signal }))
+  if (result.id !== versionId) throw new ApiError('No se pudo confirmar la versión de términos solicitada.', 422)
   return result
 }
 export async function startGoogle(email: string) {
@@ -30,6 +38,7 @@ export const requestFullRegistration = (body: {
   password: string
   userType: string
   institutionalId?: string
+  phone?: string
   evidence: string[]
   termsVersionId: string
 }) => guardedMutation('full-registration', async () => {
@@ -49,5 +58,20 @@ export async function acceptTerms(userId: string, termsVersionId: string) {
   })
   if (!result?.id || result.userId !== userId || result.termsVersionId !== termsVersionId)
     throw new ApiError('El servidor no confirmó la aceptación.', 0)
+  return result
+}
+export interface TermsAcceptance {
+  id: string
+  userId: string
+  termsVersionId: string
+  acceptedAt: string
+}
+export async function getMyAcceptances(userId: string, signal?: AbortSignal) {
+  const result = await authenticatedRequest<TermsAcceptance[]>(
+    '/terms/users/' + userId + '/acceptances',
+    { signal },
+  )
+  if (!Array.isArray(result) || result.some((item) => !item?.id || item.userId !== userId || !item.termsVersionId || !Number.isFinite(Date.parse(item.acceptedAt))))
+    throw new ApiError('No se pudo leer el historial de aceptaciones.', 0)
   return result
 }

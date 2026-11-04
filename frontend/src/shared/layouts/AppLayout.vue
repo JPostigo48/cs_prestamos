@@ -1,35 +1,25 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { House, Library, CalendarDays, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, Search, X, LogOut } from '@lucide/vue'
+import { House, Library, FileCheck, ArrowLeftRight, ClipboardList, Scale, Users, Package, Ellipsis, X, LogOut, History, Settings } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearSession, getSession } from '../../modules/auth/api/auth-api'
-import { isStaff } from '../../modules/auth/access-policy'
+import { navigationGroups, navigationIsCurrent } from '../../modules/auth/access-policy'
+import { getUser } from '../../modules/users/api/student-api'
+import { useRemote } from '../composables/useRemote'
 
 const session = getSession()
+const profile = useRemote((signal) => session ? getUser(session.user.id, signal) : Promise.resolve(null))
+const displayName = computed(() => profile.data.value?.name?.trim() || (profile.loading.value ? 'Cargando perfil…' : 'Nombre no disponible'))
 const router = useRouter()
 const route = useRoute()
 const menuOpen = ref(false)
 const content = ref<HTMLElement | null>(null)
 const menuToggle = ref<HTMLButtonElement | null>(null)
-const search = ref('')
 const roleLabel = session?.user.role === 'ADMINISTRADOR' ? 'Administrador' : session?.user.role === 'OPERADOR' ? 'Operador' : 'Usuario'
-const isCurrent = (to: string) => route.path === to || (to === '/app/catalog' && route.path.startsWith('/app/catalog/'))
-const links = [
-  ...(session?.user.role === 'ADMINISTRADOR' ? [
-    { to: '/app/admin/appeals', label: 'Apelaciones', short: 'Apelaciones', icon: Scale },
-    { to: '/app/admin/users', label: 'Usuarios', short: 'Usuarios', icon: Users },
-    { to: '/app/admin/catalog', label: 'Catálogo (Inventario)', short: 'Inventario', icon: Package },
-  ] : []),
-  ...(session?.user.role === 'USUARIO' ? [{ to: '/app', label: 'Inicio', short: 'Inicio', icon: House }] : []),
-  ...(session && isStaff(session.user.role) ? [
-    { to: '/app/loans', label: 'Préstamos y devoluciones', short: 'Préstamos', icon: ArrowLeftRight },
-  ] : []),
-  { to: '/app/catalog', label: 'Catálogo', short: 'Catálogo', icon: Library },
-  ...(session && isStaff(session.user.role) ? [
-    { to: '/app/registrations', label: 'Solicitudes de registro', short: 'Solicitudes', icon: ClipboardList },
-  ] : []),
-  { to: '/app/reservations', label: 'Mis reservas y términos', short: 'Reservas', icon: CalendarDays },
-]
+const isCurrent = (to: string) => navigationIsCurrent(route.path, to)
+const icons: Record<string, typeof House> = { home: House, catalog: Library, terms: FileCheck, loans: ArrowLeftRight, requests: ClipboardList, appeals: Scale, users: Users, inventory: Package, history: History, settings: Settings }
+const groups = navigationGroups(session?.user.role ?? 'USUARIO').map(group => ({ ...group, links: group.links.map(link => ({ ...link, icon: icons[link.icon] })) }))
+const links = groups.flatMap(group => group.links)
 const secondaryCurrent = computed(() => links.slice(3).find((link) => isCurrent(link.to)))
 let desktopQuery: MediaQueryList | undefined
 function resetMobileMenu() { menuOpen.value = false }
@@ -75,21 +65,20 @@ function logout() {
       <nav id="app-navigation" :class="{ open: menuOpen }" aria-label="Navegación principal" @keydown.esc.prevent="closeMenu(true)">
         <strong class="brand sidebar-brand"><img src="/logo.png" alt="" />CS Préstamos</strong>
         <div class="mobile-menu-heading mobile-only"><strong>Navegación</strong><button type="button" aria-label="Cerrar navegación" @click="closeMenu(true)"><X :size="20" aria-hidden="true" /></button></div>
-        <RouterLink v-for="link in links" :key="link.to" :to="link.to" :class="{ 'is-active': isCurrent(link.to) }" :aria-current="isCurrent(link.to) ? (route.path === link.to ? 'page' : 'location') : undefined" @click="route.path === link.to && menuOpen && closeMenu()">
+        <template v-for="group in groups" :key="group.label">
+        <p class="navigation-group">{{ group.label }}</p>
+        <RouterLink v-for="link in group.links" :key="link.to" :to="link.to" :class="{ 'is-active': isCurrent(link.to) }" :aria-current="isCurrent(link.to) ? (route.path === link.to ? 'page' : 'location') : undefined" @click="route.path === link.to && menuOpen && closeMenu()">
           <component :is="link.icon" :size="16" aria-hidden="true" /><span>{{ link.label }}</span>
         </RouterLink>
-        <div class="mobile-account mobile-only"><p>{{ session?.user.email }} · {{ roleLabel }}</p><button @click="logout">Salir</button></div>
+        </template>
+        <div class="mobile-account mobile-only"><strong>{{ displayName }}</strong><p>{{ session?.user.email }} · {{ roleLabel }}</p><button type="button" aria-label="Cerrar sesión" title="Cerrar sesión" @click="logout"><LogOut :size="24" aria-hidden="true" /></button></div>
       </nav>
       <div class="content-shell" :inert="menuOpen || undefined">
         <header class="app-header">
           <strong class="brand mobile-only"><img src="/logo.png" alt="" />CS Préstamos</strong>
-          <form v-if="route.path === '/app'" class="header-search" @submit.prevent="router.push({ path: '/app/catalog', query: { search: search.trim() || undefined } })">
-            <label class="sr-only" for="header-resource-search">Buscar recursos</label><Search class="search-icon" :size="16" aria-hidden="true" /><input id="header-resource-search" v-model="search" type="search" maxlength="120" placeholder="Buscar recursos en catálogo…" />
-            <button type="submit" class="sr-only">Buscar</button>
-          </form>
-          <span v-else class="header-title">Panel Institucional</span>
-          <span class="identity"><span>{{ session?.user.email }}</span><small>{{ roleLabel }}</small></span>
-          <button class="logout" type="button" @click="logout"><LogOut :size="16" aria-hidden="true" /><span>Salir</span></button>
+          <span class="header-title">Panel Institucional</span>
+          <span class="identity" :title="profile.error.value || displayName"><span>{{ displayName }}</span><small>{{ session?.user.email }}</small></span>
+          <button class="logout" type="button" aria-label="Cerrar sesión" title="Cerrar sesión" @click="logout"><LogOut :size="24" aria-hidden="true" /></button>
         </header>
         <main id="app-content" ref="content" tabindex="-1"><RouterView /></main>
       </div>
@@ -102,6 +91,7 @@ function logout() {
 </template>
 
 <style>
+.application .navigation-group { color: #94a3b8; text-transform: uppercase; font-size: 10px; font-weight: 700; letter-spacing: .08em; margin: 20px 12px 6px; }
 /* Compartido por las páginas reales, sin afectar al showcase ni al prototipo. */
 @font-face {
   font-family: 'CS Inter';
@@ -159,13 +149,13 @@ body.real-app-active { min-width: 0; }
   margin-left: auto;
   min-width: 0;
   text-align: right;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-.application .identity small { display: block; color: #64748b; font-size: 11px; font-weight: 400; }
+.application .identity small { display: block; color: #64748b; font-size: 12px; font-weight: 400; margin-top: 3px; }
 .application .header-title { color: #1e293b; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.application .app-header .logout { display: flex; align-items: center; gap: 6px; border: 0; padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.application .app-header .logout { display: flex; align-items: center; justify-content: center; border: 0; border-left: 1px solid #e2e8f0; border-radius: 0; padding: 8px 0 8px 16px; min-width: 48px; min-height: 44px; color: #64748b; flex-shrink: 0; }
 .application .app-header .logout:hover { color: #dc2626; }
 .application .app-body {
   display: flex;
@@ -174,10 +164,6 @@ body.real-app-active { min-width: 0; }
 }
 .application .content-shell { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .application .sidebar-brand { width: auto; height: var(--app-header-height); flex-shrink: 0; margin: 0 -12px 16px; padding: 0 16px; border-bottom: 1px solid #ffffff1a; }
-.application .header-search { position: relative; display: flex; flex: 1; min-width: 0; max-width: 470px; align-items: center; }
-.application .header-search .search-icon { position: absolute; left: 12px; color: #94a3b8; pointer-events: none; }
-.application .app-header .header-search input[type='search'] { min-width: 0; width: 100%; height: 42px; padding: 10px 12px 10px 40px; background: #f8fafc; border-color: #cbd5e1; border-radius: 6px; font-size: 14px; }
-.application .header-search button:focus-visible { position: absolute; width: auto; height: auto; margin: 0; clip-path: none; right: 4px; overflow: visible; }
 .application .mobile-only { display: none; }
 .application .app-body > nav {
   width: var(--app-sidebar-width);
@@ -413,7 +399,7 @@ body.real-app-active { min-width: 0; }
   .application dialog.mobile-sheet { max-width: 100%; max-height: calc(100dvh - 16px); margin: auto 0 0; border-radius: 16px 16px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 1023px) {
-  .application { --app-header-height: 56px; }
+  .application { --app-header-height: 72px; }
   .application h1 { font-size: 20px; }
   .application .desktop-only { display: none; }
   .application .mobile-only { display: block; }
@@ -422,7 +408,12 @@ body.real-app-active { min-width: 0; }
   .application .menu-toggle {
     display: flex;
   }
-  .application .identity, .application .header-search, .application .header-title, .application .app-header > button { display: none; }
+  .application .header-title { display: none; }
+  .application .app-header { gap: 12px; }
+  .application .identity { font-size: 14px; overflow: hidden; }
+  .application .identity > span, .application .identity small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .application .identity small { font-size: 11px; }
+  .application .app-header .brand.mobile-only { width: 36px; flex-shrink: 0; font-size: 0; gap: 0; }
   .application .mobile-menu-heading { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px 16px; }
   .application .mobile-menu-heading button { display: flex; padding: 10px; border: 0; color: white; background: transparent; }
   .application .mobile-account { overflow-wrap: anywhere; margin-top: 12px; }
@@ -485,7 +476,7 @@ body.real-app-active { min-width: 0; }
     z-index: 30;
   }
   .application .app-header > button:last-child {
-    margin-left: auto;
+    margin-left: 0;
   }
 }
 @media (min-width: 1280px) {

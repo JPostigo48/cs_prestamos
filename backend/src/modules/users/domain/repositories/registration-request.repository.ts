@@ -16,6 +16,7 @@ export type CreateRegistrationRequestData = {
   name: string;
   userType: UserType;
   institutionalId: string | null;
+  phone?: string | null;
   evidence: string[];
   access?: PendingAccessData;
 };

@@ -12,6 +12,7 @@ export interface CopyLoanSnapshot {
     source: 'RESOURCE' | 'CATEGORY'
   }
   accessories: { id: string; nombre: string }[]
+  reservationNoShow?: { termsVersionId: string; ruleVersionId: string }
 }
 export interface ReturnChecklistCapture {
   id: string
@@ -32,7 +33,9 @@ export function validSnapshot(v: unknown): v is CopyLoanSnapshot | null {
     (v.policy.durationHours === null || positive(v.policy.durationHours)) && positive(v.policy.effectiveDurationHours) &&
     ['RESOURCE', 'CATEGORY'].includes(String(v.policy.source)) && Array.isArray(v.accessories) &&
     v.accessories.every(p => object(p) && text(p.id) && text(p.nombre)) &&
-    new Set(v.accessories.map(p => p.id)).size === v.accessories.length
+    new Set(v.accessories.map(p => p.id)).size === v.accessories.length &&
+    (v.reservationNoShow === undefined || (object(v.reservationNoShow) &&
+      text(v.reservationNoShow.termsVersionId) && text(v.reservationNoShow.ruleVersionId)))
 }
 export function validChecklist(v: unknown): v is ReturnChecklistCapture {
   if (!object(v) || !text(v.id) || !text(v.loanId) || !text(v.actorId) || !text(v.checkedAt) ||
@@ -45,6 +48,8 @@ export function validChecklist(v: unknown): v is ReturnChecklistCapture {
 export function sameSnapshot(a: CopyLoanSnapshot | null, b: CopyLoanSnapshot | null): boolean {
   if (!a || !b) return a === b
   return a.copyId === b.copyId && a.resourceId === b.resourceId && a.schemaVersion === b.schemaVersion &&
+    a.reservationNoShow?.termsVersionId === b.reservationNoShow?.termsVersionId &&
+    a.reservationNoShow?.ruleVersionId === b.reservationNoShow?.ruleVersionId &&
     a.policy.resourceId === b.policy.resourceId && a.policy.categoryId === b.policy.categoryId &&
     a.policy.durationHours === b.policy.durationHours && a.policy.effectiveDurationHours === b.policy.effectiveDurationHours &&
     a.policy.source === b.policy.source && a.accessories.length === b.accessories.length &&

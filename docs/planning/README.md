@@ -34,7 +34,7 @@ El contenido es Markdown versionado en el repositorio. Está escrito con encabez
 
 Cada responsable frontend implementa el comportamiento responsive de lo que desarrolla. El trabajo no se divide en «escritorio» y «responsive»: se divide por módulos. El detalle de esta separación y de la coordinación sobre archivos globales está en [control de conflictos](git-workflow.md#control-de-conflictos).
 
-Los avances y pendientes atribuidos a cada integrante para el sprint en curso se registran en su [documento de sprint](sprints/sprint-01.md#estado-actual). La vista Equipo combina esa información con la tabla de responsabilidades, sin mantener una segunda bitácora semanal.
+Los sprints técnicos conservan su planificación histórica. La vista Equipo usa la [cronología académica](academic-progress.md), independiente de esos sprints: seis tareas y dos exámenes, con reparto aproximado cuando no hay autoría precisa. Esa fuente genera la tabla del Showcase sin duplicar contenido en los componentes.
 
 Project Showcase es una sección de documentación del proyecto, no un módulo del negocio. Juan Carlos se encarga de su visualización frontend sin asumir el frontend funcional de préstamos asignado a Mauricio y Luis. `docs/project-planning` agrupa la planificación y sus ajustes de visualización. Las rutas y entregas por sprint están en el [roadmap](roadmap.md).
 

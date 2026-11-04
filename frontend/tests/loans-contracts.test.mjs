@@ -65,6 +65,10 @@ test('F08: historial montado pagina, filtra desde página 1 y permite reintentar
 test('parsers: snapshot y captura completos; rechaza duplicados, parcial, fecha y configuración incoherentes', async () => {
   assert.equal(contracts.validSnapshot(snapshot), true)
   assert.equal(contracts.validSnapshot(null), true)
+  const versioned = { ...snapshot, reservationNoShow: { termsVersionId: 'terms', ruleVersionId: 'leve' } }
+  assert.equal(contracts.validSnapshot(versioned), true)
+  assert.equal(contracts.validSnapshot({ ...snapshot, reservationNoShow: { termsVersionId: 'terms' } }), false)
+  assert.equal(contracts.sameSnapshot(versioned, { ...versioned, reservationNoShow: { termsVersionId: 'terms', ruleVersionId: 'another' } }), false)
   assert.equal(contracts.validSnapshot({ ...snapshot, accessories: [...snapshot.accessories, ...snapshot.accessories] }), false)
   assert.equal(contracts.validChecklist(capture), true)
   for (const invalid of [{ ...capture, parts: [] }, { ...capture, parts: [...capture.parts, ...capture.parts] }, { ...capture, checkedAt: 'invalid' }, { ...capture, actorId: '' }])

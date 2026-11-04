@@ -55,7 +55,7 @@ describe('InventoryController', () => {
       'listCategories',
       (controller: InventoryController) => controller.listCategories(),
       'listCategories',
-      [],
+      [undefined],
     ],
     [
       'getCategory',

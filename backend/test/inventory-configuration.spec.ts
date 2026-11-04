@@ -23,6 +23,9 @@ import { RolesGuard } from '../src/modules/auth/presentation/guards/roles.guard.
 import { deriveAuthorization } from '../src/shared/presentation/openapi/authorization-metadata.js';
 import type { PrismaService } from '../src/shared/infrastructure/prisma/prisma.service.js';
 import { inMemoryPrisma } from './helpers/in-memory-prisma.js';
+import { CreateCategoryDto } from '../src/modules/inventory/presentation/dto/create-category.dto.js';
+import { UpdateCategoryDto } from '../src/modules/inventory/presentation/dto/update-category.dto.js';
+import { ListCategoriesQueryDto } from '../src/modules/inventory/presentation/dto/category-management.dto.js';
 
 vi.mock('dotenv/config', () => ({}));
 const resourceId = '123e4567-e89b-42d3-a456-426614174001';
@@ -104,6 +107,9 @@ describe('F06/F07/F13 HTTP + production repository with isolated in-memory SQL/t
       ['getAccessories', [String]],
       ['replaceAccessories', [String, ReplaceResourceAccessoriesDto, Object]],
       ['updateLoanPolicy', [String, UpdateResourceLoanPolicyDto, Object]],
+      ['createCategory', [CreateCategoryDto, Object]],
+      ['updateCategory', [String, UpdateCategoryDto, Object]],
+      ['listCategories', [ListCategoriesQueryDto]],
     ] as const)
       Reflect.defineMetadata(
         'design:paramtypes',
@@ -146,6 +152,80 @@ describe('F06/F07/F13 HTTP + production repository with isolated in-memory SQL/t
       .patch(base + '/loan-policy')
       .auth(token(), { type: 'bearer' })
       .send({ durationHours });
+
+  it('gestiona categorías por HTTP, valida estado y expone políticas/preview sin simular guardado', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/inventory/categories')
+      .auth(token(), { type: 'bearer' })
+      .send({
+        nombre: 'Nueva',
+        descripcion: 'Descripción',
+        activo: true,
+        tiempoMaximoPrestamoDias: 1,
+        tiempoMaximoPrestamoHoras: 4,
+      })
+      .expect(201);
+    const path = `/inventory/categories/${created.body.id}`;
+    expect(created.body).toMatchObject({
+      nombre: 'Nueva',
+      descripcion: 'Descripción',
+      activo: true,
+    });
+    await request(app.getHttpServer())
+      .patch(path)
+      .auth(token(), { type: 'bearer' })
+      .send({ activo: false, descripcion: null })
+      .expect(200);
+    const inactive = await request(app.getHttpServer())
+      .get('/inventory/categories?active=false')
+      .expect(200);
+    expect(
+      inactive.body.map((category: { id: string }) => category.id),
+    ).toEqual([created.body.id]);
+    await request(app.getHttpServer())
+      .get('/inventory/categories?active=invalid')
+      .expect(400);
+    await request(app.getHttpServer())
+      .patch(path)
+      .auth(token(), { type: 'bearer' })
+      .send({ activo: null })
+      .expect(400);
+    await request(app.getHttpServer())
+      .patch(path)
+      .auth(token(), { type: 'bearer' })
+      .send({ activo: true })
+      .expect(200);
+    const policies = await request(app.getHttpServer())
+      .get(path + '/policies')
+      .auth(token(), { type: 'bearer' })
+      .expect(200);
+    expect(policies.body).toMatchObject({
+      status: 'UNAVAILABLE',
+      eligibleForNewOperations: false,
+      rulesEditable: false,
+    });
+    expect(policies.body.message).toContain('pendiente');
+    await request(app.getHttpServer())
+      .patch(path + '/policies')
+      .auth(token(), { type: 'bearer' })
+      .send({})
+      .expect(404);
+    const preview = await request(app.getHttpServer())
+      .get(path + '/deletion-preview')
+      .auth(token(), { type: 'bearer' })
+      .expect(200);
+    expect(preview.body).toMatchObject({
+      canDelete: false,
+      alternative: 'DEACTIVATE',
+    });
+    expect(preview.body.blockers).toContainEqual(
+      expect.objectContaining({ dependency: 'auditorias_usuario' }),
+    );
+    await request(app.getHttpServer())
+      .delete(path)
+      .auth(token(), { type: 'bearer' })
+      .expect(409);
+  });
 
   it('requires a valid signed JWT, current account and administrator for both mutations; all authenticated roles can read', async () => {
     for (const method of ['get', 'put', 'patch'] as const) {

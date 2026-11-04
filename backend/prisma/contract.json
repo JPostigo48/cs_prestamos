@@ -24,6 +24,10 @@
       "model": "CategoriaRecurso",
       "namespace": "public"
     },
+    "configuracion_reservas": {
+      "model": "ConfiguracionReservas",
+      "namespace": "public"
+    },
     "cuentas_acceso": {
       "model": "CuentaAcceso",
       "namespace": "public"
@@ -34,6 +38,10 @@
     },
     "ejemplares": {
       "model": "Ejemplar",
+      "namespace": "public"
+    },
+    "evidencias_prestamo": {
+      "model": "EvidenciaPrestamo",
       "namespace": "public"
     },
     "evidencias_vinculacion": {
@@ -234,6 +242,27 @@
               {
                 "name": "ADMINISTRADOR",
                 "value": "ADMINISTRADOR"
+              }
+            ]
+          },
+          "TipoEvidenciaPrestamo": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ENTREGA",
+                "value": "ENTREGA"
+              },
+              {
+                "name": "DEVOLUCION",
+                "value": "DEVOLUCION"
+              },
+              {
+                "name": "DANO",
+                "value": "DANO"
+              },
+              {
+                "name": "PERDIDA",
+                "value": "PERDIDA"
               }
             ]
           },
@@ -836,6 +865,13 @@
           },
           "CategoriaRecurso": {
             "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -844,6 +880,13 @@
                   "typeParams": {
                     "precision": 3
                   }
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
                 }
               },
               "id": {
@@ -904,8 +947,14 @@
             },
             "storage": {
               "fields": {
+                "activo": {
+                  "column": "activo"
+                },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
                 },
                 "id": {
                   "column": "id"
@@ -925,6 +974,67 @@
               },
               "namespaceId": "public",
               "table": "categorias_recurso"
+            }
+          },
+          "ConfiguracionReservas": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "pickupWaitMinutes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "version": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "weeklySchedule": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "pickupWaitMinutes": {
+                  "column": "pickupWaitMinutes"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "version": {
+                  "column": "version"
+                },
+                "weeklySchedule": {
+                  "column": "weeklySchedule"
+                }
+              },
+              "namespaceId": "public",
+              "table": "configuracion_reservas"
             }
           },
           "CuentaAcceso": {
@@ -1024,6 +1134,21 @@
                 },
                 "to": {
                   "model": "Apelacion",
+                  "namespace": "public"
+                }
+              },
+              "evidenciasCargadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "cargadoPorCuentaId"
+                  ]
+                },
+                "to": {
+                  "model": "EvidenciaPrestamo",
                   "namespace": "public"
                 }
               },
@@ -1307,6 +1432,181 @@
               "table": "ejemplares"
             }
           },
+          "EvidenciaPrestamo": {
+            "fields": {
+              "cargadoPorCuentaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "hash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 64
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "mimeType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 100
+                  }
+                }
+              },
+              "nombreOriginal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 255
+                  }
+                }
+              },
+              "prestamoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "ruta": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 500
+                  }
+                }
+              },
+              "tamanoBytes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "tipo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TipoEvidenciaPrestamo",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              }
+            },
+            "relations": {
+              "cargadoPor": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "cargadoPorCuentaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CuentaAcceso",
+                  "namespace": "public"
+                }
+              },
+              "prestamo": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "prestamoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "cargadoPorCuentaId": {
+                  "column": "cargadoPorCuentaId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
+                },
+                "hash": {
+                  "column": "hash"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "mimeType": {
+                  "column": "mimeType"
+                },
+                "nombreOriginal": {
+                  "column": "nombreOriginal"
+                },
+                "prestamoId": {
+                  "column": "prestamoId"
+                },
+                "ruta": {
+                  "column": "ruta"
+                },
+                "tamanoBytes": {
+                  "column": "tamanoBytes"
+                },
+                "tipo": {
+                  "column": "tipo"
+                }
+              },
+              "namespaceId": "public",
+              "table": "evidencias_prestamo"
+            }
+          },
           "EvidenciaVinculacion": {
             "fields": {
               "createdAt": {
@@ -1425,6 +1725,13 @@
                   "kind": "scalar"
                 }
               },
+              "reservaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "usuarioId": {
                 "nullable": false,
                 "type": {
@@ -1470,6 +1777,22 @@
                 },
                 "to": {
                   "model": "ReglaUso",
+                  "namespace": "public"
+                }
+              },
+              "reserva": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "reservaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Reserva",
                   "namespace": "public"
                 }
               },
@@ -1538,6 +1861,9 @@
                 },
                 "reglaId": {
                   "column": "reglaId"
+                },
+                "reservaId": {
+                  "column": "reservaId"
                 },
                 "usuarioId": {
                   "column": "usuarioId"
@@ -1875,6 +2201,21 @@
                   "namespace": "public"
                 }
               },
+              "evidencias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "prestamoId"
+                  ]
+                },
+                "to": {
+                  "model": "EvidenciaPrestamo",
+                  "namespace": "public"
+                }
+              },
               "inspeccion": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -1963,6 +2304,13 @@
           },
           "Recurso": {
             "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "categoriaId": {
                 "nullable": false,
                 "type": {
@@ -2069,6 +2417,9 @@
             },
             "storage": {
               "fields": {
+                "activo": {
+                  "column": "activo"
+                },
                 "categoriaId": {
                   "column": "categoriaId"
                 },
@@ -2340,6 +2691,22 @@
                 },
                 "to": {
                   "model": "Ejemplar",
+                  "namespace": "public"
+                }
+              },
+              "incumplimiento": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "reservaId"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
                   "namespace": "public"
                 }
               },
@@ -2756,6 +3123,16 @@
                   }
                 }
               },
+              "telefono": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 20
+                  }
+                }
+              },
               "tipoUsuario": {
                 "nullable": false,
                 "type": {
@@ -2887,6 +3264,9 @@
                 "passwordHash": {
                   "column": "passwordHash"
                 },
+                "telefono": {
+                  "column": "telefono"
+                },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
                 },
@@ -2951,6 +3331,16 @@
                   "kind": "scalar",
                   "typeParams": {
                     "length": 180
+                  }
+                }
+              },
+              "telefono": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 20
                   }
                 }
               },
@@ -3151,6 +3541,9 @@
                 },
                 "nombre": {
                   "column": "nombre"
+                },
+                "telefono": {
+                  "column": "telefono"
                 },
                 "tipoUsuario": {
                   "column": "tipoUsuario"
@@ -4088,6 +4481,15 @@
             },
             "categorias_recurso": {
               "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -4099,6 +4501,11 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/uuid@1",
@@ -4143,6 +4550,72 @@
                   ]
                 }
               ]
+            },
+            "configuracion_reservas": {
+              "checks": [
+                {
+                  "expression": "version >= 1",
+                  "name": "configuracion_reservas_positive_revision_c2490804",
+                  "prefix": "configuracion_reservas_positive_revision"
+                },
+                {
+                  "expression": "id = 1",
+                  "name": "configuracion_reservas_singleton_check_7faf435e",
+                  "prefix": "configuracion_reservas_singleton_check"
+                },
+                {
+                  "expression": "\"pickupWaitMinutes\" BETWEEN 1 AND 240",
+                  "name": "configuracion_reservas_wait_check_fb2a7262",
+                  "prefix": "configuracion_reservas_wait_check"
+                }
+              ],
+              "columns": {
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "pickupWaitMinutes": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 30
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "version": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "weeklySchedule": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "cuentas_acceso": {
               "checks": [
@@ -4470,6 +4943,178 @@
                 }
               ]
             },
+            "evidencias_prestamo": {
+              "checks": [
+                {
+                  "expression": "\"tipo\" IN ('ENTREGA', 'DEVOLUCION', 'DANO', 'PERDIDA')",
+                  "name": "evidencias_prestamo_tipo_check_a8b33710",
+                  "prefix": "evidencias_prestamo_tipo_check"
+                }
+              ],
+              "columns": {
+                "cargadoPorCuentaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "hash": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 64
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "mimeType": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 100
+                  }
+                },
+                "nombreOriginal": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 255
+                  }
+                },
+                "prestamoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "ruta": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 500
+                  }
+                },
+                "tamanoBytes": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "tipo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TipoEvidenciaPrestamo",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "prestamoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "evidencias_prestamo"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "cargadoPorCuentaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "evidencias_prestamo"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "cuentas_acceso"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "cargadoPorCuentaId",
+                    "createdAt"
+                  ],
+                  "name": "evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c",
+                  "prefix": "evidencias_prestamo_cargadoPorCuentaId_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "cargadoPorCuentaId"
+                  ],
+                  "name": "evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9",
+                  "prefix": "evidencias_prestamo_cargadoPorCuentaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "prestamoId"
+                  ],
+                  "name": "evidencias_prestamo_prestamoId_idx_8ecc28bd",
+                  "prefix": "evidencias_prestamo_prestamoId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "prestamoId",
+                    "tipo",
+                    "createdAt"
+                  ],
+                  "name": "evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c",
+                  "prefix": "evidencias_prestamo_prestamoId_tipo_createdAt_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "evidencias_vinculacion": {
               "columns": {
                 "createdAt": {
@@ -4582,6 +5227,11 @@
                   "nativeType": "uuid",
                   "nullable": false
                 },
+                "reservaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "usuarioId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
@@ -4647,6 +5297,24 @@
                     "namespaceId": "public",
                     "tableName": "versiones_regla"
                   }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "reservaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "reservas"
+                  }
                 }
               ],
               "indexes": [
@@ -4698,7 +5366,13 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "reservaId"
+                  ]
+                }
+              ]
             },
             "inspecciones_devolucion": {
               "columns": {
@@ -5105,6 +5779,15 @@
                 }
               ],
               "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "categoriaId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
@@ -5806,6 +6489,14 @@
                     "length": 255
                   }
                 },
+                "telefono": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 20
+                  }
+                },
                 "tipoUsuario": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -5990,6 +6681,14 @@
                   "nullable": false,
                   "typeParams": {
                     "length": 180
+                  }
+                },
+                "telefono": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 20
                   }
                 },
                 "tipoUsuario": {
@@ -6332,6 +7031,15 @@
                 "ADMINISTRADOR"
               ]
             },
+            "TipoEvidenciaPrestamo": {
+              "kind": "valueSet",
+              "values": [
+                "ENTREGA",
+                "DEVOLUCION",
+                "DANO",
+                "PERDIDA"
+              ]
+            },
             "TipoSuspension": {
               "kind": "valueSet",
               "values": [
@@ -6354,10 +7062,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e0c33fd71c119cb158d4634873f0d3f93f716172178cc687acbf5c5f982ff904"
+    "storageHash": "21bf2bbc35dc01507a1ee4e804cfa31bde531b5023de21adc4a21e09e27ea036"
   },
   "execution": {
-    "executionHash": "9fa8e22e199b9a1ac5ba015b1f193b89ae249c043c4c652c1ce485f9b9b8bde2",
+    "executionHash": "96ccfa6264fdd2e237426a95c02a11e04a1512ee301d3bf0049fb0a2e8803a26",
     "mutations": {
       "defaults": [
         {
@@ -6462,6 +7170,21 @@
         },
         {
           "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "configuracion_reservas"
+          }
+        },
+        {
+          "onCreate": {
             "id": "uuidv4",
             "kind": "generator"
           },
@@ -6521,6 +7244,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "ejemplares"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "evidencias_prestamo"
           }
         },
         {

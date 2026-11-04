@@ -7,6 +7,9 @@ const resourceId = '550e8400-e29b-41d4-a716-446655440001';
 const copyId = '550e8400-e29b-41d4-a716-446655440002';
 
 export class CategoryResponseDto {
+  @ApiProperty({ type: String, nullable: true }) descripcion!: string | null;
+  @ApiProperty({ type: Boolean }) activo!: boolean;
+  @ApiProperty({ type: Number }) copyCount!: number;
   @ApiProperty({ type: String, format: 'uuid', example: categoryId })
   id!: string;
 
@@ -24,6 +27,7 @@ export class CategoryResponseDto {
 }
 
 export class ResourceResponseDto {
+  @ApiProperty({ type: Boolean }) activo!: boolean;
   @ApiProperty({
     type: 'integer',
     nullable: true,

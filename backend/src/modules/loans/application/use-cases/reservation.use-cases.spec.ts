@@ -45,8 +45,10 @@ describe('Reservation use cases', () => {
       userId: 'user-1',
       copyId: 'copy-1',
       enforceSingleOpenOperation: true,
-      pickupDeadline: reservation.pickupDeadline,
+      requestedAt: reservation.requestedAt,
     }));
+    // El caso de uso no puede imponer un plazo desactualizado al repositorio.
+    expect(reservations.create.mock.calls[0][0]).not.toHaveProperty('pickupDeadline');
   });
 
   it('rejects past reservations and a second open operation for students', async () => {

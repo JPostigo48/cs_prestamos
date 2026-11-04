@@ -46,6 +46,13 @@ export class FullRegistrationDto {
   @Length(1, 80)
   institutionalId?: string;
 
+  @ApiPropertyOptional({ type: String, maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(20)
+  phone?: string;
+
   @ApiProperty({
     type: [String],
     minItems: 1,

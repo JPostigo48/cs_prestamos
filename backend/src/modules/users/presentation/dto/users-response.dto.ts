@@ -17,6 +17,7 @@ export class RegistrationRequestResponseDto {
   @ApiProperty({ enum: UserType }) userType!: UserType;
   @ApiProperty({ type: String, nullable: true }) institutionalId!:
     string | null;
+  @ApiProperty({ type: String, nullable: true }) phone!: string | null;
   @ApiProperty({ type: String, format: 'date-time' }) requestedAt!: string;
   @ApiProperty({ enum: RegistrationRequestStatus })
   status!: RegistrationRequestStatus;

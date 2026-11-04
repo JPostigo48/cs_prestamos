@@ -8,9 +8,24 @@
 // -----------------------------------------------------------------------------
 // INVENTARIO
 // -----------------------------------------------------------------------------
+model ConfiguracionReservas {
+  id Int @id @default(1)
+  pickupWaitMinutes Int @default(30)
+  weeklySchedule Jsonb?
+  version Int @default(1)
+  updatedAt temporal.updatedAt()
+
+  @@check(expression: "id = 1", name: "configuracion_reservas_singleton_check")
+  @@check(expression: "\"pickupWaitMinutes\" BETWEEN 1 AND 240", name: "configuracion_reservas_wait_check")
+  @@check(expression: "version >= 1", name: "configuracion_reservas_positive_revision")
+  @@map("configuracion_reservas")
+}
+
 model CategoriaRecurso {
   id                       Uuid                 @id @default(uuid())
   nombre                   VarChar(120)         @unique
+  descripcion              String?
+  activo                   Boolean              @default(true)
   tiempoMaximoPrestamoDias Int
   tiempoMaximoPrestamoHoras Int?
   createdAt                Timestamptz(3)       @default(now())
@@ -26,6 +41,7 @@ model Recurso {
   categoriaId Uuid
   nombre      VarChar(180)
   descripcion String?
+  activo      Boolean              @default(true)
   duracionPrestamoHoras Int?
 
   createdAt   Timestamptz(3)       @default(now())
@@ -97,6 +113,7 @@ model Reserva {
   usuario             Usuario        @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   ejemplar            Ejemplar       @relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   prestamo            Prestamo?
+  incumplimiento      Incumplimiento?
 
   @@index([usuarioId, estado])
   @@index([ejemplarId, estado])
@@ -125,6 +142,7 @@ model SolicitudRegistro {
   nombre                     VarChar(180)
   tipoUsuario                TipoUsuario
   identificadorInstitucional VarChar(80)?
+  telefono                   VarChar(20)?
   fechaSolicitud             Timestamptz(3)         @default(now())
   estado                     EstadoSolicitud        @default(PENDIENTE)
   motivoRechazo              String?
@@ -170,6 +188,7 @@ model Usuario {
   nombre                     VarChar(180)
   tipoUsuario                TipoUsuario
   identificadorInstitucional VarChar(80)?         @unique
+  telefono                   VarChar(20)?
   vinculacionVigente         Boolean              @default(true)
   confianza                  Numeric(5, 2)
 
@@ -262,6 +281,7 @@ model Prestamo {
   ejemplar    Ejemplar             @relation(fields:[ejemplarId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   reserva     Reserva?             @relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   devolucion  Devolucion?
+  evidencias  EvidenciaPrestamo[]
   inspeccion  InspeccionDevolucion?
 
   @@index([ejemplarId, estado, fechaInicio, fechaFin])
@@ -281,6 +301,27 @@ model Devolucion {
   prestamo    Prestamo       @relation(fields:[prestamoId], references:[id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("devoluciones")
+}
+
+model EvidenciaPrestamo {
+  id                 Uuid                    @id @default(uuid())
+  prestamoId         Uuid
+  tipo               TipoEvidenciaPrestamo
+  ruta               VarChar(500)
+  nombreOriginal     VarChar(255)
+  mimeType           VarChar(100)
+  tamanoBytes        Int
+  hash               VarChar(64)
+  descripcion        String?
+  cargadoPorCuentaId Uuid
+  createdAt          Timestamptz(3)          @default(now())
+
+  prestamo           Prestamo                @relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  cargadoPor         CuentaAcceso           @relation("EvidenciasPrestamoCargadas", fields:[cargadoPorCuentaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([prestamoId, tipo, createdAt])
+  @@index([cargadoPorCuentaId, createdAt])
+  @@map("evidencias_prestamo")
 }
 
 // Captura única e inmutable; guardar no ejecuta la devolución.
@@ -344,6 +385,7 @@ model VersionRegla {
 
 model Incumplimiento {
   id                   Uuid           @id @default(uuid())
+  reservaId            Uuid?          @unique
   usuarioId            Uuid
   reglaId              Uuid
   versionReglaId       Uuid
@@ -357,6 +399,7 @@ model Incumplimiento {
   versionRegla         VersionRegla   @relation(fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
   sancion              Sancion?       @relation("IncumplimientoSancion")
   apelacion            Apelacion?
+  reserva              Reserva?       @relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([usuarioId, fecha])
   @@index([reglaId, versionReglaId])
@@ -438,6 +481,7 @@ model CuentaAcceso {
   updatedAt            temporal.updatedAt()
 
   usuario              Usuario              @relation(fields:[usuarioId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  evidenciasCargadas   EvidenciaPrestamo[]  @relation("EvidenciasPrestamoCargadas")
   apelacionesResueltas Apelacion[]          @relation("CuentaResolutora")
 
   @@index([rol, habilitada])
@@ -471,6 +515,15 @@ enum EstadoPrestamo {
   PLANIFICADO
   ACTIVO
   FINALIZADO
+}
+
+enum TipoEvidenciaPrestamo {
+  @@type("pg/text@1")
+
+  ENTREGA
+  DEVOLUCION
+  DANO
+  PERDIDA
 }
 
 enum TipoUsuario {

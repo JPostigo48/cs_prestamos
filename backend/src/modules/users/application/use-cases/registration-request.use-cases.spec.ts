@@ -41,6 +41,7 @@ describe('Users registration request use cases', () => {
       userType: 'ESTUDIANTE',
       institutionalId: 'A-1',
       evidence: ['carnet'],
+      phone: null,
     });
     await expect(
       useCase.execute({
@@ -49,6 +50,20 @@ describe('Users registration request use cases', () => {
         institutionalId: 'A-1',
       }),
     ).rejects.toThrow(ConflictException);
+  });
+
+  it('normalizes a phone with surrounding spaces', async () => {
+    const repository = {
+      findPendingByInstitutionalId: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue(pending),
+    };
+    const users = { findByInstitutionalId: vi.fn().mockResolvedValue(null) };
+    await new SubmitRegistrationRequestUseCase(repository as any, users as any).execute({
+      name: 'Ada', userType: 'ESTUDIANTE', institutionalId: 'A-1', phone: ' 987654321 ',
+    });
+    expect(repository.create).toHaveBeenCalledWith({
+      name: 'Ada', userType: 'ESTUDIANTE', institutionalId: 'A-1', phone: '987654321', evidence: [],
+    });
   });
 
   it('approves only pending requests through the transactional repository operation', async () => {

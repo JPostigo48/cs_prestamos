@@ -9,6 +9,7 @@ class HostNode {
   get multiple() { return !!this.props.multiple }
   get isConnected() { return !!this.parent }
   getRootNode() { return document }
+  contains(node) { return node === this || this.children.some(child => child.contains(node)) }
   addEventListener(name, handler) { (this.listeners[name] ??= []).push(handler) }
   removeEventListener() {}
   setAttribute(name, value) { this.props[name] = value }
@@ -52,7 +53,7 @@ export async function model(node, value) {
 }
 export function mount(component, props = {}, plugins = []) {
   globalThis.HTMLElement = HostNode
-  globalThis.Document = class Document {}
+  globalThis.Document = class Document extends EventTarget {}
   const bodyClasses = new Set()
   globalThis.document = Object.assign(new Document(), { body: { style: {}, classList: { add: value => bodyClasses.add(value), remove: value => bodyClasses.delete(value), contains: value => bodyClasses.has(value) } }, activeElement: null, getElementById: () => null })
   const root = new HostNode('root')

@@ -13,7 +13,7 @@ function move(offset: number) { page.value += offset; void remote.refresh() }
 </script>
 <template>
   <section class="panel stack">
-    <h2>Historial del artículo</h2>
+    <h2>Historial del recurso</h2>
     <form class="row" @submit.prevent="filter">
       <label>Estado<select v-model="status" :disabled="remote.loading.value"><option value="">Todos</option><option value="PLANIFICADO">Planificado</option><option value="ACTIVO">Activo</option><option value="FINALIZADO">Finalizado</option></select></label>
       <button :disabled="remote.loading.value">Consultar / actualizar historial</button>

@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { projectDocumentation } from '../services/projectDocumentation'
 import { useGeneratedData } from '../composables/useGeneratedData'
 
 const { data: planning, loading } = useGeneratedData(projectDocumentation.planning)
-const currentSprint = computed(() => planning.value?.sprints.filter((sprint) => sprint.status === 'in_progress').at(-1))
 
 const sections = [
-  { path: '/project/sprints', title: 'Sprints', detail: 'Planificación, responsables y resultados documentados.' },
   { path: '/project/architecture', title: 'Arquitectura', detail: 'Diagramas UML exportados desde sus fuentes.' },
   { path: '/project/api', title: 'API', detail: 'Endpoints descritos por OpenAPI cuando esté disponible.' },
-  { path: '/project/team', title: 'Equipo', detail: 'Responsabilidades, avances y pendientes por integrante del sprint.' },
-  { path: '/project/git', title: 'Git', detail: 'Ramas, versiones y flujo de integración del proyecto.' },
+  { path: '/project/db', title: 'DB', detail: 'Modelo de datos derivado del contrato de persistencia.' },
+  { path: '/project/terms', title: 'T&C', detail: 'Términos y condiciones del sistema.' },
+  { path: '/project/team', title: 'Equipo', detail: 'Tabla de avances por integrante, tarea académica y examen.' },
 ]
 </script>
 
@@ -24,23 +22,6 @@ const sections = [
     </div>
 
     <div v-if="loading" class="mt-8 text-sm text-slate-500">Cargando planificación…</div>
-    <div v-else class="mt-8 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Sprint en curso</p>
-        <p class="mt-2 text-xl font-bold">{{ currentSprint ? `Sprint ${currentSprint.sprint}` : 'Sin registro' }}</p>
-        <p class="mt-1 text-sm text-slate-600">{{ currentSprint?.name || 'Consultar la planificación versionada.' }}</p>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Versión objetivo</p>
-        <p class="mt-2 text-xl font-bold">{{ currentSprint?.version || 'Por definir' }}</p>
-        <p class="mt-1 text-sm text-slate-600">No equivale a una versión publicada.</p>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Fuente</p>
-        <p class="mt-2 text-xl font-bold">docs/planning</p>
-        <p class="mt-1 text-sm text-slate-600">Contenido derivado de Markdown versionado.</p>
-      </div>
-    </div>
 
     <section v-if="planning?.technologies.length" class="mt-12">
       <h2 class="text-xl font-bold">Tecnologías documentadas</h2>

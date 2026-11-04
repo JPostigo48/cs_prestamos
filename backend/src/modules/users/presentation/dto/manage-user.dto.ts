@@ -27,6 +27,13 @@ export class CreateUserDto {
   @Matches(/\S/)
   institutionalId?: string | null;
 
+  @ApiPropertyOptional({ type: String, maxLength: 20, nullable: true })
+  @ValidateIf((_object, value) => value !== undefined && value !== null)
+  @IsString()
+  @Length(7, 20)
+  @Matches(/^\+?[0-9 ()-]+$/)
+  phone?: string | null;
+
   @ApiPropertyOptional({ type: Boolean, default: true })
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
@@ -43,6 +50,7 @@ export class UserResponseDto {
   @ApiProperty({ enum: Object.values(UserType) }) userType!: UserType;
   @ApiProperty({ type: String, nullable: true }) institutionalId!:
     string | null;
+  @ApiProperty({ type: String, nullable: true }) phone!: string | null;
   @ApiProperty({ type: Boolean }) hasCurrentAffiliation!: boolean;
   @ApiProperty({ type: Number, minimum: 0, maximum: 100 })
   trustPercentage!: number;

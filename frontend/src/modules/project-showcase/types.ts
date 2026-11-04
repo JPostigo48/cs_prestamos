@@ -40,26 +40,24 @@ export interface ArchitectureData {
 }
 
 export interface TeamMember {
+  initials: string
   name: string
-  responsibility: string
-  area: string
-  update: string
-  pending: string
-  evidence: { label: string; url: string } | null
 }
 
-export interface TeamSprint {
-  sprint: number
-  name: string
-  status: string
-  source: string
-  members: TeamMember[]
+export interface TeamMilestone {
+  id: string
+  title: string
+  kind: 'task' | 'exam'
+  date: string | null
+  status: 'recorded' | 'in_progress'
+  outcome: string
+  progress: Record<string, string[]>
 }
 
 export interface TeamData {
-  currentSprint: number | null
   source: string
-  sprints: TeamSprint[]
+  members: TeamMember[]
+  milestones: TeamMilestone[]
 }
 
 export interface GitData {

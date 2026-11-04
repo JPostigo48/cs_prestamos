@@ -21,6 +21,8 @@ import { ReservationExpiryService } from './infrastructure/reservation-expiry.se
 import { CreateReservationUseCase } from './application/use-cases/create-reservation.use-case.js';
 import { PickupReservationUseCase } from './application/use-cases/pickup-reservation.use-case.js';
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case.js';
+import { UploadLoanEvidenceUseCase } from './application/use-cases/upload-loan-evidence.use-case.js';
+import { SupabaseStorageService } from '../../shared/infrastructure/storage/supabase-storage.service.js';
 import {
   ListReservationsUseCase,
   ListResourceHistoryUseCase,
@@ -39,6 +41,7 @@ const useCases = [
   CreateReservationUseCase,
   PickupReservationUseCase,
   CancelReservationUseCase,
+  UploadLoanEvidenceUseCase,
 ];
 
 @Module({
@@ -47,6 +50,7 @@ const useCases = [
   providers: [
     ...useCases,
     ReservationExpiryService,
+    SupabaseStorageService,
     {
       provide: LoanRepository,
       useClass: PrismaLoanRepository,

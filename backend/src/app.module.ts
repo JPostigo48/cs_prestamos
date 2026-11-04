@@ -6,10 +6,12 @@ import { LoansModule } from './modules/loans/loans.module.js';
 import { RulesModule } from './modules/rules/rules.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './shared/infrastructure/prisma/prisma.module.js';
+import { SystemModule } from './modules/system/system.module.js';
 
 @Module({
   imports: [
     PrismaModule,
+    SystemModule,
     InventoryModule,
     UsersModule,
     LoansModule,

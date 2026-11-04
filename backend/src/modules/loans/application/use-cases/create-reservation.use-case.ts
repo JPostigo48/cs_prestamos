@@ -1,10 +1,11 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import type { Reservation } from '../../domain/entities/reservation.js';
 import { ReservationRepository } from '../../domain/repositories/reservation.repository.js';
 import { LoanInventoryPort } from '../ports/loan-inventory.port.js';
 import { UserLoanEligibilityPort } from '../ports/user-loan-eligibility.port.js';
 import type { CreateReservationInput } from '../ports/reservations.inputs.js';
 import { TermsRepository } from '../../../rules/domain/repositories/terms.repository.js';
+import { assertFuturePickup } from '../../../system/domain/reservation-settings.js';
 
 @Injectable()
 export class CreateReservationUseCase {
@@ -29,20 +30,17 @@ export class CreateReservationUseCase {
     ) {
       throw new ConflictException('El estudiante ya tiene una operación abierta.');
     }
-    if (input.requestedAt.getTime() < Date.now()) {
-      throw new BadRequestException('La hora de recogida no puede estar en el pasado.');
-    }
+    assertFuturePickup(input.requestedAt);
     const availability = await this.inventory.getAvailability(input.copyId);
     if (!availability.available) {
       throw new ConflictException('El ejemplar no está disponible.');
     }
-    const pickupDeadline = new Date(input.requestedAt.getTime() + 30 * 60 * 1000);
+    // El repositorio calcula el plazo con la configuración bloqueada en la tx.
     return this.reservations.create({
       userId: input.userId,
       copyId: input.copyId,
       enforceSingleOpenOperation: eligibility.institutionalType === 'ESTUDIANTE',
       requestedAt: input.requestedAt,
-      pickupDeadline,
       loanDurationHours: availability.maximumLoanHours,
     });
   }

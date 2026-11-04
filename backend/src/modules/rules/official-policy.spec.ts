@@ -430,7 +430,9 @@ describe('Seed transaccional real con constructor SQL en memoria', () => {
     async (...categories) => {
       const db = inMemoryPrisma({ categorias_recurso: categories });
       await expect(seed(db)).rejects.toThrow('Conflicto');
-      expect(db.rows('categorias_recurso')).toEqual(categories);
+      expect(db.rows('categorias_recurso')).toEqual(
+        categories.map((category) => ({ activo: true, ...category })),
+      );
       expect(db.rows('reglas_uso')).toEqual([]);
     },
   );
@@ -516,7 +518,7 @@ describe('Consulta y aplicación mínima de versiones persistidas', () => {
       ruleVersionId: 'admin-v2',
     });
     const sanction = db.rows('sanciones')[0];
-    expect(sanction.fechaFin.getTime() - sanction.fechaInicio.getTime()).toBe(
+    expect(sanction.fechaFin.epochMilliseconds - sanction.fechaInicio.epochMilliseconds).toBe(
       9 * 86400000,
     );
     expect(old.penalizacionPorcentual).toBe('10.00');
