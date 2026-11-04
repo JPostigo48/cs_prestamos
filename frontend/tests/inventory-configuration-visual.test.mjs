@@ -88,6 +88,8 @@ test('detalle: duración efectiva y accesorios reales usan resourceId, con error
   const calls = []
   globalThis.fetch = async url => {
     calls.push(url)
+    if (url.includes('/loans/user/')) return Response.json([])
+    if (url.includes('/loans/reservations?')) return Response.json({ items: [], total: 0, page: 1, limit: 1 })
     if (url.endsWith('/copies')) return Response.json([])
     if (url.endsWith('/accessories')) return failing ? Response.json({}, { status: 500 }) : Response.json({ items: [{ id: 'accessory', nombre: 'Cargador confirmado' }] })
     return Response.json({ ...resource, categoria: category, loanPolicy: policy })
@@ -104,6 +106,7 @@ test('detalle: duración efectiva y accesorios reales usan resourceId, con error
     await flush()
     assert.match(text(app.root), /Cargador confirmado/)
     assert.equal(calls.filter(url => url === '/api/inventory/resources/resource/accessories').length, 2)
-    assert.ok(!calls.some(url => /history/.test(url)))
+    assert.ok(!calls.some(url => /\/loans\/resource\//.test(url)))
+    assert.ok(calls.includes(`/api/loans/user/${session().user.id}/history`))
   } finally { app.unmount() }
 })

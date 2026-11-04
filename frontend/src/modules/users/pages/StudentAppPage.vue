@@ -26,6 +26,7 @@ import { ShieldCheck, TriangleAlert, ArrowRight } from '@lucide/vue'
 import CategoryIcon from '../../inventory/components/CategoryIcon.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import TrustMeter from '../../trust/components/TrustMeter.vue'
+defineProps<{ personalOnly?: boolean }>()
 const eligibilityReasons: Record<string, string> = {
   VINCULACION_NO_VIGENTE: 'Vinculación institucional no vigente',
   SANCION_ACTIVA: 'Sanción activa',
@@ -37,7 +38,7 @@ const eligibility = useRemote((signal) => getEligibility(session.user.id, signal
 const trust = useRemote((signal) => getTrust(session.user.id, signal))
 const sanctions = useRemote((signal) => getSanctions(session.user.id, signal))
 const loans = useRemote((signal) => getHistory(session.user.id, signal))
-const categories = useRemote(getCategories)
+const categories = useRemote(signal => getCategories(signal, true))
 const availability = useRemote(getGlobalAvailability)
 const copies = useCopyDetails(loans.data)
 const currentLoans = computed(
@@ -136,7 +137,7 @@ async function sendAppeal() {
     <button v-if="canAppeal(sanction)" :disabled="appealBlocked(sanction.id)" @click="openAppeal(sanction)">Apelar sanción</button>
     <p>Los detalles y las apelaciones están disponibles en el historial de sanciones.</p>
   </section>
-  <section class="student-catalog">
+  <section v-if="!personalOnly" class="student-catalog">
     <div class="student-section-heading"><h2>Explorar catálogo</h2><RouterLink to="/app/catalog">Ver todo <ArrowRight :size="14" aria-hidden="true" /></RouterLink></div>
     <RemoteState
       :loading="categories.loading.value"
@@ -159,7 +160,7 @@ async function sendAppeal() {
     </RemoteState>
     <p v-if="availability.error.value" class="error" role="alert">Disponibilidad desconocida. {{ availability.error.value }} <button @click="availability.refresh">Reintentar disponibilidad</button></p>
   </section>
-  <section class="student-loans">
+  <section v-if="!personalOnly" class="student-loans">
     <div class="student-section-heading"><h2>Mis préstamos activos</h2><span class="muted">{{ loans.data.value ? currentLoans.length : '—' }} activos</span></div>
     <RemoteState :loading="loans.loading.value" :error="loans.error.value" @retry="loans.refresh">
       <div v-if="currentLoans.length" class="table-wrap desktop-only student-loan-table">

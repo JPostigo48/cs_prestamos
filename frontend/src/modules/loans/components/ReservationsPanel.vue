@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onScopeDispose, ref } from 'vue'
 import { getSession } from '../../auth/api/auth-api'
 import { isStaff } from '../../auth/access-policy'
 import {
@@ -20,13 +20,28 @@ const props = defineProps<{ staff?: boolean }>()
 const emit = defineEmits<{ changed: [] }>()
 const session = getSession()!
 const page = ref(1)
+const view = ref<'CONFIRMADA' | 'TODOS' | 'VENCIDA'>('CONFIRMADA')
 const remote = useRemote(
   (signal) =>
-    listReservations({ ...(props.staff && isStaff(session.user.role) ? { status: 'CONFIRMADA' } : { userId: session.user.id }), page: String(page.value), limit: '20' }, signal),
+    listReservations({ ...(props.staff && isStaff(session.user.role) ? { status: 'CONFIRMADA' } : { userId: session.user.id, ...(view.value !== 'TODOS' ? { status: view.value } : {}) }), page: String(page.value), limit: '20' }, signal),
   () => true,
   false,
 )
 function move(offset: number) { page.value += offset; void remote.refresh() }
+function changeView(value: typeof view.value) { view.value = value; page.value = 1; void remote.refresh() }
+let timer: ReturnType<typeof setInterval> | undefined
+function refreshVisible() {
+  if (remote.data.value && !remote.loading.value && !sending.value && !selected.value)
+    void remote.refresh()
+}
+onMounted(() => {
+  window.addEventListener('focus', refreshVisible)
+  timer = setInterval(refreshVisible, 60_000)
+})
+onScopeDispose(() => {
+  window.removeEventListener('focus', refreshVisible)
+  if (timer) clearInterval(timer)
+})
 const copies = useCopyDetails(() => remote.data.value?.items ?? null)
 const users = useUserDetails(() => props.staff ? remote.data.value?.items ?? null : null)
 const selected = ref<Reservation | null>(null),
@@ -69,6 +84,11 @@ async function confirm() {
 <template>
   <section class="panel stack reservations-panel" :class="{ 'staff-reservations': staff }">
     <h2>{{ staff ? 'Entregas de reservas' : 'Mis reservas' }}</h2>
+    <div v-if="!staff" class="row" role="group" aria-label="Vista de reservas">
+      <button :aria-pressed="view === 'CONFIRMADA'" @click="changeView('CONFIRMADA')">Activas</button>
+      <button :aria-pressed="view === 'TODOS'" @click="changeView('TODOS')">Historial completo</button>
+      <button :aria-pressed="view === 'VENCIDA'" @click="changeView('VENCIDA')">Vencidas</button>
+    </div>
     <p class="muted">{{ staff ? 'Verifica las reservas confirmadas y la identidad del titular antes de entregar un equipo.' : 'Consulta tus reservas y su hora límite de recogida. Si la consulta falla, no podremos confirmar su estado.' }}</p>
     <button :disabled="remote.loading.value" @click="remote.refresh">
       Consultar / actualizar reservas
@@ -82,6 +102,7 @@ async function confirm() {
             <h3 v-if="staff">{{ users[item.userId]?.name || 'Titular · ' + item.userId }}</h3>
             <h3 v-else><RouterLink v-if="copies[item.copyId]" :to="'/app/catalog/' + copies[item.copyId]!.recurso.id">{{ copies[item.copyId]!.recurso.nombre }}</RouterLink><span v-else>Reserva de recurso</span></h3>
             <StatusBadge :tone="item.status === 'CONFIRMADA' ? 'info' : 'neutral'">{{ item.status.replaceAll('_', ' ') }}</StatusBadge>
+            <p v-if="item.status === 'VENCIDA'" class="muted">La reserva venció y conserva su historial. <RouterLink to="/app/personal">Consultar mi historial de sanciones</RouterLink>.</p>
             <p v-if="staff" class="reservation-resource"><RouterLink v-if="copies[item.copyId]" :to="'/app/catalog/' + copies[item.copyId]!.recurso.id">{{ copies[item.copyId]!.recurso.nombre }}</RouterLink><span v-else>Reserva de recurso</span></p>
             <p class="muted">Ejemplar {{ copies[item.copyId]?.codigoInventario || item.copyId }}</p>
             <dl class="reservation-dates"><div><dt>Hora de recogida</dt><dd>{{ dateTime(item.requestedAt) }}</dd></div><div><dt>Límite de recogida</dt><dd>{{ dateTime(item.pickupDeadline) }}</dd></div></dl>

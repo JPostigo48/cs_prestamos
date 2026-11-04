@@ -5,6 +5,7 @@ import { getSession } from '../api/auth-api'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import { dateTime } from '../../../shared/format'
 import RemoteState from '../../../shared/components/RemoteState.vue'
+import TermsDocument from './TermsDocument.vue'
 const props = defineProps<{ allowAcceptance?: boolean }>()
 const emit = defineEmits<{ read: [versionId: string | null] }>()
 const terms = useRemote(getCurrentTerms, () => true, false)
@@ -113,7 +114,7 @@ async function accept() {
             aria-label="Contenido completo de los términos"
             @scroll="scrolled"
           >
-            {{ terms.data.value.content }}
+            <TermsDocument :content="terms.data.value.content" />
           </div>
           <template v-if="!acceptedNotice">
             <p v-if="!read">Desplázate hasta el final del contenido para poder aceptar.</p>
@@ -160,7 +161,6 @@ async function accept() {
 .terms-content {
   max-height: 16rem;
   overflow: auto;
-  white-space: pre-wrap;
   padding: 1rem;
   border: 1px solid #cbd5e1;
   margin: 0.5rem 0;

@@ -1,169 +1,239 @@
 {
-  "currentSprint": 1,
-  "source": "docs/planning/README.md",
-  "sprints": [
+  "source": "docs/planning/academic-progress.md",
+  "members": [
     {
-      "sprint": 0,
-      "name": "Planificación y arquitectura",
+      "initials": "JC",
+      "name": "Juan Carlos Postigo Cabana"
+    },
+    {
+      "initials": "MA",
+      "name": "Mauricio Alejandro Farfán Huayta"
+    },
+    {
+      "initials": "LA",
+      "name": "Luis Antonio Chipana Chura"
+    },
+    {
+      "initials": "RR",
+      "name": "Ronald Reynaldo Valdez Agüero"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "task-01",
+      "title": "Tarea 01",
+      "kind": "task",
+      "date": "09/09/2026",
+      "status": "recorded",
+      "outcome": "Definición del alcance, los usuarios y los requisitos para gestionar recursos, préstamos y devoluciones.",
+      "progress": {
+        "JC": [
+          "Alcance y requisitos.",
+          "Modularidad y separación por capas."
+        ],
+        "MA": [
+          "Actores y necesidades de consulta.",
+          "Usabilidad de los recorridos."
+        ],
+        "LA": [
+          "Acceso por usuario.",
+          "Flujo de préstamo y devolución."
+        ],
+        "RR": [
+          "Relaciones usuario–recurso–préstamo.",
+          "Integridad y disponibilidad."
+        ]
+      }
+    },
+    {
+      "id": "task-02",
+      "title": "Tarea 02",
+      "kind": "task",
+      "date": "16/09/2026",
+      "status": "recorded",
+      "outcome": "Diseño del dominio con contextos, agregados, reglas de negocio y relaciones entre usuarios, inventario y préstamos.",
+      "progress": {
+        "JC": [
+          "Contextos e interacciones.",
+          "Agregados e invariantes."
+        ],
+        "MA": [
+          "Organización de catálogo y ejemplares.",
+          "Estados de interfaz."
+        ],
+        "LA": [
+          "Roles y vinculación.",
+          "Términos versionados."
+        ],
+        "RR": [
+          "Categorías, recursos y ejemplares.",
+          "Historial de sanciones y versiones."
+        ]
+      }
+    },
+    {
+      "id": "task-03",
+      "title": "Tarea 03",
+      "kind": "task",
+      "date": "24/09/2026",
+      "status": "recorded",
+      "outcome": "Preparación del backend, la base de datos y el inventario inicial, junto con los primeros prototipos de acceso y pantallas por rol.",
+      "progress": {
+        "JC": [
+          "Consolidó requisitos, dominio y arquitectura.",
+          "Organizó módulos, contratos y planificación."
+        ],
+        "MA": [
+          "Desarrolló identidad y logotipo.",
+          "Maquetas web y móvil para tres roles."
+        ],
+        "LA": [
+          "Prototipo inicial del flujo de acceso.",
+          "Organización de pantallas y formularios de ingreso."
+        ],
+        "RR": [
+          "PostgreSQL y Prisma.",
+          "Migraciones y datos iniciales."
+        ]
+      }
+    },
+    {
+      "id": "exam-01",
+      "title": "Examen 1",
+      "kind": "exam",
+      "date": "30/09/2026",
+      "status": "recorded",
+      "outcome": "Consolidación de los requisitos, el modelo de dominio y la arquitectura por capas para los procesos del sistema.",
+      "progress": {
+        "JC": [
+          "Correspondencia requisitos–dominio–arquitectura.",
+          "Modularidad y capas."
+        ],
+        "MA": [
+          "Usabilidad y operaciones por actor.",
+          "Recorridos según roles."
+        ],
+        "LA": [
+          "Solicitudes, cuentas y habilitación modeladas.",
+          "Términos, sanciones y apelaciones modelados."
+        ],
+        "RR": [
+          "Disponibilidad por ejemplar.",
+          "Repositorios e integridad histórica propuestos."
+        ]
+      }
+    },
+    {
+      "id": "task-04",
+      "title": "Tarea 04",
+      "kind": "task",
+      "date": "07/10/2026",
+      "status": "recorded",
+      "outcome": "Generación del contrato de la API, creación del Showcase e implementación del inventario con categorías, recursos y ejemplares.",
+      "progress": {
+        "JC": [
+          "Generación de OpenAPI.",
+          "Seis vistas iniciales del Showcase."
+        ],
+        "MA": [
+          "Maquetas para tres roles.",
+          "Guía visual responsive."
+        ],
+        "LA": [
+          "Prototipo de acceso integrado.",
+          "Colaboración en variantes web y móvil."
+        ],
+        "RR": [
+          "Persistencia, migraciones y datos.",
+          "Inventario: categorías, recursos y ejemplares."
+        ]
+      }
+    },
+    {
+      "id": "task-05",
+      "title": "Tarea 05",
+      "kind": "task",
+      "date": "21/10/2026",
+      "status": "recorded",
+      "outcome": "Ampliación del backend a cinco módulos y desarrollo de una maqueta interactiva con acceso, catálogo y reservas.",
+      "progress": {
+        "JC": [
+          "Backend de cinco módulos.",
+          "Contrato de API y Showcase para conectar los procesos del sistema."
+        ],
+        "MA": [
+          "Maqueta interactiva de las pantallas.",
+          "Navegación y adaptación visual para web y móvil."
+        ],
+        "LA": [
+          "Recorridos de acceso, catálogo y reservas.",
+          "Preparación de los formularios y flujos para su conexión con la API."
+        ],
+        "RR": [
+          "Persistencia de los procesos de negocio.",
+          "Relaciones y diferencias entre recurso, ejemplar, reserva y préstamo."
+        ]
+      }
+    },
+    {
+      "id": "task-06",
+      "title": "Tarea 06",
+      "kind": "task",
+      "date": "29/10/2026",
+      "status": "recorded",
+      "outcome": "Conexión de las interfaces de usuario, operador y administrador con catálogo, reservas, entregas y devoluciones; incorporación de gestión de usuarios, inventario y apelaciones.",
+      "progress": {
+        "JC": [
+          "Coordinación de la integración entre frontend y backend.",
+          "Contrato de 75 operaciones y vistas de API, datos y términos en el Showcase."
+        ],
+        "MA": [
+          "Adaptación de la identidad visual a las pantallas web y móvil.",
+          "Layout y componentes Vue compartidos entre los tres roles."
+        ],
+        "LA": [
+          "Integración de acceso, catálogo y reservas en la interfaz.",
+          "Recorridos de información personal y consulta de operaciones del usuario."
+        ],
+        "RR": [
+          "Persistencia de inventario y procesos del sistema.",
+          "Actualización del esquema y las migraciones para la base de datos en Neon."
+        ]
+      }
+    },
+    {
+      "id": "exam-02",
+      "title": "Examen 2",
+      "kind": "exam",
+      "date": "05/11/2026",
       "status": "in_progress",
-      "source": "docs/planning/sprints/sprint-00.md",
-      "members": [
-        {
-          "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Consolida requisitos, arquitectura, documentación, backlog y dimensionamiento de los sprints.",
-          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Ronald Reynaldo Valdez Agüero",
-          "responsibility": "Aporta la perspectiva de datos y persistencia al análisis del dominio. Su esquema y configuración técnica se registran en el Sprint 1.",
-          "area": "Esquema y migraciones, capa de infraestructura",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Mauricio Alejandro Farfán Huayta",
-          "responsibility": "Aporta flujos y necesidades de usuario al análisis. Sus maquetas de Figma se registran como avance de diseño del Sprint 1, fuera del repositorio.",
-          "area": "frontend/src/app/, router/, layouts/, shared/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Luis Antonio Chipana Chura",
-          "responsibility": "Aporta la perspectiva de la interfaz y los flujos funcionales. Su prototipo de login en aporte-login se registra en el Sprint 1.",
-          "area": "frontend/src/modules/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        }
-      ]
-    },
-    {
-      "sprint": 1,
-      "name": "Base técnica y prototipos",
-      "status": "in_progress",
-      "source": "docs/planning/sprints/sprint-01.md",
-      "members": [
-        {
-          "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Arquitectura, estructura por capas, contratos de módulos, planificación y Project Showcase",
-          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
-          "update": "Planificación en docs/planning/, estructura y contratos del backend preparados con apoyo de Ronald.",
-          "pending": "Implementar los casos de uso y endpoints de los módulos restantes.",
-          "evidence": null
-        },
-        {
-          "name": "Ronald Reynaldo Valdez Agüero",
-          "responsibility": "PostgreSQL, contrato Prisma, migración, seeds y arranque técnico del backend",
-          "area": "Esquema y migraciones, capa de infraestructura",
-          "update": "PostgreSQL/Prisma y endpoints de Inventario en develop; backend/prisma/ y backend/src/modules/inventory/.",
-          "pending": "Revisar la consistencia del esquema con el dominio y cerrar la documentación de puesta en marcha.",
-          "evidence": null
-        },
-        {
-          "name": "Mauricio Alejandro Farfán Huayta",
-          "responsibility": "Maquetas web y móvil por rol; coordinación del frontend común",
-          "area": "frontend/src/app/, router/, layouts/, shared/",
-          "update": "Maquetación Figma casi final, web y móvil por rol, con apoyo de Luis.",
-          "pending": "Revisar los flujos con el equipo antes de dar el diseño por cerrado.",
-          "evidence": {
-            "label": "Ver Figma",
-            "url": "https://www.figma.com/make/xgNTepyl4gkprTBb8lWzqr/Sistema-de-Pr%C3%A9stamos-Universitarios?t=jn7FnIXxi2AFKMvo-1"
-          }
-        },
-        {
-          "name": "Luis Antonio Chipana Chura",
-          "responsibility": "Prototipo de login y futura adaptación al frontend común",
-          "area": "frontend/src/modules/",
-          "update": "Apoyo a la maquetación Figma y prototipo visual de login incorporado desde aporte-login.",
-          "pending": "Integrar el acceso funcional con la API y coordinar sus vistas con el diseño común.",
-          "evidence": null
-        }
-      ]
-    },
-    {
-      "sprint": 2,
-      "name": "Primer flujo funcional",
-      "status": "planned",
-      "source": "docs/planning/sprints/sprint-02.md",
-      "members": [
-        {
-          "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Backend, endpoints, coordinación y Project Showcase",
-          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Ronald Reynaldo Valdez Agüero",
-          "responsibility": "Persistencia e integración de datos",
-          "area": "Esquema y migraciones, capa de infraestructura",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Mauricio Alejandro Farfán Huayta",
-          "responsibility": "Frontend general, integración del diseño Figma y autenticación",
-          "area": "frontend/src/app/, router/, layouts/, shared/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Luis Antonio Chipana Chura",
-          "responsibility": "Adaptación coordinada del prototipo de login; frontend de inventario y préstamos",
-          "area": "frontend/src/modules/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        }
-      ]
-    },
-    {
-      "sprint": 3,
-      "name": "Reglas de dominio y consolidación",
-      "status": "planned",
-      "source": "docs/planning/sprints/sprint-03.md",
-      "members": [
-        {
-          "name": "Juan Carlos Postigo Cabana",
-          "responsibility": "Planificación, backend de reglas, confianza, validación temporal y Project Showcase",
-          "area": "docs/planning/, docs/architecture/, backend/src/, frontend/src/modules/project-showcase/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Ronald Reynaldo Valdez Agüero",
-          "responsibility": "Persistencia de reglas, confianza e integridad histórica",
-          "area": "Esquema y migraciones, capa de infraestructura",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Mauricio Alejandro Farfán Huayta",
-          "responsibility": "Interfaz general de reglas y administración",
-          "area": "frontend/src/app/, router/, layouts/, shared/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        },
-        {
-          "name": "Luis Antonio Chipana Chura",
-          "responsibility": "Interfaz de confianza y sanciones",
-          "area": "frontend/src/modules/",
-          "update": "",
-          "pending": "",
-          "evidence": null
-        }
-      ]
+      "outcome": "Módulos de Catálogo–Inventario, Usuario, Préstamos y Reservas, junto con un documento de aportes por integrante y otro de políticas del sistema.",
+      "progress": {
+        "JC": [
+          "Consolidación de los cambios del equipo en develop y preparación de la base para continuar la vista de operador.",
+          "Correcciones de atomicidad en evidencias, manejo de errores públicos y respuesta HTTP 200.",
+          "Contrato de API actualizado a 77 operaciones e integración de los cambios de registro, préstamos y reservas.",
+          "Organización del Showcase por tareas y exámenes, con avances individuales y documentación para la entrega."
+        ],
+        "MA": [
+          "Campo de teléfono en el formulario de registro y envío de sus datos a la API.",
+          "Ajustes de tipado en los componentes del prototipo para mantener la compilación del frontend.",
+          "Consistencia visual y navegación de las pantallas de usuario, operador y administrador.",
+          "Adaptación responsive y organización de los componentes y formularios existentes."
+        ],
+        "LA": [
+          "Panel visual de confianza con niveles y diálogo explicativo.",
+          "Historial de préstamos con filtros y contadores de activos, vencidos, devueltos y programados.",
+          "Consulta de las aceptaciones de términos y aviso de la versión ya aceptada.",
+          "Mejoras en la navegación del usuario y en los iconos de categorías del catálogo."
+        ],
+        "RR": [
+          "Persistencia del teléfono en usuarios y solicitudes de registro.",
+          "Carga y consulta de evidencias fotográficas de entrega, devolución, daño y pérdida en préstamos, con almacenamiento Supabase y enlaces temporales.",
+          "Dos migraciones para teléfono y evidencias; esquema actualizado a 22 modelos, 11 enumeraciones y 33 entidades.",
+          "Validación del contenido y tamaño de imágenes, permisos de acceso y consistencia entre metadatos y archivos almacenados."
+        ]
+      }
     }
   ]
 }

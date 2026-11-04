@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Temporal } from 'temporal-polyfill/full';
 vi.mock('dotenv/config', () => ({}));
 import { AppealStatus } from './domain/entities/appeal.js';
 import { RegisterViolationUseCase } from './application/use-cases/register-violation.use-case.js';
@@ -78,7 +79,7 @@ describe('Rules use cases', () => {
       .mockResolvedValueOnce([{ id: 'u1' }])
       .mockResolvedValueOnce([{
         id: 'v1', usuarioId: 'u1', reglaId: 'r1', versionReglaId: 'rv1',
-        fecha: new Date(), penalizacionAplicada: '5.00',
+        fecha: Temporal.Now.instant(), penalizacionAplicada: '5.00',
       }])
       .mockResolvedValueOnce([{ id: 's1' }])
       .mockResolvedValueOnce([{ id: 'audit-1' }])
@@ -122,10 +123,10 @@ describe('Rules use cases', () => {
       const query = vi.fn()
         .mockResolvedValueOnce([{ id: 'u1', confianza: '80.00' }])
         .mockResolvedValueOnce([{ id: 'u1' }])
-        .mockResolvedValueOnce([{ estado: 'ACTIVA', fechaFin: new Date('2026-10-24T12:00:00.000Z') }])
+        .mockResolvedValueOnce([{ estado: 'ACTIVA', fechaFin: Temporal.Instant.from('2026-10-24T12:00:00.000Z') }])
         .mockResolvedValueOnce([{
           id: 'v1', usuarioId: 'u1', reglaId: 'r1', versionReglaId: 'rv1',
-          fecha: at, penalizacionAplicada: '5.00',
+          fecha: Temporal.Instant.from(at.toISOString()), penalizacionAplicada: '5.00',
         }])
         .mockResolvedValueOnce([{ id: 's1' }])
         .mockResolvedValueOnce([{ id: 'audit-1' }]);
@@ -149,12 +150,14 @@ describe('Rules use cases', () => {
       });
       expect(insertSanction.mock.calls[0][0][0]).toMatchObject({
         estado: 'PROGRAMADA',
-        fechaInicio: new Date('2026-10-24T12:00:00.000Z'),
-        fechaFin: new Date('2026-10-31T12:00:00.000Z'),
+        fechaInicio: Temporal.Instant.from('2026-10-24T12:00:00.000Z'),
+        fechaFin: Temporal.Instant.from('2026-10-31T12:00:00.000Z'),
         confianzaAnterior: '80.00',
         confianzaPosterior: '75.00',
       });
       expect(query).toHaveBeenCalledTimes(6);
+      expect(insertSanction.mock.calls[0][0][0].fechaInicio.epochMilliseconds).toBe(Date.parse('2026-10-24T12:00:00.000Z'));
+      expect(insertSanction.mock.calls[0][0][0].fechaFin.epochMilliseconds).toBe(Date.parse('2026-10-31T12:00:00.000Z'));
     } finally {
       vi.useRealTimers();
     }

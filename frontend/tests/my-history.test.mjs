@@ -36,11 +36,34 @@ const resourceNames = { c1: 'Álgebra lineal', c2: 'Cálculo diferencial', c3: '
 function mockFetch(history = fixture) {
   globalThis.fetch = async (url) => {
     const path = String(url)
+    if (path.includes('/loans/reservations')) return Response.json({ items: [], total: 0, page: 1, limit: 20 })
     if (path.includes('/history')) return Response.json(history)
     const id = path.split('/inventory/copies/')[1]
     return Response.json({ id, recursoId: 'r-' + id, codigoInventario: 'INV-' + id.length + id.charCodeAt(0), estado: 'PRESTADO', recurso: { id: 'r-' + id, nombre: resourceNames[id] ?? 'Recurso', categoriaId: 'cat' } })
   }
 }
+
+for (const role of ['USUARIO', 'OPERADOR', 'ADMINISTRADOR']) test(`reservas y préstamos propios ${role}: consultas limitadas a la cuenta, sin acciones staff`, async () => {
+  auth.saveSession(session(role))
+  const calls = []
+  globalThis.fetch = async (url, options) => {
+    calls.push([url, options.method])
+    return Response.json(url.includes('/loans/reservations') ? { items: [], total: 0, page: 1, limit: 20 } : [])
+  }
+  const app = mount(Page)
+  try {
+    await flush()
+    assert.match(text(app.root), /Mis reservas y préstamos/)
+    await event(find(app.root, 'button', 'Consultar / actualizar reservas'), 'click')
+    assert.equal(calls.length, 2)
+    assert.equal(calls[0][0], '/api/loans/user/' + session(role).user.id + '/history')
+    const query = new URL(calls[1][0], 'https://offline.invalid').searchParams
+    assert.equal(query.get('userId'), session(role).user.id)
+    assert.equal(query.get('status'), 'CONFIRMADA')
+    assert.equal(calls.every(([, method]) => method === 'GET'), true)
+    assert.equal(find(app.root, 'button', 'Entregar'), undefined)
+  } finally { app.unmount() }
+})
 
 async function openPage() {
   auth.saveSession(session('USUARIO'))
@@ -49,6 +72,53 @@ async function openPage() {
   await router.isReady()
   return { ...mount(Page, {}, [router]), router }
 }
+
+test('reservas: activas excluye vencidas, historial las conserva y cambiar vista reinicia página', async () => {
+  auth.saveSession(session('USUARIO'))
+  const queries = []
+  const reservation = { id: 'expired-reservation', userId: session().user.id, copyId: 'c1', status: 'VENCIDA',
+    requestedAt: '2026-11-01T10:00:00Z', pickupDeadline: '2026-11-01T10:30:00Z', configurationSnapshot: null }
+  globalThis.fetch = async url => {
+    const path = String(url)
+    if (path.includes('/loans/reservations')) {
+      const query = new URL(path, 'https://offline.invalid').searchParams
+      queries.push(query)
+      const items = query.get('status') === 'CONFIRMADA' ? [] : [reservation]
+      return Response.json({ items, total: items.length ? 21 : 0, page: Number(query.get('page')), limit: 20 })
+    }
+    if (path.includes('/history')) return Response.json([])
+    return Response.json({ id: 'c1', recursoId: 'r1', codigoInventario: 'INV-1', estado: 'DISPONIBLE', recurso: { id: 'r1', nombre: 'Libro', categoriaId: 'cat' } })
+  }
+  const app = await openPage()
+  try {
+    await flush()
+    await event(find(app.root, 'button', 'Consultar / actualizar reservas'), 'click')
+    assert.equal(queries.at(-1).get('status'), 'CONFIRMADA')
+    assert.doesNotMatch(text(app.root), /VENCIDA/)
+    const beforeFocus = queries.length
+    window.dispatchEvent(new Event('focus'))
+    await flush()
+    assert.equal(queries.length, beforeFocus + 1)
+    await event(find(app.root, 'button', 'Historial completo'), 'click')
+    await flush()
+    assert.equal(queries.at(-1).get('status'), null)
+    assert.match(text(app.root), /VENCIDA/)
+    assert.match(text(app.root), /Consultar mi historial de sanciones/)
+    await event(find(app.root, 'button', 'Siguiente'), 'click')
+    assert.equal(queries.at(-1).get('page'), '2')
+    await event(find(app.root, 'button', 'Vencidas'), 'click')
+    assert.equal(queries.at(-1).get('page'), '1')
+    assert.equal(queries.at(-1).get('status'), 'VENCIDA')
+    assert.equal(queries.at(-1).get('userId'), session().user.id)
+    assert.equal(find(app.root, 'button', 'Cancelar mi reserva'), undefined)
+  } finally {
+    app.unmount()
+    const afterUnmount = queries.length
+    window.dispatchEvent(new Event('focus'))
+    await flush()
+    assert.equal(queries.length, afterUnmount)
+  }
+})
 
 test('mi historial: tarjetas con recursos, fechas, orden reciente y etiquetas de estado', async () => {
   mockFetch()

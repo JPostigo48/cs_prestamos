@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { IsBoolean, ValidateIf } from 'class-validator';
 import {
   IsInt,
   IsNotEmpty,
@@ -10,7 +11,27 @@ import {
 } from 'class-validator';
 
 export class CreateCategoryDto {
-  @ApiProperty({ type: String, maxLength: 120, example: 'Equipos de laboratorio' })
+  @ApiProperty({ type: Boolean, required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  activo?: boolean;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    maxLength: 2000,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descripcion?: string | null;
+
+  @ApiProperty({
+    type: String,
+    maxLength: 120,
+    example: 'Equipos de laboratorio',
+  })
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsNotEmpty()

@@ -233,10 +233,13 @@ export class InventoryService {
     return {
       id: row.id,
       nombre: row.nombre,
+      descripcion: row.descripcion ?? null,
+      activo: row.activo ?? true,
       tiempoMaximoPrestamoDias: row.tiempoMaximoPrestamoDias,
       tiempoMaximoPrestamoHoras:
         row.tiempoMaximoPrestamoHoras ?? row.tiempoMaximoPrestamoDias * 24,
       resourceCount: row.resourceCount ?? 0,
+      copyCount: row.copyCount ?? 0,
     };
   }
 
@@ -245,6 +248,7 @@ export class InventoryService {
       id: row.id,
       categoriaId: row.categoriaId,
       nombre: row.nombre,
+      activo: row.activo ?? true,
       descripcion: row.descripcion ?? null,
       durationHours: row.duracionPrestamoHoras ?? null,
       available: row.available ?? false,
@@ -293,7 +297,10 @@ export class InventoryService {
           categoria: category
             ? { id: category.id, nombre: category.nombre }
             : null,
-          available: counts.disponibles > 0,
+          available:
+            counts.disponibles > 0 &&
+            row.activo !== false &&
+            category?.activo !== false,
           totalCopies:
             counts.disponibles +
             counts.prestados +
@@ -350,6 +357,11 @@ export class InventoryService {
     try {
       const created = await this.repository.createCategory({
         nombre,
+        descripcion:
+          dto.descripcion === null
+            ? null
+            : (this.normalizeText(dto.descripcion, 'descripcion') ?? null),
+        activo: dto.activo ?? true,
         tiempoMaximoPrestamoDias: dto.tiempoMaximoPrestamoDias,
         tiempoMaximoPrestamoHoras,
       });
@@ -365,15 +377,33 @@ export class InventoryService {
     }
   }
 
-  async listCategories() {
+  async listCategories(active?: 'true' | 'false') {
     const rows = await this.repository.findAllCategories();
     const categories = await Promise.all(
-      rows.map(async (row: any) => {
-        const resourceCount = await this.repository.countResourcesByCategory(
-          row.id,
-        );
-        return this.toCategoryResponse({ ...row, resourceCount });
-      }),
+      rows
+        .filter(
+          (row: any) =>
+            active === undefined ||
+            (row.activo ?? true) === (active === 'true'),
+        )
+        .map(async (row: any) => {
+          const resourceCount = await this.repository.countResourcesByCategory(
+            row.id,
+          );
+          const resources = await this.repository.findAllResources({
+            categoryId: row.id,
+          });
+          const counts = await Promise.all(
+            resources.map((resource) =>
+              this.repository.countCopiesByResource(resource.id),
+            ),
+          );
+          return this.toCategoryResponse({
+            ...row,
+            resourceCount,
+            copyCount: counts.reduce((a, b) => a + b, 0),
+          });
+        }),
     );
     return categories;
   }
@@ -388,7 +418,32 @@ export class InventoryService {
     }
     const resourceCount =
       await this.repository.countResourcesByCategory(categoryId);
-    return this.toCategoryResponse({ ...category, resourceCount });
+    const resources = await this.repository.findAllResources({ categoryId });
+    const counts = await Promise.all(
+      resources.map((resource) =>
+        this.repository.countCopiesByResource(resource.id),
+      ),
+    );
+    return this.toCategoryResponse({
+      ...category,
+      resourceCount,
+      copyCount: counts.reduce((a, b) => a + b, 0),
+    });
+  }
+
+  async getCategoryPolicies(categoryId: string) {
+    const category = await this.ensureCategoryExists(categoryId);
+    const policies = await this.repository.getCategoryPolicies(categoryId);
+    return {
+      ...policies,
+      eligibleForNewOperations:
+        category.activo !== false && policies.eligibleForNewOperations,
+    };
+  }
+
+  async previewCategoryDeletion(categoryId: string) {
+    await this.ensureCategoryExists(categoryId);
+    return this.repository.previewCategoryDeletion(categoryId);
   }
 
   async updateCategory(categoryId: string, dto: UpdateCategoryInput) {
@@ -396,9 +451,21 @@ export class InventoryService {
 
     const updateData: Partial<{
       nombre: string;
+      descripcion: string | null;
+      activo: boolean;
       tiempoMaximoPrestamoDias: number;
       tiempoMaximoPrestamoHoras: number;
     }> = {};
+    if (dto.descripcion !== undefined)
+      updateData.descripcion =
+        dto.descripcion === null
+          ? null
+          : (this.normalizeText(dto.descripcion, 'descripcion') ?? null);
+    if (dto.activo !== undefined) {
+      if (typeof dto.activo !== 'boolean')
+        throw new BadRequestException('activo debe ser booleano.');
+      updateData.activo = dto.activo;
+    }
     if (dto.nombre !== undefined) {
       const nombre = this.normalizeText(dto.nombre, 'nombre');
       if (!nombre) throw new BadRequestException('nombre no puede ser nulo.');
@@ -448,12 +515,7 @@ export class InventoryService {
 
   async deleteCategory(categoryId: string) {
     await this.ensureCategoryExists(categoryId);
-    const count = await this.repository.countResourcesByCategory(categoryId);
-    if (count > 0) {
-      throw new ConflictException(
-        'No se puede eliminar la categoría porque tiene recursos asociados.',
-      );
-    }
+    // El repositorio revalida dependencias bajo bloqueo en la misma transacción.
     const deleted = await this.repository.deleteCategory(categoryId);
     if (deleted === 0) {
       throw new NotFoundException('Categoría no encontrada.');
@@ -465,7 +527,11 @@ export class InventoryService {
     if (!this.isUuid(dto.categoriaId)) {
       throw new BadRequestException('categoriaId no es un UUID válido.');
     }
-    await this.ensureCategoryExists(dto.categoriaId);
+    const category = await this.ensureCategoryExists(dto.categoriaId);
+    if (category.activo === false)
+      throw new ConflictException(
+        'No se pueden asignar recursos a una categoría inactiva.',
+      );
 
     const nombre = this.normalizeText(dto.nombre, 'nombre');
     if (!nombre) throw new BadRequestException('nombre es obligatorio.');
@@ -477,6 +543,7 @@ export class InventoryService {
     try {
       const created = await this.repository.createResource({
         categoriaId: dto.categoriaId,
+        activo: dto.activo ?? true,
         nombre: nombre!,
         descripcion,
       });
@@ -549,7 +616,10 @@ export class InventoryService {
       loanPolicy: await this.resolveLoanPolicy(resource),
       ...this.toResourceResponse({
         ...resource,
-        available: counts.disponibles > 0,
+        available:
+          counts.disponibles > 0 &&
+          resource.activo !== false &&
+          category?.activo !== false,
         totalCopies:
           counts.disponibles +
           counts.prestados +
@@ -574,15 +644,26 @@ export class InventoryService {
     await this.ensureResourceExists(resourceId);
     const updateData: Partial<{
       categoriaId: string;
+      activo: boolean;
       nombre: string;
       descripcion?: string | null;
     }> = {};
+
+    if (dto.activo !== undefined) {
+      if (typeof dto.activo !== 'boolean')
+        throw new BadRequestException('activo debe ser booleano.');
+      updateData.activo = dto.activo;
+    }
 
     if (dto.categoriaId !== undefined) {
       if (!this.isUuid(dto.categoriaId)) {
         throw new BadRequestException('categoriaId no es un UUID válido.');
       }
-      await this.ensureCategoryExists(dto.categoriaId);
+      const category = await this.ensureCategoryExists(dto.categoriaId);
+      if (category.activo === false)
+        throw new ConflictException(
+          'No se pueden asignar recursos a una categoría inactiva.',
+        );
       updateData.categoriaId = dto.categoriaId;
     }
     if (dto.nombre !== undefined) {
@@ -637,7 +718,12 @@ export class InventoryService {
   }
 
   async createCopy(resourceId: string, dto: CreateCopyInput) {
-    await this.ensureResourceExists(resourceId);
+    const resource = await this.ensureResourceExists(resourceId);
+    const category = await this.ensureCategoryExists(resource.categoriaId);
+    if (resource.activo === false || category.activo === false)
+      throw new ConflictException(
+        'No se pueden asignar ejemplares a un recurso o categoría inactivos.',
+      );
     const codigoInventario = this.normalizeText(
       dto.codigoInventario,
       'codigoInventario',
@@ -706,9 +792,17 @@ export class InventoryService {
     const copy = await this.ensureCopyExists(copyId);
     const resource = await this.ensureResourceExists(copy.recursoId);
     const policy = await this.resolveLoanPolicy(resource);
+    const category = await this.ensureCategoryExists(resource.categoriaId);
+    const configuration = await this.repository.getCategoryPolicies(
+      resource.categoriaId,
+    );
+    const enabled =
+      resource.activo !== false &&
+      category.activo !== false &&
+      configuration.eligibleForNewOperations;
     return {
       copyId,
-      available: copy.estado === 'DISPONIBLE',
+      available: copy.estado === 'DISPONIBLE' && enabled,
       maximumLoanDays: policy.effectiveDurationHours / 24,
       maximumLoanHours: policy.effectiveDurationHours,
     };
@@ -765,7 +859,8 @@ export class InventoryService {
   }
 
   async getResourceAvailability(resourceId: string) {
-    await this.ensureResourceExists(resourceId);
+    const resource = await this.ensureResourceExists(resourceId);
+    const category = await this.ensureCategoryExists(resource.categoriaId);
     const counts = await this.getAvailabilityCounts(resourceId);
     const totalCopies =
       counts.disponibles +
@@ -774,7 +869,10 @@ export class InventoryService {
       counts.reservados;
     return {
       resourceId,
-      available: counts.disponibles > 0,
+      available:
+        counts.disponibles > 0 &&
+        resource.activo !== false &&
+        category.activo !== false,
       totalCopies,
       disponibles: counts.disponibles,
       prestados: counts.prestados,
@@ -802,7 +900,10 @@ export class InventoryService {
             categoria: category
               ? { id: category.id, nombre: category.nombre }
               : null,
-            available: counts.disponibles > 0,
+            available:
+              counts.disponibles > 0 &&
+              row.activo !== false &&
+              category?.activo !== false,
             totalCopies:
               counts.disponibles +
               counts.prestados +

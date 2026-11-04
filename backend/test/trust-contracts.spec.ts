@@ -648,7 +648,6 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
         userId,
         copyId,
         requestedAt: new Date(),
-        pickupDeadline: new Date(Date.now() + 600000),
         loanDurationHours: 8,
         enforceSingleOpenOperation: false,
       }),

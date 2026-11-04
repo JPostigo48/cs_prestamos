@@ -6,11 +6,19 @@ export interface Terms {
   number: number
   title: string
   content: string
+  publishedAt?: string | null
 }
-export async function getCurrentTerms(signal?: AbortSignal) {
-  const result = await apiRequest<Terms>('/terms/current', { signal })
+function readableTerms(result: Terms) {
   if (!result?.id || !Number.isInteger(result.number) || result.number < 1 || !result.title?.trim() || !result.content?.trim())
     throw new ApiError('No hay una versión de términos legible disponible. Contacta con el personal.', 422)
+  return result
+}
+export async function getCurrentTerms(signal?: AbortSignal) {
+  return readableTerms(await apiRequest<Terms>('/terms/current', { signal }))
+}
+export async function getTermsVersion(versionId: string, signal?: AbortSignal) {
+  const result = readableTerms(await apiRequest<Terms>('/terms/versions/' + encodeURIComponent(versionId), { signal }))
+  if (result.id !== versionId) throw new ApiError('No se pudo confirmar la versión de términos solicitada.', 422)
   return result
 }
 export async function startGoogle(email: string) {
@@ -63,7 +71,7 @@ export async function getMyAcceptances(userId: string, signal?: AbortSignal) {
     '/terms/users/' + userId + '/acceptances',
     { signal },
   )
-  if (!Array.isArray(result))
+  if (!Array.isArray(result) || result.some((item) => !item?.id || item.userId !== userId || !item.termsVersionId || !Number.isFinite(Date.parse(item.acceptedAt))))
     throw new ApiError('No se pudo leer el historial de aceptaciones.', 0)
   return result
 }

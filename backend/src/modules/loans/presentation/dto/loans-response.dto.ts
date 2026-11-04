@@ -1,10 +1,23 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OpeningDayDto } from '../../../system/presentation/reservation-settings.dto.js';
 import { LoanStatus } from '../../domain/entities/loan.js';
 import { ReservationStatus } from '../../domain/entities/reservation.js';
 import {
   ResourceAccessoryResponseDto,
   ResourceLoanPolicyResponseDto,
 } from '../../../inventory/presentation/dto/resource-configuration.dto.js';
+
+export class ReservationSettingsSnapshotDto {
+  @ApiProperty({ type: 'integer', minimum: 1 }) version!: number;
+  @ApiProperty({ type: 'integer', minimum: 1, maximum: 240 }) pickupWaitMinutes!: number;
+  @ApiProperty({ type: [OpeningDayDto], nullable: true }) weeklySchedule!: OpeningDayDto[] | null;
+  @ApiProperty({ type: String, enum: ['America/Lima'] }) timeZone!: 'America/Lima';
+}
+
+export class ReservationNoShowSnapshotDto {
+  @ApiProperty({ type: String, format: 'uuid' }) termsVersionId!: string;
+  @ApiProperty({ type: String, format: 'uuid' }) ruleVersionId!: string;
+}
 
 export class CopyLoanSnapshotDto {
   @ApiProperty({ type: 'integer', enum: [1] }) schemaVersion!: 1;
@@ -18,6 +31,10 @@ export class CopyLoanSnapshotDto {
   policy!: ResourceLoanPolicyResponseDto;
   @ApiProperty({ type: [ResourceAccessoryResponseDto] })
   accessories!: ResourceAccessoryResponseDto[];
+  @ApiPropertyOptional({ type: ReservationSettingsSnapshotDto, description: 'Configuración operativa congelada. Ausente en instantáneas anteriores; no recalcular el plazo.' })
+  reservationSettings?: ReservationSettingsSnapshotDto;
+  @ApiPropertyOptional({ type: ReservationNoShowSnapshotDto, description: 'Publicación y versión LEVE de inasistencia congeladas al confirmar. Ausente en reservas históricas.' })
+  reservationNoShow?: ReservationNoShowSnapshotDto;
 }
 export class ReturnChecklistPartResponseDto {
   @ApiProperty({ type: String, format: 'uuid' }) accessoryId!: string;

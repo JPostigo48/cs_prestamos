@@ -26,7 +26,7 @@ Todo préstamo nace de una reserva CONFIRMADA de un ejemplar concreto que queda 
 
 La duración empieza en la recogida efectiva: **electrónicos 8 horas dentro del campus, libros 14 días y deportes 2 días**. Las políticas y duración se conservan al confirmar la reserva. Los cambios posteriores no modifican esa operación; la elegibilidad personal y términos vigentes se verifican nuevamente al entregar.
 
-La ventana de recogida incluye los 30 minutos posteriores a la hora pactada. Después, la reserva pasa a VENCIDA y genera inasistencia. La cancelación válida o administrativa no genera esa falta.
+La espera operativa para nuevas reservas es configurable por ADMINISTRADOR, inicialmente 30 minutos; cada plazo persistido conserva su vigencia. El horario semanal se detalla en el [contrato de settings](../architecture/reservation-settings-api.md); el [vencimiento automático](../architecture/reservation-expiry.md) aplica una sola variante LEVE existente por reserva, sin escalar por reiteración y conservando historial. La cancelación válida o administrativa no genera esa falta. No se modifican menciones históricas en términos publicados.
 
 Las reglas completas de acumulación, escalamiento y absolución están en [términos y condiciones](terms-and-conditions.md#8-acumulación-de-sanciones). Las suspensiones futuras usan PROGRAMADA, las efectivas ACTIVA y las terminadas FINALIZADA o ABSUELTA. Las sanciones sin suspensión se finalizan después del descuento y pueden apelarse durante 30 días desde su registro; las demás finalizadas, durante 30 días desde su finalización.
 

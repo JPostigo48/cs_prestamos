@@ -85,8 +85,8 @@ Los requisitos RF-57 en adelante amplían la versión inicial sin modificar los 
 ### Reservas y control de tiempos
 
 - **RF-57.** El usuario confirma una reserva de un ejemplar DISPONIBLE para una hora igual o posterior a la actual. La confirmación bloquea inmediatamente la unidad y conserva duración, categoría y políticas aplicables.
-- **RF-58.** La recogida se permite desde la hora pactada hasta esa hora más 30 minutos, inclusive. Después la reserva no recogida pasa a VENCIDA, libera la unidad apta y genera una sola inasistencia.
-- **RF-59.** El sistema debe registrar la inasistencia a una reserva como una regla diferenciada, aplicar un descuento menor de confianza configurable y conservar la cancelación. La escala vigente es de **2/3/5 puntos** para la primera, segunda y tercera o siguientes inasistencias, respectivamente, dentro de una ventana móvil de 30 días.
+- **RF-58.** La recogida se permite desde la hora pactada hasta el plazo persistido, inclusive. La espera y horario configurables solo afectan nuevas reservas. Al superarlo, una CONFIRMADA pasa a VENCIDA, libera exclusivamente su ejemplar reservado y registra una sola inasistencia en la misma transacción; conserva historial. Véase el [contrato operativo](../architecture/reservation-expiry.md).
+- **RF-59.** El vencimiento aplica siempre la variante LEVE existente de inasistencia de la publicación asociada a la reserva, una sola vez, con importe persistido y sin escalamiento por repetición. Las escalas históricas y términos aceptados se conservan, pero no seleccionan MODERADA/GRAVE en este flujo.
 - **RF-60.** El sistema debe detectar automáticamente la devolución tardía **sin tolerancia**, determinar su gravedad según categoría y tiempo transcurrido, y escalar la consecuencia conforme a la versión vigente de la regla.
 - **RF-61.** El sistema debe evitar aplicar varias veces las penalizaciones completas leve, moderada y grave **sobre un mismo episodio de tardanza**; al escalar debe cobrar solo el incremento de la consecuencia total.
 

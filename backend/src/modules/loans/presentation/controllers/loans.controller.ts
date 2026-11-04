@@ -98,12 +98,12 @@ export class LoansController {
   @ApiQuery({ name: 'userId', required: false, type: String, format: 'uuid', description: 'USUARIO solo propio; personal puede filtrar cualquier titular.' })
   @ApiQuery({ name: 'copyId', required: false, type: String, format: 'uuid', description: 'ID del ejemplar, no del artículo.' })
   @ApiExtension('x-access-constraints', 'USUARIO: solo reservas propias. OPERADOR y ADMINISTRADOR: consulta operativa, filtrable por titular.')
-  @ApiHttpErrors(400, 401, 403)
+  @ApiHttpErrors(400, 401, 403, 503)
   @ApiOkResponse({ type: ReservationsPageResponseDto })
   @ApiOperation({
     summary: 'Listar reservas',
     description:
-      'USUARIO: solo propias. OPERADOR/ADMINISTRADOR: listado operativo filtrable. Orden fecha solicitada descendente e ID ascendente; paginación aplicada en persistencia.',
+      'USUARIO: solo propias. OPERADOR/ADMINISTRADOR: listado operativo filtrable. CONFIRMADA corresponde a activas; sin estado conserva historial, incluida VENCIDA. Antes de consultar procesa vencimientos con sanción LEVE única; fallo de política/persistencia devuelve 503. Orden fecha solicitada descendente e ID ascendente; paginación aplicada en persistencia.',
   })
   @ApiExtension('x-implementation-status', 'implemented')
   reservations(
@@ -167,7 +167,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(400, 404, 409)
+  @ApiHttpErrors(400, 404, 409, 503)
   @Post('reservations')
   @ApiCreatedResponse({ type: ReservationResponseDto })
   @ApiBody({ type: CreateReservationDto })
@@ -184,7 +184,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(404, 409)
+  @ApiHttpErrors(404, 409, 503)
   @Post('reservations/:reservationId/pickup')
   @ApiCreatedResponse({ type: LoanResponseDto })
   @UseGuards(RolesGuard)
@@ -198,7 +198,7 @@ export class LoansController {
     });
   }
 
-  @ApiHttpErrors(400, 409)
+  @ApiHttpErrors(400, 409, 503)
   @Delete('reservations/:reservationId')
   @ApiOkResponse({
     type: ReservationResponseDto,

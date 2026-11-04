@@ -47,7 +47,7 @@ describe('InventoryService', () => {
       countResourcesByCategory: vi.fn(),
       createResource: vi.fn(),
       findResourceById: vi.fn(),
-      findAllResources: vi.fn(),
+      findAllResources: vi.fn().mockResolvedValue([]),
       countCopiesByResource: vi.fn(),
       countAvailableCopiesByResource: vi.fn(),
       countCopiesByResourceAndState: vi
@@ -93,6 +93,8 @@ describe('InventoryService', () => {
 
     expect(repository.createCategory).toHaveBeenCalledWith({
       nombre: 'Libros',
+      descripcion: null,
+      activo: true,
       tiempoMaximoPrestamoDias: 14,
       tiempoMaximoPrestamoHoras: 336,
     });
@@ -137,6 +139,7 @@ describe('InventoryService', () => {
 
     expect(repository.createResource).toHaveBeenCalledWith({
       categoriaId: categoryId,
+      activo: true,
       nombre: 'Clean Code',
       descripcion: 'Libro',
     });
@@ -155,8 +158,10 @@ describe('InventoryService', () => {
   });
 
   it('should create a copy as AVAILABLE', async () => {
+    repository.findCategoryById.mockResolvedValue({ id: categoryId });
     repository.findResourceById.mockResolvedValue({
       id: resourceId,
+      categoriaId: categoryId,
       nombre: 'Clean Code',
     });
     repository.createCopy.mockResolvedValue({
@@ -179,7 +184,11 @@ describe('InventoryService', () => {
   });
 
   it('should reject duplicated inventory code', async () => {
-    repository.findResourceById.mockResolvedValue({ id: resourceId });
+    repository.findCategoryById.mockResolvedValue({ id: categoryId });
+    repository.findResourceById.mockResolvedValue({
+      id: resourceId,
+      categoriaId: categoryId,
+    });
     repository.createCopy.mockRejectedValue(
       new ConflictException('Código duplicado'),
     );
@@ -201,7 +210,14 @@ describe('InventoryService', () => {
   });
 
   it('should calculate availability', async () => {
-    repository.findResourceById.mockResolvedValue({ id: resourceId });
+    repository.findResourceById.mockResolvedValue({
+      id: resourceId,
+      categoriaId: categoryId,
+    });
+    repository.findCategoryById.mockResolvedValue({
+      id: categoryId,
+      activo: true,
+    });
     repository.countCopiesByResourceAndState.mockImplementation((_id, state) =>
       Promise.resolve(
         state === 'DISPONIBLE'
@@ -223,9 +239,11 @@ describe('InventoryService', () => {
     expect(result.noDisponibles).toBe(3);
   });
 
-  it('should reject category deletion when resources exist', async () => {
+  it('propagates transactional category deletion blockers from persistence', async () => {
     repository.findCategoryById.mockResolvedValue({ id: categoryId });
-    repository.countResourcesByCategory.mockResolvedValue(1);
+    repository.deleteCategory.mockRejectedValue(
+      new ConflictException('Historial que conservar.'),
+    );
 
     await expect(service.deleteCategory(categoryId)).rejects.toThrow(
       ConflictException,
@@ -288,7 +306,7 @@ describe('InventoryService', () => {
     ).rejects.toBe(error);
 
     repository.createCopy.mockRejectedValue({ code: '23505' });
-    repository.findResourceById.mockResolvedValue({ id: resourceId });
+    repository.findResourceById.mockResolvedValue({ id: resourceId, categoriaId: categoryId });
     await expect(
       service.createCopy(resourceId, { codigoInventario: 'LIB-001' }),
     ).rejects.toThrow(ConflictException);
@@ -374,7 +392,13 @@ describe('InventoryService', () => {
       id: resourceId,
       available: true,
       categoria: expect.objectContaining({ id: categoryId }),
-      loanPolicy: { resourceId, categoryId, durationHours: null, effectiveDurationHours: 336, source: 'CATEGORY' },
+      loanPolicy: {
+        resourceId,
+        categoryId,
+        durationHours: null,
+        effectiveDurationHours: 336,
+        source: 'CATEGORY',
+      },
     });
     repository.findResourceById.mockResolvedValue(null);
     await expect(service.getResource(resourceId)).rejects.toThrow(

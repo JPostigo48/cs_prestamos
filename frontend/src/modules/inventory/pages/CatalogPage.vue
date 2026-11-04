@@ -9,14 +9,16 @@ import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import { Search, Plus, Pencil } from '@lucide/vue'
 import CategoryIcon from '../components/CategoryIcon.vue'
+import { getSession } from '../../auth/api/auth-api'
 
 const route = useRoute()
-defineProps<{ management?: boolean }>()
+const props = defineProps<{ management?: boolean }>()
+const management = computed(() => !!props.management && getSession()?.user.role === 'ADMINISTRADOR')
 const editing = ref(false),
   selected = ref<Resource | null>(null)
 const router = useRouter()
 const filters = computed(() => catalogFilters(route.query))
-const categories = useRemote(getCategories)
+const categories = useRemote(signal => getCategories(signal, management.value ? undefined : true))
 const resources = useRemote(
   (signal) => getResources(filters.value, signal),
   () => JSON.stringify(filters.value),
@@ -71,20 +73,23 @@ const pages = computed(() =>
     <div>
     <p v-if="!management" class="catalog-eyebrow">Explorar recursos</p>
     <h1>{{ management ? 'Gestión del Inventario' : 'Catálogo' }}</h1>
-    <p class="muted">{{ management ? 'Administra los artículos, sus categorías y los ejemplares del catálogo.' : 'Encuentra los recursos que necesitas y consulta su disponibilidad.' }}</p>
+    <p class="muted">{{ management ? 'Administra los recursos, sus categorías y los ejemplares del catálogo.' : 'Encuentra los recursos que necesitas y consulta su disponibilidad.' }}</p>
     </div>
+    <div v-if="management" class="row inventory-heading-actions">
+    <RouterLink class="manage-categories" to="/app/admin/inventory/categories">Gestionar categorías</RouterLink>
     <button
       v-if="management"
       class="primary"
       @click="edit(null)"
     >
-      <Plus :size="18" aria-hidden="true" /> <span class="new-article-label">Nuevo artículo</span>
+      <Plus :size="18" aria-hidden="true" /> <span class="new-article-label">Nuevo recurso</span>
     </button>
+    </div>
   </div>
   <form class="panel catalog-filters" role="search" aria-label="Filtrar catálogo" @submit.prevent="update({ search: search.trim() || undefined })">
     <label class="catalog-search"
       ><span class="sr-only">Buscar por nombre</span><Search :size="18" aria-hidden="true" />
-      <input v-model="search" type="search" placeholder="Buscar artículo…" maxlength="120" @input="searchChanged"
+      <input v-model="search" type="search" placeholder="Buscar recurso…" maxlength="120" @input="searchChanged"
     /></label>
     <label
       >Disponibilidad
@@ -120,13 +125,13 @@ const pages = computed(() =>
       </p>
       <div v-if="management" class="panel table-wrap desktop-only inventory-table" tabindex="0" role="region" aria-label="Inventario de recursos">
         <table>
-          <caption>Inventario · {{ resources.data.value.total }} artículos</caption>
-          <thead><tr><th>Artículo</th><th>Categoría</th><th>Disponibilidad</th><th>Acciones</th></tr></thead>
+          <caption>Inventario · {{ resources.data.value.total }} recursos</caption>
+          <thead><tr><th>Recurso</th><th>Categoría</th><th>Disponibilidad</th><th>Acciones</th></tr></thead>
           <tbody><tr v-for="resource in resources.data.value.data" :key="resource.id">
             <td><RouterLink :to="resourceDestination(resource.id, route.query, true)">{{ resource.nombre }}</RouterLink><p v-if="resource.descripcion" class="muted inventory-description">{{ resource.descripcion }}</p></td>
             <td><span class="inventory-category">{{ categories.data.value?.find(c => c.id === resource.categoriaId)?.nombre || 'Categoría no disponible' }}</span></td>
             <td><strong class="inventory-stock" :class="{ empty: resource.availableCopies === 0 }">{{ resource.availableCopies }}</strong> disponibles<small>Total de ejemplares desconocido; consultar detalle</small></td>
-            <td><button class="inventory-edit" @click="edit(resource)"><Pencil :size="15" aria-hidden="true" /> Editar artículo y ejemplares</button></td>
+            <td><button class="inventory-edit" @click="edit(resource)"><Pencil :size="15" aria-hidden="true" /> Editar recurso y ejemplares</button></td>
           </tr></tbody>
         </table>
       </div>
@@ -144,7 +149,7 @@ const pages = computed(() =>
             v-if="management"
             @click="edit(resource)"
           >
-            Editar artículo y ejemplares
+            Editar recurso y ejemplares
           </button></ResourceCard
         >
         </template>
@@ -197,6 +202,8 @@ const pages = computed(() =>
 .inventory-table small { display: block; color: #64748b; font-size: 10px; margin-top: 4px; }
 .inventory-table .inventory-edit { display: inline-flex; align-items: center; gap: 8px; background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; font-size: 12px; font-weight: 700; }
 .catalog-heading { justify-content: space-between; margin-bottom: 24px; }
+.inventory-heading-actions { gap: 8px; }
+.manage-categories { display: inline-flex; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; color: #1e3a5f; text-decoration: none; }
 .catalog-heading h1 { margin: 4px 0; }
 .catalog-heading .muted { font-size: 14px; }
 .catalog-eyebrow { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
@@ -225,9 +232,8 @@ const pages = computed(() =>
 @media (max-width: 1279px) { .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .catalog-grid { grid-template-columns: minmax(0, 1fr); } .catalog-filters { padding: 12px; } .catalog-search { flex-basis: 100%; } .catalog-filters label:not(.catalog-search) { flex: 1; min-width: 0; } .catalog-filters select { width: 100%; } .category-filters button { padding: 8px 12px; font-size: 12px; } }
 @media (max-width: 600px) {
-  .inventory-management .catalog-heading { position: relative; margin-bottom: 20px; }
-  .inventory-management .catalog-heading h1 { padding-right: 50px; }
-  .inventory-management .catalog-heading > button { position: absolute; top: 0; right: 0; padding: 10px; border-radius: 8px; }
-  .new-article-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .inventory-management .catalog-heading { margin-bottom: 20px; }
+  .inventory-heading-actions { width: 100%; }
+  .inventory-heading-actions > :is(a,button) { flex: 1; justify-content: center; font-size: 12px; }
 }
 </style>

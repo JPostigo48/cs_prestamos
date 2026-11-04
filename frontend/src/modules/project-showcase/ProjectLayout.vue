@@ -5,13 +5,11 @@ const route = useRoute()
 
 const navigation = [
   { path: '/project', label: 'Resumen', exact: true },
-  { path: '/project/sprints', label: 'Sprints' },
   { path: '/project/architecture', label: 'Arquitectura' },
   { path: '/project/api', label: 'API' },
   { path: '/project/db', label: 'DB' },
   { path: '/project/terms', label: 'T&C' },
   { path: '/project/team', label: 'Equipo' },
-  { path: '/project/git', label: 'Git' },
 ]
 </script>
 
@@ -35,9 +33,8 @@ const navigation = [
             {{ item.label }}
           </RouterLink>
         </nav>
-        <RouterLink to="/prototype" class="inline-flex shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-700 xl:justify-self-end xl:px-4">
-          <span class="xl:hidden">Acceso</span>
-          <span class="hidden xl:inline">Ver prototipo de acceso</span>
+        <RouterLink to="/app" class="inline-flex shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 xl:justify-self-end xl:px-4">
+          Ir a la app
         </RouterLink>
       </div>
     </header>

@@ -64,7 +64,9 @@ Todo préstamo empieza por una reserva, incluso si la recogida es inmediata. El 
 
 ### Regla R-RES: inasistencia a una reserva
 
-Se aplican descuentos de **2, 3 y 5 puntos** según las inasistencias del **mismo usuario dentro de una ventana móvil de 30 días**, contando la actual y las anteriores no absueltas en (instante actual − 30 días, instante actual]. Una absolución cambia conteos futuros sin recalcular sanciones anteriores:
+**Flujo operativo actual:** al vencer una reserva se aplica una sola vez la variante **LEVE existente** de su publicación aplicable, sin escalamiento por reiteración y conservando historial. El importe se obtiene de la versión persistida, no de esta tabla. Véase el [contrato de vencimiento](../architecture/reservation-expiry.md).
+
+La siguiente escala corresponde a las políticas históricas publicadas, que se conservan sin editar sus versiones ni términos aceptados. **No selecciona la gravedad del nuevo flujo automático**. Su criterio histórico cuenta inasistencias del mismo usuario en una ventana móvil de 30 días:
 
 | Inasistencia durante los últimos 30 días | Gravedad | Descuento | Días de suspensión |
 | --- | --- | ---: | ---: |

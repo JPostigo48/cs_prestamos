@@ -17,6 +17,7 @@ import { useCopyDetails } from '../../inventory/useCopyDetails'
 import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
+import ReservationsPanel from '../components/ReservationsPanel.vue'
 import { dateTime } from '../../../shared/format'
 
 const session = getSession()!
@@ -51,10 +52,12 @@ const visible = computed(() => {
 </script>
 <template>
   <header class="history-heading">
-    <h1>Mi historial</h1>
-    <p class="muted">Revisa tus préstamos, sus fechas y el estado de cada devolución.</p>
+    <h1>Mis reservas y préstamos</h1>
+    <p class="muted">Consulta tus reservas y revisa tus préstamos, sus fechas y cada devolución.</p>
   </header>
+  <ReservationsPanel />
   <section class="panel stack">
+    <h2>Mi historial de préstamos</h2>
     <div class="row history-filters" role="group" aria-label="Filtrar por estado">
       <button
         v-for="option in filterOptions"

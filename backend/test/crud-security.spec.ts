@@ -180,6 +180,18 @@ describe('CRUD controller permissions over HTTP, no DB', () => {
     AccessRole.OPERATOR,
     AccessRole.ADMINISTRATOR,
   ]) {
+    it.each(['policies', 'deletion-preview'])(
+      `category administrative read ${role ?? 'anonymous'}: %s`,
+      async (suffix) => {
+        let call = request(app.getHttpServer()).get(
+          `/inventory/categories/${id}/${suffix}`,
+        );
+        if (role) call = call.auth(role, { type: 'bearer' });
+        await call.expect(
+          role === null ? 401 : role === AccessRole.ADMINISTRATOR ? 200 : 403,
+        );
+      },
+    );
     it.each(inventoryWrites)(
       `inventory ${role ?? 'anonymous'}: %s %s`,
       async (method, path, body) => {
@@ -190,7 +202,10 @@ describe('CRUD controller permissions over HTTP, no DB', () => {
         const expected =
           role === null
             ? 401
-            : role === AccessRole.USER
+            : role === AccessRole.USER ||
+                (role === AccessRole.OPERATOR &&
+                  !path.endsWith('/state') &&
+                  !path.endsWith('/observations'))
               ? 403
               : method === 'post'
                 ? 201
@@ -274,11 +289,14 @@ describe('CRUD controller permissions over HTTP, no DB', () => {
       .expect(400);
     await request(app.getHttpServer())
       .patch(`/inventory/copies/${id}`)
-      .auth(AccessRole.OPERATOR, { type: 'bearer' })
+      .auth(AccessRole.ADMINISTRATOR, { type: 'bearer' })
       .send({ codigoInventario: 'INV-2' })
       .expect(200);
     expect(inventory.mutate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ accountId: 'account-OPERADOR', userId: id }),
+      expect.objectContaining({
+        accountId: 'account-ADMINISTRADOR',
+        userId: id,
+      }),
       'INVENTARIO_EJEMPLAR_EDITADO',
       expect.any(Function),
     );
@@ -302,7 +320,7 @@ describe('CRUD controller permissions over HTTP, no DB', () => {
       .expect(400);
     await request(app.getHttpServer())
       .patch(`/inventory/copies/${id}`)
-      .auth(AccessRole.OPERATOR, { type: 'bearer' })
+      .auth(AccessRole.ADMINISTRATOR, { type: 'bearer' })
       .send({ recursoId: otherId, codigoInventario: 'X' })
       .expect(400);
   });

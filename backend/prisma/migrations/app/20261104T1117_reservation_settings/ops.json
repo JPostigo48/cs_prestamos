@@ -1,0 +1,72 @@
+[
+  {
+    "id": "table.configuracion_reservas",
+    "label": "Create table \"configuracion_reservas\"",
+    "summary": "Creates table \"configuracion_reservas\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "configuracion_reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"configuracion_reservas\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"configuracion_reservas\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"configuracion_reservas\"",
+        "sql": "CREATE TABLE \"public\".\"configuracion_reservas\" (\n  \"id\" int4 DEFAULT 1 NOT NULL,\n  \"pickupWaitMinutes\" int4 DEFAULT 30 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"version\" int4 DEFAULT 1 NOT NULL,\n  \"weeklySchedule\" jsonb,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"configuracion_reservas_positive_revision_c2490804\" CHECK (version >= 1),\n  CONSTRAINT \"configuracion_reservas_singleton_check_7faf435e\" CHECK (id = 1),\n  CONSTRAINT \"configuracion_reservas_wait_check_fb2a7262\" CHECK (\"pickupWaitMinutes\" BETWEEN 1 AND 240)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"configuracion_reservas\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"configuracion_reservas\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data.configuracion_reservas.initial",
+    "label": "Initialize reservation settings without inventing opening hours",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "configuracion_reservas"
+      }
+    },
+    "precheck": [
+      {
+        "description": "Singleton is absent",
+        "sql": "SELECT NOT EXISTS (SELECT 1 FROM public.configuracion_reservas WHERE id = 1) AS result"
+      }
+    ],
+    "execute": [
+      {
+        "description": "Initial persisted wait and unconfigured schedule",
+        "sql": "INSERT INTO public.configuracion_reservas (id, \"pickupWaitMinutes\", \"weeklySchedule\", version, \"updatedAt\") VALUES (1, 30, NULL, 1, now()) ON CONFLICT (id) DO NOTHING"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Singleton exists (preserve later ADMIN edits)",
+        "sql": "SELECT EXISTS (SELECT 1 FROM public.configuracion_reservas WHERE id = 1) AS result"
+      }
+    ]
+  }
+]

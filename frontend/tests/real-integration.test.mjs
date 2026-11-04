@@ -33,7 +33,9 @@ const loans = await load('modules/loans/api/loans-api')
 const student = await load('modules/users/api/student-api')
 const { useRemote } = await load('shared/composables/useRemote')
 const values = new Map()
-globalThis.sessionStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) }
+const legacyValues = new Map()
+globalThis.localStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) }
+globalThis.sessionStorage = { getItem: key => legacyValues.get(key) ?? null, setItem: (key, value) => legacyValues.set(key, value), removeItem: key => legacyValues.delete(key) }
 globalThis.window = new EventTarget()
 const session = (role = 'USUARIO') => ({ accessToken: 'test-token', tokenType: 'Bearer', expiresAt: Date.now() + 60000, user: { id: 'u1', email: 'test@example.invalid', role, userType: 'DOCENTE' } })
 

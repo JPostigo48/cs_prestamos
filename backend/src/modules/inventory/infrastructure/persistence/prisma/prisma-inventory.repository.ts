@@ -11,6 +11,9 @@ import type {
   InventoryCopyStatus,
 } from '../../../domain/entities/inventory.types.js';
 import { InventoryRepository } from '../../../domain/repositories/inventory.repository.js';
+import type { CategoryDeletionPreview } from '../../../domain/entities/category-deletion.js';
+import { categoryPolicyConfiguration } from '../../../../rules/domain/category-policy.js';
+import { PrismaTermsRepository } from '../../../../rules/infrastructure/persistence/prisma/prisma-terms.repository.js';
 import {
   normalizeAccessoryName,
   type ResourceAccessoryInput,
@@ -243,6 +246,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async createCategory(data: {
     nombre: string;
+    descripcion?: string | null;
+    activo?: boolean;
     tiempoMaximoPrestamoDias: number;
     tiempoMaximoPrestamoHoras?: number;
   }) {
@@ -250,6 +255,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .insert([
         {
           nombre: data.nombre,
+          descripcion: data.descripcion ?? null,
+          activo: data.activo ?? true,
           tiempoMaximoPrestamoDias: data.tiempoMaximoPrestamoDias,
           tiempoMaximoPrestamoHoras:
             data.tiempoMaximoPrestamoHoras ??
@@ -259,6 +266,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .returning(
         'id',
         'nombre',
+        'descripcion',
+        'activo',
         'tiempoMaximoPrestamoDias',
         'tiempoMaximoPrestamoHoras',
         'createdAt',
@@ -274,6 +283,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .select(
         'id',
         'nombre',
+        'descripcion',
+        'activo',
         'tiempoMaximoPrestamoDias',
         'tiempoMaximoPrestamoHoras',
       )
@@ -286,6 +297,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .select(
         'id',
         'nombre',
+        'descripcion',
+        'activo',
         'tiempoMaximoPrestamoDias',
         'tiempoMaximoPrestamoHoras',
         'createdAt',
@@ -302,6 +315,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
     categoryId: string,
     data: Partial<{
       nombre: string;
+      descripcion: string | null;
+      activo: boolean;
       tiempoMaximoPrestamoDias: number;
       tiempoMaximoPrestamoHoras: number;
     }>,
@@ -309,6 +324,10 @@ export class PrismaInventoryRepository extends InventoryRepository {
     const query = this.prisma.sql.public.categorias_recurso
       .update({
         ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
+        ...(data.descripcion !== undefined
+          ? { descripcion: data.descripcion }
+          : {}),
+        ...(data.activo !== undefined ? { activo: data.activo } : {}),
         ...(data.tiempoMaximoPrestamoDias !== undefined
           ? { tiempoMaximoPrestamoDias: data.tiempoMaximoPrestamoDias }
           : {}),
@@ -320,6 +339,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .returning(
         'id',
         'nombre',
+        'descripcion',
+        'activo',
         'tiempoMaximoPrestamoDias',
         'createdAt',
         'updatedAt',
@@ -331,13 +352,194 @@ export class PrismaInventoryRepository extends InventoryRepository {
   }
 
   async deleteCategory(categoryId: string) {
-    const query = this.prisma.sql.public.categorias_recurso
-      .delete()
-      .where((row, fns) => fns.eq(row.id, categoryId))
-      .returning('id')
-      .build();
-    const rows = await this.runtime().query(query);
-    return rows.length;
+    try {
+      return await this.copyTransaction(async (runtime) => {
+        // Las referencias JSON/texto no tienen FK. El bloqueo impide escritores
+        // concurrentes entre la revalidación y el borrado; NOWAIT evita esperas
+        // largas/deadlocks con circulación. No se usa una cascada destructiva.
+        await runtime.query(
+          this.prisma.client.raw.sql`
+          LOCK TABLE public.categorias_recurso, public.recursos,
+            public.ejemplares, public.accesorios_recurso,
+            public.observaciones_ejemplar, public.reservas, public.prestamos,
+            public.inspecciones_devolucion, public.versiones_regla,
+            public.versiones_terminos, public.auditorias_usuario
+          IN SHARE ROW EXCLUSIVE MODE NOWAIT
+        `
+            .returnsRow({})
+            .build(),
+        );
+        const scoped = this.forTransaction(runtime);
+        const preview = await scoped.previewCategoryDeletion(categoryId);
+        if (!preview.canDelete)
+          throw new ConflictException(
+            'La categoría tiene historial o dependencias que deben conservarse. Puede desactivarla.',
+          );
+        const sql = this.prisma.sql.public;
+        for (const id of preview.copyIds)
+          await runtime.query(
+            sql.ejemplares
+              .delete()
+              .where((r, f) => f.eq(r.id, id))
+              .returning('id')
+              .build(),
+          );
+        for (const id of preview.accessoryIds)
+          await runtime.query(
+            sql.accesorios_recurso
+              .delete()
+              .where((r, f) => f.eq(r.id, id))
+              .returning('id')
+              .build(),
+          );
+        for (const id of preview.resourceIds)
+          await runtime.query(
+            sql.recursos
+              .delete()
+              .where((r, f) => f.eq(r.id, id))
+              .returning('id')
+              .build(),
+          );
+        const rows = await runtime.query(
+          sql.categorias_recurso
+            .delete()
+            .where((r, f) => f.eq(r.id, categoryId))
+            .returning('id')
+            .build(),
+        );
+        return rows.length;
+      });
+    } catch (error) {
+      const e = error as { code?: string; cause?: { code?: string } };
+      if (
+        ['23503', '23505', '55P03', '40P01', '40001'].includes(
+          e.cause?.code ?? e.code ?? '',
+        )
+      )
+        throw new ConflictException(
+          'No se pudo eliminar por dependencias o una operación concurrente. Reintente o desactive la categoría.',
+        );
+      throw error;
+    }
+  }
+
+  async getCategoryPolicies(categoryId: string) {
+    const runtime = this.runtime();
+    const terms = await new PrismaTermsRepository(this.prisma)
+      .forTransaction(runtime)
+      .readPublicVersion();
+    const sql = this.prisma.sql.public;
+    const rules = await runtime.query(
+      sql.reglas_uso.select('versionVigenteId').build(),
+    );
+    const versions = await runtime.query(
+      sql.versiones_regla.select('id', 'estado').build(),
+    );
+    const active = new Set(
+      versions
+        .filter(
+          (v) =>
+            v.estado === 'ACTIVA' &&
+            rules.some((r) => r.versionVigenteId === v.id),
+        )
+        .map((v) => v.id),
+    );
+    return categoryPolicyConfiguration(terms, categoryId, active);
+  }
+
+  async previewCategoryDeletion(
+    categoryId: string,
+  ): Promise<CategoryDeletionPreview> {
+    const category = await this.findCategoryById(categoryId);
+    if (!category) throw new NotFoundException('Categoría no encontrada.');
+    const resources = await this.findAllResources({ categoryId });
+    const resourceIds = resources.map((r) => r.id as string);
+    const copies = (
+      await Promise.all(resourceIds.map((id) => this.findCopiesByResource(id)))
+    ).flat();
+    const copyIds = copies.map((c) => c.id as string);
+    const accessories = (
+      await Promise.all(
+        resourceIds.map((id) => this.findResourceAccessories(id)),
+      )
+    ).flat();
+    const accessoryIds = accessories.map((a) => a.id);
+    const ids = [categoryId, ...resourceIds, ...copyIds, ...accessoryIds];
+    // Conservador: también conserva referencias embebidas en texto histórico.
+    const references = (value: unknown) =>
+      ids.some((id) =>
+        JSON.stringify(value ?? '')
+          .toLowerCase()
+          .includes(id.toLowerCase()),
+      );
+    const sql = this.prisma.sql.public;
+    const runtime = this.runtime();
+    const blockers: CategoryDeletionPreview['blockers'] = [];
+    const add = (dependency: string, count: number) => {
+      if (count)
+        blockers.push({
+          dependency,
+          count,
+          reason:
+            'Referencia histórica o configuración versionada; desactive para conservarla.',
+        });
+    };
+    const reservations = await runtime.query(
+      sql.reservas.select('id', 'ejemplarId', 'configurationSnapshot').build(),
+    );
+    const loans = await runtime.query(
+      sql.prestamos.select('id', 'ejemplarId', 'configurationSnapshot').build(),
+    );
+    const observations = await runtime.query(
+      sql.observaciones_ejemplar.select('id', 'ejemplarId').build(),
+    );
+    const inspections = await runtime.query(
+      sql.inspecciones_devolucion
+        .select('id', 'configurationSnapshot', 'parts')
+        .build(),
+    );
+    const versions = await runtime.query(
+      sql.versiones_regla.select('id', 'descripcion').build(),
+    );
+    const terms = await runtime.query(
+      sql.versiones_terminos.select('id', 'contenido').build(),
+    );
+    const audits = await runtime.query(
+      sql.auditorias_usuario
+        .select('id', 'datosAnteriores', 'datosNuevos', 'motivo')
+        .build(),
+    );
+    add('reservas', reservations.filter(references).length);
+    add('prestamos', loans.filter(references).length);
+    add('observaciones_ejemplar', observations.filter(references).length);
+    add('inspecciones_devolucion', inspections.filter(references).length);
+    add('versiones_regla', versions.filter(references).length);
+    add('versiones_terminos', terms.filter(references).length);
+    add('auditorias_usuario', audits.filter(references).length);
+    add(
+      'operaciones_pendientes',
+      copies.filter((c) => c.estado === 'PRESTADO' || c.estado === 'RESERVADO')
+        .length,
+    );
+    const canDelete = blockers.length === 0;
+    return {
+      categoryId,
+      nombre: category.nombre,
+      resourceIds,
+      copyIds,
+      accessoryIds,
+      resourceCount: resourceIds.length,
+      copyCount: copyIds.length,
+      blockers,
+      canDelete,
+      wouldDelete: {
+        categories: canDelete ? 1 : 0,
+        resources: canDelete ? resourceIds.length : 0,
+        copies: canDelete ? copyIds.length : 0,
+        accessories: canDelete ? accessoryIds.length : 0,
+      },
+      alternative: 'DEACTIVATE',
+    };
   }
 
   async countResourcesByCategory(categoryId: string): Promise<number> {
@@ -351,6 +553,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async createResource(data: {
     categoriaId: string;
+    activo?: boolean;
     nombre: string;
     descripcion?: string | null;
   }) {
@@ -358,12 +561,14 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .insert([
         {
           categoriaId: data.categoriaId,
+          activo: data.activo ?? true,
           nombre: data.nombre,
           descripcion: data.descripcion ?? null,
         },
       ])
       .returning(
         'id',
+        'activo',
         'categoriaId',
         'nombre',
         'descripcion',
@@ -385,6 +590,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
   }) {
     let base = this.prisma.sql.public.recursos.select(
       'id',
+      'activo',
       'categoriaId',
       'nombre',
       'descripcion',
@@ -436,6 +642,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
     const query = this.prisma.sql.public.recursos
       .select(
         'id',
+        'activo',
         'categoriaId',
         'nombre',
         'descripcion',
@@ -454,6 +661,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
     resourceId: string,
     data: Partial<{
       categoriaId: string;
+      activo: boolean;
       nombre: string;
       descripcion?: string | null;
     }>,
@@ -463,6 +671,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         ...(data.categoriaId !== undefined
           ? { categoriaId: data.categoriaId }
           : {}),
+        ...(data.activo !== undefined ? { activo: data.activo } : {}),
         ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
         ...(data.descripcion !== undefined
           ? { descripcion: data.descripcion ?? null }
@@ -471,6 +680,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
       .where((row, fns) => fns.eq(row.id, resourceId))
       .returning(
         'id',
+        'activo',
         'categoriaId',
         'nombre',
         'descripcion',

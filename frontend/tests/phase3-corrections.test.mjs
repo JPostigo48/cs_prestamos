@@ -120,6 +120,7 @@ test('I4: montaje POST confirmado + F14 404 + confirmación humana cancela ID/ow
   const confirmed = { id: 'i4-reservation-real', userId: 'owner', copyId: 'i4-copy', status: 'CONFIRMADA', pickupDeadline: future }
   globalThis.fetch = async (url, options) => {
     calls.push([url, options.method])
+    if (url === '/api/system/reservation-settings') return Response.json({ pickupWaitMinutes: 30, weeklySchedule: null, version: 1, updatedAt: '2026-11-04T00:00:00Z', timeZone: 'America/Lima', scheduleStatus: 'UNCONFIGURED', pickupWindowPolicy: 'FULL_WINDOW_WITHIN_INTERVAL', warning: 'Horario sin configurar' })
     if (options.method === 'POST') return Response.json(confirmed, { status: 201 })
     if (options.method === 'DELETE') { assert.equal(url, '/api/loans/reservations/i4-reservation-real'); return Response.json({ ...confirmed, status: 'CANCELADA' }) }
     return Response.json(null, { status: 404 })
@@ -127,7 +128,9 @@ test('I4: montaje POST confirmado + F14 404 + confirmación humana cancela ID/ow
   const mounted = mount(component, { copies: [{ id: 'i4-copy', estado: 'DISPONIBLE', codigoInventario: 'REAL' }], resourceName: 'Real' })
   try {
     await model(find(mounted.root, 'select'), 'i4-copy')
-    await model(find(mounted.root, 'input'), future)
+    const { limaParts } = await load('modules/system/reservation-time')
+    await model(findAll(mounted.root, n => n.tag === 'input' && n.props.type === 'date')[0], limaParts(Date.parse(future)).date)
+    await model(findAll(mounted.root, n => n.tag === 'input' && n.props.type === 'time')[0], limaParts(Date.parse(future)).time)
     await event(find(mounted.root, 'form'), 'submit')
     assert.match(text(mounted.root), /i4-reservation-real/)
     await assert.rejects(reservations.listReservations({ userId: 'owner' }), e => e.status === 404)
