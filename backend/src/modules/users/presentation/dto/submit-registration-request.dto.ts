@@ -64,6 +64,13 @@ export class SubmitRegistrationRequestDto {
   @MaxLength(80)
   identificadorInstitucional?: string;
 
+  @ApiPropertyOptional({ type: String, maxLength: 20, nullable: true })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(20)
+  phone?: string;
+
   @ApiPropertyOptional({ type: [String], nullable: true })
   @IsOptional()
   @IsArray()

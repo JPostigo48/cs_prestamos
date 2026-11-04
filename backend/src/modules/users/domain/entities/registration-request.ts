@@ -24,6 +24,7 @@ export type RegistrationRequest = {
   name: string;
   userType: UserType;
   institutionalId: string | null;
+  phone: string | null;
   requestedAt: Date;
   status: RegistrationRequestStatus;
   rejectionReason: string | null;

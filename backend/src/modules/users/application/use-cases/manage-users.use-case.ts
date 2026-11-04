@@ -44,6 +44,16 @@ export class ManageUsersUseCase {
       typeof data.hasCurrentAffiliation !== 'boolean'
     )
       throw new BadRequestException('Vinculación inválida.');
+    if (data.phone !== undefined && data.phone !== null) {
+      if (
+        typeof data.phone !== 'string' ||
+        !/^\+?[0-9 ()-]+$/.test(data.phone.trim()) ||
+        data.phone.trim().length < 7 ||
+        data.phone.trim().length > 20
+      )
+        throw new BadRequestException('Teléfono inválido.');
+      result.phone = data.phone.trim();
+    }
     return result;
   }
 
@@ -65,6 +75,7 @@ export class ManageUsersUseCase {
       name: string;
       userType: UserType;
       institutionalId?: string | null;
+      phone?: string | null;
       hasCurrentAffiliation?: boolean;
     },
     actor: AuditActor,

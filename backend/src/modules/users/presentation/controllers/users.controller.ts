@@ -202,6 +202,7 @@ export class UsersController {
       userType?: string;
       vinculacionVigente?: string;
       institutionalId?: string;
+      phone?: string;
       page?: number;
       limit?: number;
     },

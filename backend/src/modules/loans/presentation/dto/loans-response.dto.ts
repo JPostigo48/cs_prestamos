@@ -93,6 +93,22 @@ export class LoanHistoryPageResponseDto {
   @ApiProperty({ type: 'integer', minimum: 1 }) page!: number;
   @ApiProperty({ type: 'integer', minimum: 1, maximum: 100 }) limit!: number;
 }
+
+export class LoanEvidenceResponseDto {
+  @ApiProperty({ type: String, format: 'uuid' }) id!: string;
+  @ApiProperty({ type: String, format: 'uuid' }) loanId!: string;
+  @ApiProperty({ enum: ['ENTREGA', 'DEVOLUCION', 'DANO', 'PERDIDA'] })
+  type!: string;
+  @ApiProperty({ type: String }) originalName!: string;
+  @ApiProperty({ type: String }) mimeType!: string;
+  @ApiProperty({ type: 'integer' }) sizeBytes!: number;
+  @ApiProperty({ type: String }) hash!: string;
+  @ApiProperty({ type: String, nullable: true }) description!: string | null;
+  @ApiProperty({ type: String, format: 'uuid' }) uploadedByAccountId!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) createdAt!: string;
+  @ApiProperty({ type: String, format: 'uri' }) url!: string;
+}
+
 export class ReservationsPageResponseDto {
   @ApiProperty({ type: [ReservationResponseDto] })
   items!: ReservationResponseDto[];

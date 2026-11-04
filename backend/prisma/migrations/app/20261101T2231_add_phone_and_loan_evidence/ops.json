@@ -1,0 +1,323 @@
+[
+  {
+    "id": "table.evidencias_prestamo",
+    "label": "Create table \"evidencias_prestamo\"",
+    "summary": "Creates table \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"evidencias_prestamo\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"evidencias_prestamo\"",
+        "sql": "CREATE TABLE \"public\".\"evidencias_prestamo\" (\n  \"cargadoPorCuentaId\" uuid NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"descripcion\" text,\n  \"hash\" character varying(64) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"mimeType\" character varying(100) NOT NULL,\n  \"nombreOriginal\" character varying(255) NOT NULL,\n  \"prestamoId\" uuid NOT NULL,\n  \"ruta\" character varying(500) NOT NULL,\n  \"tamanoBytes\" int4 NOT NULL,\n  \"tipo\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"evidencias_prestamo_tipo_check_a8b33710\" CHECK (\"tipo\" IN ('ENTREGA', 'DEVOLUCION', 'DANO', 'PERDIDA'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"evidencias_prestamo\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.usuarios.telefono",
+    "label": "Add column \"telefono\" to \"usuarios\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "telefono",
+        "table": "usuarios"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"telefono\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "usuarios",
+          "telefono"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"telefono\"",
+        "sql": "ALTER TABLE \"public\".\"usuarios\" ADD COLUMN \"telefono\" character varying(20)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"telefono\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "usuarios",
+          "telefono"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.evidencias_prestamo.evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c",
+    "label": "Create index \"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\"",
+        "sql": "CREATE INDEX \"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\" ON \"public\".\"evidencias_prestamo\" (\"cargadoPorCuentaId\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_cargadoPorCuentaId_createdAt_idx_8be0062c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.evidencias_prestamo.evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9",
+    "label": "Create index \"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\"",
+        "sql": "CREATE INDEX \"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\" ON \"public\".\"evidencias_prestamo\" (\"cargadoPorCuentaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_cargadoPorCuentaId_idx_c70876c9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.evidencias_prestamo.evidencias_prestamo_prestamoId_idx_8ecc28bd",
+    "label": "Create index \"evidencias_prestamo_prestamoId_idx_8ecc28bd\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "evidencias_prestamo_prestamoId_idx_8ecc28bd",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"evidencias_prestamo_prestamoId_idx_8ecc28bd\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_prestamoId_idx_8ecc28bd\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"evidencias_prestamo_prestamoId_idx_8ecc28bd\"",
+        "sql": "CREATE INDEX \"evidencias_prestamo_prestamoId_idx_8ecc28bd\" ON \"public\".\"evidencias_prestamo\" (\"prestamoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"evidencias_prestamo_prestamoId_idx_8ecc28bd\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_prestamoId_idx_8ecc28bd\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.evidencias_prestamo.evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c",
+    "label": "Create index \"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\"",
+        "sql": "CREATE INDEX \"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\" ON \"public\".\"evidencias_prestamo\" (\"prestamoId\", \"tipo\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidencias_prestamo_prestamoId_tipo_createdAt_idx_e50f5f6c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.evidencias_prestamo.evidencias_prestamo_prestamoId_fkey",
+    "label": "Add foreign key \"evidencias_prestamo_prestamoId_fkey\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "evidencias_prestamo_prestamoId_fkey",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"evidencias_prestamo_prestamoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_prestamo_prestamoId_fkey",
+          "public",
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"evidencias_prestamo_prestamoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"evidencias_prestamo\"\nADD CONSTRAINT \"evidencias_prestamo_prestamoId_fkey\"\nFOREIGN KEY (\"prestamoId\")\nREFERENCES \"public\".\"prestamos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"evidencias_prestamo_prestamoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_prestamo_prestamoId_fkey",
+          "public",
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.evidencias_prestamo.evidencias_prestamo_cargadoPorCuentaId_fkey",
+    "label": "Add foreign key \"evidencias_prestamo_cargadoPorCuentaId_fkey\" on \"evidencias_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "evidencias_prestamo_cargadoPorCuentaId_fkey",
+        "table": "evidencias_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"evidencias_prestamo_cargadoPorCuentaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_prestamo_cargadoPorCuentaId_fkey",
+          "public",
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"evidencias_prestamo_cargadoPorCuentaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"evidencias_prestamo\"\nADD CONSTRAINT \"evidencias_prestamo_cargadoPorCuentaId_fkey\"\nFOREIGN KEY (\"cargadoPorCuentaId\")\nREFERENCES \"public\".\"cuentas_acceso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"evidencias_prestamo_cargadoPorCuentaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "evidencias_prestamo_cargadoPorCuentaId_fkey",
+          "public",
+          "\"public\".\"evidencias_prestamo\""
+        ]
+      }
+    ]
+  }
+]
