@@ -39,7 +39,7 @@ const existingParts = ref<AccessoryInput[]>([])
 watch(accessories.data, value => { if (value) existingParts.value = value.items.map(item => ({ ...item })) })
 watch(details.data, value => { if (value) hours.value = value.loanPolicy.durationHours })
 async function save() {
-  if (busy.value) return
+  if (busy.value || !canConfigure) return
   sending.value = true
   error.value = ''
   notice.value = ''
@@ -101,30 +101,30 @@ async function extra(kind: 'parts' | 'policy') {
 </script>
 <template>
   <ModalDialog
-    :title="id ? 'Editar artículo' : 'Nuevo artículo'"
+    :title="id ? 'Editar recurso' : 'Nuevo recurso'"
     :subtitle="resource?.nombre || 'Registra un recurso del catálogo'"
     :busy="busy"
     @close="emit('close')"
   >
     <div class="resource-editor">
-    <nav v-if="id" class="editor-tabs" aria-label="Secciones del artículo"><button :aria-pressed="section === 'basic'" :disabled="busy" @click="section = 'basic'"><Package :size="16" aria-hidden="true" /> Artículo</button><button :aria-pressed="section === 'copies'" :disabled="busy" @click="section = 'copies'"><Layers :size="16" aria-hidden="true" /> Ejemplares</button><button :aria-pressed="section === 'parts'" :disabled="busy" @click="section = 'parts'"><ClipboardList :size="16" aria-hidden="true" /> Accesorios</button><button :aria-pressed="section === 'policy'" :disabled="busy" @click="section = 'policy'"><Clock :size="16" aria-hidden="true" /> Duración</button></nav>
+    <nav v-if="id" class="editor-tabs" aria-label="Secciones del recurso"><button :aria-pressed="section === 'basic'" :disabled="busy" @click="section = 'basic'"><Package :size="16" aria-hidden="true" /> Recurso</button><button :aria-pressed="section === 'copies'" :disabled="busy" @click="section = 'copies'"><Layers :size="16" aria-hidden="true" /> Ejemplares</button><button :aria-pressed="section === 'parts'" :disabled="busy" @click="section = 'parts'"><ClipboardList :size="16" aria-hidden="true" /> Accesorios</button><button :aria-pressed="section === 'policy'" :disabled="busy" @click="section = 'policy'"><Clock :size="16" aria-hidden="true" /> Duración</button></nav>
     <form v-show="section === 'basic'" class="stack" @submit.prevent="save">
-      <fieldset :disabled="busy" class="basic-fields">
-        <legend>Datos del artículo</legend>
+      <fieldset :disabled="busy || !canConfigure" class="basic-fields">
+        <legend>Datos del recurso</legend>
         <label>Nombre<input v-model="name" required maxlength="180" /></label>
         <label
           >Categoría<select v-model="categoryId" required>
             <option value="">Seleccionar</option>
-            <option v-for="item in categories" :key="item.id" :value="item.id">
-              {{ item.nombre }}
+            <option v-for="item in categories" :key="item.id" :value="item.id" :disabled="item.activo === false">
+              {{ item.nombre }}{{ item.activo === false ? ' (inactiva)' : '' }}
             </option>
           </select></label
         >
         <label class="full-field">Descripción<textarea v-model="description" rows="3" /></label>
         <p v-if="category" class="category-policy full-field"><Clock :size="16" aria-hidden="true" />
-          Duración de la categoría: {{ durationLabel(category) }}. Esta regla se hereda; guardar el artículo no modifica la categoría.
+          Duración de la categoría: {{ durationLabel(category) }}. Esta regla se hereda; guardar el recurso no modifica la categoría.
         </p>
-        <button class="primary full-field" :disabled="sending || !name.trim() || !categoryId">
+        <button v-if="canConfigure" class="primary full-field" :disabled="sending || !name.trim() || !categoryId || category?.activo === false">
           Guardar datos básicos
         </button>
       </fieldset>
@@ -160,7 +160,7 @@ async function extra(kind: 'parts' | 'policy') {
       </form></section>
       <form v-show="section === 'policy'" class="stack editor-section" @submit.prevent="extra('policy')">
         <h3>Duración del préstamo</h3>
-        <p class="category-policy">{{ category ? 'Regla de la categoría: ' + durationLabel(category) + '.' : 'Selecciona una categoría para conocer su regla.' }} La excepción se aplica únicamente a este artículo.</p>
+        <p class="category-policy">{{ category ? 'Regla de la categoría: ' + durationLabel(category) + '.' : 'Selecciona una categoría para conocer su regla.' }} La excepción se aplica únicamente a este recurso.</p>
         <RemoteState :loading="details.loading.value" :error="details.error.value" @retry="details.refresh">
           <p v-if="details.data.value">Duración efectiva guardada: {{ details.data.value.loanPolicy.effectiveDurationHours }} horas. {{ details.data.value.loanPolicy.source === 'RESOURCE' ? 'Excepción individual.' : 'Heredada de categoría.' }}</p>
         </RemoteState>

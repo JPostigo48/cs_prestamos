@@ -5,6 +5,9 @@ import { guardedMutation, mutationConfirmation } from '../../../shared/api/mutat
 export interface Category {
   id: string
   nombre: string
+  descripcion: string | null
+  activo: boolean
+  copyCount: number
   resourceCount: number
   tiempoMaximoPrestamoDias: number
   tiempoMaximoPrestamoHoras: number
@@ -14,13 +17,14 @@ export interface Resource {
   categoriaId: string
   nombre: string
   descripcion: string | null
+  activo: boolean
   durationHours: number | null
   available: boolean
   availableCopies: number
   totalCopies: number
 }
 export interface ResourceDetail extends Resource {
-  categoria: Omit<Category, 'resourceCount'> | null
+  categoria: Pick<Category, 'id' | 'nombre' | 'tiempoMaximoPrestamoDias' | 'tiempoMaximoPrestamoHoras'> | null
   loanPolicy: ResourceLoanPolicy
 }
 export interface ResourceLoanPolicy {
@@ -52,8 +56,8 @@ export interface CatalogFilters {
   page: number
   limit: number
 }
-export const getCategories = (signal?: AbortSignal) =>
-  apiRequest<Category[]>('/inventory/categories', { signal })
+export const getCategories = (signal?: AbortSignal, active?: boolean) =>
+  apiRequest<Category[]>('/inventory/categories' + (active === undefined ? '' : '?active=' + active), { signal })
 // Endpoint completo, no una página del catálogo. DISPONIBLE excluye RESERVADO.
 export async function getGlobalAvailability(signal?: AbortSignal): Promise<Resource[]> {
   const result = await apiRequest<Resource[]>('/inventory/availability', { signal })

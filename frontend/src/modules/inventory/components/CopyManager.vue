@@ -4,6 +4,8 @@ import { getCopies, createCopy, changeCopyState, type Copy } from '../api/invent
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
+import { getSession } from '../../auth/api/auth-api'
+const canCreate = getSession()?.user.role === 'ADMINISTRADOR'
 const props = defineProps<{ resourceId: string; disabled?: boolean }>()
 const emit = defineEmits<{ changed: []; busy: [value: boolean] }>()
 const copies = useRemote((signal) => getCopies(props.resourceId, signal))
@@ -13,7 +15,7 @@ const code = ref(''),
   notice = ref('')
 const selected = ref<Copy | null>(null)
 async function add() {
-  if (sending.value || props.disabled || !code.value.trim()) return
+  if (sending.value || props.disabled || !code.value.trim() || !canCreate) return
   sending.value = true
   emit('busy', true)
   error.value = ''
@@ -80,7 +82,7 @@ async function state() {
       <button type="button" :disabled="sending" @click="selected = null">Cancelar</button
       ><button type="button" :disabled="sending" @click="state">Confirmar cambio</button>
     </div>
-    <form class="row" @submit.prevent="add">
+    <form v-if="canCreate" class="row" @submit.prevent="add">
       <label
         >Código único del nuevo ejemplar<input
           v-model="code"

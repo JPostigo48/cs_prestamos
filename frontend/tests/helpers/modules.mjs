@@ -31,15 +31,20 @@ export const loadComponent = async (path) =>
   (await import(await moduleUrl(new URL('../../src/' + path + '.vue', import.meta.url)))).default
 export const loadModule = async (path) =>
   import(await moduleUrl(new URL('../../src/' + path + '.vue', import.meta.url)))
-export function testEnvironment() {
-  const values = new Map()
-  globalThis.sessionStorage = {
+export function memoryStorage(values = new Map()) {
+  return {
     get length() { return values.size },
     key: (index) => [...values.keys()][index] ?? null,
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
     removeItem: (key) => values.delete(key),
+    clear: () => values.clear(),
   }
+}
+export function testEnvironment() {
+  const values = new Map()
+  globalThis.sessionStorage = memoryStorage(values)
+  globalThis.localStorage = memoryStorage()
   globalThis.window = new EventTarget()
   globalThis.fetch = async (url) => {
     throw new Error('Petición de test inesperada: ' + url)
