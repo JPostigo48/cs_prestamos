@@ -18,7 +18,19 @@ import {
 
 @Injectable()
 export class PrismaTermsRepository implements TermsRepository {
+  private transactionRuntime?: Pick<
+    ReturnType<PrismaService['client']['runtime']>,
+    'query'
+  >;
   constructor(private readonly prisma: PrismaService) {}
+
+  forTransaction(
+    runtime: Pick<ReturnType<PrismaService['client']['runtime']>, 'query'>,
+  ) {
+    const scoped = new PrismaTermsRepository(this.prisma);
+    scoped.transactionRuntime = runtime;
+    return scoped;
+  }
 
   async readPublicVersion(versionId?: string): Promise<PublicTerms | null> {
     const sql = this.prisma.sql.public;
@@ -81,7 +93,7 @@ export class PrismaTermsRepository implements TermsRepository {
   }
 
   private runtime() {
-    return this.prisma.client.runtime();
+    return this.transactionRuntime ?? this.prisma.client.runtime();
   }
   private mapVersion(row: any): TermsVersion {
     return {

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.categorias_recurso.activo",
+    "label": "Add column \"activo\" to \"categorias_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "activo",
+        "table": "categorias_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"activo\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "categorias_recurso",
+          "activo"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"activo\"",
+        "sql": "ALTER TABLE \"public\".\"categorias_recurso\" ADD COLUMN \"activo\" bool DEFAULT true NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"activo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "categorias_recurso",
+          "activo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.categorias_recurso.descripcion",
+    "label": "Add column \"descripcion\" to \"categorias_recurso\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "descripcion",
+        "table": "categorias_recurso"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"descripcion\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "categorias_recurso",
+          "descripcion"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"descripcion\"",
+        "sql": "ALTER TABLE \"public\".\"categorias_recurso\" ADD COLUMN \"descripcion\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"descripcion\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "categorias_recurso",
+          "descripcion"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.recursos.activo",
+    "label": "Add column \"activo\" to \"recursos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "activo",
+        "table": "recursos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"activo\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "recursos",
+          "activo"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"activo\"",
+        "sql": "ALTER TABLE \"public\".\"recursos\" ADD COLUMN \"activo\" bool DEFAULT true NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"activo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "recursos",
+          "activo"
+        ]
+      }
+    ]
+  }
+]

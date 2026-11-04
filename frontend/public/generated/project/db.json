@@ -2,6 +2,127 @@
   "source": "backend/prisma/contract.prisma",
   "models": [
     {
+      "name": "ConfiguracionReservas",
+      "module": "INVENTARIO",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "1"
+              ],
+              "named": {},
+              "raw": "@default(1)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "pickupWaitMinutes",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "30"
+              ],
+              "named": {},
+              "raw": "@default(30)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "weeklySchedule",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "1"
+              ],
+              "named": {},
+              "raw": "@default(1)"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "updatedAt",
+          "type": "temporal.updatedAt",
+          "typeExpression": "temporal.updatedAt()",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "id = 1",
+            "name": "configuracion_reservas_singleton_check"
+          },
+          "raw": "@@check(expression: \"id = 1\", name: \"configuracion_reservas_singleton_check\")"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "\"pickupWaitMinutes\" BETWEEN 1 AND 240",
+            "name": "configuracion_reservas_wait_check"
+          },
+          "raw": "@@check(expression: \"\\\"pickupWaitMinutes\\\" BETWEEN 1 AND 240\", name: \"configuracion_reservas_wait_check\")"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "version >= 1",
+            "name": "configuracion_reservas_positive_revision"
+          },
+          "raw": "@@check(expression: \"version >= 1\", name: \"configuracion_reservas_positive_revision\")"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "configuracion_reservas"
+          ],
+          "named": {},
+          "raw": "@@map(\"configuracion_reservas\")"
+        }
+      ]
+    },
+    {
       "name": "CategoriaRecurso",
       "module": "INVENTARIO",
       "fields": [
@@ -41,6 +162,33 @@
               "positional": [],
               "named": {},
               "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "descripcion",
+          "type": "String",
+          "typeExpression": "String",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "activo",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
             }
           ],
           "kind": "scalar"
@@ -164,6 +312,24 @@
           "nullable": true,
           "list": false,
           "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "activo",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
+            }
+          ],
           "kind": "scalar"
         },
         {
@@ -845,6 +1011,15 @@
           "name": "prestamo",
           "type": "Prestamo",
           "typeExpression": "Prestamo",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimiento",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
           "nullable": true,
           "list": false,
           "attributes": [],
@@ -3514,6 +3689,22 @@
           "kind": "scalar"
         },
         {
+          "name": "reservaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
           "name": "usuarioId",
           "type": "Uuid",
           "typeExpression": "Uuid",
@@ -3685,6 +3876,31 @@
           "nullable": true,
           "list": false,
           "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "reserva",
+          "type": "Reserva",
+          "typeExpression": "Reserva",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "reservaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
           "kind": "relation"
         }
       ],
@@ -5091,6 +5307,25 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "Reserva",
+      "field": "incumplimiento",
+      "target": "Incumplimiento",
+      "inverse": "reserva",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "reservaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "ObservacionEjemplar",
       "field": "ejemplar",
       "target": "Ejemplar",
@@ -5976,6 +6211,25 @@
       "owner": "Apelacion",
       "fields": [
         "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "reserva",
+      "target": "Reserva",
+      "inverse": "incumplimiento",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "reservaId"
       ],
       "references": [
         "id"

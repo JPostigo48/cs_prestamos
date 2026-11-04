@@ -82,7 +82,11 @@ describe('Inventory CRUD without database', () => {
       ConflictException,
     );
     await write((s) => s.deleteResource(resource.id));
-    await write((s) => s.deleteCategory(category.id));
+    // Aun vacía, las auditorías de creación/edición deben conservarse.
+    await expect(write((s) => s.deleteCategory(category.id))).rejects.toThrow(
+      ConflictException,
+    );
+    await write((s) => s.updateCategory(category.id, { activo: false }));
     expect(db.rows('auditorias_usuario')).toHaveLength(6);
     expect(
       JSON.parse(db.rows('auditorias_usuario')[0].datosNuevos).actor,
@@ -132,7 +136,7 @@ describe('Inventory CRUD without database', () => {
     );
     await write((s) => s.updateCopyState(copyId, { estado: 'DISPONIBLE' }));
     expect(await service.getLoanAvailability(copyId)).toMatchObject({
-      available: true,
+      available: false, // categoría sin publicación oficial completa
     });
     expect(
       db.calls.some(

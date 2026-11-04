@@ -24,6 +24,10 @@
       "model": "CategoriaRecurso",
       "namespace": "public"
     },
+    "configuracion_reservas": {
+      "model": "ConfiguracionReservas",
+      "namespace": "public"
+    },
     "cuentas_acceso": {
       "model": "CuentaAcceso",
       "namespace": "public"
@@ -861,6 +865,13 @@
           },
           "CategoriaRecurso": {
             "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -869,6 +880,13 @@
                   "typeParams": {
                     "precision": 3
                   }
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
                 }
               },
               "id": {
@@ -929,8 +947,14 @@
             },
             "storage": {
               "fields": {
+                "activo": {
+                  "column": "activo"
+                },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
                 },
                 "id": {
                   "column": "id"
@@ -950,6 +974,67 @@
               },
               "namespaceId": "public",
               "table": "categorias_recurso"
+            }
+          },
+          "ConfiguracionReservas": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "pickupWaitMinutes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "version": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "weeklySchedule": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "pickupWaitMinutes": {
+                  "column": "pickupWaitMinutes"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "version": {
+                  "column": "version"
+                },
+                "weeklySchedule": {
+                  "column": "weeklySchedule"
+                }
+              },
+              "namespaceId": "public",
+              "table": "configuracion_reservas"
             }
           },
           "CuentaAcceso": {
@@ -1640,6 +1725,13 @@
                   "kind": "scalar"
                 }
               },
+              "reservaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "usuarioId": {
                 "nullable": false,
                 "type": {
@@ -1685,6 +1777,22 @@
                 },
                 "to": {
                   "model": "ReglaUso",
+                  "namespace": "public"
+                }
+              },
+              "reserva": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "reservaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Reserva",
                   "namespace": "public"
                 }
               },
@@ -1753,6 +1861,9 @@
                 },
                 "reglaId": {
                   "column": "reglaId"
+                },
+                "reservaId": {
+                  "column": "reservaId"
                 },
                 "usuarioId": {
                   "column": "usuarioId"
@@ -2193,6 +2304,13 @@
           },
           "Recurso": {
             "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "categoriaId": {
                 "nullable": false,
                 "type": {
@@ -2299,6 +2417,9 @@
             },
             "storage": {
               "fields": {
+                "activo": {
+                  "column": "activo"
+                },
                 "categoriaId": {
                   "column": "categoriaId"
                 },
@@ -2570,6 +2691,22 @@
                 },
                 "to": {
                   "model": "Ejemplar",
+                  "namespace": "public"
+                }
+              },
+              "incumplimiento": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "reservaId"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
                   "namespace": "public"
                 }
               },
@@ -4344,6 +4481,15 @@
             },
             "categorias_recurso": {
               "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -4355,6 +4501,11 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/uuid@1",
@@ -4399,6 +4550,72 @@
                   ]
                 }
               ]
+            },
+            "configuracion_reservas": {
+              "checks": [
+                {
+                  "expression": "version >= 1",
+                  "name": "configuracion_reservas_positive_revision_c2490804",
+                  "prefix": "configuracion_reservas_positive_revision"
+                },
+                {
+                  "expression": "id = 1",
+                  "name": "configuracion_reservas_singleton_check_7faf435e",
+                  "prefix": "configuracion_reservas_singleton_check"
+                },
+                {
+                  "expression": "\"pickupWaitMinutes\" BETWEEN 1 AND 240",
+                  "name": "configuracion_reservas_wait_check_fb2a7262",
+                  "prefix": "configuracion_reservas_wait_check"
+                }
+              ],
+              "columns": {
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "pickupWaitMinutes": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 30
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "version": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "weeklySchedule": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "cuentas_acceso": {
               "checks": [
@@ -5010,6 +5227,11 @@
                   "nativeType": "uuid",
                   "nullable": false
                 },
+                "reservaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "usuarioId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
@@ -5075,6 +5297,24 @@
                     "namespaceId": "public",
                     "tableName": "versiones_regla"
                   }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "reservaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "reservas"
+                  }
                 }
               ],
               "indexes": [
@@ -5126,7 +5366,13 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "reservaId"
+                  ]
+                }
+              ]
             },
             "inspecciones_devolucion": {
               "columns": {
@@ -5533,6 +5779,15 @@
                 }
               ],
               "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "categoriaId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
@@ -6807,10 +7062,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "833c09d2fe681e01204af9ee9e6fbdb340ef038337911aad829bcef29d48d409"
+    "storageHash": "21bf2bbc35dc01507a1ee4e804cfa31bde531b5023de21adc4a21e09e27ea036"
   },
   "execution": {
-    "executionHash": "eefc38df0b3933d4b37822bc7c6c73fd4f2d9ed7350a29adaa05287d416a3837",
+    "executionHash": "96ccfa6264fdd2e237426a95c02a11e04a1512ee301d3bf0049fb0a2e8803a26",
     "mutations": {
       "defaults": [
         {
@@ -6911,6 +7166,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "categorias_recurso"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "configuracion_reservas"
           }
         },
         {

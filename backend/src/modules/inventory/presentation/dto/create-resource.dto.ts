@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { IsBoolean, ValidateIf } from 'class-validator';
 import {
   IsNotEmpty,
   IsOptional,
@@ -9,7 +10,16 @@ import {
 } from 'class-validator';
 
 export class CreateResourceDto {
-  @ApiProperty({ type: String, format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' })
+  @ApiPropertyOptional({ type: Boolean, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  activo?: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
   @IsUUID()
   categoriaId!: string;
 
@@ -20,7 +30,11 @@ export class CreateResourceDto {
   @MaxLength(180)
   nombre!: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'Equipo para prácticas de laboratorio' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'Equipo para prácticas de laboratorio',
+  })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

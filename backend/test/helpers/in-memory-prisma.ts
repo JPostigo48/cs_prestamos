@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 type Row = Record<string, any>;
 type Predicate = (row: Row) => boolean;
+// Temporal omite ceros fraccionarios al serializar: comparar texto no reproduce SQL.
+const comparable = (value: any): string | number =>
+  typeof value?.epochMilliseconds === 'number'
+    ? value.epochMilliseconds
+    : value instanceof Date ? value.getTime() : String(value);
 type Plan = {
   table: string;
   operation: string;
@@ -11,11 +16,21 @@ type Plan = {
   offset?: number;
   count?: boolean;
   order?: { key: string; direction: string }[];
+  text?: string;
 };
 
 /** Doble del constructor SQL y transacciones; no crea clientes ni conexiones. */
 export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
-  let tables: Record<string, Row[]> = structuredClone(initial);
+  let tables: Record<string, Row[]> = Object.fromEntries(
+    Object.entries(structuredClone(initial)).map(([name, rows]) => [
+      name,
+      rows.map((row) =>
+        name === 'categorias_recurso' || name === 'recursos'
+          ? { activo: true, ...row }
+          : row,
+      ),
+    ]),
+  );
   const calls: Plan[] = [];
   let failAudit = false;
   const chain = (plan: Plan): any => ({
@@ -36,11 +51,11 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
               (row: Row) =>
                 predicates.every((p) => p(row)),
             lt: (key: string, value: any) => (row: Row) =>
-              String(row[key]) < String(value),
+              comparable(row[key]) < comparable(value),
             lte: (key: string, value: any) => (row: Row) =>
-              String(row[key]) <= String(value),
+              comparable(row[key]) <= comparable(value),
             gte: (key: string, value: any) => (row: Row) =>
-              String(row[key]) >= String(value),
+              comparable(row[key]) >= comparable(value),
             ilike: (key: string, value: string) => (row: Row) =>
               String(row[key])
                 .toLowerCase()
@@ -88,6 +103,8 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
   const runtime = {
     query: async (plan: Plan) => {
       calls.push(plan);
+      // Registra la solicitud de bloqueo; NO simula garantías de PostgreSQL.
+      if (plan.operation === 'lock') return [];
       const rows = (tables[plan.table] ??= []);
       if (
         failAudit &&
@@ -242,6 +259,18 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
   return {
     sql,
     client: {
+      raw: {
+        sql: (parts: TemplateStringsArray) => ({
+          returnsRow: () => ({
+            build: (): Plan => ({
+              table: '',
+              operation: 'lock',
+              predicates: [],
+              text: parts.join(''),
+            }),
+          }),
+        }),
+      },
       runtime: () => runtime,
       transaction: async (work: (tx: typeof runtime) => Promise<any>) => {
         // Copia superficial de filas: los instantes Temporal son inmutables.

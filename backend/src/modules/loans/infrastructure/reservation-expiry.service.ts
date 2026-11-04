@@ -25,8 +25,8 @@ export class ReservationExpiryService implements OnModuleInit, OnModuleDestroy {
     this.running = true;
     try {
       await this.reservations.expire(new Date());
-    } catch (error) {
-      this.logger.error('No se pudieron vencer las reservas pendientes.', error);
+    } catch {
+      this.logger.error('No se pudieron vencer las reservas pendientes; se reintentará en el siguiente ciclo.');
     } finally {
       this.running = false;
     }

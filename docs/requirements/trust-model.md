@@ -52,7 +52,7 @@ Las faltas se clasifican en **reglas independientes**:
 1. **Devolución tardía:** se detecta automáticamente desde el instante en que vence el préstamo, **sin tolerancia**. La gravedad puede aumentar por tiempo transcurrido.
 2. **Daño o piezas faltantes:** el operador consigna el estado en un formulario al recibir el ejemplar. El sistema determina la gravedad y consecuencia según la regla vigente.
 3. **Pérdida o robo:** se registra como incidente independiente; lleva la confianza a cero y provoca bloqueo indefinido hasta resolución o apelación aceptada.
-4. **Reserva no recogida:** la reserva pasa a VENCIDA al superar los 30 minutos posteriores a la hora pactada y se aplica una penalización menor, según configuración.
+4. **Reserva no recogida:** al superar el plazo persistido se registra VENCIDA, se conserva historial y se aplica una sola vez la variante LEVE publicada aplicable, sin escalamiento por reiteración. Véase el [contrato operativo y migración pendiente](../architecture/reservation-expiry.md).
 
 Cada consecuencia depende de **regla, categoría, grado de falta y versión vigente**. Las tablas numéricas están en [términos y condiciones](terms-and-conditions.md).
 
@@ -105,7 +105,7 @@ Todo préstamo nace de una reserva CONFIRMADA de un ejemplar concreto que queda 
 
 La duración empieza en la recogida efectiva: **electrónicos 8 horas dentro del campus, libros 14 días y deportes 2 días**. Las políticas y duración se conservan al confirmar la reserva. Los cambios posteriores no modifican esa operación; la elegibilidad personal y términos vigentes se verifican nuevamente al entregar.
 
-La ventana de recogida incluye los 30 minutos posteriores a la hora pactada. Después, la reserva pasa a VENCIDA y genera inasistencia. La cancelación válida o administrativa no genera esa falta.
+La ventana de recogida usa el plazo persistido; la espera de nuevas reservas es configurable, inicialmente 30 minutos. No se recalculan reservas anteriores ni criterios sancionadores versionados. Después corresponde VENCIDA y una sola inasistencia LEVE existente, sin escalamiento por repetición, conforme al [contrato operativo y migración pendiente](../architecture/reservation-expiry.md). La cancelación válida o administrativa no genera esa falta.
 
 Las reglas completas de acumulación, escalamiento y absolución están en [términos y condiciones](terms-and-conditions.md#8-acumulación-de-sanciones). Las suspensiones futuras usan PROGRAMADA, las efectivas ACTIVA y las terminadas FINALIZADA o ABSUELTA. Las sanciones sin suspensión se finalizan después del descuento y pueden apelarse durante 30 días desde su registro; las demás finalizadas, durante 30 días desde su finalización.
 

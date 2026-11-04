@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.incumplimientos.reservaId",
+    "label": "Add column \"reservaId\" to \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "reservaId",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"reservaId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "reservaId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"reservaId\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD COLUMN \"reservaId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"reservaId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "reservaId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.incumplimientos.incumplimientos_reservaId_key",
+    "label": "Add unique constraint on \"incumplimientos\" (reservaId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "incumplimientos_reservaId_key",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"incumplimientos_reservaId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reservaId_key",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"incumplimientos_reservaId_key\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD CONSTRAINT \"incumplimientos_reservaId_key\" UNIQUE (\"reservaId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"incumplimientos_reservaId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reservaId_key",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_reservaId_fkey",
+    "label": "Add foreign key \"incumplimientos_reservaId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_reservaId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_reservaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reservaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_reservaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_reservaId_fkey\"\nFOREIGN KEY (\"reservaId\")\nREFERENCES \"public\".\"reservas\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_reservaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_reservaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  }
+]

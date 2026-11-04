@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { categoryPolicyFixture } from './helpers/category-policy-fixture.js';
 import { type INestApplication, ValidationPipe } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
@@ -90,6 +91,9 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     vi.stubEnv('JWT_EXPIRES_IN', '3600s');
     enabled = true;
     db = inMemoryPrisma({
+      configuracion_reservas: [{ id: 1, pickupWaitMinutes: 30, weeklySchedule: null, version: 1, updatedAt: new Date() }],
+      sanciones: [],
+      ...categoryPolicyFixture(categoryId),
       usuarios: [
         { id: userId, vinculacionVigente: true },
         { id: actorId, vinculacionVigente: true },
@@ -163,7 +167,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
           usuarioId: otherUser,
           ejemplarId: otherCopy,
           fechaSolicitada: past(),
-          fechaLimiteRecogida: new Date(),
+          fechaLimiteRecogida: new Date(Date.now() + 86400000),
           duracionPrestamoHoras: 4,
           estado: 'CONFIRMADA',
           fechaRecogida: null,
@@ -173,7 +177,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       ],
     });
     // El ORM decodifica timestamptz como Temporal.Instant, no Date.
-    for (const table of ['prestamos', 'reservas'])
+    for (const table of ['prestamos', 'reservas', 'configuracion_reservas'])
       for (const row of db.rows(table)) {
         for (const [key, value] of Object.entries(row))
           if (value instanceof Date)
@@ -219,7 +223,11 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       new ListUserLoanHistoryUseCase(loans),
       new ListOverdueLoansUseCase(loans),
       {},
-      {},
+      new PickupReservationUseCase(
+        reservations,
+        { getByUserId: async () => ({ enabled: true }) } as any,
+        { hasAcceptedCurrentVersion: async () => true } as any,
+      ),
       {},
       {},
       new ListReservationsUseCase(reservations),
@@ -507,29 +515,86 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
   });
   it('captures effective policy/accessories inside create transaction and transfers without consulting changed inventory', async () => {
     db.rows('ejemplares')[0]!.estado = 'DISPONIBLE';
+    const requestedAt = new Date(Date.now() + 60_000);
     const reservation = await reservations.create({
       userId,
       copyId,
       enforceSingleOpenOperation: false,
-      requestedAt: past(),
-      pickupDeadline: new Date(Date.now() + 600000),
+      requestedAt,
       loanDurationHours: 999,
     });
     expect(reservation.loanDurationHours).toBe(8);
-    expect(reservation.configurationSnapshot).toEqual(snapshot);
+    const noShow = db.rows('versiones_regla').find(r => JSON.parse(r.descripcion).key === 'R-RES:LEVE')!;
+    const expectedSnapshot = { ...snapshot, reservationSettings: { version: 1, pickupWaitMinutes: 30, weeklySchedule: null, timeZone: 'America/Lima' }, reservationNoShow: { termsVersionId: db.rows('versiones_terminos')[0].id, ruleVersionId: noShow.id } };
+    expect(reservation.configurationSnapshot).toEqual(expectedSnapshot);
     await inventory.updateLoanPolicy(resourceId, 3);
     await inventory.replaceAccessories(resourceId, []);
-    const picked = await reservations.pickup(reservation.id, new Date());
-    expect(picked.loan.configurationSnapshot).toEqual(snapshot);
+    const picked = await reservations.pickup(reservation.id, requestedAt);
+    expect(picked.loan.configurationSnapshot).toEqual(expectedSnapshot);
     expect(picked.loan.endsAt.getTime() - picked.loan.startsAt.getTime()).toBe(
       8 * 3600000,
     );
     expect(
       (await loans.findById(picked.loan.id))?.configurationSnapshot,
-    ).toEqual(snapshot);
+    ).toEqual(expectedSnapshot);
     const writes = db.calls.filter((p) => p.operation === 'update');
     expect(writes.some((p) => p.table === 'recursos')).toBe(true);
     expect(writes.some((p) => p.table === 'categorias_recurso')).toBe(true);
+  });
+  it('uses current locked settings for new reservations only; pickup retains the stored deadline/snapshot', async () => {
+    db.rows('ejemplares')[0].estado = 'DISPONIBLE';
+    db.rows('configuracion_reservas')[0].pickupWaitMinutes = 75;
+    db.rows('configuracion_reservas')[0].version = 2;
+    const requestedAt = new Date(Date.now() + 60_000);
+    const reservation = await reservations.create({ userId, copyId, enforceSingleOpenOperation: false, requestedAt, loanDurationHours: 8 });
+    expect(reservation.pickupDeadline.getTime() - requestedAt.getTime()).toBe(75 * 60_000);
+    expect(reservation.configurationSnapshot?.reservationSettings).toMatchObject({ version: 2, pickupWaitMinutes: 75 });
+    expect(db.calls.some(p => p.operation === 'lock' && p.text?.includes('configuracion_reservas') && p.text.includes('FOR UPDATE'))).toBe(true);
+    db.rows('configuracion_reservas')[0].pickupWaitMinutes = 1;
+    db.rows('configuracion_reservas')[0].weeklySchedule = Array.from({ length: 7 }, (_, i) => ({ day: i + 1, intervals: [] }));
+    const picked = await reservations.pickup(reservation.id, new Date(requestedAt.getTime() + 70 * 60_000));
+    expect(picked.reservation.pickupDeadline).toEqual(reservation.pickupDeadline);
+    expect(picked.loan.configurationSnapshot).toEqual(reservation.configurationSnapshot);
+  });
+  it('missing settings returns 503 and rolls back copy reservation; no in-memory default', async () => {
+    db.rows('ejemplares')[0].estado = 'DISPONIBLE';
+    db.rows('configuracion_reservas').splice(0);
+    const before = db.rows('reservas').length;
+    await expect(reservations.create({ userId, copyId, enforceSingleOpenOperation: false, requestedAt: new Date(Date.now() + 60_000), loanDurationHours: 8 })).rejects.toMatchObject({ status: 503 });
+    expect(db.rows('ejemplares')[0].estado).toBe('DISPONIBLE');
+    expect(db.rows('reservas')).toHaveLength(before);
+  });
+  it('expiry uses stored deadlines even without settings, stays VENCIDA on retry and preserves historical sanctions', async () => {
+    const deadline = new Date(Date.now() + 60_000);
+    const row = db.rows('reservas')[1];
+    const version = db.rows('versiones_regla').find(r => JSON.parse(r.descripcion).key === 'R-RES:LEVE')!;
+    row.configurationSnapshot = { reservationNoShow: { termsVersionId: db.rows('versiones_terminos')[0].id, ruleVersionId: version.id } };
+    db.rows('usuarios').find(r => r.id === otherUser)!.confianza = '80.00';
+    row.fechaLimiteRecogida = Temporal.Instant.from(deadline.toISOString());
+    db.rows('ejemplares')[1].estado = 'RESERVADO';
+    const sanction = { id: 'historical-no-show', usuarioId: otherUser, tipo: 'NO_SHOW', reservaId: row.id };
+    db.rows('sanciones').push(sanction);
+    db.rows('configuracion_reservas').splice(0);
+    expect(await reservations.expire(deadline)).toEqual([]);
+    const expired = await reservations.expire(new Date(deadline.getTime() + 1));
+    expect(expired).toHaveLength(1);
+    expect(expired[0]).toMatchObject({ status: 'VENCIDA', pickupDeadline: deadline });
+    expect(db.rows('ejemplares')[1].estado).toBe('DISPONIBLE');
+    expect(await reservations.expire(new Date(deadline.getTime() + 2))).toEqual([]);
+    expect(db.rows('reservas')[1].estado).toBe('VENCIDA');
+    expect(db.rows('sanciones')).toHaveLength(2);
+    expect(db.rows('sanciones')[0]).toEqual(sanction);
+    expect(db.rows('sanciones')[1]).toMatchObject({ versionReglaId: version.id, confianzaPosterior: '78.00', estado: 'FINALIZADA' });
+    expect(db.rows('incumplimientos')).toHaveLength(1);
+    expect(db.rows('incumplimientos')[0].reservaId).toBe(row.id);
+  });
+  it('transaction rejects closed-day and stale/past pickup dates without leaving a reserved copy', async () => {
+    db.rows('ejemplares')[0].estado = 'DISPONIBLE';
+    db.rows('configuracion_reservas')[0].weeklySchedule = Array.from({ length: 7 }, (_, i) => ({ day: i + 1, intervals: [] }));
+    for (const requestedAt of [new Date(Date.now() + 60_000), new Date(Date.now() - 1), new Date(NaN)]) {
+      await expect(reservations.create({ userId, copyId, enforceSingleOpenOperation: false, requestedAt, loanDurationHours: 8 })).rejects.toMatchObject({ status: 400 });
+      expect(db.rows('ejemplares')[0].estado).toBe('DISPONIBLE');
+    }
   });
   it.each([
     { individual: 3, categoryHours: 8, expected: 3, source: 'RESOURCE' },
@@ -545,8 +610,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
         userId,
         copyId,
         enforceSingleOpenOperation: false,
-        requestedAt: past(),
-        pickupDeadline: new Date(Date.now() + 60000),
+        requestedAt: new Date(Date.now() + 60_000),
         loanDurationHours: 999,
       });
       expect(reservation.configurationSnapshot?.policy).toMatchObject({
@@ -555,7 +619,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
         source,
       });
       db.rows('categorias_recurso')[0]!.tiempoMaximoPrestamoHoras = 1;
-      const picked = await reservations.pickup(reservation.id, new Date());
+      const picked = await reservations.pickup(reservation.id, reservation.requestedAt);
       expect(
         picked.loan.endsAt.getTime() - picked.loan.startsAt.getTime(),
       ).toBe(expected * 3600000);
@@ -578,6 +642,59 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       .expect(409);
     expect(db.rows('devoluciones')).toHaveLength(1);
   });
+
+  it.each([AccessRole.OPERATOR, AccessRole.ADMINISTRATOR])(
+    'conserva circulación e inspección histórica para %s aun con inventario inactivo',
+    async (role) => {
+      await inventory.updateCategory(categoryId, { activo: false });
+      await inventory.updateResource(resourceId, { activo: false });
+      await inspect(checklistBody(), role).expect(201);
+      await request(app.getHttpServer())
+        .post(`/loans/${loanId}/return`)
+        .auth(token(role), { type: 'bearer' })
+        .send({ returnedAt: new Date().toISOString() })
+        .expect(201);
+      expect(db.rows('prestamos')[0].estado).toBe('FINALIZADO');
+    },
+  );
+
+  it.each([AccessRole.OPERATOR, AccessRole.ADMINISTRATOR])(
+    'permite recogida histórica para %s sin recalcular duración',
+    async (role) => {
+      db.rows('reservas')[1].fechaLimiteRecogida = Temporal.Instant.from(
+        new Date(Date.now() + 60000).toISOString(),
+      );
+      db.rows('ejemplares')[1].estado = 'RESERVADO';
+      await inventory.updateCategory(categoryId, {
+        tiempoMaximoPrestamoHoras: 1,
+      });
+      const result = await request(app.getHttpServer())
+        .post(`/loans/reservations/${uuid(11)}/pickup`)
+        .auth(token(role), { type: 'bearer' })
+        .expect(201);
+      expect(
+        new Date(result.body.endsAt).getTime() -
+          new Date(result.body.startsAt).getTime(),
+      ).toBe(4 * 3600000);
+    },
+  );
+
+  it.each(['categorias_recurso', 'recursos'])(
+    'bloquea recogida si %s se desactiva, sin perder la reserva',
+    async (table) => {
+      db.rows('reservas')[1].fechaLimiteRecogida = Temporal.Instant.from(
+        new Date(Date.now() + 60000).toISOString(),
+      );
+      db.rows('ejemplares')[1].estado = 'RESERVADO';
+      db.rows(table)[0].activo = false;
+      await request(app.getHttpServer())
+        .post(`/loans/reservations/${uuid(11)}/pickup`)
+        .auth(token(AccessRole.ADMINISTRATOR), { type: 'bearer' })
+        .expect(409);
+      expect(db.rows('ejemplares')[1].estado).toBe('RESERVADO');
+      expect(db.rows('reservas')[1].estado).toBe('CONFIRMADA');
+    },
+  );
   it('rolls back reserved copy/configuration on failed create; preserves legacy reservation duration on pickup', async () => {
     db.rows('ejemplares')[0]!.estado = 'DISPONIBLE';
     const runtime = db.client.runtime(),
@@ -592,8 +709,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
         userId,
         copyId,
         enforceSingleOpenOperation: false,
-        requestedAt: past(),
-        pickupDeadline: new Date(),
+        requestedAt: new Date(Date.now() + 60_000),
         loanDurationHours: 8,
       }),
     ).rejects.toMatchObject({ status: 409 });

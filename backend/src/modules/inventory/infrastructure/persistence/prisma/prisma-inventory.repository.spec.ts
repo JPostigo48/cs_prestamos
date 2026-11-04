@@ -41,9 +41,14 @@ describe('PrismaInventoryRepository', () => {
           observaciones_ejemplar: table('observaciones_ejemplar'),
           prestamos: table('prestamos'),
           reservas: table('reservas'),
+          inspecciones_devolucion: table('inspecciones_devolucion'),
+          versiones_regla: table('versiones_regla'),
+          versiones_terminos: table('versiones_terminos'),
+          auditorias_usuario: table('auditorias_usuario'),
         },
       },
       client: {
+        raw: { sql: () => ({ returnsRow: () => ({ build: () => query }) }) },
         runtime: vi.fn().mockReturnValue(runtime),
         transaction: vi.fn((work) => work(runtime)),
       },
@@ -210,6 +215,23 @@ describe('PrismaInventoryRepository', () => {
       'recursos',
     ],
   ])('normalizes affected rows for %s', async (_name, operation, table) => {
+    if (_name === 'deleteCategory') {
+      runtime.query.mockReset();
+      for (const rows of [
+        [],
+        [{ id: 'cat-1', nombre: 'Test' }],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [{ id: 'cat-1' }],
+      ])
+        runtime.query.mockResolvedValueOnce(rows);
+    }
     await expect(operation()).resolves.toBe(1);
     expect(builders[table].delete).toHaveBeenCalled();
     expect(runtime.query).toHaveBeenCalledWith(query);

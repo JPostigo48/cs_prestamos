@@ -62,7 +62,7 @@ Las reglas de negocio expresan invariantes y restricciones del sistema de prést
 
 | ID | Regla |
 | --- | --- |
-| RN-30 | Una reserva se recoge a la hora pactada o **dentro de los siguientes 30 minutos**; después pasa a VENCIDA automáticamente y se registra inasistencia con descuento pequeño configurable. |
+| RN-30 | Recogida desde la hora pactada hasta su plazo persistido inclusive. La configuración de espera y horario solo afecta nuevas reservas. Después corresponde VENCIDA y una sola sanción LEVE existente, sin escalamiento por reiteración y conservando historial; véase el [contrato operativo](../architecture/reservation-expiry.md). |
 | RN-31 | Un estudiante debe aportar al registrarse carné o constancia de matrícula; un **operador o administrador** valida la evidencia antes de aprobar la cuenta. |
 | RN-32 | El sistema permite acceso con Google mediante correo institucional `@unsa.edu.pe`; autenticar no equivale a estar aprobado ni habilitado para préstamos. |
 | RN-33 | Un administrador puede ejecutar todas las funciones del operador. `TipoUsuario` (estudiante, docente, administrativo) y `RolAcceso` (usuario, operador, administrador) representan dimensiones distintas. |

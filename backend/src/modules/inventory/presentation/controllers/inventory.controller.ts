@@ -31,6 +31,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { InventoryService } from '../../application/use-cases/inventory.service.js';
+import {
+  ListCategoriesQueryDto,
+  CategoryDeletionPreviewDto,
+  CategoryPoliciesResponseDto,
+} from '../dto/category-management.dto.js';
 import { CreateCategoryDto } from '../dto/create-category.dto.js';
 import { CreateCopyDto } from '../dto/create-copy.dto.js';
 import { CreateCopyObservationDto } from '../dto/create-copy-observation.dto.js';
@@ -148,7 +153,7 @@ export class InventoryController {
   @Post('categories')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: CreateCategoryDto })
   @ApiOperation({ summary: 'Registrar categoría de recurso' })
   @ApiCreatedResponse({ type: CategoryResponseDto })
@@ -168,8 +173,42 @@ export class InventoryController {
   @ApiOperation({ summary: 'Consultar categorías de recurso' })
   @ApiOkResponse({ type: CategoryResponseDto, isArray: true })
   @ApiExtension('x-implementation-status', 'implemented')
-  listCategories() {
-    return this.service.listCategories();
+  listCategories(@Query() query: ListCategoriesQueryDto = {}) {
+    return this.service.listCategories(query.active);
+  }
+
+  @Get('categories/:categoryId/policies')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Consultar políticas publicadas por categoría, solo lectura',
+    description:
+      'No hereda reglas de otras categorías ni permite guardado. rulesEditable=false; message explica la publicación pendiente.',
+  })
+  @ApiOkResponse({ type: CategoryPoliciesResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 500)
+  getCategoryPolicies(
+    @Param('categoryId', new ParseUUIDPipe()) categoryId: string,
+  ) {
+    return this.service.getCategoryPolicies(categoryId);
+  }
+
+  @Get('categories/:categoryId/deletion-preview')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Previsualizar eliminación física sin modificar datos',
+    description:
+      'DELETE revalida bajo bloqueo transaccional; la previsualización no autoriza el borrado.',
+  })
+  @ApiOkResponse({ type: CategoryDeletionPreviewDto })
+  @ApiHttpErrors(400, 401, 403, 404, 500)
+  previewCategoryDeletion(
+    @Param('categoryId', new ParseUUIDPipe()) categoryId: string,
+  ) {
+    return this.service.previewCategoryDeletion(categoryId);
   }
 
   @ApiHttpErrors(400, 404)
@@ -185,9 +224,13 @@ export class InventoryController {
   @Patch('categories/:categoryId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: UpdateCategoryDto })
-  @ApiOperation({ summary: 'Modificar categoría de recurso' })
+  @ApiOperation({
+    summary: 'Modificar categoría de recurso',
+    description:
+      'Solo ADMINISTRADOR. activo=false conserva todo el historial y permite reactivación. La duración en horas rige solo nuevas operaciones; no reescribe reservas/préstamos ni reglas publicadas.',
+  })
   @ApiOkResponse({ type: CategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   updateCategory(
@@ -206,8 +249,12 @@ export class InventoryController {
   @Delete('categories/:categoryId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
-  @ApiOperation({ summary: 'Eliminar categoría de recurso' })
+  @Roles(AccessRole.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Eliminar categoría y conjunto sin historial',
+    description:
+      'Solo ADMINISTRADOR. Revalida bajo bloqueo transaccional; borra explícitamente ejemplares, accesorios, recursos y categoría solo sin dependencias. Historial, reglas versionadas y auditorías bloquean con 409 y alternativa desactivar. Un conflicto concurrente también devuelve 409.',
+  })
   @ApiOkResponse({ type: DeletedCategoryResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   deleteCategory(
@@ -225,7 +272,7 @@ export class InventoryController {
   @Post('resources')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: CreateResourceDto })
   @ApiOperation({ summary: 'Registrar recurso' })
   @ApiCreatedResponse({ type: ResourceResponseDto })
@@ -288,7 +335,7 @@ export class InventoryController {
   @Patch('resources/:resourceId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: UpdateResourceDto })
   @ApiOperation({ summary: 'Modificar recurso' })
   @ApiOkResponse({ type: ResourceResponseDto })
@@ -307,7 +354,7 @@ export class InventoryController {
   @Delete('resources/:resourceId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiOperation({ summary: 'Eliminar recurso' })
   @ApiOkResponse({ type: DeletedResourceResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
@@ -326,7 +373,7 @@ export class InventoryController {
   @Post('resources/:resourceId/copies')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: CreateCopyDto })
   @ApiOperation({ summary: 'Registrar ejemplar' })
   @ApiCreatedResponse({ type: CopyResponseDto })
@@ -363,7 +410,7 @@ export class InventoryController {
   @Delete('copies/:copyId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiOperation({
     summary:
       'Desactivar ejemplar sin borrar historial; rechaza operaciones abiertas',
@@ -385,7 +432,7 @@ export class InventoryController {
   @Patch('copies/:copyId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @Roles(AccessRole.ADMINISTRATOR)
   @ApiBody({ type: UpdateCopyDto })
   @ApiOkResponse({ type: CopyResponseDto })
   @ApiOperation({
