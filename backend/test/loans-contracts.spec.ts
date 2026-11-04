@@ -31,6 +31,7 @@ import { ListUserLoanHistoryUseCase } from '../src/modules/loans/application/use
 import { CreateReservationUseCase } from '../src/modules/loans/application/use-cases/create-reservation.use-case.js';
 import { PickupReservationUseCase } from '../src/modules/loans/application/use-cases/pickup-reservation.use-case.js';
 import { CancelReservationUseCase } from '../src/modules/loans/application/use-cases/cancel-reservation.use-case.js';
+import { UploadLoanEvidenceUseCase } from '../src/modules/loans/application/use-cases/upload-loan-evidence.use-case.js';
 import { LoansController } from '../src/modules/loans/presentation/controllers/loans.controller.js';
 import {
   ReservationsQueryDto,
@@ -192,6 +193,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       CreateReservationUseCase,
       PickupReservationUseCase,
       CancelReservationUseCase,
+      UploadLoanEvidenceUseCase,
       ListReservationsUseCase,
       ListResourceHistoryUseCase,
       SaveReturnChecklistUseCase,
@@ -216,6 +218,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       new ListActiveLoansUseCase(loans),
       new ListUserLoanHistoryUseCase(loans),
       new ListOverdueLoansUseCase(loans),
+      {},
       {},
       {},
       {},

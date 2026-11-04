@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -9,6 +10,7 @@ const BUCKET = 'loan-evidence';
 
 @Injectable()
 export class SupabaseStorageService {
+  private readonly logger = new Logger(SupabaseStorageService.name);
   private readonly client: SupabaseClient;
 
   constructor() {
@@ -25,35 +27,46 @@ export class SupabaseStorageService {
   }
 
   async upload(path: string, file: Express.Multer.File): Promise<void> {
-    const { error } = await this.client.storage.from(BUCKET).upload(path, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false,
-    });
-    if (error) {
+    try {
+      const { error } = await this.client.storage
+        .from(BUCKET)
+        .upload(path, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+      if (error) throw error;
+    } catch {
+      this.logger.error('loan-evidence-storage: upload-failed');
       throw new InternalServerErrorException(
-        `No se pudo almacenar la evidencia: ${error.message}`,
+        'No se pudo almacenar la evidencia.',
       );
     }
   }
 
   async remove(path: string): Promise<void> {
-    const { error } = await this.client.storage.from(BUCKET).remove([path]);
-    if (error) {
+    try {
+      const { error } = await this.client.storage.from(BUCKET).remove([path]);
+      if (error) throw error;
+    } catch {
+      this.logger.error('loan-evidence-storage: remove-failed');
       throw new InternalServerErrorException(
-        `No se pudo limpiar la evidencia almacenada: ${error.message}`,
+        'No se pudo limpiar la evidencia almacenada.',
       );
     }
   }
 
   async createSignedUrl(path: string): Promise<string> {
-    const { data, error } = await this.client.storage
-      .from(BUCKET)
-      .createSignedUrl(path, 60 * 15);
-    if (error || !data?.signedUrl) {
+    try {
+      const { data, error } = await this.client.storage
+        .from(BUCKET)
+        .createSignedUrl(path, 60 * 15);
+      if (error || !data?.signedUrl) throw new Error('signing-failed');
+      return data.signedUrl;
+    } catch {
+      this.logger.error('loan-evidence-storage: signing-failed');
       throw new InternalServerErrorException(
-        `No se pudo generar el acceso a la evidencia: ${error?.message ?? 'URL ausente'}`,
+        'No se pudo generar el acceso a la evidencia.',
       );
     }
-    return data.signedUrl;
   }
 }

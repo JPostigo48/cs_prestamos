@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
   Param,
   Post,
   Delete,
@@ -299,6 +300,7 @@ export class LoansController {
   }
 
   @Post(':loanId/evidence')
+  @HttpCode(200)
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @UseInterceptors(

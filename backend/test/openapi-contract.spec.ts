@@ -278,6 +278,7 @@ describe('Contrato OpenAPI generado desde Nest', () => {
       'institutionalId',
       'name',
       'nombre',
+      'phone',
       'tipoUsuario',
       'userType',
     ]);
@@ -288,6 +289,7 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     expect(
       schema('SubmitRegistrationRequestDto').properties!.evidencias,
     ).toMatchObject({ type: 'array', items: { type: 'string' } });
+    expect(schema('SubmitRegistrationRequestDto').required ?? []).not.toContain('phone');
     expect(schema('UpdateAccessAccountDto').properties).toHaveProperty(
       'enabled',
     );
