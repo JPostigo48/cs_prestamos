@@ -21,12 +21,12 @@ El formulario de acceso real está aislado en [RealLoginForm.vue](../../frontend
 
 | Ruta | Acceso / función |
 | --- | --- |
-| /login, /login/google, /register | Público; autenticación propia, OIDC Google configurado y solicitudes separadas |
+| /login, /login/google, /register | Público; autenticación propia, OIDC Google configurado y solicitud integral única |
 | /app | Inicio personal de USUARIO |
 | /app/catalog, /app/catalog/:resourceId | Todos los roles autenticados; catálogo compartido y reserva propia |
 | /app/reservations | Todos los roles; reservas propias y aceptación informada de términos |
 | /app/loans | OPERADOR y ADMINISTRADOR; activos, mora, recepción y entregas |
-| /app/registrations | OPERADOR y ADMINISTRADOR; aprobación/rechazo de vinculación. Alta de acceso solo ADMINISTRADOR |
+| /app/registrations | OPERADOR y ADMINISTRADOR; aprobación integral con cuenta habilitada o rechazo motivado |
 | /app/admin/appeals, /app/admin/users, /app/admin/catalog | Solo ADMINISTRADOR |
 | /app/denied | Acceso denegado sin cerrar la sesión |
 | /prototype, /project | Referencia y documentación; accesos preservados |
@@ -41,7 +41,7 @@ Inicio de sesión: USUARIO → inicio personal; OPERADOR → operaciones; ADMINI
 | --- | --- | --- |
 | V01 | Acceso, visibilidad de contraseña y envío | Integrado: [login](../../frontend/src/modules/auth/pages/LoginPage.vue) |
 | V02 | Google, correo y volver | Parcial/API F01: [acceso Google](../../frontend/src/modules/auth/pages/GoogleAccessPage.vue); no emite sesión por correo |
-| V03 | Registro, evidencia textual y alta integral separada | Básica integrada; términos/alta integral F02/F03: [registro](../../frontend/src/modules/auth/pages/RegistrationRequestPage.vue). Sin upload ni cuenta creada ficticiamente |
+| V03 | Registro integral único | [Registro](../../frontend/src/modules/auth/pages/RegistrationRequestPage.vue): contraseña elegida para todos, imagen PNG/JPEG hasta 60 KiB y aceptación explícita de términos. Estudiantes: carné o constancia de matrícula vigente. No crea acceso hasta aprobar |
 | V04 | Bienvenida, habilitación y confianza | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue), bloques independientes |
 | V05 | Categorías, contadores, ver todo y búsqueda | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue); contador rotulado como recursos, no ejemplares disponibles |
 | V06 | Préstamos propios, estado/mora e historial | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue), nombres enriquecidos o ID real |
@@ -68,15 +68,15 @@ Inicio de sesión: USUARIO → inicio personal; OPERADOR → operaciones; ADMINI
 | V27 | Tiempo máximo por artículo | Duración heredada visible; excepción individual F13 pendiente, no modifica política de toda categoría |
 | V28 | Partes por coma y checklist | Lectura/escritura F06/F07 y revisión F09 pendientes; guardado separado, sin éxito compuesto ficticio |
 | C01 | Recuperar/cancelar reservas y entregar | Acciones reales integradas; lectura F14 pendiente: [reservas](../../frontend/src/modules/loans/components/ReservationsPanel.vue) |
-| C02 | Leer/aceptar versión de términos | POST real integrado con usuario, versión leída e instante; lectura F02 pendiente: [términos](../../frontend/src/modules/auth/components/TermsPanel.vue) |
-| C03 | Revisar solicitud y crear acceso | Integrado: [solicitudes](../../frontend/src/modules/users/pages/RegistrationRequestsPage.vue). Aprobación no crea cuenta; alta administrativa separada con correo/clave explícitos y rol USUARIO |
+| C02 | Consultar/aceptar versión de términos | [Términos](../../frontend/src/modules/auth/components/TermsPanel.vue): documento completo en modal público accesible con renderer seguro. Abrir/cargar habilita la casilla externa, no la acepta; recarga, cambio o fallo invalidan aceptación. No acredita lectura humana |
+| C03 | Revisar solicitud y crear acceso | [Solicitudes](../../frontend/src/modules/users/pages/RegistrationRequestsPage.vue): aprobación atómica crea usuario, vinculación, cuenta habilitada USUARIO y aceptación con correo/hash originales. Sin contraseña administrativa ni alta manual en este flujo; legados incompletos bloqueados con 409 y motivos seguros |
 | C04 | Renovación, notificaciones, pérdida/robo y motor de sanción | Fuera de las acciones de estas referencias; sin nueva UI ni rutas inventadas |
 
 ## Endpoints existentes usados
 
 Los adaptadores de cada módulo concentran las rutas de negocio; los componentes no construyen URLs HTTP.
 
-- Autenticación: POST /auth/authenticate; POST /users/registration-requests; POST /auth/accounts; PATCH /auth/accounts/:accountId.
+- Autenticación: POST /auth/authenticate; POST /auth/registration-requests. La entrada básica POST /users/registration-requests responde 410. POST /auth/accounts sigue siendo alta administrativa ajena al flujo de aprobación; PATCH /auth/accounts/:accountId conserva sus permisos.
 - Usuario: GET /users; GET /users/:userId; GET /users/:userId/loan-eligibility; GET /users/:userId/trust; GET /users/:userId/sanctions.
 - Solicitudes: GET /users/registration-requests; POST /users/registration-requests/:requestId/approve y /reject.
 - Inventario: GET /inventory/categories; GET/POST /inventory/resources; GET/PATCH /inventory/resources/:resourceId; GET/POST /inventory/resources/:resourceId/copies; GET /inventory/copies/:copyId; PATCH /inventory/copies/:copyId/state.
@@ -93,6 +93,7 @@ No se pretende exponer las 53 operaciones del inventario backend como un backoff
 - Accesorios, ejemplares, datos básicos y excepción de política se guardan por separado. El fallo de una etapa no deshace ni declara completas otras escrituras confirmadas.
 - Sanción no equivale a cuenta deshabilitada o vinculación no vigente. Resolver apelación no borra el historial ni absuelve otras sanciones.
 - ADMINISTRADOR no cancela reservas ajenas ni apela sanciones ajenas por ser administrador: las acciones personales conservan ownership.
+- Registro: la contraseña solo se persiste como hash Argon2id y no se expone al personal ni a auditorías. El acceso posterior usa el correo y contraseña elegidos. La bandeja muestra la evidencia como imagen y motivos seguros de completitud; ante legado incompleto requiere rechazo motivado y reenvío, no reparación administrativa de credenciales. Los resultados inciertos siguen bloqueando reenvíos.
 
 ## Correcciones obligatorias de revisión I1–I9 · 2026-10-28
 

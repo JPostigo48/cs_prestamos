@@ -1,4 +1,4 @@
-import { authenticatedRequest, sessionFromResponse, type AuthResponse } from './auth-api'
+import { authenticatedRequest, sessionFromResponse, type AuthResponse, type AuthSession } from './auth-api'
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import { guardedMutation } from '../../../shared/api/mutation-guard'
 export interface Terms {
@@ -36,14 +36,14 @@ export const requestFullRegistration = (body: {
   name: string
   email: string
   password: string
-  userType: string
+  userType: AuthSession['user']['userType']
   institutionalId?: string
   phone?: string
   evidence: string[]
   termsVersionId: string
 }) => guardedMutation('full-registration', async () => {
   const result = await apiRequest<{ id: string; status: 'PENDIENTE' }>('/auth/registration-requests', { method: 'POST', body })
-  if (!result?.id || result.status !== 'PENDIENTE') throw new ApiError('No se confirmó el alta. Consulta su estado antes de repetir.', 422)
+  if (!result?.id || result.status !== 'PENDIENTE') throw new ApiError('No se confirmó el alta. Consulta su estado antes de repetir.', 0)
   return result
 })
 export async function acceptTerms(userId: string, termsVersionId: string) {

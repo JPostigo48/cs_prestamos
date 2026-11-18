@@ -164,21 +164,3 @@ export async function authenticatedRequest<T>(
   }
   return apiRequest<T>(path, { ...options, token: session.accessToken })
 }
-
-export async function submitRegistrationRequest(input: {
-  name: string
-  userType: 'ESTUDIANTE' | 'DOCENTE' | 'ADMINISTRATIVO'
-  institutionalId?: string
-  evidence: string[]
-}): Promise<{ id: string; status: string }> {
-  const result = await apiRequest<{ id: string; status: string }>('/users/registration-requests', {
-    method: 'POST',
-    body: input,
-  })
-  if (!result?.id || result.status !== 'PENDIENTE')
-    throw new ApiError(
-      'El servidor no confirmó la solicitud de registro. Verifica antes de repetir.',
-      0,
-    )
-  return result
-}

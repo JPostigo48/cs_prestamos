@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { CheckCircle2, ChevronRight, FileText } from '@lucide/vue'
 import { acceptTerms, getCurrentTerms, getMyAcceptances, getTermsVersion, type Terms } from '../api/access-flows-api'
 import { getSession } from '../api/auth-api'
@@ -7,6 +7,7 @@ import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import TermsDocument from './TermsDocument.vue'
+import { ApiError } from '../../../shared/api/client'
 
 const session = getSession()
 const history = useRemote(async (signal) => {
@@ -31,8 +32,14 @@ const read = ref(false)
 const checked = ref(false)
 const sending = ref(false)
 const error = ref('')
+const uncertainVersions = ref(new Set<string>())
 const acceptanceByVersion = computed(() => new Map((history.data.value?.acceptances ?? []).map((item) => [item.termsVersionId, item])))
-const canAccept = computed(() => selected.value?.id === history.data.value?.current.id && !acceptanceByVersion.value.has(selected.value?.id ?? ''))
+const canAccept = computed(() => !history.loading.value && !history.error.value && selected.value?.id === history.data.value?.current.id && !acceptanceByVersion.value.has(selected.value?.id ?? '') && !uncertainVersions.value.has(selected.value?.id ?? ''))
+watch([history.data, history.loading, history.error], () => {
+  checked.value = false
+  read.value = false
+  selected.value = null
+}, { flush: 'sync' })
 function dateOnly(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? 'Fecha no disponible' : date.toLocaleDateString('es-PE', { timeZone: 'America/Lima', day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -43,21 +50,21 @@ async function open(version: Terms) {
   read.value = false
   error.value = ''
   await nextTick()
-  if (content.value && content.value.scrollHeight <= content.value.clientHeight + 4) read.value = true
-}
-function scrolled(event: Event) {
-  const element = event.target as HTMLElement
-  if (element.scrollTop + element.clientHeight >= element.scrollHeight - 4) read.value = true
+  if (content.value && selected.value?.id === version.id && selected.value.content === version.content && !history.loading.value && !history.error.value) read.value = true
 }
 async function accept() {
   if (!session || !selected.value || !history.data.value || !canAccept.value || !read.value || !checked.value || sending.value) return
   sending.value = true
   error.value = ''
+  const versionId = selected.value.id
   try {
-    const result = await acceptTerms(session.user.id, selected.value.id)
+    const result = await acceptTerms(session.user.id, versionId)
     history.data.value = { ...history.data.value, acceptances: [...history.data.value.acceptances, result] }
   } catch (cause) {
     error.value = errorMessage(cause)
+    checked.value = false
+    read.value = false
+    if (cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)) uncertainVersions.value.add(versionId)
   } finally {
     sending.value = false
   }
@@ -91,17 +98,18 @@ async function accept() {
     </RemoteState>
 
     <ModalDialog v-if="selected" class="terms-version-dialog" :title="selected.title" :subtitle="`Versión ${selected.number}${selected.id === history.data.value?.current.id ? ' · Actual' : ''}`" :busy="sending" @close="selected = null">
-      <div ref="content" class="terms-document-scroll" tabindex="0" aria-label="Contenido de los términos y condiciones" @scroll="scrolled">
+      <div ref="content" class="terms-document-scroll" tabindex="0" aria-label="Contenido de los términos y condiciones">
         <TermsDocument :content="selected.content" />
       </div>
       <footer class="terms-dialog-footer">
         <p v-if="acceptanceByVersion.has(selected.id)" class="accepted-message" role="status"><CheckCircle2 :size="20" aria-hidden="true" />Aceptado el {{ dateOnly(acceptanceByVersion.get(selected.id)!.acceptedAt) }}</p>
         <template v-else-if="canAccept">
-          <p v-if="!read" class="terms-read-hint">Lee hasta el final para poder aceptar esta versión.</p>
+          <p class="terms-read-hint">La casilla se habilita al cargar el documento completo. Esto no comprueba tu lectura ni comprensión.</p>
           <label class="terms-consent"><input v-model="checked" type="checkbox" :disabled="!read || sending" />He leído y acepto estos términos y condiciones.</label>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
           <button class="primary" type="button" :disabled="!read || !checked || sending" @click="accept">{{ sending ? 'Registrando…' : 'Aceptar términos' }}</button>
         </template>
+        <p v-else-if="uncertainVersions.has(selected.id)" class="error" role="alert">Resultado incierto. Actualiza tu historial antes de repetir; no se reintentará automáticamente.</p>
       </footer>
     </ModalDialog>
   </section>

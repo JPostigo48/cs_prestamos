@@ -12,7 +12,8 @@ const Reservations = await loadComponent('modules/loans/components/ReservationsP
 const { useUserDetails } = await load('modules/users/useUserDetails')
 beforeEach(() => { testEnvironment(); auth.saveSession(session('OPERADOR')) })
 const loan = { id: 'loan-visual', copyId: 'copy-visual', userId: 'user-visual', status: 'ACTIVO', startsAt: '2026-01-01T10:00:00Z', endsAt: '2026-01-02T10:00:00Z' }
-const request = { id: 'request-visual', name: 'Solicitante de prueba', userType: 'ESTUDIANTE', institutionalId: 'TEST-01', status: 'PENDIENTE', evidence: [{ information: 'Vinculación de prueba' }], rejectionReason: null, approvedUserId: null }
+const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jK9sAAAAASUVORK5CYII='
+const request = { id: 'request-visual', name: 'Solicitante de prueba', userType: 'ESTUDIANTE', institutionalId: 'TEST-01', status: 'PENDIENTE', evidence: [{ information: png }], approvalBlockers: [], rejectionReason: null, approvedUserId: null }
 
 test('panel: tarjetas reales, mora, detalles y resolución de ejemplar única entre listas', async () => {
   const calls = []
@@ -63,7 +64,7 @@ test('checklist: ninguna selección implícita; guarda separado y no registra de
   } finally { app.unmount() }
 })
 
-test('solicitudes: evidencia, filtros HTTP, aprobación confirmada sin crear acceso', async () => {
+test('solicitudes: evidencia imagen, filtros HTTP; aprobación crea cuenta original sin alta manual', async () => {
   const calls = []
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
@@ -72,17 +73,84 @@ test('solicitudes: evidencia, filtros HTTP, aprobación confirmada sin crear acc
   const app = mount(Requests)
   try {
     await flush()
-    assert.match(text(app.root), /Vinculación de prueba/)
+    assert.equal(find(app.root, 'img').props.src, png)
+    assert.doesNotMatch(text(app.root), /base64/)
     await model(find(app.root, 'input'), ' TEST-01 ')
     await event(find(app.root, 'form'), 'submit')
     assert.ok(calls.some(call => call.url.includes('institutionalId=TEST-01')))
     await event(find(app.root, 'button', 'Aprobar vinculación'), 'click')
-    assert.match(text(find(app.root, 'dialog')), /no una cuenta de acceso/)
+    assert.match(text(find(app.root, 'dialog')), /crea el usuario y su cuenta/)
+    assert.match(text(find(app.root, 'dialog')), /solicitud original/)
     await event(find(find(app.root, 'dialog'), 'form'), 'submit')
     assert.match(text(app.root), /Solicitud aprobada/)
+    assert.match(text(app.root), /Ya puede iniciar sesión/)
     assert.equal(calls.filter(call => call.options.method === 'POST').length, 1)
     assert.ok(calls.some(call => call.url.endsWith('/approve')))
     assert.equal(find(app.root, 'button', 'Crear cuenta de acceso'), undefined)
+  } finally { app.unmount() }
+})
+
+test('solicitudes incompletas: bloquear aprobación y mostrar motivos seguros, nunca base64 crudo; rechazo sigue disponible', async () => {
+  const incomplete = [
+    { ...request, id: 'missing-credentials', approvalBlockers: ['MISSING_CREDENTIALS'] },
+    { ...request, id: 'missing-contract', approvalBlockers: undefined },
+    { ...request, id: 'unsafe-reason', approvalBlockers: ['passwordHash=NO-DIVULGAR'] },
+    { ...request, id: 'unsafe-evidence', evidence: [{ information: 'data:image/png;base64,NO-DIVULGAR' }] },
+    { ...request, id: 'legacy', evidence: [{ information: 'EVIDENCIA-TEXTO-ANTIGUA' }] },
+  ]
+  let posts = 0
+  globalThis.fetch = async (_url, options) => {
+    if (options.method === 'POST') { posts++; return Response.json({ ...incomplete[0], status: 'RECHAZADA' }) }
+    return Response.json({ items: incomplete, total: incomplete.length, page: 1, limit: 20 })
+  }
+  const app = mount(Requests)
+  try {
+    await flush()
+    assert.doesNotMatch(text(app.root), /NO-DIVULGAR|EVIDENCIA-TEXTO-ANTIGUA|base64/)
+    assert.match(text(app.root), /Faltan los datos originales de acceso/)
+    const approvals = findAll(app.root, node => node.tag === 'button' && text(node).includes('Aprobar vinculación'))
+    assert.equal(approvals.length, incomplete.length)
+    assert.ok(approvals.every(node => node.props.disabled))
+    for (const button of approvals) await event(button, 'click')
+    assert.equal(find(app.root, 'dialog'), undefined)
+    assert.equal(posts, 0)
+    await event(find(app.root, 'button', 'Rechazar'), 'click')
+    await event(find(find(app.root, 'dialog'), 'form'), 'submit')
+    assert.equal(posts, 1)
+    assert.match(text(app.root), /Rechazo confirmado/)
+  } finally { app.unmount() }
+})
+
+test('imagen no decodificable bloquea aprobación; cuenta aprobada nunca ofrece alta manual incluso al administrador', async () => {
+  auth.saveSession(session('ADMINISTRADOR'))
+  globalThis.fetch = async () => Response.json({ items: [request, { ...request, id: 'approved', status: 'APROBADA', approvedUserId: 'user-created' }], total: 2, page: 1, limit: 20 })
+  const app = mount(Requests)
+  try {
+    await flush()
+    assert.equal(find(app.root, 'button', 'Crear cuenta de acceso'), undefined)
+    await event(find(app.root, 'img'), 'error')
+    assert.equal(find(app.root, 'button', 'Aprobar vinculación').props.disabled, true)
+    assert.match(text(app.root), /no pudo visualizarse/)
+  } finally { app.unmount() }
+})
+
+test('aprobación incierta: cerrar y reabrir no permite duplicar la decisión', async () => {
+  let posts = 0
+  globalThis.fetch = async (_url, options) => {
+    if (options.method === 'POST') { posts++; return Response.json({}, { status: 500 }) }
+    return Response.json({ items: [request], total: 1, page: 1, limit: 20 })
+  }
+  const app = mount(Requests)
+  try {
+    await flush()
+    await event(find(app.root, 'button', 'Aprobar vinculación'), 'click')
+    await event(find(find(app.root, 'dialog'), 'form'), 'submit')
+    assert.match(text(app.root), /Resultado incierto/)
+    await event(find(find(app.root, 'dialog'), 'button', 'Cerrar'), 'click')
+    assert.equal(find(app.root, 'button', 'Aprobar vinculación').props.disabled, true)
+    await event(find(app.root, 'button', 'Aprobar vinculación'), 'click')
+    await event(find(find(app.root, 'dialog'), 'form'), 'submit')
+    assert.equal(posts, 1)
   } finally { app.unmount() }
 })
 

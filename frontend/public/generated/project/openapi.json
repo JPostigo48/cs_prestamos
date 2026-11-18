@@ -648,6 +648,7 @@
         "x-implementation-status": "implemented"
       },
       "post": {
+        "description": "Operación administrativa independiente para usuarios existentes sin cuenta. No es un paso de aprobación de solicitudes: la aprobación integral ya crea la cuenta USUARIO habilitada con las credenciales originales. No modifica ese flujo.",
         "operationId": "AuthController_register",
         "parameters": [],
         "requestBody": {
@@ -1082,41 +1083,13 @@
     },
     "/users/registration-requests": {
       "post": {
+        "deprecated": true,
+        "description": "Siempre responde 410 y no crea solicitudes. Enviar el registro integral a POST /auth/registration-requests.",
         "operationId": "RegistrationRequestsController_submit",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitRegistrationRequestDto"
-              }
-            }
-          }
-        },
         "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationRequestResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BAD_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpErrorDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "CONFLICT",
+          "410": {
+            "description": "GONE",
             "content": {
               "application/json": {
                 "schema": {
@@ -1143,7 +1116,7 @@
             }
           }
         },
-        "summary": "Presentar solicitud de registro",
+        "summary": "Entrada básica retirada",
         "tags": [
           "Usuarios"
         ],
@@ -1372,7 +1345,7 @@
     },
     "/users/registration-requests/{requestId}/approve": {
       "post": {
-        "description": "OPERADOR o ADMINISTRADOR. Transacción: crea usuario con confianza inicial 75; si la solicitud es integral, crea además cuenta USUARIO y aceptación de la versión leída. Las solicitudes básicas conservan aprovisionamiento separado. No emite sesión.",
+        "description": "OPERADOR o ADMINISTRADOR. Toda aprobación crea atómicamente usuario con vinculación vigente y confianza 75, cuenta habilitada USUARIO con el correo y hash originales y aceptación original de términos. No emite sesión ni devuelve credenciales. 409 antes de escribir si faltan correo válido, credenciales Argon2id, aceptación/versión existente o imagen PNG/JPEG de hasta 60 KiB: rechazar con motivo y solicitar un nuevo envío integral. Consultar approvalBlockers en listado/detalle.",
         "operationId": "RegistrationRequestsController_approve",
         "parameters": [
           {
@@ -8665,7 +8638,8 @@
             "type": "string",
             "minLength": 8,
             "maxLength": 128,
-            "writeOnly": true
+            "writeOnly": true,
+            "description": "Elegida por todo solicitante. Solo se persiste su hash Argon2id; no se muestra ni envía al personal ni se incluye en auditorías. Tras aprobar se accede con el correo y esta contraseña originales."
           },
           "userType": {
             "type": "string",
@@ -8673,7 +8647,8 @@
               "ESTUDIANTE",
               "DOCENTE",
               "ADMINISTRATIVO"
-            ]
+            ],
+            "description": "Tipo institucional; DOCENTE se presenta como Profesor. No determina el rol de acceso, que será USUARIO."
           },
           "institutionalId": {
             "type": "string",
@@ -8686,7 +8661,7 @@
           "evidence": {
             "minItems": 1,
             "maxItems": 1,
-            "description": "Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa.",
+            "description": "Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional. El personal revisa la vigencia del documento.",
             "type": "array",
             "items": {
               "type": "string"
@@ -8853,69 +8828,6 @@
           }
         }
       },
-      "SubmitRegistrationRequestDto": {
-        "type": "object",
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 180
-          },
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 180,
-            "description": "Nombre preferido sobre el alias nombre; uno de ambos debe contener al menos 2 caracteres."
-          },
-          "userType": {
-            "type": "string",
-            "enum": [
-              "ESTUDIANTE",
-              "DOCENTE",
-              "ADMINISTRATIVO"
-            ],
-            "example": "ESTUDIANTE",
-            "description": "Tipo preferido sobre tipoUsuario; debe proporcionarse uno de ambos."
-          },
-          "tipoUsuario": {
-            "type": "string",
-            "enum": [
-              "ESTUDIANTE",
-              "DOCENTE",
-              "ADMINISTRATIVO"
-            ]
-          },
-          "institutionalId": {
-            "type": "string",
-            "maxLength": 80,
-            "nullable": true
-          },
-          "identificadorInstitucional": {
-            "type": "string",
-            "maxLength": 80,
-            "nullable": true
-          },
-          "phone": {
-            "type": "string",
-            "maxLength": 20,
-            "nullable": true
-          },
-          "evidence": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "evidencias": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "AffiliationEvidenceResponseDto": {
         "type": "object",
         "properties": {
@@ -8979,6 +8891,13 @@
             "items": {
               "$ref": "#/components/schemas/AffiliationEvidenceResponseDto"
             }
+          },
+          "approvalBlockers": {
+            "description": "Motivos seguros que impiden aprobar una solicitud pendiente. Vacío si está completa o ya fue decidida. No contiene credenciales. Rechazar con motivo y solicitar un nuevo envío integral si hay bloqueos.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -8991,7 +8910,8 @@
           "status",
           "rejectionReason",
           "approvedUserId",
-          "evidence"
+          "evidence",
+          "approvalBlockers"
         ]
       },
       "RegistrationRequestsPageResponseDto": {

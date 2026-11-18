@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { getSession } from '../../auth/api/auth-api'
 import {
   listRegistrationRequests,
   approveRequest,
@@ -10,11 +9,11 @@ import {
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
-import CreateAccountDialog from '../components/CreateAccountDialog.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { ClipboardList, Filter, Check, X } from '@lucide/vue'
 import { ApiError } from '../../../shared/api/client'
-const session = getSession()!
+import { registrationImageSource } from '../../auth/registration-image'
+import { registrationApprovalBlockers } from '../registration-review'
 const status = ref('PENDIENTE'),
   institutionalId = ref(''),
   page = ref(1)
@@ -30,7 +29,18 @@ const selected = ref<RegistrationRequest | null>(null),
   error = ref(''),
   notice = ref(''),
   uncertain = ref(false)
-const account = ref<{ userId: string; name: string } | null>(null)
+const uncertainRequests = ref(new Set<string>())
+const failedImages = ref(new Map<string, string>())
+function imageSource(item: RegistrationRequest, index: number): string | null {
+  const source = item.evidence[index]?.information
+  return failedImages.value.get(`${item.id}:${index}`) === source ? null : registrationImageSource(source)
+}
+function blockers(item: RegistrationRequest): string[] {
+  const reasons = registrationApprovalBlockers(item)
+  if (item.evidence?.length && !item.evidence.some((_, index) => imageSource(item, index)))
+    reasons.push('No se pudo visualizar una imagen válida de vinculación. Solicita evidencia corregida.')
+  return [...new Set(reasons)]
+}
 function load(next = 1) {
   page.value = next
   query.value = {
@@ -41,14 +51,16 @@ function load(next = 1) {
   }
 }
 function select(item: RegistrationRequest, value: boolean) {
+  if (item.status !== 'PENDIENTE') return
+  if (value && blockers(item).length) return
   selected.value = item
   approve.value = value
   reason.value = ''
   error.value = ''
-  uncertain.value = false
+  uncertain.value = uncertainRequests.value.has(item.id)
 }
 async function confirm() {
-  if (!selected.value || sending.value || uncertain.value) return
+  if (!selected.value || selected.value.status !== 'PENDIENTE' || sending.value || uncertain.value || (approve.value && blockers(selected.value).length)) return
   sending.value = true
   error.value = ''
   try {
@@ -57,7 +69,7 @@ async function confirm() {
       notice.value =
         'Solicitud aprobada. Usuario ' +
         result.user.id +
-        '. La cuenta de acceso aún requiere alta por administrador.'
+        '. Se creó su cuenta con el correo y la contraseña protegida de la solicitud original. Ya puede iniciar sesión.'
     } else {
       await rejectRequest(selected.value.id, reason.value)
       notice.value = 'Rechazo confirmado.'
@@ -67,6 +79,7 @@ async function confirm() {
   } catch (cause) {
     error.value = errorMessage(cause)
     uncertain.value = cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)
+    if (uncertain.value && selected.value) uncertainRequests.value.add(selected.value.id)
   } finally {
     sending.value = false
   }
@@ -97,29 +110,20 @@ async function confirm() {
        <div class="request-list">
          <article v-for="item in requests.data.value.items" :key="item.id" class="panel request-card">
            <div class="request-identity"><h2>{{ item.name }}</h2>
-           <p>{{ item.userType.replaceAll('_', ' ') }} · {{ item.institutionalId || 'Sin identificador' }}</p></div>
+           <p>{{ item.userType === 'DOCENTE' ? 'Profesor' : item.userType.replaceAll('_', ' ') }} · {{ item.institutionalId || 'Sin identificador' }}</p></div>
            <StatusBadge :tone="item.status === 'PENDIENTE' ? 'warning' : item.status === 'APROBADA' ? 'success' : 'danger'">{{ item.status }}</StatusBadge>
            <details class="request-evidence"><summary><ClipboardList :size="16" aria-hidden="true" />Revisar evidencia de vinculación</summary><ul>
-            <li v-for="(evidence, index) in item.evidence" :key="index">
-              <img v-if="/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(evidence.information)" :src="evidence.information" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" />
-              <template v-else>{{ evidence.information }}</template>
+            <li v-for="(_, index) in item.evidence" :key="index">
+              <img v-if="imageSource(item, index)" :src="imageSource(item, index)!" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" @error="failedImages.set(`${item.id}:${index}`, item.evidence[index]!.information)" />
+              <p v-else>La evidencia no es una imagen PNG/JPEG válida o no pudo visualizarse. Solicita una imagen corregida; no se muestra el contenido crudo.</p>
             </li>
-           </ul><p v-if="!item.evidence.length">No se adjuntó información de vinculación.</p></details>
+           </ul><p v-if="!item.evidence?.length">No se adjuntó información de vinculación.</p></details>
+           <div v-if="item.status === 'PENDIENTE' && blockers(item).length" class="request-blockers" role="status"><p>No se puede aprobar:</p><ul><li v-for="message in blockers(item)" :key="message">{{ message }}</li></ul></div>
            <p v-if="item.rejectionReason" class="request-reason">Motivo: {{ item.rejectionReason }}</p>
            <div v-if="item.status === 'PENDIENTE'" class="row request-actions">
-             <button class="approve-request" @click="select(item, true)"><Check :size="16" aria-hidden="true" />Aprobar vinculación</button
+             <button class="approve-request" :disabled="!!blockers(item).length || uncertainRequests.has(item.id)" @click="select(item, true)"><Check :size="16" aria-hidden="true" />Aprobar vinculación</button
              ><button class="reject-request" @click="select(item, false)"><X :size="16" aria-hidden="true" />Rechazar</button>
           </div>
-          <button
-            v-if="
-              session.user.role === 'ADMINISTRADOR' &&
-              item.status === 'APROBADA' &&
-              item.approvedUserId
-            "
-            @click="account = { userId: item.approvedUserId, name: item.name }"
-          >
-            Crear cuenta de acceso
-          </button>
         </article>
       </div>
        <p v-if="!requests.data.value.items.length" class="panel requests-empty">No hay solicitudes con esos filtros.</p>
@@ -141,8 +145,8 @@ async function confirm() {
     ><form class="stack" @submit.prevent="confirm">
        <p class="muted">Solicitud {{ selected.id }}</p>
       <p v-if="approve">
-        Confirma que has revisado la evidencia de vinculación. Esta acción crea un usuario, no una
-        cuenta de acceso.
+        Confirma que has revisado la evidencia de vinculación. Esta acción crea el usuario y su cuenta
+        con el correo y la contraseña protegida de la solicitud original. No debes elegir otra contraseña.
       </p>
       <label v-else>Motivo opcional<textarea v-model="reason" maxlength="500" /></label>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
@@ -151,16 +155,10 @@ async function confirm() {
       </p>
       <div class="row">
         <button type="button" :disabled="sending" @click="selected = null">Cerrar</button
-         ><button class="primary" :disabled="sending || uncertain">{{ sending ? 'Procesando…' : 'Confirmar decisión' }}</button>
+         ><button class="primary" :disabled="sending || uncertain || (approve && !!blockers(selected).length)">{{ sending ? 'Procesando…' : 'Confirmar decisión' }}</button>
       </div>
     </form></ModalDialog
   >
-  <CreateAccountDialog
-    v-if="account"
-    :user-id="account.userId"
-    :name="account.name"
-    @close="account = null"
-  />
   </section>
 </template>
 <style scoped>
@@ -184,6 +182,9 @@ async function confirm() {
 .request-evidence summary svg { display: inline; vertical-align: middle; margin-right: 6px; }
 .request-evidence ul { list-style: disc; padding-left: 20px; margin-top: 10px; }
 .request-reason { grid-column: 1; font-size: 13px; }
+.request-blockers { grid-column: 1 / -1; padding: 12px; background: #fffbeb; color: #92400e; border-radius: 8px; font-size: 13px; }
+.request-blockers ul { list-style: disc; padding-left: 20px; }
+.request-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .request-actions { grid-column: 2; grid-row: 2 / span 2; align-self: center; flex-direction: row-reverse; }
 .application .request-actions { align-items: stretch; }
 .application .request-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 10px 14px; }

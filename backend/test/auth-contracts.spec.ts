@@ -34,6 +34,12 @@ import {
   GoogleExchangeDto,
 } from '../src/modules/auth/presentation/dto/google-authentication.dto.js';
 import { UpdateAccessAccountDto } from '../src/modules/auth/presentation/dto/update-access-account.dto.js';
+import { RegistrationRequestsController } from '../src/modules/users/presentation/controllers/registration-requests.controller.js';
+import { SubmitRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/submit-registration-request.use-case.js';
+import { GetRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/get-registration-request.use-case.js';
+import { ApproveRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/approve-registration-request.use-case.js';
+import { RejectRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/reject-registration-request.use-case.js';
+import { ListRegistrationRequestsUseCase } from '../src/modules/users/application/use-cases/list-registration-requests.use-case.js';
 
 vi.mock('dotenv/config', () => ({}));
 const userId = '123e4567-e89b-42d3-a456-426614174001';
@@ -65,6 +71,7 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
     },
   };
   const states = { findById: vi.fn().mockImplementation(async () => account) };
+  const submitBasic = vi.fn();
 
   beforeAll(async () => {
     vi.stubEnv('GOOGLE_CLIENT_ID', '');
@@ -79,6 +86,18 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       FullRegistrationUseCase,
     ];
     Reflect.defineMetadata('design:paramtypes', types, AuthController);
+    const reviewTypes = [
+      SubmitRegistrationRequestUseCase,
+      GetRegistrationRequestUseCase,
+      ApproveRegistrationRequestUseCase,
+      RejectRegistrationRequestUseCase,
+      ListRegistrationRequestsUseCase,
+    ];
+    Reflect.defineMetadata(
+      'design:paramtypes',
+      reviewTypes,
+      RegistrationRequestsController,
+    );
     for (const [method, params] of [
       ['accountsForUser', [ListAccountsDto]],
       ['registerFull', [FullRegistrationDto]],
@@ -103,11 +122,17 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       { execute: executeFull },
     ];
     const module = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: types.map((provide, index) => ({
-        provide,
-        useValue: values[index],
-      })),
+      controllers: [AuthController, RegistrationRequestsController],
+      providers: [
+        ...types.map((provide, index) => ({
+          provide,
+          useValue: values[index],
+        })),
+        ...reviewTypes.map((provide) => ({
+          provide,
+          useValue: { execute: submitBasic },
+        })),
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue(new AuthGuard(jwt as any, states as any))
@@ -196,8 +221,27 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       password: 'isolated-test',
       userType: 'ESTUDIANTE',
       termsVersionId: otherId,
-      evidence: ['image fixture'],
+      evidence: [
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1kAAAAASUVORK5CYII=',
+      ],
     };
+    const callsBefore = executeFull.mock.calls.length;
+    for (const key of [
+      'name',
+      'email',
+      'password',
+      'userType',
+      'termsVersionId',
+      'evidence',
+    ] as const) {
+      const missing: Record<string, unknown> = { ...body };
+      delete missing[key];
+      await request(app.getHttpServer())
+        .post('/auth/registration-requests')
+        .send(missing)
+        .expect(400);
+    }
+    expect(executeFull.mock.calls).toHaveLength(callsBefore);
     await request(app.getHttpServer())
       .post('/auth/registration-requests')
       .send({ ...body, role: 'ADMINISTRADOR' })
@@ -222,6 +266,20 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
           .expect(201)
       ).body,
     ).toEqual({ id: otherId, status: 'PENDIENTE' });
+  });
+  it('retires basic registration with explicit 410 without creating anything', async () => {
+    for (const body of [
+      {},
+      { name: 'Legacy', evidence: ['texto'] },
+      { role: 'ADMINISTRADOR' },
+    ]) {
+      const response = await request(app.getHttpServer())
+        .post('/users/registration-requests')
+        .send(body)
+        .expect(410);
+      expect(response.body.message).toContain('/auth/registration-requests');
+    }
+    expect(submitBasic).not.toHaveBeenCalled();
   });
   it('F01 without provider configuration fails explicitly; malformed callback is 400', async () => {
     await request(app.getHttpServer())
@@ -264,6 +322,21 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       app,
       new DocumentBuilder().addBearerAuth().build(),
     );
+    const retired = doc.paths['/users/registration-requests']!.post!;
+    expect(retired.deprecated).toBe(true);
+    expect(retired.responses['410']).toBeDefined();
+    expect(retired.responses['201']).toBeUndefined();
+    const registration = doc.components!.schemas!
+      .RegistrationRequestResponseDto as SchemaObject;
+    expect(registration.properties!.approvalBlockers).toMatchObject({
+      type: 'array',
+      items: { type: 'string' },
+    });
+    expect(registration.required).toContain('approvalBlockers');
+    expect(
+      doc.paths['/users/registration-requests/{requestId}/approve']!.post!
+        .responses['409'],
+    ).toBeDefined();
     for (const [path, method, status, dto] of [
       [
         '/auth/google/authorization',

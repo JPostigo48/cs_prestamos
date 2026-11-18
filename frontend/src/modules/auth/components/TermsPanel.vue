@@ -1,168 +1,117 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { getCurrentTerms, acceptTerms, getMyAcceptances } from '../api/access-flows-api'
 import { getSession } from '../api/auth-api'
+import { ApiError } from '../../../shared/api/client'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import { dateTime } from '../../../shared/format'
+import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import TermsDocument from './TermsDocument.vue'
+
 const props = defineProps<{ allowAcceptance?: boolean }>()
 const emit = defineEmits<{ read: [versionId: string | null] }>()
 const terms = useRemote(getCurrentTerms, () => true, false)
-const acceptances = useRemote(
-  async (signal) => {
-    const session = getSession()
-    return session ? getMyAcceptances(session.user.id, signal) : []
-  },
-  () => true,
-  false,
-)
-const checked = ref(false),
-  read = ref(false),
-  sending = ref(false),
-  error = ref(''),
-  showTerms = ref(false)
+const acceptances = useRemote(async (signal) => {
+  const session = getSession()
+  return session ? getMyAcceptances(session.user.id, signal) : []
+}, () => true, false)
+const checked = ref(false)
+const displayedVersion = ref<string | null>(null)
+const sending = ref(false)
+const error = ref('')
+const uncertain = ref(false)
+const showTerms = ref(false)
 const content = ref<HTMLElement | null>(null)
 const loading = computed(() => terms.loading.value || acceptances.loading.value)
 const loadError = computed(() => terms.error.value || acceptances.error.value)
-const currentAcceptance = computed(() => {
-  const current = terms.data.value
-  const list = acceptances.data.value
-  if (!current || !list) return null
-  return list.find((item) => item.termsVersionId === current.id) ?? null
-})
-const acceptedNotice = computed(() => {
-  const acceptance = currentAcceptance.value
-  const current = terms.data.value
-  if (!acceptance || !current) return null
-  return `Ya aceptaste los términos y condiciones el ${dateTime(acceptance.acceptedAt)}`
-})
-async function markReadIfFits() {
-  await nextTick()
-  if (content.value && content.value.scrollHeight <= content.value.clientHeight + 4)
-    read.value = true
-}
-async function load() {
+const ready = computed(() => !!displayedVersion.value && displayedVersion.value === terms.data.value?.id && !loading.value && !loadError.value)
+const currentAcceptance = computed(() => acceptances.data.value?.find((item) => item.termsVersionId === terms.data.value?.id))
+const acceptedNotice = computed(() => currentAcceptance.value ? `Ya aceptaste los términos y condiciones el ${dateTime(currentAcceptance.value.acceptedAt)}` : null)
+
+function invalidate() {
   checked.value = false
-  read.value = false
-  showTerms.value = true
+  displayedVersion.value = null
   emit('read', null)
+}
+// También invalida cambios de contenido/versión y fallos fuera de la apertura inicial.
+watch([terms.data, loading, loadError], invalidate, { flush: 'sync' })
+async function load() {
+  invalidate()
+  error.value = ''
   const tasks = [terms.refresh()]
   if (props.allowAcceptance) tasks.push(acceptances.refresh())
   await Promise.all(tasks)
-  await markReadIfFits()
+  await nextTick()
+  if (showTerms.value && content.value && terms.data.value && !loading.value && !loadError.value)
+    displayedVersion.value = terms.data.value.id
+  if (currentAcceptance.value) uncertain.value = false
 }
-async function toggleTerms() {
-  if (showTerms.value) {
-    showTerms.value = false
-    return
-  }
+async function open() {
   showTerms.value = true
-  if (terms.data.value) {
-    await markReadIfFits()
-    return
-  }
   await load()
 }
-onMounted(() => {
-  if (!props.allowAcceptance) return
-  void Promise.all([terms.refresh(), acceptances.refresh()])
-})
-function scrolled(event: Event) {
-  const el = event.target as HTMLElement
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) read.value = true
-}
+onMounted(() => { if (props.allowAcceptance) void load() })
 function change() {
-  emit('read', checked.value && read.value ? terms.data.value!.id : null)
+  emit('read', checked.value && ready.value ? displayedVersion.value : null)
 }
 async function accept() {
-  if (!props.allowAcceptance || sending.value || !checked.value || !terms.data.value) return
+  if (!props.allowAcceptance || sending.value || uncertain.value || !checked.value || !ready.value || !terms.data.value) return
   const session = getSession()
   if (!session) return
+  const versionId = terms.data.value.id
   sending.value = true
   error.value = ''
   try {
-    const result = await acceptTerms(session.user.id, terms.data.value.id)
+    const result = await acceptTerms(session.user.id, versionId)
     acceptances.data.value = [...(acceptances.data.value ?? []), result]
   } catch (cause) {
     error.value = errorMessage(cause)
-  } finally {
-    sending.value = false
-  }
+    uncertain.value = cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)
+    invalidate()
+  } finally { sending.value = false }
 }
 </script>
+
 <template>
-  <section class="terms-panel stack">
+  <section class="terms-panel" aria-label="Términos y condiciones">
     <h2>Términos y condiciones</h2>
-    <p class="muted">Lee la versión vigente antes de registrar tu aceptación. Conoce las condiciones de préstamo y las posibles penalizaciones.</p>
-    <button
-      type="button"
-      :disabled="loading || sending"
-      :aria-expanded="showTerms"
-      @click="toggleTerms"
-    >
-      {{ showTerms ? 'Ocultar términos' : 'Consultar términos actuales' }}
-    </button>
-    <RemoteState :loading="loading" :error="loadError" @retry="load">
-      <template v-if="terms.data.value">
-        <template v-if="showTerms">
+    <p>Consulta la versión vigente antes de aceptar las condiciones de préstamo y las posibles penalizaciones.</p>
+    <button type="button" aria-haspopup="dialog" :disabled="loading || sending" @click="open">Consultar términos actuales</button>
+    <p v-if="acceptedNotice" role="status" class="notice">{{ acceptedNotice }}</p>
+    <template v-else>
+      <p class="terms-hint">Abre el documento y espera su carga completa para habilitar la casilla. Esto no comprueba la lectura ni la comprensión humana.</p>
+      <label class="terms-consent"><input v-model="checked" type="checkbox" :disabled="!ready || sending || uncertain" @change="change" />He leído y acepto los términos y condiciones de la versión consultada.</label>
+      <button v-if="allowAcceptance" type="button" :disabled="!checked || !ready || sending || uncertain" @click="accept">{{ sending ? 'Registrando…' : 'Registrar aceptación' }}</button>
+    </template>
+    <p v-if="error" role="alert" class="error">{{ error }}</p>
+    <p v-if="uncertain" role="alert" class="error">Resultado incierto. Consulta tu historial antes de repetir la aceptación.</p>
+    <ModalDialog v-if="showTerms" title="Términos y condiciones" class="registration-terms-dialog" :busy="sending" @close="showTerms = false">
+      <RemoteState :loading="loading" :error="loadError" @retry="load">
+        <template v-if="terms.data.value">
           <h3>{{ terms.data.value.title }} · versión {{ terms.data.value.number }}</h3>
-          <div
-            ref="content"
-            class="terms-content"
-            tabindex="0"
-            aria-label="Contenido completo de los términos"
-            @scroll="scrolled"
-          >
+          <div ref="content" class="terms-content" tabindex="0" aria-label="Contenido completo de los términos">
             <TermsDocument :content="terms.data.value.content" />
           </div>
-          <template v-if="!acceptedNotice">
-            <p v-if="!read">Desplázate hasta el final del contenido para poder aceptar.</p>
-            <label
-              ><input v-model="checked" type="checkbox" :disabled="!read || sending" @change="change" />
-              Acepto la versión leída</label
-            >
-            <button
-              v-if="allowAcceptance"
-              type="button"
-              :disabled="!checked || sending"
-              @click="accept"
-            >
-              {{ sending ? 'Registrando…' : 'Registrar aceptación' }}
-            </button>
-          </template>
         </template>
-        <p v-if="acceptedNotice" role="status" class="notice">{{ acceptedNotice }}</p>
-      </template>
-    </RemoteState>
-    <p v-if="error" role="alert" class="error">{{ error }}</p>
+      </RemoteState>
+      <button type="button" :disabled="loading || sending" @click="load">Actualizar versión</button>
+      <button type="button" :disabled="sending" @click="showTerms = false">Cerrar documento</button>
+    </ModalDialog>
   </section>
 </template>
+
 <style scoped>
-.terms-panel {
-  font-size: 14px;
-  line-height: 1.6;
-}
-.terms-panel h2 {
-  font-weight: 700;
-}
-.terms-panel button {
-  border: 1px solid #94a3b8;
-  border-radius: 8px;
-  padding: 0.6rem;
-  margin: 0.4rem 0;
-}
-.terms-panel label {
-  display: flex;
-  align-items: start;
-  gap: 10px;
-}
-.terms-panel input[type='checkbox'] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 4px; accent-color: #1e3a5f; }
-.terms-content {
-  max-height: 16rem;
-  overflow: auto;
-  padding: 1rem;
-  border: 1px solid #cbd5e1;
-  margin: 0.5rem 0;
-}
+.terms-panel { font-size: 14px; line-height: 1.6; color: #334155; }
+.terms-panel h2, .registration-terms-dialog h3 { font-weight: 700; }
+.terms-panel button { border: 1px solid #94a3b8; border-radius: 8px; padding: .6rem; margin: .5rem .5rem .5rem 0; background: white; color: #17375e; }
+.terms-panel button:disabled { opacity: .5; cursor: not-allowed; }
+.terms-panel :is(button, input):focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.terms-consent { display: flex; align-items: start; gap: 10px; }
+.terms-consent input { width: 17px; height: 17px; flex-shrink: 0; margin-top: 4px; accent-color: #1e3a5f; }
+.terms-hint { margin: .5rem 0; color: #64748b; font-size: 12px; }
+.registration-terms-dialog { max-width: min(820px, calc(100vw - 2rem)); }
+.terms-content { max-height: 54dvh; overflow: auto; overscroll-behavior: contain; padding: 1rem .5rem; margin: .5rem 0; }
+.error { padding: .75rem; border-radius: 8px; background: #fef2f2; color: #991b1b; }
+.notice { color: #15803d; }
 </style>

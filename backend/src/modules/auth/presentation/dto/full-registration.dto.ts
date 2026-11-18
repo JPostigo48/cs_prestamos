@@ -31,12 +31,18 @@ export class FullRegistrationDto {
   @MaxLength(254)
   email!: string;
 
-  @ApiProperty({ type: String, minLength: 8, maxLength: 128, writeOnly: true })
+  @ApiProperty({
+    type: String,
+    minLength: 8,
+    maxLength: 128,
+    writeOnly: true,
+    description: 'Elegida por todo solicitante. Solo se persiste su hash Argon2id; no se muestra ni envía al personal ni se incluye en auditorías. Tras aprobar se accede con el correo y esta contraseña originales.',
+  })
   @IsString()
   @Length(8, 128)
   password!: string;
 
-  @ApiProperty({ type: String, enum: UserType })
+  @ApiProperty({ type: String, enum: UserType, description: 'Tipo institucional; DOCENTE se presenta como Profesor. No determina el rol de acceso, que será USUARIO.' })
   @IsEnum(UserType)
   userType!: UserType;
 
@@ -58,7 +64,7 @@ export class FullRegistrationDto {
     minItems: 1,
     maxItems: 1,
     description:
-      'Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa.',
+      'Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional. El personal revisa la vigencia del documento.',
   })
   @IsArray()
   @ArrayMinSize(1)

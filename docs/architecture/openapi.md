@@ -62,6 +62,15 @@ apelaciones tienen controles adicionales documentados en las respuestas.
   si se añade una. La raíz devuelve texto plano.
 - Auth documenta solo la cuenta segura, sin hash. Registrar cuenta requiere
   administrador, pero el caso de uso sigue creando exclusivamente rol USUARIO.
+- Registro público canónico: POST /auth/registration-requests recibe el formulario
+  integral (contraseña writeOnly, evidencia PNG/JPEG hasta 60 KiB y versión de
+  términos). POST /users/registration-requests está obsoleto y responde solo 410,
+  sin cuerpo de alta ni éxito ficticio; el validador admite esta retirada explícita
+  con esquema de error. Consultar/aprobar/rechazar solicitudes se conserva.
+  La aprobación crea atómicamente usuario, vinculación, cuenta habilitada USUARIO
+  y aceptación originales; 409 bloquea legados incompletos antes de escribir.
+  `approvalBlockers` publica motivos seguros, nunca correo/hash/contraseña.
+  El alta administrativa de cuentas permanece fuera del flujo de aprobación.
 - Aceptar términos exige validar el `userId` del cuerpo, aunque el propietario
   efectivo se obtiene del token. No se ha cambiado esa lógica.
 - Los errores HTTP siguen el filtro: `statusCode`, `error`, `message` (texto o

@@ -27,6 +27,12 @@ export class RegistrationRequestResponseDto {
   approvedUserId!: string | null;
   @ApiProperty({ type: [AffiliationEvidenceResponseDto] })
   evidence!: AffiliationEvidenceResponseDto[];
+  @ApiProperty({
+    type: [String],
+    description:
+      'Motivos seguros que impiden aprobar una solicitud pendiente. Vacío si está completa o ya fue decidida. No contiene credenciales. Rechazar con motivo y solicitar un nuevo envío integral si hay bloqueos.',
+  })
+  approvalBlockers!: string[];
 }
 
 export class RegistrationRequestsPageResponseDto extends PageMetadataDto {

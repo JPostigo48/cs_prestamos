@@ -72,7 +72,9 @@ Las variables locales se configuran en archivos `.env`, que no deben versionarse
 
 Auth acepta únicamente correos normalizados (sin espacios y en minúsculas) cuyo
 dominio exacto sea `@unsa.edu.pe`. Las contraseñas se almacenan con Argon2id.
-El registro público crea exclusivamente cuentas `USUARIO`; los roles
+El registro público crea una solicitud integral pendiente; su aprobación crea
+atómicamente el usuario con vinculación vigente, cuenta habilitada `USUARIO`
+y aceptación de términos, conservando el correo y hash originales. Los roles
 `OPERADOR` y `ADMINISTRADOR` deben asignarse mediante una operación administrativa
 o un seed controlado.
 
@@ -104,7 +106,26 @@ deben usar `AuthGuard`; para autorización por rol se combinan `@Roles(...)` y
 
 Endpoints disponibles:
 
-- `POST /auth/accounts`: autorregistro de una cuenta `USUARIO`.
+- `POST /auth/registration-requests`: única entrada pública de registro completo
+  para estudiantes, profesores (`DOCENTE`) y administrativos. Requiere contraseña
+  elegida por el solicitante, versión de términos aceptada e imagen PNG/JPEG de
+  hasta 60 KiB (carné o constancia de matrícula vigente para estudiantes).
+  El servidor decodifica la imagen completa de forma estricta con Sharp: máximo
+  4 millones de píxeles, 4096 por lado, una página y 2 segundos de procesamiento.
+  Se reutiliza el decodificador ya presente en el árbol de dependencias, ahora
+  declarado para producción con su lock; no basta comprobar la firma binaria.
+  La aprobación vuelve a validar la evidencia persistida antes de cualquier alta.
+  La autenticidad y vigencia documental requieren revisión humana, no automática.
+  Solo se persiste el hash Argon2id, sin mostrarlo en respuestas ni auditorías.
+- `POST /users/registration-requests`: retirado; responde 410 y remite a la entrada
+  integral. Las consultas, aprobación y rechazo siguen disponibles.
+- `POST /users/registration-requests/:requestId/approve`: OPERADOR o
+  ADMINISTRADOR; toda aprobación crea acceso y no recibe contraseña administrativa.
+  Un legado sin correo, credenciales, aceptación o evidencia válidos responde 409
+  sin escrituras; debe rechazarse con motivo y reenviarse completo. Listado y
+  detalle exponen solo motivos seguros de bloqueo en `approvalBlockers`.
+- `POST /auth/accounts`: alta administrativa de cuenta `USUARIO`, solo para
+  ADMINISTRADOR; se conserva para usos ajenos a la aprobación de solicitudes.
 - `POST /auth/authenticate`: autenticación y emisión del JWT.
 - `GET /auth/accounts/:accountId`: consulta propia o administrativa.
 - `PATCH /auth/accounts/:accountId`: cambio administrativo de rol o habilitación;

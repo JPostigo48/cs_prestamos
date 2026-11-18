@@ -24,6 +24,7 @@ export interface RegistrationRequest {
   evidence: { information: string }[]
   approvedUserId: string | null
   rejectionReason: string | null
+  approvalBlockers: string[]
 }
 const queryString = (query: Record<string, string>) =>
   new URLSearchParams(Object.entries(query).filter(([, v]) => v !== '')).toString()

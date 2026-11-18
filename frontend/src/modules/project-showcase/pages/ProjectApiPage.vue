@@ -112,7 +112,9 @@ function requestFields(endpoint: Endpoint) {
             </summary>
 
             <div class="mt-5 space-y-4 border-t border-slate-100 pt-4 text-sm text-slate-700">
-              <p>{{ endpoint.summary || endpoint.description || 'Operación declarada en el controlador.' }}</p>
+              <p v-if="endpoint.summary" class="font-semibold">{{ endpoint.summary }}</p>
+              <p v-if="endpoint.description" class="whitespace-pre-line">{{ endpoint.description }}</p>
+              <p v-if="!endpoint.summary && !endpoint.description">Operación declarada en el controlador.</p>
 
               <div v-if="endpoint.parameters?.length">
                 <h3 class="font-semibold text-slate-900">Parámetros</h3>

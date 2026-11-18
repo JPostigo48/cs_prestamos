@@ -50,9 +50,13 @@ export function validateDocument(document: OpenAPIObject): number {
       const successes = Object.entries(operation.responses).filter(([code]) =>
         /^2\d\d$/.test(code),
       );
-      if (!successes.length)
+      const retired = operation.deprecated === true && !!operation.responses['410'];
+      if (!successes.length && !retired)
         throw new Error(`Sin respuesta exitosa: ${method} ${path}`);
-      for (const [code, response] of successes) {
+      const documentedResults = successes.length
+        ? successes
+        : [['410', operation.responses['410']] as const];
+      for (const [code, response] of documentedResults) {
         if (!response)
           throw new Error(`Respuesta indefinida: ${method} ${path} ${code}`);
         if ('$ref' in response) continue;

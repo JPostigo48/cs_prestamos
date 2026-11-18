@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import TermsPanel from './TermsPanel.vue'
 import { requestFullRegistration } from '../api/access-flows-api'
 import { errorMessage } from '../../../shared/composables/useRemote'
+import { pendingMutation } from '../../../shared/api/mutation-guard'
+import { readRegistrationImage } from '../registration-image'
+import type { AuthSession } from '../api/auth-api'
+import { ApiError } from '../../../shared/api/client'
 const name = ref(''),
   email = ref(''),
   password = ref(''),
-  userType = ref('ESTUDIANTE'),
+  userType = ref<AuthSession['user']['userType']>('ESTUDIANTE'),
   institutionalId = ref(''),
   phone = ref(''),
   evidence = ref('')
@@ -15,26 +19,30 @@ const version = ref<string | null>(null),
   error = ref(''),
   confirmed = ref('')
 const passwordVisible = ref(false)
+const termsGeneration = ref(0)
+const readingImage = ref(false)
+const uncertain = computed(() => pendingMutation('full-registration'))
+let imageGeneration = 0
+onBeforeUnmount(() => { imageGeneration++ })
 async function selectImage(event: Event) {
+  const generation = ++imageGeneration
   evidence.value = ''
   error.value = ''
+  readingImage.value = false
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
-  if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 60 * 1024) {
-    error.value = 'Selecciona una imagen PNG o JPEG de hasta 60 KiB.'
-    return
-  }
+  readingImage.value = true
   try {
-    evidence.value = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  } catch { error.value = 'No se pudo leer la imagen.' }
+    const source = await readRegistrationImage(file)
+    if (generation === imageGeneration) evidence.value = source
+  } catch (cause) {
+    if (generation === imageGeneration) error.value = errorMessage(cause)
+  } finally {
+    if (generation === imageGeneration) readingImage.value = false
+  }
 }
 async function submit() {
-  if (sending.value || !version.value || !evidence.value || confirmed.value) return
+  if (sending.value || readingImage.value || uncertain.value || !version.value || !evidence.value || confirmed.value) return
   sending.value = true
   error.value = ''
   try {
@@ -52,6 +60,10 @@ async function submit() {
     password.value = ''
   } catch (cause) {
     error.value = errorMessage(cause)
+    if (cause instanceof ApiError && cause.status === 409) {
+      version.value = null
+      termsGeneration.value++
+    }
   } finally {
     sending.value = false
   }
@@ -59,12 +71,13 @@ async function submit() {
 </script>
 <template>
   <form class="full-registration space-y-4" @submit.prevent="submit">
-    <h2 class="text-xl font-bold">Crear cuenta</h2>
+    <h2 class="text-xl font-bold">Datos para tu cuenta</h2>
     <p>
       El alta queda pendiente de revisión. Al aprobarla, se creará tu cuenta de usuario.
       Adjunta una imagen de vinculación PNG o JPEG de hasta 60 KiB y acepta los términos vigentes.
     </p>
-    <fieldset :disabled="sending || !!confirmed" class="space-y-3">
+    <p id="registration-password-notice" class="text-sm text-slate-600">Todos los solicitantes eligen su contraseña. El servidor almacena únicamente su hash Argon2id; la contraseña no será visible para operadores ni administradores, ni se les enviará. Tras la aprobación podrás acceder con el correo y la contraseña que elegiste.</p>
+    <fieldset :disabled="sending || !!confirmed || uncertain" class="registration-fields">
       <label
         >Nombre completo<input
           v-model="name"
@@ -76,47 +89,52 @@ async function submit() {
       <label
         >Correo institucional<input v-model="email" type="email" required autocomplete="username"
       /></label>
-      <label
+      <div class="password-field"><label
         >Contraseña<input
           v-model="password"
           :type="passwordVisible ? 'text' : 'password'"
           id="registration-password"
+          aria-describedby="registration-password-notice"
           required
-          minlength="8"
+           minlength="8"
+           maxlength="128"
           autocomplete="new-password"
       /></label>
-      <button type="button" aria-controls="registration-password" :aria-pressed="passwordVisible" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña' }}</button>
+      <button type="button" aria-controls="registration-password" :aria-pressed="passwordVisible" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña' }}</button></div>
       <label
         >Tipo institucional<select v-model="userType">
-          <option>ESTUDIANTE</option>
-          <option>DOCENTE</option>
-          <option>ADMINISTRATIVO</option>
+          <option value="ESTUDIANTE">Estudiante</option>
+          <option value="DOCENTE">Profesor</option>
+          <option value="ADMINISTRATIVO">Personal administrativo</option>
         </select></label
       >
       <label>Identificador institucional<input v-model="institutionalId" maxlength="80" /></label>
       <label>Teléfono<input v-model="phone" type="tel" maxlength="20" autocomplete="tel" /></label>
-      <label>Evidencia de vinculación<input type="file" accept="image/png,image/jpeg" required @change="selectImage" /></label>
-      <TermsPanel @read="version = $event" />
+      <p id="registration-evidence-hint" class="full-row text-sm text-slate-600">{{ userType === 'ESTUDIANTE' ? 'Estudiantes: adjunta una imagen de tu carné o constancia de matrícula vigente.' : 'Adjunta una imagen que acredite tu vinculación institucional.' }} Solo PNG o JPEG, hasta 60 KiB.</p>
+      <label class="full-row">Evidencia de vinculación<input type="file" accept="image/png,image/jpeg" aria-describedby="registration-evidence-hint" required @change="selectImage" /></label>
+      <p v-if="readingImage" class="full-row" role="status">Validando imagen…</p>
+      <img v-if="evidence" :src="evidence" alt="Vista previa de la evidencia seleccionada" class="full-row max-h-64 max-w-full object-contain" />
+      <div class="full-row"><TermsPanel :key="termsGeneration" @read="version = $event" /></div>
     </fieldset>
     <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ error }}</p>
     <p v-if="confirmed" role="status">
-      Solicitud {{ confirmed }} confirmada como PENDIENTE. No se ha iniciado sesión.
+      Solicitud {{ confirmed }} confirmada como PENDIENTE. La aprobación creará tu cuenta con los datos enviados. Aún no puedes iniciar sesión.
     </p>
+    <p v-if="uncertain && !sending" role="alert">Hay un envío pendiente o de resultado incierto. Consulta con el personal antes de repetir. No se reintentará automáticamente.</p>
     <button
-      :disabled="sending || !version || !evidence || !!confirmed"
+      :disabled="sending || readingImage || uncertain || !version || !evidence || !!confirmed"
       class="rounded-lg bg-[#1e3a5f] px-5 py-3 text-white disabled:opacity-50"
     >
-      Enviar alta integral
+      {{ sending ? 'Enviando…' : 'Enviar solicitud' }}
     </button>
   </form>
 </template>
 <style scoped>
-.full-registration label {
+.full-registration fieldset label {
   display: block;
 }
-.full-registration input,
-.full-registration select,
-.full-registration textarea {
+.full-registration fieldset label input,
+.full-registration fieldset label select {
   display: block;
   width: 100%;
   padding: 0.65rem;
@@ -124,4 +142,13 @@ async function submit() {
   border-radius: 8px;
   margin-top: 0.4rem;
 }
+.full-registration { color: #334155; line-height: 1.6; overflow-wrap: anywhere; }
+.full-registration button { cursor: pointer; }
+.full-registration button:disabled { cursor: not-allowed; }
+.full-registration :is(input, select, button):focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.registration-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
+.registration-fields > *, .password-field { min-width: 0; }
+.password-field button { margin-top: 6px; font-size: 13px; color: #1d4ed8; }
+.full-row { grid-column: 1 / -1; }
+@media (min-width: 700px) { .registration-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

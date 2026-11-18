@@ -30,4 +30,5 @@ export type RegistrationRequest = {
   rejectionReason: string | null;
   approvedUserId: string | null;
   evidence: AffiliationEvidence[];
+  approvalBlockers: string[];
 };

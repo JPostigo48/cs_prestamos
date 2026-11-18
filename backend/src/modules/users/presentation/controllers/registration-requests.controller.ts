@@ -2,6 +2,8 @@ import { ApiHttpErrors } from '../../../../shared/presentation/openapi/api-http-
 import {
   Body,
   Controller,
+  GoneException,
+  HttpCode,
   Get,
   Param,
   Post,
@@ -27,7 +29,6 @@ import { ApproveRegistrationRequestUseCase } from '../../application/use-cases/a
 import { GetRegistrationRequestUseCase } from '../../application/use-cases/get-registration-request.use-case.js';
 import { RejectRegistrationRequestUseCase } from '../../application/use-cases/reject-registration-request.use-case.js';
 import { SubmitRegistrationRequestUseCase } from '../../application/use-cases/submit-registration-request.use-case.js';
-import { SubmitRegistrationRequestDto } from '../dto/submit-registration-request.dto.js';
 import { ListRegistrationRequestsUseCase } from '../../application/use-cases/list-registration-requests.use-case.js';
 import { RejectRegistrationRequestDto } from '../dto/reject-registration-request.dto.js';
 import { AccessRole } from '../../../auth/domain/entities/access-account.js';
@@ -48,20 +49,20 @@ export class RegistrationRequestsController {
     private readonly listRequests: ListRegistrationRequestsUseCase,
   ) {}
 
-  @ApiHttpErrors(400, 409)
+  @ApiHttpErrors(410)
   @Post()
-  @ApiCreatedResponse({ type: RegistrationRequestResponseDto })
-  @ApiBody({ type: SubmitRegistrationRequestDto })
-  @ApiOperation({ summary: 'Presentar solicitud de registro' })
+  @HttpCode(410)
+  @ApiOperation({
+    summary: 'Entrada básica retirada',
+    deprecated: true,
+    description:
+      'Siempre responde 410 y no crea solicitudes. Enviar el registro integral a POST /auth/registration-requests.',
+  })
   @ApiExtension('x-implementation-status', 'implemented')
-  submit(@Body() dto: SubmitRegistrationRequestDto) {
-    return this.submitRequest.execute({
-      name: dto.name ?? dto.nombre ?? '',
-      userType: dto.userType ?? dto.tipoUsuario!,
-      institutionalId: dto.institutionalId ?? dto.identificadorInstitucional,
-      phone: dto.phone,
-      evidence: dto.evidence ?? dto.evidencias,
-    });
+  submit() {
+    throw new GoneException(
+      'La entrada básica fue retirada. Envíe el registro completo a POST /auth/registration-requests.',
+    );
   }
 
   @Get()
@@ -118,7 +119,7 @@ export class RegistrationRequestsController {
   @ApiOperation({
     summary: 'Aprobar solicitud de registro',
     description:
-      'OPERADOR o ADMINISTRADOR. Transacción: crea usuario con confianza inicial 75; si la solicitud es integral, crea además cuenta USUARIO y aceptación de la versión leída. Las solicitudes básicas conservan aprovisionamiento separado. No emite sesión.',
+      'OPERADOR o ADMINISTRADOR. Toda aprobación crea atómicamente usuario con vinculación vigente y confianza 75, cuenta habilitada USUARIO con el correo y hash originales y aceptación original de términos. No emite sesión ni devuelve credenciales. 409 antes de escribir si faltan correo válido, credenciales Argon2id, aceptación/versión existente o imagen PNG/JPEG de hasta 60 KiB: rechazar con motivo y solicitar un nuevo envío integral. Consultar approvalBlockers en listado/detalle.',
   })
   @ApiExtension('x-implementation-status', 'implemented')
   approve(

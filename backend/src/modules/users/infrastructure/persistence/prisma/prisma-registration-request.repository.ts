@@ -1,5 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill';
+import { isEmail } from 'class-validator';
+import { isRegistrationImage } from '../../../../../shared/domain/registration-image.js';
 import type { AuditActor } from '../../../../../shared/application/audit-actor.js';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type {
@@ -23,7 +25,77 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
     return this.prisma.client.runtime();
   }
 
-  private map(row: any, evidence: any[] = []): RegistrationRequest {
+  private async approvalBlockers(
+    row: any,
+    evidence: any[],
+    versionExists: boolean,
+  ): Promise<string[]> {
+    if (row.estado !== 'PENDIENTE') return [];
+    const blockers: string[] = [];
+    if (
+      typeof row.email !== 'string' ||
+      !isEmail(row.email) ||
+      !/^[^\s@]+@unsa\.edu\.pe$/.test(row.email)
+    )
+      blockers.push('Falta un correo institucional válido.');
+    // PHC Argon2id v19 con parámetros y base64 canónicos, no solo un prefijo.
+    const hash =
+      typeof row.passwordHash === 'string'
+        ? /^\$argon2id\$v=19\$([mtp]=[1-9]\d*(?:,[mtp]=[1-9]\d*){2})\$([A-Za-z0-9+/]+)\$([A-Za-z0-9+/]+)$/.exec(
+            row.passwordHash,
+          )
+        : null;
+    const params = Object.fromEntries(
+      (hash?.[1] ?? '').split(',').map((part) => {
+        const [key, value] = part.split('=');
+        return [key, Number(value)];
+      }),
+    );
+    const validPart = (part: string, min: number) => {
+      const bytes = Buffer.from(part, 'base64');
+      return (
+        bytes.length >= min &&
+        bytes.toString('base64').replace(/=+$/, '') === part
+      );
+    };
+    if (
+      !hash ||
+      ![params.m, params.t, params.p].every(
+        (v) => Number.isSafeInteger(v) && v <= 2147483647,
+      ) ||
+      params.m < 8 * params.p ||
+      !validPart(hash[2], 8) ||
+      !validPart(hash[3], 16)
+    )
+      blockers.push('Faltan credenciales válidas del registro integral.');
+    let accepted = false;
+    try {
+      const instant = Temporal.Instant.from(
+        row.fechaAceptacionTerminos instanceof Date
+          ? row.fechaAceptacionTerminos.toISOString()
+          : row.fechaAceptacionTerminos,
+      );
+      accepted = instant.epochMilliseconds <= Date.now();
+    } catch {
+      /* Un legado sin fecha válida no es aprobable. */
+    }
+    if (!versionExists || !accepted)
+      blockers.push(
+        'Falta la aceptación válida de una versión de términos existente.',
+      );
+    if (
+      evidence.length !== 1 ||
+      !(await isRegistrationImage(evidence[0]?.informacion))
+    )
+      blockers.push('Falta una imagen PNG o JPEG válida de hasta 60 KiB.');
+    return blockers;
+  }
+
+  private async map(
+    row: any,
+    evidence: any[] = [],
+    versionExists = false,
+  ): Promise<RegistrationRequest> {
     return {
       id: row.id,
       name: row.nombre,
@@ -35,6 +107,11 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
       rejectionReason: row.motivoRechazo ?? null,
       approvedUserId: row.usuarioAprobadoId,
       evidence: evidence.map((item) => ({ information: item.informacion })),
+      approvalBlockers: await this.approvalBlockers(
+        row,
+        evidence,
+        versionExists,
+      ),
     };
   }
 
@@ -83,7 +160,21 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
       .select('informacion')
       .where((item, fns) => fns.eq(item.solicitudRegistroId, row.id))
       .build();
-    return this.map(row, await runtime.query(evidenceQuery));
+    const versions =
+      row.estado === 'PENDIENTE' && row.versionTerminosId
+        ? await runtime.query(
+            this.prisma.sql.public.versiones_terminos
+              .select('id')
+              .where((item, fns) => fns.eq(item.id, row.versionTerminosId))
+              .limit(1)
+              .build(),
+          )
+        : [];
+    return this.map(
+      row,
+      await runtime.query(evidenceQuery),
+      versions.length > 0,
+    );
   }
 
   async create(
@@ -140,6 +231,10 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
             'estado',
             'motivoRechazo',
             'usuarioAprobadoId',
+            'email',
+            'passwordHash',
+            'versionTerminosId',
+            'fechaAceptacionTerminos',
           )
           .build();
         const rows = await tx.query(query);
@@ -193,6 +288,10 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
         'estado',
         'motivoRechazo',
         'usuarioAprobadoId',
+        'email',
+        'passwordHash',
+        'versionTerminosId',
+        'fechaAceptacionTerminos',
       )
       .where((row, fns) => fns.eq(row.id, requestId))
       .limit(1)
@@ -215,6 +314,10 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
         'estado',
         'motivoRechazo',
         'usuarioAprobadoId',
+        'email',
+        'passwordHash',
+        'versionTerminosId',
+        'fechaAceptacionTerminos',
       )
       .where((row, fns) =>
         fns.eq(row.identificadorInstitucional, institutionalId),
@@ -237,6 +340,10 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
       'estado',
       'motivoRechazo',
       'usuarioAprobadoId',
+      'email',
+      'passwordHash',
+      'versionTerminosId',
+      'fechaAceptacionTerminos',
     );
     if (filters.status)
       base = base.where((row, fns) => fns.eq(row.estado, filters.status!));
@@ -336,6 +443,11 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
       const request = requestRows[0];
       if (!request || request.estado !== 'PENDIENTE')
         throw new ConflictException('Solicitud no pendiente.');
+      const reviewed = await this.withEvidence(request, tx);
+      if (reviewed.approvalBlockers.length)
+        throw new ConflictException(
+          `Solicitud incompleta: ${reviewed.approvalBlockers.join(' ')} Rechace con un motivo y solicite un nuevo envío completo mediante /auth/registration-requests.`,
+        );
       if (request.identificadorInstitucional) {
         const existing = await tx.query(
           this.prisma.sql.public.usuarios
@@ -395,6 +507,7 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
             'nombre',
             'tipoUsuario',
             'identificadorInstitucional',
+            'telefono',
             'fechaSolicitud',
             'estado',
             'motivoRechazo',
@@ -407,20 +520,14 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
         throw new ConflictException(
           'La solicitud fue procesada concurrentemente.',
         );
-      if (request.email) {
-        if (
-          !request.passwordHash ||
-          !request.versionTerminosId ||
-          !request.fechaAceptacionTerminos
-        )
-          throw new ConflictException('Solicitud integral incompleta.');
+      {
         await tx.query(
           this.prisma.sql.public.cuentas_acceso
             .insert([
               {
                 usuarioId: userRow.id,
-                email: request.email,
-                passwordHash: request.passwordHash,
+                email: request.email!,
+                passwordHash: request.passwordHash!,
                 rol: 'USUARIO',
                 habilitada: true,
               },
@@ -433,8 +540,8 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
             .insert([
               {
                 usuarioId: userRow.id,
-                versionTerminosId: request.versionTerminosId,
-                fecha: request.fechaAceptacionTerminos,
+                versionTerminosId: request.versionTerminosId!,
+                fecha: request.fechaAceptacionTerminos!,
               },
             ])
             .returning('id')
@@ -450,7 +557,7 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
             estado: 'APROBADA',
             usuarioAprobadoId: userRow.id,
             actor,
-            accountCreated: Boolean(request.email),
+            accountCreated: true,
             termsVersionId: request.versionTerminosId,
           },
         },
@@ -463,7 +570,7 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
           .build(),
       );
       return {
-        request: this.map(updated, evidenceRows),
+        request: await this.map(updated, evidenceRows),
         user: {
           id: userRow.id,
           name: userRow.nombre,

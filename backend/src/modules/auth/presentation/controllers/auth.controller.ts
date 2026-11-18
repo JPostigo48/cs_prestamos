@@ -172,7 +172,13 @@ export class AuthController {
   }
 
   @Get('accounts')
-  @ApiQuery({ name: 'userId', type: String, format: 'uuid', required: true, description: 'Usuario exacto; devuelve cero o una cuenta sin credenciales.' })
+  @ApiQuery({
+    name: 'userId',
+    type: String,
+    format: 'uuid',
+    required: true,
+    description: 'Usuario exacto; devuelve cero o una cuenta sin credenciales.',
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.ADMINISTRATOR)
   @ApiOperation({
@@ -196,6 +202,8 @@ export class AuthController {
   @ApiBody({ type: RegisterAccessAccountDto })
   @ApiOperation({
     summary: 'Registrar cuenta de acceso para un usuario aprobado',
+    description:
+      'Operación administrativa independiente para usuarios existentes sin cuenta. No es un paso de aprobación de solicitudes: la aprobación integral ya crea la cuenta USUARIO habilitada con las credenciales originales. No modifica ese flujo.',
   })
   @ApiExtension('x-implementation-status', 'implemented')
   register(@Body() input: RegisterAccessAccountDto) {

@@ -279,28 +279,32 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     ).toBeDefined();
   });
 
-  it('entradas incluyen aliases, query y cuerpos administrativos reales', () => {
+  it('entradas incluyen registro integral, retirada básica, query y cuerpos administrativos reales', () => {
     expect(
-      Object.keys(schema('SubmitRegistrationRequestDto').properties!).sort(),
+      Object.keys(schema('FullRegistrationDto').properties!).sort(),
     ).toEqual([
+      'email',
       'evidence',
-      'evidencias',
-      'identificadorInstitucional',
       'institutionalId',
       'name',
-      'nombre',
+      'password',
       'phone',
-      'tipoUsuario',
+      'termsVersionId',
       'userType',
     ]);
     expect(
-      schema('SubmitRegistrationRequestDto').properties!
-        .identificadorInstitucional,
+      schema('FullRegistrationDto').properties!.institutionalId,
     ).toMatchObject({ type: 'string' });
     expect(
-      schema('SubmitRegistrationRequestDto').properties!.evidencias,
+      schema('FullRegistrationDto').properties!.evidence,
     ).toMatchObject({ type: 'array', items: { type: 'string' } });
-    expect(schema('SubmitRegistrationRequestDto').required ?? []).not.toContain('phone');
+    expect(schema('FullRegistrationDto').required ?? []).not.toContain('phone');
+    expect(schema('FullRegistrationDto').properties!.password).toMatchObject({ writeOnly: true, minLength: 8, maxLength: 128 });
+    const retired = document.paths['/users/registration-requests']!.post!;
+    expect(retired.deprecated).toBe(true);
+    expect(retired.responses['410']).toBeDefined();
+    expect(Object.keys(retired.responses).some((code) => /^2\d\d$/.test(code))).toBe(false);
+    expect(schema('RegistrationRequestResponseDto').properties!.approvalBlockers).toMatchObject({ type: 'array', items: { type: 'string' } });
     expect(schema('UpdateAccessAccountDto').properties).toHaveProperty(
       'enabled',
     );
@@ -363,6 +367,12 @@ describe('Contrato OpenAPI generado desde Nest', () => {
       content: { 'application/json': { schema: { type: 'string' } } },
     };
     expect(() => validateDocument(noBody)).toThrow('sin cuerpo');
+    const retired = copy();
+    retired.paths['/users/registration-requests']!.post!.deprecated = false;
+    expect(() => validateDocument(retired)).toThrow('Sin respuesta exitosa');
+    retired.paths['/users/registration-requests']!.post!.deprecated = true;
+    retired.paths['/users/registration-requests']!.post!.responses['410'] = { description: 'Retirado sin esquema' };
+    expect(() => validateDocument(retired)).toThrow('incompleto');
   });
 });
 
