@@ -1,35 +1,44 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { ShieldAlert, TrendingDown, CalendarClock } from '@lucide/vue'
 import { getSanction } from '../api/trust-api'
+import { sanctionReason } from '../sanction-presentation'
 import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
+import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { dateTime } from '../../../shared/format'
-const props = defineProps<{ sanctionId: string }>()
-const remote = useRemote(signal => getSanction(props.sanctionId, signal), () => props.sanctionId, false)
+const props = defineProps<{ sanctionId: string; revision?: number }>()
+const remote = useRemote(signal => getSanction(props.sanctionId, signal), () => [props.sanctionId, props.revision])
+const detail = remote.data
+const reason = computed(() => detail.value ? sanctionReason(detail.value) : '')
+const statuses = { ACTIVA: 'Activa', PROGRAMADA: 'Programada', FINALIZADA: 'Finalizada', ABSUELTA: 'Absuelta' }
+const appealStatuses = { PENDIENTE: 'Pendiente de revisión', ACEPTADA: 'Aceptada', RECHAZADA: 'Rechazada' }
 </script>
 <template>
-  <section class="panel stack">
-    <h2>Motivo y detalles de la sanción</h2>
-    <button :disabled="remote.loading.value" @click="remote.refresh">Consultar / actualizar</button>
+  <div class="sanction-details">
     <RemoteState :loading="remote.loading.value" :error="remote.error.value" @retry="remote.refresh">
-      <template v-if="remote.data.value">
-        <p>{{ remote.data.value.reason ?? 'El servidor no aportó un motivo detallado.' }}</p>
-        <p>Estado: {{ remote.data.value.status }} · {{ dateTime(remote.data.value.startsAt) }} — {{ remote.data.value.endsAt ? dateTime(remote.data.value.endsAt) : 'Sin fecha de fin' }}</p>
-        <p>Confianza: {{ remote.data.value.previousTrust }} % → {{ remote.data.value.resultingTrust }} %</p>
-        <div v-if="remote.data.value.rule">
-          <h3>{{ remote.data.value.rule.title }} · versión {{ remote.data.value.rule.number }}</h3>
-          <p>{{ remote.data.value.rule.consequence }}</p>
-          <p>Suspensión: {{ remote.data.value.rule.suspensionType ?? 'No registrada' }}<span v-if="remote.data.value.rule.suspensionDays !== null"> · {{ remote.data.value.rule.suspensionDays }} días</span></p>
+      <template v-if="detail">
+        <div class="sanction-heading"><h3><ShieldAlert :size="19" aria-hidden="true" />{{ reason }}</h3><StatusBadge :tone="detail.status === 'ACTIVA' ? 'danger' : detail.status === 'PROGRAMADA' ? 'warning' : 'neutral'">{{ statuses[detail.status] }}</StatusBadge></div>
+        <div class="sanction-meta">
+          <p><TrendingDown :size="16" aria-hidden="true" />Confianza: {{ detail.previousTrust }} % → {{ detail.resultingTrust }} %<span v-if="detail.violation?.appliedPenalty"> · Penalización: {{ detail.violation.appliedPenalty }} puntos</span></p>
+          <p><CalendarClock :size="16" aria-hidden="true" /><time :datetime="detail.violation?.occurredAt || detail.startsAt">{{ dateTime(detail.violation?.occurredAt || detail.startsAt) }}</time></p>
         </div>
-        <p v-else>Versión histórica de la regla no disponible. No se reconstruye con la regla actual.</p>
-        <p v-if="remote.data.value.violation">Incumplimiento: {{ remote.data.value.violation.id }} · {{ dateTime(remote.data.value.violation.occurredAt) }} · Penalización aplicada: {{ remote.data.value.violation.appliedPenalty }}</p>
-        <p v-else>Sin incumplimiento detallado disponible.</p>
-        <h3>Apelaciones vinculadas</h3>
-        <p v-for="appeal in remote.data.value.appeals" :key="appeal.id">{{ appeal.reason }} · {{ appeal.status }}<span v-if="appeal.resolution"> · {{ appeal.resolution }}</span></p>
-        <p v-if="!remote.data.value.appeals.length">Sin apelaciones vinculadas.</p>
-        <h3>Historial</h3>
-        <ul><li v-for="(entry, index) in remote.data.value.history" :key="index">{{ entry.action }} · {{ dateTime(entry.occurredAt) }} · {{ entry.actorAccountId ?? 'Sistema / actor no registrado' }}<span v-if="entry.reason"> · {{ entry.reason }}</span></li></ul>
-        <p v-if="!remote.data.value.history.length">Sin eventos disponibles.</p>
+        <p v-if="detail.rule?.suspensionType === 'TEMPORAL' || detail.rule?.suspensionType === 'INDEFINIDA'" class="suspension">Suspensión {{ detail.rule.suspensionType === 'INDEFINIDA' ? 'indefinida' : 'temporal' }}<template v-if="detail.endsAt"> · hasta <time :datetime="detail.endsAt">{{ dateTime(detail.endsAt) }}</time></template><template v-else-if="detail.rule.suspensionDays"> · {{ detail.rule.suspensionDays }} días</template>.</p>
+        <details v-if="detail.appeals.length" class="appeal-details"><summary>Apelaciones de esta sanción ({{ detail.appeals.length }})</summary>
+          <article v-for="appeal in detail.appeals" :key="appeal.id"><strong>{{ appealStatuses[appeal.status] }}</strong> · <time :datetime="appeal.submittedAt">{{ dateTime(appeal.submittedAt) }}</time><p>{{ appeal.reason }}</p><p v-if="appeal.resolution">Resolución: {{ appeal.resolution }}</p></article>
+        </details>
       </template>
     </RemoteState>
-  </section>
+  </div>
 </template>
+<style scoped>
+.sanction-details { font-size: 13px; overflow-wrap: anywhere; }
+.sanction-heading { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 10px; }
+.sanction-heading h3 { display: flex; gap: 8px; align-items: start; font-size: 15px; color: #1e3a5f; margin: 0; flex: 1; min-width: 180px; }
+.sanction-heading svg, .sanction-meta svg { flex-shrink: 0; }
+.sanction-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; color: #475569; }
+.sanction-meta p { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 0; }
+.suspension, .appeal-details { margin-top: 12px; }
+summary { cursor: pointer; color: #1e40af; }
+.appeal-details article { margin-top: 12px; padding-left: 12px; border-left: 2px solid #dbeafe; }
+</style>

@@ -46,11 +46,11 @@ test('trust: detalle conserva la versión histórica INACTIVA y los campos reaso
   assert.deepEqual(await api.getSanction('sanction-real'), detail)
   const app = mount(Details, { sanctionId: 'sanction-real' })
   try {
-    await event(find(app.root, 'button', 'Consultar'), 'click')
+    await flush()
     assert.match(text(app.root), /Motivo registrado/)
-    assert.match(text(app.root), /versión 2/)
+    assert.doesNotMatch(text(app.root), /versión 2|sanction-real|actor/)
     assert.match(text(app.root), /Fundamento real/)
-    assert.match(text(app.root), /CREADA/)
+    assert.doesNotMatch(text(app.root), /CREADA/)
   } finally { app.unmount() }
 })
 test('trust: detalle rechaza ID, titular o versión histórica ajenos; no consulta reglas actuales', async () => {
@@ -61,6 +61,21 @@ test('trust: detalle rechaza ID, titular o versión histórica ajenos; no consul
   }
   globalThis.fetch = async () => Response.json(sanction({ rule: null, ruleVersionId: null, violation: null, reason: null }))
   assert.equal((await api.getSanction('sanction-real')).rule, null)
+})
+test('sanción compacta: motivo de política histórica, impacto real y sin bloques técnicos ni vacíos', async () => {
+  const detail = sanction({ reason: null, status: 'FINALIZADA', previousTrust: 100, resultingTrust: 98,
+    rule: rule({ title: 'R-RES:LEVE', description: JSON.stringify({ format: 'epcc.official-policy/v1', kind: 'NO_SHOW' }), suspensionType: 'NINGUNA', suspensionDays: null }),
+    history: [{ action: 'CONFIANZA_ACTUALIZADA', occurredAt: '2026-10-28T00:00:00Z', actorAccountId: 'internal-actor', reason: null }] })
+  globalThis.fetch = async () => Response.json(detail)
+  const app = mount(Details, { sanctionId: detail.id })
+  try {
+    await flush()
+    assert.match(text(app.root), /Reserva no recogida/)
+    assert.match(text(app.root), /100 % → 98 %/)
+    assert.match(text(app.root), /Finalizada/)
+    assert.doesNotMatch(text(app.root), /R-RES|versión|CONFIANZA_ACTUALIZADA|internal-actor|Suspensión|Sin apelaciones|no aportó|Consultar/)
+    assert.ok(find(app.root, 'time').props.datetime)
+  } finally { app.unmount() }
 })
 test('trust: reglas manuales excluyen mora, no recogida, acceso, confianza, recompensa y ausencia de suspensión', async () => {
   const official = kind => rule({ description: JSON.stringify({ format: 'epcc.official-policy/v1', kind, trustEffect: 'DISCOUNT' }) })
@@ -129,8 +144,7 @@ test('trust: consulta de mis apelaciones pagina, muestra resolución y vacío', 
   }
   const app = mount(Mine, { userId })
   try {
-    await flush(); assert.equal(calls.length, 0)
-    await event(find(app.root, 'form'), 'submit')
+    await flush(); assert.equal(calls.length, 1)
     assert.match(text(app.root), /Decisión real/)
     await event(find(app.root, 'button', 'Siguiente'), 'click')
     assert.ok(calls[1].includes('page=2'))
@@ -138,17 +152,19 @@ test('trust: consulta de mis apelaciones pagina, muestra resolución y vacío', 
   } finally { app.unmount() }
 })
 test('trust: errores 403/500 son visibles, conservan sesión y permiten reconsultar', async () => {
+  globalThis.fetch = async () => Response.json({ message: 'Error de prueba' }, { status: 403 })
   const app = mount(Details, { sanctionId: 'trust-error' })
   try {
     for (const status of [403, 500]) {
       globalThis.fetch = async () => Response.json({ message: 'Error de prueba' }, { status })
-      await event(find(app.root, 'button', 'Consultar'), 'click')
+      if (status === 403) await flush()
+      else await event(find(app.root, 'button', 'Volver a intentar'), 'click')
       assert.ok(find(app.root, 'p') || find(app.root, 'button', 'Reintentar'))
       assert.match(text(app.root), status === 403 ? /Acceso denegado/ : /No pudimos comunicarnos/)
       assert.ok(auth.getSession())
     }
     globalThis.fetch = async () => Response.json(sanction({ id: 'trust-error' }))
-    await event(find(app.root, 'button', 'Consultar'), 'click')
+    await event(find(app.root, 'button', 'Volver a intentar'), 'click')
     assert.match(text(app.root), /Motivo registrado/)
   } finally { app.unmount() }
 })

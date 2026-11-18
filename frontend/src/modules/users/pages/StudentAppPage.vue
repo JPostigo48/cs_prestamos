@@ -49,6 +49,7 @@ const reason = ref('')
 const appealError = ref('')
 const sending = ref(false)
 const notice = ref('')
+const appealsRevision = ref(0)
 const date = dateTime
 function openAppeal(sanction: Sanction) {
   if (confirmedAppeal(sanction.id)) return
@@ -61,9 +62,11 @@ async function sendAppeal() {
   sending.value = true
   appealError.value = ''
   try {
-    const confirmation = await submitAppeal(appealing.value.id, reason.value.trim())
+    await submitAppeal(appealing.value.id, reason.value.trim())
     appealing.value = null
-    notice.value = 'Apelación ' + confirmation.id + ' confirmada como PENDIENTE para revisión.'
+    notice.value = 'Apelación enviada. Pendiente de revisión.'
+    appealsRevision.value++
+    await Promise.all([sanctions.refresh(), trust.refresh(), eligibility.refresh()])
   } catch (cause) {
     appealError.value = errorMessage(cause)
   } finally {
@@ -130,10 +133,10 @@ async function sendAppeal() {
     </div>
   </section>
   <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-  <section v-for="sanction in sanctions.data.value?.filter(item => item.status === 'ACTIVA')" :key="sanction.id" class="panel active-sanction" aria-label="Sanción activa">
+  <section v-for="sanction in sanctions.data.value?.filter(item => !personalOnly && item.status === 'ACTIVA')" :key="sanction.id" class="panel active-sanction" aria-label="Sanción activa">
     <h2><TriangleAlert :size="20" aria-hidden="true" /> Sanción activa</h2>
     <p>Vigente desde {{ date(sanction.startsAt) }} hasta {{ sanction.endsAt ? date(sanction.endsAt) : 'sin fecha registrada' }}.</p>
-    <p v-if="confirmedAppeal(sanction.id)" role="status">Apelación {{ confirmedAppeal(sanction.id)?.id }} · PENDIENTE</p>
+    <p v-if="confirmedAppeal(sanction.id)" role="status">Apelación enviada · pendiente de revisión</p>
     <button v-if="canAppeal(sanction)" :disabled="appealBlocked(sanction.id)" @click="openAppeal(sanction)">Apelar sanción</button>
     <p>Los detalles y las apelaciones están disponibles en el historial de sanciones.</p>
   </section>
@@ -213,21 +216,15 @@ async function sendAppeal() {
       @retry="sanctions.refresh"
     >
       <article v-for="sanction in sanctions.data.value" :key="sanction.id" class="panel stack">
-        <h3>Sanción <StatusBadge :tone="sanction.status === 'ACTIVA' ? 'danger' : sanction.status === 'PROGRAMADA' ? 'warning' : 'neutral'">{{ sanction.status }}</StatusBadge></h3>
-        <p>
-          Desde {{ date(sanction.startsAt) }} hasta
-          {{ sanction.endsAt ? date(sanction.endsAt) : 'sin fecha registrada' }}
-        </p>
-        <p>Confianza: {{ sanction.previousTrust }} % → {{ sanction.resultingTrust }} %</p>
-        <SanctionDetails :key="sanction.id" :sanction-id="sanction.id" />
-        <p v-if="confirmedAppeal(sanction.id)" role="status">Apelación {{ confirmedAppeal(sanction.id)?.id }} confirmada · PENDIENTE</p>
+        <SanctionDetails :key="sanction.id" :sanction-id="sanction.id" :revision="appealsRevision" />
+        <p v-if="confirmedAppeal(sanction.id)" role="status">Apelación enviada · pendiente de revisión</p>
         <button v-if="canAppeal(sanction)" :disabled="appealBlocked(sanction.id)" @click="openAppeal(sanction)">Apelar sanción</button>
         <button v-if="appealDraft(sanction.id) && appealBlocked(sanction.id) && !confirmedAppeal(sanction.id)" @click="openAppeal(sanction)">Ver motivo del envío pendiente</button>
       </article>
       <p v-if="sanctions.data.value?.length === 0">No tienes sanciones en tu historial.</p>
     </RemoteState>
   </section>
-  <MyAppeals :user-id="session.user.id" />
+  <MyAppeals :user-id="session.user.id" :revision="appealsRevision" />
   <ModalDialog v-if="appealing" title="Apelar sanción" :busy="sending" compact @close="appealing = null">
     <form class="stack appeal-form" @submit.prevent="sendAppeal">
       <div class="appeal-context"><strong>Detalle de la sanción</strong><p>Desde {{ date(appealing.startsAt) }} hasta {{ appealing.endsAt ? date(appealing.endsAt) : 'sin fecha registrada' }}.</p><p>Confianza: {{ appealing.previousTrust }} % → {{ appealing.resultingTrust }} %</p></div>
@@ -269,7 +266,7 @@ async function sendAppeal() {
 .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px; margin-top: 12px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: white; }
 .profile-grid dt { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
 .profile-grid dd { color: #0f172a; overflow-wrap: anywhere; }
-.sanction-history > :deep(article) { margin-top: 16px; background: #f8fafc; }
+.sanction-history > :deep(article) { margin-top: 12px; background: white; padding: 16px; border-color: #e2e8f0; }
 .appeal-context { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.7; }
 .appeal-form .row > button { flex: 1; font-size: 14px; font-weight: 600; }
 .appeal-form > label { font-size: 13px; color: #475569; }

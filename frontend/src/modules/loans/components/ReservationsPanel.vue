@@ -25,7 +25,7 @@ const remote = useRemote(
   (signal) =>
     listReservations({ ...(props.staff && isStaff(session.user.role) ? { status: 'CONFIRMADA' } : { userId: session.user.id, ...(view.value !== 'TODOS' ? { status: view.value } : {}) }), page: String(page.value), limit: '20' }, signal),
   () => true,
-  false,
+  !props.staff,
 )
 function move(offset: number) { page.value += offset; void remote.refresh() }
 function changeView(value: typeof view.value) { view.value = value; page.value = 1; void remote.refresh() }
@@ -90,9 +90,7 @@ async function confirm() {
       <button :aria-pressed="view === 'VENCIDA'" @click="changeView('VENCIDA')">Vencidas</button>
     </div>
     <p class="muted">{{ staff ? 'Verifica las reservas confirmadas y la identidad del titular antes de entregar un equipo.' : 'Consulta tus reservas y su hora límite de recogida. Si la consulta falla, no podremos confirmar su estado.' }}</p>
-    <button :disabled="remote.loading.value" @click="remote.refresh">
-      Consultar / actualizar reservas
-    </button>
+    <button v-if="staff" :disabled="remote.loading.value" @click="remote.refresh">Consultar / actualizar reservas</button>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <RemoteState :loading="remote.loading.value" :error="remote.error.value" @retry="remote.refresh"
       ><template v-if="remote.data.value">
