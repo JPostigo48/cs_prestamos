@@ -1,123 +1,109 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col bg-white text-slate-900">
-    <header class="shrink-0 rounded-b-[28px] bg-[#1e3a5f] px-6 py-7 text-center text-white sm:py-8">
-      <img src="/logo.png" alt="" class="mx-auto h-20 w-20 object-contain sm:h-24 sm:w-24" />
-      <h1 class="mt-2 text-xl font-bold tracking-tight sm:text-2xl">CS Préstamos</h1>
-      <p class="mt-1 text-xs text-blue-100 sm:text-sm">Escuela de Ciencias de la Computación</p>
-    </header>
+  <div
+    class="mx-auto w-full max-w-[420px] rounded-3xl border border-white/20 bg-white/10 p-8 text-white shadow-[0_18px_50px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-10 lg:max-w-[500px] lg:p-12 [@media(max-height:800px)]:p-8 [@media(max-height:700px)]:p-6!"
+  >
+    <div class="text-left">
+      <h2 class="text-3xl lg:text-4xl font-semibold tracking-wide text-white">Inicia sesión</h2>
+      <p class="mt-2 text-base lg:text-lg text-white/70">Usa tu cuenta institucional</p>
+    </div>
 
-    <main class="flex flex-1 flex-col justify-center px-7 py-7 sm:px-10">
-      <div class="text-center">
-        <h2 class="text-2xl font-bold">Inicia sesión</h2>
-        <p class="mt-1 text-sm text-slate-500">Usa tu cuenta institucional</p>
-      </div>
+    <div class="mt-7 space-y-5 [@media(max-height:800px)]:space-y-4 [@media(max-height:700px)]:mt-5 [@media(max-height:700px)]:space-y-3!">
+      <button
+        type="button"
+        :disabled="loading"
+        class="flex h-11 lg:h-14 w-full items-center justify-center gap-3 rounded-lg border border-white/25 bg-white/10 px-4 text-sm lg:text-base font-medium text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a5d8cc]/60 disabled:cursor-not-allowed disabled:opacity-60"
+        @click="emit('google')"
+      >
+        <img src="/images.png" alt="" class="h-5 w-5 object-contain" />
+        Continuar con Google
+      </button>
 
-      <div class="mt-7 space-y-5">
-        <button
-          type="button"
-          :disabled="loading"
-          class="flex min-h-11 w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium shadow-sm transition enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          @click="emit('google')"
-        >
-          <img src="/images.png" alt="" class="h-5 w-5 object-contain" />
-          Continuar con Google
-        </button>
+      <div class="text-center text-white/70">o</div>
 
-        <div class="flex items-center gap-3 text-xs text-slate-400">
-          <span class="h-px flex-1 bg-slate-200"></span>o<span
-            class="h-px flex-1 bg-slate-200"
-          ></span>
+      <form
+        class="space-y-4 lg:space-y-5 [@media(max-height:800px)]:space-y-4 [@media(max-height:700px)]:space-y-3!"
+        @submit.prevent="emit('submit')"
+      >
+        <div>
+          <label
+            for="login-email"
+            class="mb-1.5 block text-xs lg:text-sm uppercase tracking-wide text-white/80"
+            >Correo institucional</label
+          >
+          <input
+            id="login-email"
+            v-model.trim="email"
+            type="email"
+            autocomplete="username"
+            required
+            placeholder="usuario@unsa.edu.pe"
+            class="h-12 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-[#a5d8cc] focus:ring-2 focus:ring-[#a5d8cc]/30"
+          />
+        </div>
+        <div>
+          <label
+            for="login-password"
+            class="mb-1.5 block text-xs lg:text-sm uppercase tracking-wide text-white/80"
+            >Contraseña</label
+          >
+          <div class="relative">
+            <LockKeyhole
+              v-show="!password"
+              :size="18"
+              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60 transition-opacity duration-150"
+            />
+            <input
+              id="login-password"
+              v-model="password"
+              :type="passwordVisible ? 'text' : 'password'"
+              :class="password ? 'pl-4' : 'pl-11'"
+              autocomplete="current-password"
+              required
+              class="h-12 w-full rounded-lg border border-white/20 bg-white/10 pr-12 text-sm text-white placeholder:text-white/40 outline-none focus:border-[#a5d8cc] focus:ring-2 focus:ring-[#a5d8cc]/30"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a5d8cc]/60"
+              :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              @click="passwordVisible = !passwordVisible"
+            >
+              <EyeOff v-if="passwordVisible" :size="19" />
+              <Eye v-else :size="19" />
+            </button>
+          </div>
         </div>
 
-        <form class="space-y-4" @submit.prevent="emit('submit')">
-          <div>
-            <label
-              for="login-email"
-              class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600"
-              >Correo institucional</label
-            >
-            <div class="relative">
-              <Mail
-                :size="18"
-                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                id="login-email"
-                v-model.trim="email"
-                type="email"
-                autocomplete="username"
-                required
-                placeholder="usuario@unsa.edu.pe"
-                class="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-          </div>
-          <div>
-            <label
-              for="login-password"
-              class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600"
-              >Contraseña</label
-            >
-            <div class="relative">
-              <LockKeyhole
-                :size="18"
-                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                id="login-password"
-                v-model="password"
-                :type="passwordVisible ? 'text' : 'password'"
-                autocomplete="current-password"
-                required
-                class="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-12 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              />
-              <button
-                type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
-                :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                @click="passwordVisible = !passwordVisible"
-              >
-                <EyeOff v-if="passwordVisible" :size="19" />
-                <Eye v-else :size="19" />
-              </button>
-            </div>
-          </div>
-
-          <p v-if="error" role="alert" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {{ error }}
-          </p>
-
-          <button
-            type="submit"
-            :disabled="loading"
-            class="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1e3a5f] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#294f82] disabled:cursor-wait disabled:opacity-60"
-          >
-            {{ loading ? 'Ingresando…' : 'Ingresar' }}
-            <ArrowRight v-if="!loading" :size="17" />
-          </button>
-        </form>
+        <p
+          v-if="error"
+          role="alert"
+          class="rounded-lg border border-red-400/30 bg-red-500/20 px-3 py-2 text-sm text-red-100"
+        >
+          {{ error }}
+        </p>
 
         <button
-          type="button"
-          class="w-full text-center text-sm font-medium text-blue-600 hover:underline"
-          @click="emit('register')"
+          type="submit"
+          :disabled="loading"
+          class="flex h-11 w-full items-center justify-center rounded-lg bg-[#a5d8cc] px-4 text-sm font-semibold text-[#14282f] transition hover:bg-[#b8e3d9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a5d8cc]/60 disabled:cursor-wait disabled:opacity-60"
         >
-          ¿No tienes cuenta? Solicita tu registro
+          {{ loading ? 'Ingresando…' : 'Ingresar' }}
         </button>
-      </div>
-    </main>
+      </form>
 
-    <footer
-      class="shrink-0 border-t border-slate-100 px-5 py-3 text-center text-[11px] leading-relaxed text-slate-500"
-    >
-      CS Préstamos · Escuela de Ciencias de la Computación
-    </footer>
+      <button
+        type="button"
+        class="block w-full text-center text-sm text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a5d8cc]/60"
+        @click="emit('register')"
+      >
+        ¿No tienes cuenta? <span class="font-bold text-white">Solicita tu registro</span>
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from '@lucide/vue'
+import { Eye, EyeOff, LockKeyhole } from '@lucide/vue'
 
 withDefaults(
   defineProps<{
