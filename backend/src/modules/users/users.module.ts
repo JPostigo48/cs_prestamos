@@ -18,6 +18,7 @@ import { RegistrationRequestsController } from './presentation/controllers/regis
 import { UsersController } from './presentation/controllers/users.controller.js';
 import { SecurityModule } from '../auth/security.module.js';
 import { ManageUsersUseCase } from './application/use-cases/manage-users.use-case.js';
+import { SupabaseStorageService } from '../../shared/infrastructure/storage/supabase-storage.service.js';
 
 const useCases = [
   ManageUsersUseCase,
@@ -39,6 +40,7 @@ const useCases = [
   controllers: [RegistrationRequestsController, UsersController],
   providers: [
     ...useCases,
+    SupabaseStorageService,
     {
       provide: RegistrationRequestRepository,
       useClass: PrismaRegistrationRequestRepository,
