@@ -86,6 +86,8 @@ JWT_SECRET=un-secreto-largo-y-aleatorio
 JWT_EXPIRES_IN=3600s
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=tu-clave-privada
+# Opcional: por defecto utiliza el bucket loan-evidence
+REGISTRATION_EVIDENCE_BUCKET=loan-evidence
 PORT=3000
 ```
 
@@ -109,7 +111,10 @@ Endpoints disponibles:
 - `POST /auth/registration-requests`: única entrada pública de registro completo
   para estudiantes, profesores (`DOCENTE`) y administrativos. Requiere contraseña
   elegida por el solicitante, versión de términos aceptada e imagen PNG/JPEG de
-  hasta 60 KiB (carné o constancia de matrícula vigente para estudiantes).
+  hasta 60 KiB o PDF de hasta 10 MiB (carné o constancia de matrícula vigente
+  para estudiantes). Los PDFs se almacenan en el bucket privado configurado por
+  `REGISTRATION_EVIDENCE_BUCKET`; Neon conserva la ruta, nombre, MIME, tamaño y
+  hash en `evidencias_vinculacion`.
   El servidor decodifica la imagen completa de forma estricta con Sharp: máximo
   4 millones de píxeles, 4096 por lado, una página y 2 segundos de procesamiento.
   Se reutiliza el decodificador ya presente en el árbol de dependencias, ahora

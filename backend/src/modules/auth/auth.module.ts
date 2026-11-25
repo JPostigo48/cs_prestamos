@@ -16,12 +16,14 @@ import { UsersRegistrationAdapter } from './infrastructure/integration/users-reg
 import { GoogleIdentityPort } from './application/ports/google-identity.port.js';
 import { GoogleIdentityAdapter } from './infrastructure/security/google-identity.adapter.js';
 import { GoogleAuthenticationUseCase } from './application/use-cases/google-authentication.use-case.js';
+import { SupabaseStorageService } from '../../shared/infrastructure/storage/supabase-storage.service.js';
 
 @Module({
   imports: [UsersModule, SecurityModule],
   controllers: [AuthController],
   providers: [
     FullRegistrationUseCase,
+    SupabaseStorageService,
     GoogleAuthenticationUseCase,
     { provide: RegistrationPort, useClass: UsersRegistrationAdapter },
     { provide: GoogleIdentityPort, useClass: GoogleIdentityAdapter },

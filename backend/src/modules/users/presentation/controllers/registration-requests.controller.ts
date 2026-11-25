@@ -3,9 +3,11 @@ import {
   Body,
   Controller,
   GoneException,
+  BadRequestException,
   HttpCode,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   UseGuards,
@@ -37,6 +39,8 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
 import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator.js';
 import type { AuthenticatedIdentity } from '../../../auth/application/ports/auth.inputs.js';
+import { SupabaseStorageService } from '../../../../shared/infrastructure/storage/supabase-storage.service.js';
+import { registrationEvidenceMetadata } from '../../../../shared/domain/registration-evidence.js';
 
 @ApiTags('Usuarios')
 @Controller('users/registration-requests')
@@ -47,6 +51,7 @@ export class RegistrationRequestsController {
     private readonly approveRequest: ApproveRegistrationRequestUseCase,
     private readonly rejectRequest: RejectRegistrationRequestUseCase,
     private readonly listRequests: ListRegistrationRequestsUseCase,
+    private readonly storage: SupabaseStorageService,
   ) {}
 
   @ApiHttpErrors(410)
@@ -109,6 +114,35 @@ export class RegistrationRequestsController {
   @ApiExtension('x-implementation-status', 'implemented')
   getById(@Param('requestId') requestId: string) {
     return this.getRequest.execute({ requestId });
+  }
+
+  @Get(':requestId/evidence/:evidenceIndex')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Obtener URL firmada de una evidencia de vinculación',
+  })
+  @ApiOkResponse({
+    schema: {
+      type: 'object',
+      properties: { url: { type: 'string' } },
+    },
+  })
+  async getEvidence(
+    @Param('requestId') requestId: string,
+    @Param('evidenceIndex', ParseIntPipe) evidenceIndex: number,
+  ) {
+    const request = await this.getRequest.execute({ requestId });
+    const evidence = request.evidence[evidenceIndex];
+    const metadata = registrationEvidenceMetadata(evidence?.information);
+    if (!metadata) {
+      throw new BadRequestException(
+        'Esta evidencia no está almacenada como documento en Supabase.',
+      );
+    }
+    return {
+      url: await this.storage.createSignedUrl(metadata.path, metadata.bucket),
+    };
   }
 
   @ApiHttpErrors(404, 409)

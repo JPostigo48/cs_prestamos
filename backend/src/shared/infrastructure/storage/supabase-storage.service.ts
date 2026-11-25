@@ -6,7 +6,15 @@ import {
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const BUCKET = 'loan-evidence';
+export const LOAN_EVIDENCE_BUCKET = 'loan-evidence';
+export const REGISTRATION_EVIDENCE_BUCKET =
+  process.env.REGISTRATION_EVIDENCE_BUCKET || LOAN_EVIDENCE_BUCKET;
+
+export type StorageFile = {
+  buffer: Buffer;
+  mimetype: string;
+  originalname: string;
+};
 
 @Injectable()
 export class SupabaseStorageService {
@@ -26,10 +34,14 @@ export class SupabaseStorageService {
     });
   }
 
-  async upload(path: string, file: Express.Multer.File): Promise<void> {
+  async upload(
+    path: string,
+    file: StorageFile,
+    bucket: string = LOAN_EVIDENCE_BUCKET,
+  ): Promise<void> {
     try {
       const { error } = await this.client.storage
-        .from(BUCKET)
+        .from(bucket)
         .upload(path, file.buffer, {
           contentType: file.mimetype,
           upsert: false,
@@ -43,9 +55,14 @@ export class SupabaseStorageService {
     }
   }
 
-  async remove(path: string): Promise<void> {
+  async remove(
+    path: string,
+    bucket: string = LOAN_EVIDENCE_BUCKET,
+  ): Promise<void> {
     try {
-      const { error } = await this.client.storage.from(BUCKET).remove([path]);
+      const { error } = await this.client.storage
+        .from(bucket)
+        .remove([path]);
       if (error) throw error;
     } catch {
       this.logger.error('loan-evidence-storage: remove-failed');
@@ -55,10 +72,13 @@ export class SupabaseStorageService {
     }
   }
 
-  async createSignedUrl(path: string): Promise<string> {
+  async createSignedUrl(
+    path: string,
+    bucket: string = LOAN_EVIDENCE_BUCKET,
+  ): Promise<string> {
     try {
       const { data, error } = await this.client.storage
-        .from(BUCKET)
+        .from(bucket)
         .createSignedUrl(path, 60 * 15);
       if (error || !data?.signedUrl) throw new Error('signing-failed');
       return data.signedUrl;

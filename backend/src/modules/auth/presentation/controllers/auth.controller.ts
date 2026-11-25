@@ -162,7 +162,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Solicitar alta integral sin iniciar sesión',
     description:
-      'Público. Guarda solicitud, evidencia de imagen y aceptación de términos vigentes en una transacción. Solo guarda hash Argon2id. La aprobación O/A existente crea usuario y cuenta USUARIO y transfiere la aceptación en la misma transacción. No admite rol ni habilitación del cliente.',
+      'Público. Guarda solicitud, evidencia PNG/JPEG/PDF y aceptación de términos vigentes. Los PDFs se almacenan en Supabase y sus metadatos en Neon. Solo guarda hash Argon2id. La aprobación O/A existente crea usuario y cuenta USUARIO y transfiere la aceptación en la misma transacción.',
   })
   @ApiBody({ type: FullRegistrationDto })
   @ApiCreatedResponse({ type: PendingRegistrationResponseDto })

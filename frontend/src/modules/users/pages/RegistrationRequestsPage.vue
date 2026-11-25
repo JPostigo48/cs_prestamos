@@ -4,6 +4,7 @@ import {
   listRegistrationRequests,
   approveRequest,
   rejectRequest,
+  getRegistrationEvidenceUrl,
   type RegistrationRequest,
 } from '../api/users-admin-api'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
@@ -12,7 +13,7 @@ import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { ClipboardList, Filter, Check, X } from '@lucide/vue'
 import { ApiError } from '../../../shared/api/client'
-import { registrationImageSource } from '../../auth/registration-image'
+import { registrationEvidenceMetadata, registrationImageSource } from '../../auth/registration-image'
 import { registrationApprovalBlockers } from '../registration-review'
 const status = ref('PENDIENTE'),
   institutionalId = ref(''),
@@ -31,14 +32,40 @@ const selected = ref<RegistrationRequest | null>(null),
   uncertain = ref(false)
 const uncertainRequests = ref(new Set<string>())
 const failedImages = ref(new Map<string, string>())
+const pdfUrls = ref(new Map<string, string>())
+const pdfLoading = ref(new Set<string>())
+async function openPdf(item: RegistrationRequest, index: number) {
+  const key = `${item.id}:${index}`
+  const existing = pdfUrls.value.get(key)
+  if (existing) {
+    window.open(existing, '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (pdfLoading.value.has(key)) return
+  pdfLoading.value.add(key)
+  try {
+    const url = await getRegistrationEvidenceUrl(item.id, index)
+    pdfUrls.value.set(key, url)
+    window.open(url, '_blank', 'noopener,noreferrer')
+  } catch (cause) {
+    error.value = errorMessage(cause)
+  } finally {
+    pdfLoading.value.delete(key)
+  }
+}
 function imageSource(item: RegistrationRequest, index: number): string | null {
   const source = item.evidence[index]?.information
   return failedImages.value.get(`${item.id}:${index}`) === source ? null : registrationImageSource(source)
 }
 function blockers(item: RegistrationRequest): string[] {
   const reasons = registrationApprovalBlockers(item)
-  if (item.evidence?.length && !item.evidence.some((_, index) => imageSource(item, index)))
-    reasons.push('No se pudo visualizar una imagen válida de vinculación. Solicita evidencia corregida.')
+  if (
+    item.evidence?.length
+    && !item.evidence.some((evidence, index) =>
+      registrationEvidenceMetadata(evidence.information)?.kind === 'pdf'
+      || imageSource(item, index),
+    )
+  ) reasons.push('No se pudo visualizar una evidencia válida de vinculación. Solicita una imagen o PDF corregido.')
   return [...new Set(reasons)]
 }
 function load(next = 1) {
@@ -114,7 +141,16 @@ async function confirm() {
            <StatusBadge :tone="item.status === 'PENDIENTE' ? 'warning' : item.status === 'APROBADA' ? 'success' : 'danger'">{{ item.status }}</StatusBadge>
            <details class="request-evidence"><summary><ClipboardList :size="16" aria-hidden="true" />Revisar evidencia de vinculación</summary><ul>
             <li v-for="(_, index) in item.evidence" :key="index">
-              <img v-if="imageSource(item, index)" :src="imageSource(item, index)!" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" @error="failedImages.set(`${item.id}:${index}`, item.evidence[index]!.information)" />
+               <button
+                 v-if="registrationEvidenceMetadata(item.evidence[index]?.information)?.kind === 'pdf'"
+                 type="button"
+                 class="pdf-evidence"
+                 :disabled="pdfLoading.has(`${item.id}:${index}`)"
+                 @click="openPdf(item, index)"
+               >
+                 {{ pdfLoading.has(`${item.id}:${index}`) ? 'Abriendo PDF…' : 'Abrir constancia PDF' }}
+               </button>
+               <img v-else-if="imageSource(item, index)" :src="imageSource(item, index)!" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" @error="failedImages.set(`${item.id}:${index}`, item.evidence[index]!.information)" />
               <p v-else>La evidencia no es una imagen PNG/JPEG válida o no pudo visualizarse. Solicita una imagen corregida; no se muestra el contenido crudo.</p>
             </li>
            </ul><p v-if="!item.evidence?.length">No se adjuntó información de vinculación.</p></details>

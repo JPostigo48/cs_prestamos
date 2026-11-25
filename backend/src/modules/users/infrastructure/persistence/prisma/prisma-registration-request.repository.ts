@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill';
 import { isEmail } from 'class-validator';
 import { isRegistrationImage } from '../../../../../shared/domain/registration-image.js';
+import { registrationEvidenceMetadata } from '../../../../../shared/domain/registration-evidence.js';
 import type { AuditActor } from '../../../../../shared/application/audit-actor.js';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import type {
@@ -83,11 +84,24 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
       blockers.push(
         'Falta la aceptación válida de una versión de términos existente.',
       );
-    if (
-      evidence.length !== 1 ||
-      !(await isRegistrationImage(evidence[0]?.informacion))
-    )
-      blockers.push('Falta una imagen PNG o JPEG válida de hasta 60 KiB.');
+    if (evidence.length !== 1) {
+      blockers.push('Falta una imagen PNG/JPEG o PDF válido de vinculación.');
+    } else {
+      const information = evidence[0]?.informacion;
+      const pdf = registrationEvidenceMetadata(information);
+      const validPdf =
+        pdf?.kind === 'pdf' &&
+        pdf.mimeType === 'application/pdf' &&
+        Number.isInteger(pdf.sizeBytes) &&
+        pdf.sizeBytes > 0 &&
+        pdf.sizeBytes <= 10 * 1024 * 1024 &&
+        typeof pdf.path === 'string' &&
+        typeof pdf.hash === 'string';
+      const validImage = await isRegistrationImage(information);
+      if (!validPdf && !validImage) {
+        blockers.push('Falta una imagen PNG/JPEG válida o un PDF válido de vinculación.');
+      }
+    }
     return blockers;
   }
 

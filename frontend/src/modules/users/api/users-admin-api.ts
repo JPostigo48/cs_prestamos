@@ -78,6 +78,19 @@ export async function rejectRequest(id: string, rejectionReason: string) {
     throw new ApiError('El servidor no confirmó el rechazo.', 0)
   return result
 }
+export async function getRegistrationEvidenceUrl(
+  requestId: string,
+  evidenceIndex: number,
+) {
+  const result = await authenticatedRequest<{ url: string }>(
+    '/users/registration-requests/' +
+      encodeURIComponent(requestId) +
+      '/evidence/' +
+      evidenceIndex,
+  )
+  if (!result?.url) throw new ApiError('No se pudo abrir la evidencia.', 0)
+  return result.url
+}
 export async function createAccount(body: { userId: string; email: string; password: string }) {
   const result = await authenticatedRequest<SafeAccount>('/auth/accounts', {
     method: 'POST',

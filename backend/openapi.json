@@ -472,7 +472,7 @@
     },
     "/auth/registration-requests": {
       "post": {
-        "description": "Público. Guarda solicitud, evidencia de imagen y aceptación de términos vigentes en una transacción. Solo guarda hash Argon2id. La aprobación O/A existente crea usuario y cuenta USUARIO y transfiere la aceptación en la misma transacción. No admite rol ni habilitación del cliente.",
+        "description": "Público. Guarda solicitud, evidencia PNG/JPEG/PDF y aceptación de términos vigentes. Los PDFs se almacenan en Supabase y sus metadatos en Neon. Solo guarda hash Argon2id. La aprobación O/A existente crea usuario y cuenta USUARIO y transfiere la aceptación en la misma transacción.",
         "operationId": "AuthController_registerFull",
         "parameters": [],
         "requestBody": {
@@ -1341,6 +1341,106 @@
             "bearer": []
           }
         ]
+      }
+    },
+    "/users/registration-requests/{requestId}/evidence/{evidenceIndex}": {
+      "get": {
+        "operationId": "RegistrationRequestsController_getEvidence",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "evidenceIndex",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token bearer requerido o inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Obtener URL firmada de una evidencia de vinculación",
+        "tags": [
+          "Usuarios"
+        ],
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-implementation-status": "implemented"
       }
     },
     "/users/registration-requests/{requestId}/approve": {
@@ -8661,7 +8761,7 @@
           "evidence": {
             "minItems": 1,
             "maxItems": 1,
-            "description": "Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional. El personal revisa la vigencia del documento.",
+            "description": "Una imagen PNG/JPEG de hasta 60 KiB o PDF de hasta 10 MiB como data URL base64. No texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional.",
             "type": "array",
             "items": {
               "type": "string"

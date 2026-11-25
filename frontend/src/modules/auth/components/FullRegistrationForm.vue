@@ -4,7 +4,7 @@ import TermsPanel from './TermsPanel.vue'
 import { requestFullRegistration } from '../api/access-flows-api'
 import { errorMessage } from '../../../shared/composables/useRemote'
 import { pendingMutation } from '../../../shared/api/mutation-guard'
-import { readRegistrationImage } from '../registration-image'
+import { readRegistrationEvidence } from '../registration-image'
 import type { AuthSession } from '../api/auth-api'
 import { ApiError } from '../../../shared/api/client'
 const name = ref(''),
@@ -33,7 +33,7 @@ async function selectImage(event: Event) {
   if (!file) return
   readingImage.value = true
   try {
-    const source = await readRegistrationImage(file)
+    const source = await readRegistrationEvidence(file)
     if (generation === imageGeneration) evidence.value = source
   } catch (cause) {
     if (generation === imageGeneration) error.value = errorMessage(cause)
@@ -74,7 +74,7 @@ async function submit() {
     <h2 class="text-xl font-bold">Datos para tu cuenta</h2>
     <p>
       El alta queda pendiente de revisión. Al aprobarla, se creará tu cuenta de usuario.
-      Adjunta una imagen de vinculación PNG o JPEG de hasta 60 KiB y acepta los términos vigentes.
+      Adjunta una imagen PNG/JPEG de hasta 60 KiB o un PDF de hasta 10 MiB y acepta los términos vigentes.
     </p>
     <p id="registration-password-notice" class="text-sm text-slate-600">Todos los solicitantes eligen su contraseña. El servidor almacena únicamente su hash Argon2id; la contraseña no será visible para operadores ni administradores, ni se les enviará. Tras la aprobación podrás acceder con el correo y la contraseña que elegiste.</p>
     <fieldset :disabled="sending || !!confirmed || uncertain" class="registration-fields">
@@ -110,10 +110,11 @@ async function submit() {
       >
       <label>Identificador institucional<input v-model="institutionalId" maxlength="80" /></label>
       <label>Teléfono<input v-model="phone" type="tel" maxlength="20" autocomplete="tel" /></label>
-      <p id="registration-evidence-hint" class="full-row text-sm text-slate-600">{{ userType === 'ESTUDIANTE' ? 'Estudiantes: adjunta una imagen de tu carné o constancia de matrícula vigente.' : 'Adjunta una imagen que acredite tu vinculación institucional.' }} Solo PNG o JPEG, hasta 60 KiB.</p>
-      <label class="full-row">Evidencia de vinculación<input type="file" accept="image/png,image/jpeg" aria-describedby="registration-evidence-hint" required @change="selectImage" /></label>
+      <p id="registration-evidence-hint" class="full-row text-sm text-slate-600">{{ userType === 'ESTUDIANTE' ? 'Estudiantes: adjunta tu carné o constancia de matrícula vigente.' : 'Adjunta un documento que acredite tu vinculación institucional.' }} PNG/JPEG hasta 60 KiB o PDF hasta 10 MiB.</p>
+      <label class="full-row">Evidencia de vinculación<input type="file" accept="image/png,image/jpeg,application/pdf" aria-describedby="registration-evidence-hint" required @change="selectImage" /></label>
       <p v-if="readingImage" class="full-row" role="status">Validando imagen…</p>
-      <img v-if="evidence" :src="evidence" alt="Vista previa de la evidencia seleccionada" class="full-row max-h-64 max-w-full object-contain" />
+      <img v-if="evidence && !evidence.startsWith('data:application/pdf')" :src="evidence" alt="Vista previa de la evidencia seleccionada" class="full-row max-h-64 max-w-full object-contain" />
+      <p v-if="evidence && evidence.startsWith('data:application/pdf')" class="full-row text-sm text-slate-600">PDF seleccionado y listo para enviar.</p>
       <div class="full-row"><TermsPanel :key="termsGeneration" @read="version = $event" /></div>
     </fieldset>
     <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ error }}</p>
