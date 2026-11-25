@@ -23,6 +23,13 @@ planificación ni diagramas. La comprobación compara ambas copias con la genera
 Salidas: [backend](../../backend/openapi.json) y
 [copia de Showcase](../../frontend/public/generated/project/openapi.json).
 
+Corte de integración de episodios (25/11/2026): 84 operaciones desde fuentes,
+117 pruebas OpenAPI aprobadas; catálogo ORM con 25 modelos, 13 enums y 84
+direcciones de relación. Se usaron exclusivamente los modos focales anteriores
+y el modo DB inferior, no la generación completa. La migración de episodios
+permanece preparada, **no aplicada**. Resultados completos y fallos restantes:
+[verificación de integración](../development/loan-integration-verification.md).
+
 ## Extensiones por operación
 
 - `x-roles: string[]`: valores reales de los roles efectivos de `RolesGuard`.
