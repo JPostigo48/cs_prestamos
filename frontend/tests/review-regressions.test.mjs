@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { parse } from '@vue/compiler-sfc'
 import { load, testEnvironment, session } from './helpers/modules.mjs'
 import { sanction, appeal } from './helpers/trust-fixtures.mjs'
+import { activeLoan, returnBody, closedLoan } from './helpers/loan-closure-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const loans = await load('modules/loans/api/loans-api')
@@ -14,10 +15,12 @@ beforeEach(() => { testEnvironment(); auth.saveSession(session('ADMINISTRADOR'))
 
 test('reconciliación de devolución: ACTIVO, 404 e ID ajeno no desbloquean el envío', async () => {
   const id = 'loan-review'
-  loans.setPendingReturn(id, true)
+  const body = returnBody()
+  globalThis.fetch = async () => Response.json({}, { status: 503 })
+  await assert.rejects(loans.returnLoan(id, body))
   globalThis.fetch = async url => {
     assert.equal(url, '/api/loans/' + id)
-    return Response.json({ id, status: 'ACTIVO', return: null })
+    return Response.json(activeLoan(id))
   }
   assert.equal(await loans.reconcileReturn(id), false)
   assert.equal(loans.hasPendingReturn(id), true)
@@ -27,10 +30,10 @@ test('reconciliación de devolución: ACTIVO, 404 e ID ajeno no desbloquean el e
   globalThis.fetch = async () => Response.json({ id: 'other', status: 'FINALIZADO', return: { returnedAt: '2026-10-28T00:00:00Z' } })
   await assert.rejects(loans.reconcileReturn(id))
   assert.equal(loans.hasPendingReturn(id), true)
-  globalThis.fetch = async () => Response.json({ id, status: 'FINALIZADO', return: {} })
+  globalThis.fetch = async () => Response.json({ ...activeLoan(id), status: 'FINALIZADO', return: {} })
   assert.equal(await loans.reconcileReturn(id), false)
   assert.equal(loans.hasPendingReturn(id), true)
-  globalThis.fetch = async () => Response.json({ id, status: 'FINALIZADO', return: { returnedAt: '2026-10-28T00:00:00Z' } })
+  globalThis.fetch = async () => Response.json(closedLoan(activeLoan(id), body))
   assert.equal(await loans.reconcileReturn(id), true)
   assert.equal(loans.hasPendingReturn(id), false)
 })

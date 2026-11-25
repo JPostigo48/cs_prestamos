@@ -29,7 +29,7 @@ test('R1: editor recupera A, confirma renombre B y Nuevo A crea otro ID y asigna
     const method = options.method ?? 'GET'; calls.push([url, method])
     if (url.endsWith('/accessories')) return Response.json({ resourceId: url.includes('new-A') ? 'new-A' : 'old-A', items: [] })
     if (url.endsWith('/copies')) {
-      if (method === 'POST') return Response.json({ id: 'new-copy', recursoId: 'new-A', codigoInventario: 'CODE-A' })
+      if (method === 'POST') return Response.json({ id: 'new-copy', recursoId: 'new-A', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'CODE-A' })
       return Response.json([])
     }
     if (method === 'PATCH') return Response.json({ ...a, nombre: 'Renombrado B', id: 'old-A' })
@@ -120,15 +120,15 @@ test('R2: pestañas controlan el DOM estable y conservan lectura de reservas pen
 
 for (const available of [1, 0]) test(`R3: detalle con ${available} disponible y reservado presenta total completo y reserva segura`, async () => {
   const component = await loadComponent('modules/inventory/pages/ResourceDetailPage')
-  const copies = [{ id: 'reserved', recursoId: 'r-final', codigoInventario: 'RES', estado: 'RESERVADO' }, ...(available ? [{ id: 'free', recursoId: 'r-final', codigoInventario: 'FREE', estado: 'DISPONIBLE' }] : [])]
-  globalThis.fetch = async url => Response.json(url.endsWith('/copies') ? copies : { ...a, id: 'r-final', availableCopies: available, totalCopies: available })
+  const copies = [{ id: 'reserved', recursoId: 'r-final', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'RES', estado: 'RESERVADO' }, ...(available ? [{ id: 'free', recursoId: 'r-final', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'FREE', estado: 'DISPONIBLE' }] : [])]
+  globalThis.fetch = async url => Response.json(url.includes('/loans/user/') ? [] : url.includes('/loans/reservations?') ? { items: [], total: 0, page: 1, limit: 1 } : url.endsWith('/accessories') ? { items: [] } : url.endsWith('/copies') ? copies : { ...a, id: 'r-final', availableCopies: available, totalCopies: available })
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/app/catalog/:resourceId', component: { template: '<div />' } }] })
   await router.push('/app/catalog/r-final'); await router.isReady()
   const mounted = mount(component, {}, [router])
   try {
     await flush(); await flush()
     assert.match(text(mounted.root).replace(/\s+/g, ' '), new RegExp(`${available} disponible${available === 1 ? '' : 's'} de ${copies.length} ejemplares totales`))
-    const reserve = find(mounted.root, 'button', available ? 'Reservar equipo para mí' : 'Sin disponibilidad por el momento')
+    const reserve = find(mounted.root, 'button', 'Reservar ejemplar')
     assert.equal(reserve.props.disabled, !available)
     if (available) {
       await event(reserve, 'click')

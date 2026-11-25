@@ -29,19 +29,19 @@ test('ejemplar: código explícito y recurso real, RESERVADO se conserva en lect
     assert.equal(url, '/api/inventory/resources/r1/copies')
     assert.deepEqual(JSON.parse(options.body), { codigoInventario: 'INV-TEST' })
     return Response.json(
-      { id: 'c1', recursoId: 'r1', codigoInventario: 'INV-TEST', estado: 'DISPONIBLE' },
+      { id: 'c1', recursoId: 'r1', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'INV-TEST', estado: 'DISPONIBLE' },
       { status: 201 },
     )
   }
   await inventory.createCopy('r1', ' INV-TEST ')
-  globalThis.fetch = async () => Response.json([{ id: 'c1', estado: 'RESERVADO' }])
+  globalThis.fetch = async () => Response.json([{ id: 'c1', recursoId: 'r1', codigoInventario: 'INV-TEST', estado: 'RESERVADO', condicionFisica: 'APTO', habilitado: true }])
   assert.equal((await inventory.getCopies('r1'))[0].estado, 'RESERVADO')
 })
 test('ocupación: frontend no libera prestados/reservados y revalida antes de PATCH', async () => {
   let calls = 0
   globalThis.fetch = async () => {
     calls++
-    return Response.json({ id: 'c1', estado: 'RESERVADO' })
+    return Response.json({ id: 'c1', recursoId: 'r1', codigoInventario: 'INV-TEST', estado: 'RESERVADO', condicionFisica: 'APTO', habilitado: true })
   }
   for (const estado of ['RESERVADO', 'PRESTADO'])
     await assert.rejects(

@@ -1,5 +1,6 @@
 import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { activeLoan, closedLoan, requestId } from './helpers/loan-closure-fixtures.mjs'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadModule, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, text } from './helpers/renderer.mjs'
@@ -48,9 +49,27 @@ function mockFetch(history = fixture) {
     if (path.includes('/loans/reservations')) return Response.json({ items: [], total: 0, page: 1, limit: 100 })
     if (path.includes('/history')) return Response.json(history)
     const id = path.split('/inventory/copies/')[1]
-    return Response.json({ id, recursoId: 'r-' + id, codigoInventario: 'INV-' + id.length + id.charCodeAt(0), estado: 'PRESTADO', recurso: { id: 'r-' + id, nombre: resourceNames[id] ?? 'Recurso', categoriaId: 'cat' } })
+    return Response.json({ id, recursoId: 'r-' + id, condicionFisica: 'APTO', habilitado: true, codigoInventario: 'INV-' + id.length + id.charCodeAt(0), estado: 'PRESTADO', recurso: { id: 'r-' + id, nombre: resourceNames[id] ?? 'Recurso', categoriaId: 'cat' } })
   }
 }
+
+for (const kind of ['PERDIDA', 'ROBO']) test(`historial ${kind}: terminal no es activo, vencido ni devuelto; aparece en Finalizados sin devolución ficticia`, async () => {
+  auth.saveSession(session())
+  const result = closedLoan(activeLoan('incident-history'), { requestId, kind, confirmed: true, description: 'Hecho acreditado', evidenceIds: [] })
+  mockFetch([result])
+  const app = mount(Page)
+  try {
+    await flush(); await flush()
+    assert.equal(historyState(result, Date.now()), 'CERRADO_POR_INCIDENCIA')
+    assert.match(text(app.root), /cerrado por incidencia · no devuelto/)
+    assert.match(text(app.root), kind === 'ROBO' ? /Robo: cierre sin devolución real/ : /Pérdida: cierre sin devolución real/)
+    assert.doesNotMatch(text(app.root), /Préstamo devuelto|Devuelto el/)
+    await event(find(app.root, 'button', 'Finalizados'), 'click')
+    assert.equal(findAll(app.root, n => n.tag === 'article').length, 1)
+    await event(find(app.root, 'button', 'En préstamo'), 'click')
+    assert.equal(findAll(app.root, n => n.tag === 'article').length, 0)
+  } finally { app.unmount() }
+})
 
 for (const role of ['USUARIO', 'OPERADOR', 'ADMINISTRADOR']) test(`reservas y préstamos propios ${role}: consultas limitadas a la cuenta, sin acciones staff`, async () => {
   auth.saveSession(session(role))
@@ -99,7 +118,7 @@ test('reservas: carga todas las páginas sin filtro; unión solo por vínculo re
       return Response.json({ items: all.slice((page - 1) * 100, page * 100), total: all.length, page, limit: 100 })
     }
     if (path.includes('/history')) return Response.json([fixture[0]])
-    return Response.json({ id: 'c1', recursoId: 'r1', codigoInventario: 'INV-1', estado: 'DISPONIBLE', recurso: { id: 'r1', nombre: 'Libro', categoriaId: 'cat' } })
+    return Response.json({ id: 'c1', recursoId: 'r1', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'INV-1', estado: 'DISPONIBLE', recurso: { id: 'r1', nombre: 'Libro', categoriaId: 'cat' } })
   }
   const app = await openPage()
   try {
@@ -234,7 +253,7 @@ test('historial: carga visible sin clic y cancelar recarga ambas fuentes sin rep
       return Response.json({ items: [{ ...reservation, ...(cancelled ? { status: 'CANCELADA', cancelledAt: futureIso(0) } : {}) }], total: 1, page: 1, limit: 100 })
     }
     if (String(url).includes('/history')) { reads++; return Response.json([]) }
-    return Response.json({ id: 'copy-ux', codigoInventario: 'UX', recurso: { id: 'resource-ux', nombre: 'Recurso UX' } })
+    return Response.json({ id: 'copy-ux', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'UX', recurso: { id: 'resource-ux', nombre: 'Recurso UX' } })
   }
   const app = mount(Page)
   try {

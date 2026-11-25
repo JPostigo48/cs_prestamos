@@ -7,7 +7,7 @@ import { mount, flush, find, findAll, event, model, text } from './helpers/rende
 const auth = await load('modules/auth/api/auth-api')
 const Detail = await loadComponent('modules/inventory/pages/ResourceDetailPage')
 const owner = session().user.id
-const copy = { id: 'copy-availability', codigoInventario: 'C-1', estado: 'DISPONIBLE', recursoId: 'resource' }
+const copy = { id: 'copy-availability', codigoInventario: 'C-1', estado: 'DISPONIBLE', recursoId: 'resource', condicionFisica: 'APTO', habilitado: true }
 const category = { id: 'category', nombre: 'Libros', tiempoMaximoPrestamoDias: 1, tiempoMaximoPrestamoHoras: 24 }
 const resource = { id: 'resource', categoriaId: category.id, categoria: category, nombre: 'Libro', descripcion: null, available: true,
   loanPolicy: { resourceId: 'resource', categoryId: category.id, durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' } }
@@ -18,9 +18,9 @@ const loan = (status = 'ACTIVO', userId = owner) => ({ id: 'loan-open', copyId: 
 const settings = { pickupWaitMinutes: 30, weeklySchedule: null, version: 1, updatedAt: '2026-11-04T00:00:00Z',
   timeZone: 'America/Lima', scheduleStatus: 'UNCONFIGURED', pickupWindowPolicy: 'FULL_WINDOW_WITHIN_INTERVAL', warning: 'Horario sin configurar.' }
 
-async function openDetail(state = {}, role = 'USUARIO') {
+async function openDetail(state = {}, role = 'USUARIO', userType = 'ESTUDIANTE') {
   testEnvironment()
-  auth.saveSession(session(role))
+  auth.saveSession(session(role, userType))
   const calls = []
   globalThis.fetch = async (url, options = {}) => {
     calls.push({ url, options })
@@ -143,4 +143,22 @@ test('confirmar una reserva actualiza el bloqueo sin abandonar la página', asyn
     await flush()
     assert.equal(button().props.disabled, true)
   } finally { app.unmount() }
+})
+
+for (const userType of ['ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO']) {
+  for (const role of ['USUARIO', 'OPERADOR', 'ADMINISTRADOR']) {
+    test(`normativa cupo institucional ${userType} cruzado con rol ${role}`, async () => {
+      const { app, button } = await openDetail({ reserved: true, loans: [loan()] }, role, userType)
+      try {
+        assert.equal(button().props.disabled, userType === 'ESTUDIANTE')
+        if (userType !== 'ESTUDIANTE') {
+          await event(button(), 'click'); assert.ok(find(app.root, 'dialog'))
+        }
+      } finally { app.unmount() }
+    })
+  }
+}
+for (const userType of ['DOCENTE', 'ADMINISTRATIVO']) test(`${userType}: operaciones fallidas siguen fail-closed sin excepción por tipo`, async () => {
+  const { app, button } = await openDetail({ loanFailure: true }, 'USUARIO', userType)
+  try { assert.equal(button().props.disabled, true); assert.match(text(app.root), /No pudimos comprobar/) } finally { app.unmount() }
 })

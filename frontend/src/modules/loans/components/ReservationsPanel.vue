@@ -34,6 +34,8 @@ function refreshVisible() {
   if (remote.data.value && !remote.loading.value && !sending.value && !selected.value)
     void remote.refresh()
 }
+// Reconsulta solo una lista ya abierta; conserva cualquier entrega pendiente.
+defineExpose({ refresh: refreshVisible })
 onMounted(() => {
   window.addEventListener('focus', refreshVisible)
   timer = setInterval(refreshVisible, 60_000)

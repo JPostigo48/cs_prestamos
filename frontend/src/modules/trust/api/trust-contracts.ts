@@ -34,6 +34,7 @@ export interface Violation {
   appliedPenalty: number
 }
 export interface SanctionDetail extends Sanction {
+  current?: SanctionCurrent | null
   userId: string
   ruleVersionId: string | null
   reason: string | null
@@ -41,6 +42,16 @@ export interface SanctionDetail extends Sanction {
   violation: Violation | null
   appeals: Appeal[]
   history: { action: string; occurredAt: string; actorAccountId: string | null; reason: string | null }[]
+}
+export interface SanctionAdjustment {
+  id: string; ruleVersionId: string; severity: string; effect: 'DISCOUNT' | 'SET_ZERO'
+  nominalTarget: number | null; nominalIncrement: number | null; effectiveDiscount: number
+  previousTrust: number; resultingTrust: number; suspensionDays: number | null
+  effectiveAt: string; recordedAt: string
+}
+export interface SanctionCurrent {
+  severity: string; rule: RuleVersion; nominalPenaltyTotal: number | null
+  effectivePenaltyTotal: number; suspensionDays: number | null; adjustments: SanctionAdjustment[]
 }
 export interface AppealPage { items: Appeal[]; total: number; page: number; limit: number }
 export const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -68,10 +79,8 @@ export function manualSuspensionRule(rule: RuleVersion): boolean {
   let policy: unknown
   try { policy = JSON.parse(rule.description) } catch { return rule.penaltyPercentage > 0 && rule.penaltyPercentage <= 100 }
   if (!record(policy) || policy.format !== 'epcc.official-policy/v1') return rule.penaltyPercentage > 0 && rule.penaltyPercentage <= 100
-  if (!['DAMAGE', 'LOSS'].includes(String(policy.kind))) return false
-  return policy.trustEffect === 'SET_ZERO'
-    ? rule.penaltyPercentage === 0 && rule.suspensionType === 'INDEFINIDA'
-    : policy.trustEffect === 'DISCOUNT' && rule.penaltyPercentage > 0 && rule.penaltyPercentage <= 100
+  // Las políticas oficiales requieren contexto del préstamo, no una sanción genérica.
+  return false
 }
 export function validSuspension(value: unknown): value is SanctionDetail {
   return validSanctionDetail(value) && ['ACTIVA', 'PROGRAMADA'].includes(value.status) &&
@@ -88,6 +97,30 @@ export function validSanctionDetail(value: unknown): value is SanctionDetail {
     !Array.isArray(value.history) || !value.history.every(h => record(h) && text(h.action) && validInstant(h.occurredAt) && nullableText(h.actorAccountId) && nullableText(h.reason))) return false
   if (value.rule && (value.rule.ruleId !== value.ruleId || value.rule.id !== value.ruleVersionId)) return false
   if (value.appeals.some(a => a.sanctionId !== value.id || a.userId !== value.userId)) return false
+  if (value.current !== undefined && value.current !== null && !validCurrent(value.current)) return false
   const violation = value.violation
   return violation === null || (record(violation) && text(violation.id) && text(violation.userId) && text(violation.ruleId) && text(violation.ruleVersionId) && validInstant(violation.occurredAt) && typeof violation.appliedPenalty === 'number' && Number.isFinite(violation.appliedPenalty))
+}
+const points = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100
+const days = (v: unknown) => v === null || (Number.isSafeInteger(v) && Number(v) > 0)
+function validCurrent(value: unknown): value is SanctionCurrent {
+  if (!record(value) || !text(value.severity) || !validRule(value.rule) ||
+    !(value.nominalPenaltyTotal === null || points(value.nominalPenaltyTotal)) ||
+    !points(value.effectivePenaltyTotal) || !days(value.suspensionDays) ||
+    !Array.isArray(value.adjustments) || !value.adjustments.length) return false
+  for (const a of value.adjustments) {
+    if (!record(a) || !text(a.id) || !text(a.ruleVersionId) || !text(a.severity) ||
+      !['DISCOUNT', 'SET_ZERO'].includes(String(a.effect)) || !points(a.effectiveDiscount) ||
+      !points(a.previousTrust) || !points(a.resultingTrust) || !days(a.suspensionDays) ||
+      !validInstant(a.effectiveAt) || !validInstant(a.recordedAt) ||
+      Math.round((a.previousTrust - a.resultingTrust) * 100) !== Math.round(a.effectiveDiscount * 100)) return false
+    if (a.effect === 'SET_ZERO' ? a.nominalTarget !== null || a.nominalIncrement !== null || a.suspensionDays !== null || a.resultingTrust !== 0 :
+      !points(a.nominalTarget) || !points(a.nominalIncrement) || a.nominalIncrement > a.nominalTarget || a.suspensionDays === null) return false
+  }
+  const adjustments = value.adjustments as unknown as SanctionAdjustment[]
+  const last = adjustments[adjustments.length - 1]!
+  return new Set(adjustments.map(a => a.id)).size === adjustments.length &&
+    last.ruleVersionId === value.rule.id && last.severity === value.severity &&
+    last.nominalTarget === value.nominalPenaltyTotal && last.suspensionDays === value.suspensionDays &&
+    adjustments.reduce((sum, a) => sum + Math.round(a.effectiveDiscount * 100), 0) === Math.round(value.effectivePenaltyTotal * 100)
 }

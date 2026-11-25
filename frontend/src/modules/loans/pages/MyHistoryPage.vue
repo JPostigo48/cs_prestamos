@@ -27,11 +27,12 @@ const filters = [
   { key: 'PENDIENTES', label: 'Por recoger', states: ['POR_RECOGER'] },
   { key: 'CURSO', label: 'En préstamo', states: ['ACTIVO', 'PROGRAMADO'] },
   { key: 'VENCIDOS', label: 'Vencidos', states: ['VENCIDO', 'RESERVA_VENCIDA'] },
-  { key: 'CERRADOS', label: 'Finalizados', states: ['DEVUELTO', 'CANCELADA', 'CONVERTIDA'] },
+  { key: 'CERRADOS', label: 'Finalizados', states: ['DEVUELTO', 'CERRADO_POR_INCIDENCIA', 'CANCELADA', 'CONVERTIDA'] },
 ]
 const matches = (state: OperationState, key: string) => key === 'TODOS' || !!filters.find(f => f.key === key)?.states.includes(state)
 const visible = computed(() => operations.value.filter(item => matches(item.state, filter.value)))
 const labels: Record<OperationState, string> = {
+  CERRADO_POR_INCIDENCIA: 'Préstamo cerrado por incidencia · no devuelto',
   POR_RECOGER: 'Reserva · pendiente de recogida', RESERVA_VENCIDA: 'Reserva · vencida sin recoger',
   CANCELADA: 'Reserva cancelada', CONVERTIDA: 'Reserva convertida a préstamo',
   ACTIVO: 'Préstamo activo', VENCIDO: 'Préstamo vencido', DEVUELTO: 'Préstamo devuelto', PROGRAMADO: 'Préstamo programado',
@@ -76,6 +77,7 @@ async function cancel() {
           <p v-if="item.loan && item.reservation" class="muted">Originado en tu reserva · recogida <time :datetime="item.reservation.pickedUpAt || item.loan.startsAt">{{ dateTime(item.reservation.pickedUpAt || item.loan.startsAt) }}</time></p>
           <p v-else-if="item.loan" class="muted">Préstamo · sin reserva vinculada{{ reservations.data.value ? '' : ' en los datos disponibles' }}</p>
           <p class="operation-date"><Clock :size="14" aria-hidden="true" /> {{ item.dateLabel }} <time :datetime="item.relevantAt">{{ dateTime(item.relevantAt) }}</time></p>
+          <p v-if="item.state === 'CERRADO_POR_INCIDENCIA'">{{ item.loan?.closure?.reason === 'ROBO' ? 'Robo' : item.loan?.closure?.reason === 'PERDIDA' ? 'Pérdida' : 'Pérdida o robo' }}: cierre sin devolución real y sin recompensa.</p>
           <p v-if="item.state === 'POR_RECOGER'">Recoge antes del <time :datetime="item.reservation!.pickupDeadline">{{ dateTime(item.reservation!.pickupDeadline) }}</time>.</p>
           <p v-if="item.loan && ['ACTIVO', 'VENCIDO', 'PROGRAMADO'].includes(item.state)">{{ item.state === 'VENCIDO' ? 'Devuelve el recurso cuanto antes. Fecha límite:' : 'Devolución límite:' }} <time :datetime="item.loan.endsAt">{{ dateTime(item.loan.endsAt) }}</time></p>
           <p v-if="item.state === 'RESERVA_VENCIDA'" class="muted">El plazo de recogida terminó. <RouterLink to="/app/personal">Ver mi confianza y sanciones</RouterLink>.</p>

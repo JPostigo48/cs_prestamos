@@ -42,7 +42,7 @@ const categories = useRemote(signal => getCategories(signal, true))
 const availability = useRemote(getGlobalAvailability)
 const copies = useCopyDetails(loans.data)
 const currentLoans = computed(
-  () => loans.data.value?.filter((loan) => loan.status !== 'FINALIZADO') ?? [],
+  () => loans.data.value?.filter((loan) => ['ACTIVO', 'PLANIFICADO'].includes(loan.status)) ?? [],
 )
 const appealing = ref<Sanction | null>(null)
 const reason = ref('')
@@ -196,14 +196,14 @@ async function sendAppeal() {
         <details><summary>Fecha de inicio</summary><p>{{ date(loan.startsAt) }}</p></details>
       </article>
       <p v-if="!currentLoans.length" class="panel">No tienes préstamos activos ni planificados.</p>
-      <details v-if="loans.data.value?.some((loan) => loan.status === 'FINALIZADO')">
+      <details v-if="loans.data.value?.some((loan) => ['FINALIZADO', 'CERRADO_POR_INCIDENCIA'].includes(loan.status))">
         <summary>Historial de préstamos finalizados</summary>
         <p
-          v-for="loan in loans.data.value.filter((item) => item.status === 'FINALIZADO')"
+          v-for="loan in loans.data.value.filter((item) => ['FINALIZADO', 'CERRADO_POR_INCIDENCIA'].includes(item.status))"
           :key="loan.id"
         >
           {{ copies[loan.copyId]?.recurso.nombre || loan.copyId }} ·
-          {{ loan.return ? date(loan.return.returnedAt) : 'Sin fecha de devolución' }}
+          {{ loan.status === 'CERRADO_POR_INCIDENCIA' ? 'Cerrado por pérdida o robo, sin devolución real ni recompensa' : loan.return ? date(loan.return.returnedAt) : 'Sin fecha de devolución' }}
         </p>
       </details>
     </RemoteState>

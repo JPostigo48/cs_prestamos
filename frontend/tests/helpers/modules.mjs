@@ -51,7 +51,7 @@ export function testEnvironment() {
   }
   return values
 }
-export const session = (role = 'USUARIO') => ({
+export const session = (role = 'USUARIO', userType = 'DOCENTE') => ({
   accessToken: 'offline-test-token',
   tokenType: 'Bearer',
   expiresAt: Date.now() + 60000,
@@ -59,6 +59,6 @@ export const session = (role = 'USUARIO') => ({
     id: '11111111-1111-4111-8111-111111111111',
     email: 'test@example.invalid',
     role,
-    userType: 'DOCENTE',
+    userType,
   },
 })

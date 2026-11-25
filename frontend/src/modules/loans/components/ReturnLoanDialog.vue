@@ -1,191 +1,93 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { getSession } from '../../auth/api/auth-api'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
-import { ApiError } from '../../../shared/api/client'
 import { errorMessage } from '../../../shared/composables/useRemote'
-import {
-  reconcileReturn,
-  hasPendingReturn,
-  returnLoan,
-  setPendingReturn,
-  type Loan,
-} from '../api/loans-api'
-import { returnInput, uncertainReturn } from '../return-policy'
-import { dateTime } from '../../../shared/format'
+import { getReturnPolicy, getLoanEvidence, type Loan } from '../api/loans-api'
+import type { LoanEvidence } from '../api/closure-contracts'
+import { returnInput, type ReturnPolicy, type PhysicalCondition, type Severity } from '../return-policy'
+import { useLoanClosure } from '../useLoanClosure'
 import ReturnChecklist from './ReturnChecklist.vue'
-import { Check, Clock } from '@lucide/vue'
-
+import ClosureResult from './ClosureResult.vue'
 const props = defineProps<{ loan: Loan; copyLabel: string }>()
 const emit = defineEmits<{ close: []; changed: []; success: [] }>()
-const clock = ref(Date.now())
-const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
-const timer = setInterval(() => { clock.value = Date.now() }, 1000)
-onBeforeUnmount(() => clearInterval(timer))
-const incident = ref(false)
-const description = ref('')
-const sending = ref(false)
-const checklistBusy = ref(false)
-const missingParts = ref(props.loan.returnChecklist?.parts.some(part => !part.received) ?? false)
-const checking = ref(false)
-const unknown = ref(hasPendingReturn(props.loan.id))
-const finished = ref(false)
-const error = ref('')
-const notice = ref('')
-const busy = computed(() => sending.value || checking.value || checklistBusy.value)
+const closure = useLoanClosure(props.loan.id, () => emit('success'))
+const { busy, error, notice, result, locked, pending, reconciled } = closure
+const policy = ref<ReturnPolicy | null>(null), loading = ref(false), loadError = ref('')
+const parts = ref<Record<string, boolean | null>>({}), condition = ref<PhysicalCondition | ''>('')
+const damage = ref<Severity | ''>(''), missing = ref<Severity | ''>(''), description = ref(''), observation = ref('')
+const evidence = ref<LoanEvidence[]>([]), evidenceIds = ref<string[]>([])
+const controller = new AbortController()
+onBeforeUnmount(() => controller.abort())
+const hasMissing = computed(() => Object.values(parts.value).some(v => v === false))
+const incident = computed(() => condition.value === 'DANADO' || hasMissing.value)
+const ready = computed(() => props.loan.status === 'ACTIVO' && !!policy.value && !!condition.value && policy.value.accessories.every(p => typeof parts.value[p.id] === 'boolean') &&
+  (!incident.value || !!description.value.trim()) && (condition.value !== 'DANADO' || !!damage.value) && (!hasMissing.value || !!missing.value))
+async function load() {
+  if (busy.value || loading.value || locked.value) return
+  loading.value = true; loadError.value = ''; policy.value = null
+  try {
+    const [historical, available] = await Promise.all([getReturnPolicy(props.loan.id, controller.signal), getLoanEvidence(props.loan.id, controller.signal)])
+    policy.value = historical
+    parts.value = Object.fromEntries(historical.accessories.map(p => [p.id, null]))
+    evidence.value = available.filter(e => e.type === 'DEVOLUCION' || e.type === 'DANO')
+    evidenceIds.value = []
+  } catch (cause) { if (!controller.signal.aborted) loadError.value = errorMessage(cause) }
+  finally { loading.value = false }
+}
 async function confirm() {
-  if (busy.value || unknown.value || finished.value) return
-  error.value = ''
-  let body
+  if (!ready.value || locked.value || busy.value || !policy.value) return
   try {
-    const instant = Date.now()
-    if (missingParts.value && (!incident.value || !description.value.trim()))
-      throw new ApiError('Hay partes faltantes: registra una incidencia y describe lo ocurrido antes de devolver.', 400)
-    body = returnInput(new Date(instant).toISOString(), incident.value, description.value, props.loan.startsAt, instant)
-  } catch (cause) {
-    error.value = errorMessage(cause)
-    return
-  }
-  sending.value = true
-  const owner = getSession()?.user.id ?? 'public'
-  setPendingReturn(props.loan.id, true, owner)
-  try {
-    await returnLoan(props.loan.id, body)
-    setPendingReturn(props.loan.id, false, owner)
-    emit('success')
-  } catch (cause) {
-    const status = cause instanceof ApiError ? cause.status : undefined
-    unknown.value = uncertainReturn(status)
-    if (!unknown.value) setPendingReturn(props.loan.id, false, owner)
-    error.value = unknown.value
-      ? 'No se pudo confirmar el resultado. La devolución puede haberse registrado. Consulta el estado antes de volver a enviar.'
-      : errorMessage(cause)
-    if (status === 404 || status === 409) {
-      // El dato de la lista ya no es fiable. Exige consultar antes de reintentar.
-      unknown.value = true
-      setPendingReturn(props.loan.id, true, owner)
-      emit('changed')
-    }
-  } finally {
-    sending.value = false
-  }
+    const body = returnInput(crypto.randomUUID(), policy.value, parts.value, condition.value, damage.value, missing.value, description.value, evidenceIds.value, observation.value)
+    await closure.send(body)
+  } catch (cause) { error.value = errorMessage(cause) }
 }
-async function check() {
-  if (busy.value) return
-  checking.value = true
-  error.value = ''
-  try {
-    finished.value = await reconcileReturn(props.loan.id)
-    unknown.value = !finished.value
-    notice.value = finished.value
-      ? 'El servidor informa que este préstamo ya está finalizado. No se enviará otra devolución.'
-      : 'El servidor aún no confirma una devolución finalizada. Una lectura activa no prueba que el envío anterior haya fallado; el reenvío continúa bloqueado.'
-    emit('changed')
-  } catch (cause) {
-    error.value = errorMessage(cause)
-    if (cause instanceof ApiError && cause.status === 404) {
-      notice.value = 'No se encontró una confirmación de devolución. Se mantiene el bloqueo hasta verificar que el préstamo ha finalizado.'
-      emit('changed')
-    }
-  } finally {
-    checking.value = false
-  }
-}
+onMounted(() => { void load() })
 </script>
 <template>
-  <ModalDialog class="return-dialog" title="Registrar devolución" :subtitle="copyLabel" :busy="busy" @close="emit('close')">
-    <div class="return-body">
-    <ReturnChecklist
-      :loan-id="loan.id"
-      :copy-id="loan.copyId"
-      :disabled="sending || checking || unknown || finished"
-      @busy="checklistBusy = $event"
-      @missing="missingParts = $event; if ($event) incident = true"
-    />
-    <form class="stack" @submit.prevent="confirm">
-      <div class="return-timing" :class="{ late: clock > new Date(loan.endsAt).getTime() }"><Clock :size="18" aria-hidden="true" /><p>
-        {{
-          clock > new Date(loan.endsAt).getTime()
-            ? 'devolución posterior al vencimiento'
-            : 'devolución dentro del plazo'
-        }}. Se capturará la hora exacta al confirmar; el servidor determina la puntualidad.
-      </p></div>
-      <details class="return-reference"><summary>Fechas y referencia del préstamo</summary><p>Límite: {{ dateTime(loan.endsAt) }}</p><p>Hora actual: {{ dateTime(new Date(clock).toISOString()) }} · {{ zone }}</p><p>Préstamo {{ loan.id }} · Usuario {{ loan.userId }}</p></details>
-      <fieldset :disabled="busy || unknown || finished" class="stack return-condition">
-        <legend>Condición del ejemplar</legend>
-        <p v-if="missingParts" class="error" role="status">Hay partes faltantes. La devolución requiere una descripción de incidencia; no aplica sanción automática.</p>
-        <label class="condition-option" :class="{ chosen: !incident }"
-          ><input v-model="incident" name="return-condition" type="radio" :value="false" :disabled="missingParts" />
-          Devolución sin incidencias</label
-        >
-        <label class="condition-option incident-option" :class="{ chosen: incident }"
-          ><input v-model="incident" name="return-condition" type="radio" :value="true" />
-          Incidencia que requiere revisión</label
-        >
-        <template v-if="incident"
-          ><p class="error">
-            Al registrar una incidencia el ejemplar quedará NO DISPONIBLE hasta su revisión. No se
-            aplica una sanción automática.
-          </p>
-          <label
-            >Descripción de la incidencia<textarea
-              v-model="description"
-              required
-              maxlength="1000"
-              rows="4"
-            /></label
-        ></template>
-        <p v-else>El ejemplar volverá a estar disponible. No se enviará ninguna observación.</p>
-      </fieldset>
-      <p v-if="unknown" class="error" role="alert">
-        Resultado pendiente de verificar. El envío está bloqueado.
-      </p>
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-      <div class="row return-actions">
-        <button type="button" :disabled="busy" @click="emit('close')">Cerrar</button>
-        <button v-if="unknown" type="button" :disabled="busy" @click="check">
-          {{ checking ? 'Consultando…' : 'Consultar estado del préstamo' }}
-        </button>
-        <button
-          v-if="!finished"
-          class="primary"
-          type="submit"
-          :disabled="busy || unknown || (incident && !description.trim()) || (missingParts && (!incident || !description.trim()))"
-        >
-          <Check :size="16" aria-hidden="true" />{{ sending ? 'Registrando…' : 'Confirmar solo devolución básica' }}
-        </button>
-      </div>
-    </form>
+  <ModalDialog class="return-dialog" title="Registrar devolución integral" :subtitle="copyLabel" :busy="busy || loading" @close="emit('close')">
+    <div class="stack return-body" :aria-busy="busy || loading">
+      <ClosureResult v-if="result" :loan="result" />
+      <template v-else>
+        <p v-if="loan.status !== 'ACTIVO'" role="alert">Solo los préstamos ACTIVOS pueden cerrarse con una nueva devolución.</p>
+        <p v-if="loading" role="status">Consultando política histórica y evidencias…</p>
+        <p v-if="loadError" class="error" role="alert">{{ loadError }} No se permite cerrar sin política histórica.</p>
+        <button v-if="loadError" :disabled="loading" @click="load">Reintentar lectura histórica</button>
+        <form v-if="policy" class="stack" @submit.prevent="confirm">
+          <p>Categoría histórica {{ policy.categoryId }} · Publicación {{ policy.termsVersionId }}.</p>
+          <section aria-label="Tardanza automática" class="panel">
+            <h3>Tardanza AUTOMÁTICA · solo lectura</h3>
+            <p>Ya aplicada: {{ policy.lateness.currentSeverity ?? 'Ninguna' }} · {{ policy.lateness.appliedPenaltyPoints }} puntos.</p>
+            <p>Proyectada al consultar: {{ policy.lateness.targetSeverity ?? 'Ninguna' }} · {{ policy.lateness.targetPenaltyPoints }} puntos nominales · {{ policy.lateness.targetSuspensionDays }} días. El servidor recalcula al cerrar; no es un segundo cargo manual.</p>
+          </section>
+          <ReturnChecklist v-model="parts" :parts="policy.accessories" :disabled="busy || locked" />
+          <fieldset :disabled="busy || locked" class="stack">
+            <legend>Condición física obligatoria</legend>
+            <label><input v-model="condition" type="radio" name="condition" value="SANO" /> Sano</label>
+            <label><input v-model="condition" type="radio" name="condition" value="DESGASTE_NORMAL" /> Desgaste normal (no es daño)</label>
+            <label><input v-model="condition" type="radio" name="condition" value="DANADO" /> Dañado</label>
+            <template v-if="incident">
+              <p>Daño y faltantes del mismo hecho generan una sola falta, con la mayor gravedad seleccionada. El tipo y la consecuencia los determina la política histórica.</p>
+              <label v-if="condition === 'DANADO'">Gravedad del daño<select v-model="damage" required><option value="">Seleccionar según criterios</option><option v-for="p in policy.damageOptions" :key="p.versionId" :value="p.severity">{{ p.severity }} · {{ p.criteria.condition }}</option></select></label>
+              <label v-if="hasMissing">Gravedad de faltantes<select v-model="missing" required><option value="">Seleccionar según criterios</option><option v-for="p in policy.damageOptions" :key="p.versionId" :value="p.severity">{{ p.severity }} · {{ p.criteria.condition }}</option></select></label>
+              <ul><li v-for="p in policy.damageOptions" :key="p.versionId">{{ p.severity }}: {{ p.criteria.condition }} · {{ p.consequence }} · {{ p.penaltyPoints ?? 'No aplica' }} puntos · suspensión {{ p.suspensionType }} {{ p.suspensionDays ?? '' }}. Versión {{ p.versionId }}.</li></ul>
+              <label>Descripción de daño/faltantes<textarea v-model="description" required maxlength="1000" /></label>
+            </template>
+            <label>Observación opcional (no determina daño)<textarea v-model="observation" maxlength="1000" /></label>
+            <fieldset><legend>Evidencias existentes de este préstamo</legend>
+              <label v-for="e in evidence" :key="e.id"><input v-model="evidenceIds" type="checkbox" :value="e.id" /> {{ e.originalName }} · {{ e.description }}</label>
+              <p v-if="!evidence.length">Sin evidencias disponibles. Se enviará la colección vacía admitida por el servidor.</p>
+            </fieldset>
+            <p>Recompensa histórica: {{ policy.rewardPolicy.consequence }}. Solo se mostrará el importe realmente persistido.</p>
+          </fieldset>
+          <button class="primary" :disabled="!ready || busy || locked">{{ busy ? 'Registrando…' : 'Confirmar devolución integral' }}</button>
+        </form>
+        <div v-if="locked" class="stack"><p role="alert">Resultado pendiente. No se pueden modificar ni reenviar datos distintos.</p><button :disabled="busy" @click="closure.check">Consultar cierre del préstamo</button><button v-if="pending && reconciled" :disabled="busy" @click="closure.retry">Reintentar mismo cuerpo y UUID</button></div>
+      </template>
+      <p v-if="error" role="alert" class="error">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
+      <button :disabled="busy || loading" @click="emit('close')">Cerrar</button>
     </div>
   </ModalDialog>
 </template>
 <style scoped>
-.application dialog.return-dialog { padding: 0; border-radius: 24px; max-width: min(512px,calc(100vw - 2rem)); }
-.return-dialog :deep(.modal-heading) { background: #1e3a5f; color: white; padding: 24px 28px; margin: 0; border: 0; }
-.return-dialog :deep(.modal-heading h2) { font-size: 22px; }
-.return-dialog :deep(.modal-heading p) { color: #bfdbfe; line-height: 1.6; }
-.application .return-dialog :deep(.modal-heading button) { color: white; }
-.return-body { padding: 24px 28px; }
-.return-timing { display: flex; align-items: start; gap: 10px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 14px; border-radius: 12px; }
-.return-timing p { font-size: 12px; line-height: 1.7; }
-.return-timing.late { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.return-reference { font-size: 11px; color: #64748b; line-height: 1.8; }
-.return-reference summary { cursor: pointer; }
-.return-condition { border: 0; padding: 16px 0 0; border-top: 1px solid #e2e8f0; }
-.return-condition legend { font-size: 14px; font-weight: 700; padding-right: 8px; }
-.application .return-condition .condition-option { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.application .return-condition input[type='radio'] { width: 16px; height: 16px; margin: 0; accent-color: #059669; flex-shrink: 0; }
-.application .return-condition .chosen { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
-.application .return-condition .incident-option.chosen { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
-.return-condition p, .return-condition label { font-size: 12px; line-height: 1.7; }
-.application .return-actions { border-top: 1px solid #e2e8f0; padding-top: 20px; flex-wrap: wrap; align-items: stretch; }
-.application .return-actions button { display: inline-flex; justify-content: center; align-items: center; gap: 6px; flex: 1; padding: 12px; border-radius: 12px; font-size: 12px; font-weight: 700; }
-@media (max-width: 600px) {
- .application dialog.return-dialog { border-radius: 12px; }
- .return-dialog :deep(.modal-heading) { padding: 16px; }
- .return-dialog :deep(.modal-heading h2) { font-size: 18px; }
- .return-body { padding: 20px 16px; }
- .application .return-actions button { flex-basis: 100%; }
-}
+.return-body { padding: 12px; } fieldset { min-width: 0; } select, textarea { max-width: 100%; } p, li { overflow-wrap: anywhere; }
 </style>

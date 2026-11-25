@@ -73,7 +73,7 @@ test('ejemplares compartidos: deduplica solicitudes pendientes, conserva fallbac
     assert.equal(requests.length, 1)
     source.value = [{ copyId: 'copy-a' }]; await flush()
     assert.equal(requests.length, 1)
-    requests[0].resolve(new Response(JSON.stringify({ id: 'copy-a', codigoInventario: 'TEST-A', recurso: { id: 'resource-a', nombre: 'Nombre confirmado' } }), { status: 200 }))
+    requests[0].resolve(new Response(JSON.stringify({ id: 'copy-a', recursoId: 'resource-a', estado: 'PRESTADO', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'TEST-A', recurso: { id: 'resource-a', nombre: 'Nombre confirmado' } }), { status: 200 }))
     await flush()
     assert.equal(copies.value['copy-a'].recurso.nombre, 'Nombre confirmado')
     source.value = [{ copyId: 'copy-a' }, { copyId: 'copy-missing' }]; await flush()

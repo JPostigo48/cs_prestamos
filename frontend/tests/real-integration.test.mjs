@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import ts from 'typescript'
 import { effectScope, nextTick, ref } from 'vue'
+import { returnPolicy, returnBody, activeLoan, closedLoan, requestId, partId } from './helpers/loan-closure-fixtures.mjs'
 
 // Usa el compilador ya instalado y el runner de Node: sin instalar ni generar archivos.
 const modules = new Map()
@@ -82,25 +83,21 @@ test('catálogo: parámetros URL, límites y disponibilidad independientes', asy
   assert.equal(inventory.durationLabel({ tiempoMaximoPrestamoDias: 0.5, tiempoMaximoPrestamoHoras: 12 }), '12 horas')
   assert.equal(inventory.durationLabel({ tiempoMaximoPrestamoDias: 2, tiempoMaximoPrestamoHoras: 48 }), '2 días')
 })
-test('devolución: sin incidencia omite observación; incidencia requiere descripción válida', () => {
-  const start = '2026-01-01T00:00:00Z', date = '2026-01-02T12:00'
-  const now = new Date(date).getTime()
-  assert.deepEqual(Object.keys(returns.returnInput(date, false, 'Sin daños', start, now)), ['returnedAt'])
-  assert.equal(returns.returnInput(date, true, '  pantalla dañada  ', start, now).observation, 'pantalla dañada')
-  for (const run of [() => returns.returnInput('', false, '', start, now), () => returns.returnInput('invalid', false, '', start, now), () => returns.returnInput('2025-01-01', false, '', start, now), () => returns.returnInput(date, true, ' ', start, now), () => returns.returnInput(date, true, 'x'.repeat(1001), start, now)]) assert.throws(run)
+test('devolución integral: sano no genera daño; daño exige descripción y gravedad históricas', () => {
+  const input = (condition = 'SANO', severity = '', description = '') => returns.returnInput(requestId, returnPolicy(), { [partId]: true }, condition, severity, '', description, [])
+  assert.deepEqual(input(), returnBody())
+  assert.equal(input('DANADO', 'MODERADA', '  pantalla dañada  ').inspection.description, 'pantalla dañada')
+  for (const run of [() => input(''), () => input('DANADO'), () => input('DANADO', 'LEVE', ' '), () => input('DANADO', 'GRAVE', 'x'.repeat(1001))]) assert.throws(run)
   for (const status of [undefined, 0, 500, 503]) assert.equal(returns.uncertainReturn(status), true)
   for (const status of [400, 401, 403, 404, 409]) assert.equal(returns.uncertainReturn(status), false)
 })
-test('devolución: reloj en el mismo minuto conserva el instante completo sin adelantarlo', () => {
-  const start = new Date(2026, 9, 28, 10, 15, 40)
+test('devolución: no envía fecha cliente; solo el servidor fija instante y puntualidad', () => {
   for (const milliseconds of [0, 123, 999]) {
-    const now = new Date(2026, 9, 28, 10, 15, 50, milliseconds)
-    const local = returns.localDateTime(now)
-    assert.match(local, /^2026-10-28T10:15:50\.\d{3}$/)
-    assert.equal(new Date(local).getTime(), now.getTime())
-    assert.equal(returns.returnInput(local, false, '', start.toISOString(), now.getTime()).returnedAt, now.toISOString())
+    const p = { ...returnPolicy(), serverNow: new Date(2026, 9, 28, 10, 15, 50, milliseconds).toISOString() }
+    const body = returns.returnInput(requestId, p, { [partId]: true }, 'SANO', '', '', '', [])
+    assert.deepEqual(Object.keys(body).sort(), ['inspection', 'requestId'])
+    assert.doesNotMatch(JSON.stringify(body), /returnedAt|checkedAt|effectiveAt|serverNow/)
   }
-  assert.throws(() => returns.returnInput(returns.localDateTime(new Date(start.getTime() - 1)), false, '', start.toISOString()))
 })
 test('apelación: política visible permite programadas, activas y finalizadas dentro del plazo inclusivo', () => {
   const now = Date.parse('2026-10-28T15:15:50.123Z')
@@ -146,12 +143,15 @@ test('contrato de devolución: endpoint, payload, bloqueo persistente y confirma
   auth.saveSession(session('OPERADOR'))
   loans.setPendingReturn('l1', true)
   assert.equal(loans.hasPendingReturn('l1'), true)
-  const body = returns.returnInput('2026-01-02T12:00', false, '', '2026-01-01', new Date('2026-01-02T12:00').getTime())
+  loans.setPendingReturn('l1', false)
+  const body = returnBody()
   globalThis.fetch = async (url, options) => {
     assert.equal(url, '/api/loans/l1/return'); assert.equal(options.method, 'POST')
     assert.equal(options.headers.Authorization, 'Bearer test-token')
     assert.equal('observation' in JSON.parse(options.body), false)
-    return Response.json({ id: 'l1', status: 'FINALIZADO', return: { returnedAt: body.returnedAt } })
+    const result = closedLoan({ ...activeLoan('l1'), userId: 'u1' }, body)
+    result.closure.actorUserId = 'u1'
+    return Response.json(result)
   }
   assert.equal((await loans.returnLoan('l1', body)).status, 'FINALIZADO')
   loans.setPendingReturn('l1', false)
