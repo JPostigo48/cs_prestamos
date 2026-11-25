@@ -92,7 +92,7 @@ Los requisitos RF-57 en adelante amplían la versión inicial sin modificar los 
 
 ### Inspección, pérdida y recompensas
 
-- **RF-62.** Al recibir un ejemplar, el operador debe completar un formulario que indique si está **completo, en buen estado o con daño**, y registrar las observaciones correspondientes. El sistema aplicará la matriz de daño por categoría y gravedad.
+- **RF-62.** Al recibir un ejemplar, el operador debe completar un formulario que indique si está **completo, en buen estado o con daño**, y registrar las observaciones correspondientes. Ante daño o faltantes selecciona y fundamenta la gravedad entre las opciones históricas mostradas, sin valores preseleccionados. El sistema valida el contexto y la selección y aplica la matriz de daño por categoría y gravedad, sin delegar al operador el cálculo de puntos o suspensión.
 - **RF-63.** La pérdida o robo confirmado cierra el préstamo como CERRADO_POR_INCIDENCIA, sin simular devolución ni recompensa; deja el ejemplar NO_DISPONIBLE, establece confianza en cero y genera bloqueo indefinido.
 - **RF-64.** El sistema debe establecer la confianza en **0 %** y mantener un bloqueo indefinido cuando corresponda **daño grave de electrónico**.
 - **RF-65.** El sistema debe **sumar** descuentos y días de suspensión de incumplimientos distintos y mantener el historial de cada uno; ninguna operación puede reducir la confianza por debajo de 0.

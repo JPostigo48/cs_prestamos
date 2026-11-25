@@ -1,67 +1,36 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ReturnLoanUseCase } from './return-loan.use-case.js';
+import type { LoanRepository } from '../../domain/repositories/loan.repository.js';
+import type { ReturnLoanInput } from '../ports/loans.inputs.js';
 
-const startsAt = new Date(Date.now() + 60_000);
-const loan = {
-  id: 'loan-1',
-  userId: 'user-1',
-  copyId: 'copy-1',
-  startsAt,
-  endsAt: new Date(startsAt.getTime() + 86_400_000),
-  status: 'ACTIVO' as const,
-  return: null,
+const input: ReturnLoanInput = {
+  loanId: 'loan',
+  requestId: '123e4567-e89b-42d3-a456-426614174001',
+  actor: { accountId: 'account', userId: 'operator' },
+  inspection: { parts: [], condition: 'SANO', evidenceIds: [] },
 };
-
-describe('Loans use cases', () => {
-  it('returns an active loan and releases the copy', async () => {
-    const completed = {
-      ...loan,
+describe('ReturnLoanUseCase: único puerto integral e idempotente', () => {
+  it('devuelve el resultado transaccional sin lectura previa ni posterior que rompa reintentos', async () => {
+    const result = {
+      id: 'loan',
       status: 'FINALIZADO',
-      return: { returnedAt: new Date() },
+      closure: { requestId: input.requestId },
     };
-    const loans = {
-      findById: vi
-        .fn()
-        .mockResolvedValueOnce(loan)
-        .mockResolvedValueOnce(completed),
-      registerReturnWithCopy: vi.fn().mockResolvedValue({}),
-    };
-    const useCase = new ReturnLoanUseCase(loans as any);
-
-    await expect(
-      useCase.execute({
-        loanId: loan.id,
-        returnedAt: new Date(startsAt.getTime() + 3_600_000),
-        observation: 'Sin daños',
-      }),
-    ).resolves.toEqual(completed);
-    expect(loans.registerReturnWithCopy).toHaveBeenCalled();
+    const loans = { closeLoan: vi.fn().mockResolvedValue(result) };
+    const useCase = new ReturnLoanUseCase(loans as unknown as LoanRepository);
+    await expect(useCase.execute(input)).resolves.toEqual(result);
+    await expect(useCase.execute(input)).resolves.toEqual(result);
+    expect(loans.closeLoan).toHaveBeenCalledWith(input);
   });
-
-  it('never returns a stale success if the persisted return cannot be confirmed', async () => {
-    const loans = {
-      findById: vi.fn().mockResolvedValue(loan),
-      registerReturnWithCopy: vi.fn().mockResolvedValue({}),
-    };
+  it.each([
+    new NotFoundException(),
+    new ConflictException(),
+    new Error('rollback'),
+  ])('propaga el fallo del cierre sin éxito parcial', async (error) => {
+    const loans = { closeLoan: vi.fn().mockRejectedValue(error) };
     await expect(
-      new ReturnLoanUseCase(loans as any).execute({
-        loanId: loan.id,
-        returnedAt: new Date(startsAt.getTime() + 1),
-      }),
-    ).rejects.toMatchObject({ status: 500 });
-  });
-
-  it('rejects missing or already completed loans', async () => {
-    const loans = { findById: vi.fn().mockResolvedValue(null) };
-    const useCase = new ReturnLoanUseCase(loans as any);
-    await expect(
-      useCase.execute({ loanId: 'missing', returnedAt: new Date() }),
-    ).rejects.toThrow(NotFoundException);
-
-    loans.findById.mockResolvedValue({ ...loan, status: 'FINALIZADO' });
-    await expect(
-      useCase.execute({ loanId: loan.id, returnedAt: new Date() }),
-    ).rejects.toThrow(ConflictException);
+      new ReturnLoanUseCase(loans as unknown as LoanRepository).execute(input),
+    ).rejects.toBe(error);
   });
 });

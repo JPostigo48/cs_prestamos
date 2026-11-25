@@ -70,7 +70,7 @@ Las reglas de negocio expresan invariantes y restricciones del sistema de prést
 | RN-35 | Una devolución puntual, completa y sin faltas concede una recompensa de **10 % de la penalización de referencia de la categoría**; el porcentaje final no supera 100. |
 | RN-36 | La tardanza se detecta y clasifica automáticamente **sin tolerancia** y puede escalar de leve a moderada o grave según los umbrales de su categoría. |
 | RN-37 | Para una misma tardanza, escalar implica ajustar **solo la diferencia** hasta la nueva consecuencia total; no se aplican tres sanciones completas por haber atravesado tres niveles. |
-| RN-38 | El operador registra al recibir el ejemplar su estado y si sus componentes están completos; el sistema determina la falta de daño y su gravedad según la política aplicable. |
+| RN-38 | El operador registra al recibir el ejemplar su estado y si sus componentes están completos, y selecciona justificadamente la gravedad del daño o faltantes entre las opciones de la política histórica mostrada. El sistema valida esa selección y su contexto y determina la falta y consecuencia según la política aplicable; no se permite ingresar importes o suspensiones arbitrarios. |
 | RN-39 | Pérdida o robo es una regla distinta: la confianza se establece en **0 %** y el usuario se bloquea indefinidamente hasta resolución interna o apelación aceptada. |
 | RN-40 | Daño grave de electrónico también establece confianza en **0 %** y bloqueo indefinido hasta resolución interna o absolución. |
 | RN-41 | Las **faltas diferentes** se registran y sus descuentos y días de suspensión **se acumulan**; las suspensiones temporales se encadenan, sin solaparse. |

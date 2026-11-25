@@ -1,4 +1,5 @@
 import { ApiError } from '../../../shared/api/client'
+import { validClosureFields } from './closure-contracts'
 
 export interface CopyLoanSnapshot {
   schemaVersion: 1
@@ -64,8 +65,8 @@ export function validLoanConfiguration(v: Record<string, unknown>): boolean {
 }
 export function validLoan(v: unknown): boolean {
   return object(v) && text(v.id) && text(v.copyId) && text(v.userId) && text(v.endsAt) &&
-    ['ACTIVO', 'FINALIZADO', 'PLANIFICADO'].includes(String(v.status)) &&
-    validLoanConfiguration(v)
+    ['ACTIVO', 'FINALIZADO', 'PLANIFICADO', 'CERRADO_POR_INCIDENCIA'].includes(String(v.status)) &&
+    validLoanConfiguration(v) && validClosureFields(v)
 }
 export function pagination(query: Record<string, string>) {
   const page = Number(query.page ?? 1), limit = Number(query.limit ?? 20)

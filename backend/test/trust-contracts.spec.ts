@@ -50,12 +50,27 @@ const userId = uuid(1),
   reservationId = uuid(8),
   oldSanction = uuid(9),
   otherSanction = uuid(10);
-const temporary = OFFICIAL_POLICIES.find(
-  (p) => p.kind === 'DAMAGE' && p.suspensionType === 'TEMPORAL',
-)!;
-const indefinite = OFFICIAL_POLICIES.find(
-  (p) => p.kind === 'DAMAGE' && p.trustEffect === 'SET_ZERO',
-)!;
+// Reglas manuales sintéticas: las oficiales requieren su contexto específico.
+const temporary = {
+  ruleId: uuid(200),
+  versionId: uuid(201),
+  version: 1,
+  title: 'Suspensión manual temporal',
+  penalty: 10,
+  consequence: 'SUSPENSION',
+  suspensionType: 'TEMPORAL',
+  suspensionDays: 7,
+};
+const indefinite = {
+  ruleId: uuid(202),
+  versionId: uuid(203),
+  version: 1,
+  title: 'Suspensión manual indefinida',
+  penalty: 100,
+  consequence: 'SUSPENSION',
+  suspensionType: 'INDEFINIDA',
+  suspensionDays: null,
+};
 const instant = (offset = 0) =>
   Temporal.Instant.fromEpochMilliseconds(Date.now() + offset);
 const actor = { accountId, userId: actorId };
@@ -93,25 +108,44 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
           habilitada: true,
         },
       ],
-      reglas_uso: OFFICIAL_POLICIES.map((p) => ({
+      reglas_uso: [...OFFICIAL_POLICIES, temporary, indefinite].map((p) => ({
         id: p.ruleId,
         versionVigenteId: p.versionId,
       })),
-      versiones_regla: OFFICIAL_POLICIES.map((p) => ({
-        id: p.versionId,
-        reglaId: p.ruleId,
-        numero: p.version,
-        titulo: p.title,
-        descripcion: describeOfficialPolicy(p, p.category ? uuid(30) : null),
-        penalizacionPorcentual: p.penalty.toFixed(2),
-        consecuencia: p.consequence,
-        tipoSuspension: p.suspensionType,
-        diasSuspension: p.suspensionDays,
-        estado: 'ACTIVA',
-      })),
+      versiones_regla: [...OFFICIAL_POLICIES, temporary, indefinite].map(
+        (p) => ({
+          id: p.versionId,
+          reglaId: p.ruleId,
+          numero: p.version,
+          titulo: p.title,
+          descripcion:
+            'kind' in p
+              ? describeOfficialPolicy(p, p.category ? uuid(30) : null)
+              : 'Regla manual sintética sin metadatos de política oficial.',
+          penalizacionPorcentual: p.penalty.toFixed(2),
+          consecuencia: p.consequence,
+          tipoSuspension: p.suspensionType,
+          diasSuspension: p.suspensionDays,
+          estado: 'ACTIVA',
+        }),
+      ),
+      categorias_recurso: [{ id: uuid(31), activo: true }],
+      recursos: [{ id: uuid(30), categoriaId: uuid(31), activo: true }],
       ejemplares: [
-        { id: copyId, recursoId: uuid(30), estado: 'RESERVADO' },
-        { id: loanCopy, recursoId: uuid(30), estado: 'PRESTADO' },
+        {
+          id: copyId,
+          recursoId: uuid(30),
+          estado: 'RESERVADO',
+          condicionFisica: 'APTO',
+          habilitado: true,
+        },
+        {
+          id: loanCopy,
+          recursoId: uuid(30),
+          estado: 'PRESTADO',
+          condicionFisica: 'APTO',
+          habilitado: true,
+        },
       ],
       prestamos: [
         {
@@ -496,22 +530,28 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
     expect(db.rows('reservas')[0]!.estado).toBe('CONFIRMADA');
     expect(db.rows('ejemplares')[0]!.estado).toBe('RESERVADO');
   });
-  it('rolls back rather than freeing a loaned or inconsistent reserved copy', async () => {
-    db.rows('ejemplares')[0]!.estado = 'PRESTADO';
-    await suspend().expect(409);
-    expect(db.rows('sanciones')).toHaveLength(2);
-    expect(db.rows('usuarios')[0]!.confianza).toBe('75.00');
-    expect(db.rows('reservas')[0]!.estado).toBe('CONFIRMADA');
-    expect(db.rows('ejemplares')[0]!.estado).toBe('PRESTADO');
-    db.rows('ejemplares')[0]!.estado = 'RESERVADO';
-    db.rows('prestamos')[0]!.ejemplarId = copyId;
-    await suspend().expect(409);
-    expect(db.rows('ejemplares')[0]!.estado).toBe('RESERVADO');
-  });
-  it('rejects automatic/access/reward/trust policies and unconfigured or inactive suspensions', async () => {
-    for (const policy of OFFICIAL_POLICIES.filter(
-      (p) => !['DAMAGE', 'LOSS'].includes(p.kind),
-    ))
+  it.each(['loaned-copy', 'inconsistent-reservation'])(
+    'cancels the reservation without freeing commitments when %s',
+    async (scenario) => {
+      if (scenario === 'loaned-copy')
+        db.rows('ejemplares')[0]!.estado = 'PRESTADO';
+      else db.rows('prestamos')[0]!.ejemplarId = copyId;
+      const loansBefore = structuredClone(db.rows('prestamos'));
+      await suspend().expect(201);
+      expect(db.rows('sanciones')).toHaveLength(3);
+      expect(db.rows('usuarios')[0]!.confianza).toBe(
+        (75 - temporary.penalty).toFixed(2),
+      );
+      expect(db.rows('reservas')[0]!.estado).toBe('CANCELADA');
+      expect(db.rows('ejemplares')[0]!.estado).toBe(
+        scenario === 'loaned-copy' ? 'PRESTADO' : 'NO_DISPONIBLE',
+      );
+      expect(db.rows('prestamos')).toEqual(loansBefore);
+      expect(db.rows('incumplimientos')).toHaveLength(1);
+    },
+  );
+  it('rejects every official policy without its context and unconfigured or inactive manual suspensions', async () => {
+    for (const policy of OFFICIAL_POLICIES)
       await suspend(suspension({ ruleId: policy.ruleId })).expect(409);
     const version = db
       .rows('versiones_regla')
@@ -526,7 +566,7 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
     await suspend().expect(409);
     expect(db.rows('incumplimientos')).toHaveLength(0);
   });
-  it('lifts indefinite SET_ZERO without absolution or trust restoration, and is repeatable without duplicate audit', async () => {
+  it('lifts an indefinite manual suspension without absolution or trust restoration, and is repeatable without duplicate audit', async () => {
     const first = await suspend(
       suspension({ ruleId: indefinite.ruleId }),
     ).expect(201);
@@ -538,7 +578,10 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
     expect(result.body.resultingTrust).toBe(0);
     expect(db.rows('usuarios')[0]!.confianza).toBe('0.00');
     const users = new PrismaUserRepository(db as unknown as PrismaService);
-    expect((await users.getLoanEligibility(userId)).eligible).toBe(true);
+    const eligibility = await users.getLoanEligibility(userId);
+    expect(eligibility.eligible).toBe(false);
+    expect(eligibility.reasons).toEqual(['CONFIANZA_INSUFICIENTE']);
+    expect(eligibility.activeSanctions).toEqual([]);
     expect(
       (await new PrismaAppealRepository(
         db as unknown as PrismaService,
@@ -640,8 +683,10 @@ describe('F04/F05/F11/F12 HTTP and production repositories; isolated in-memory t
     await expect(
       reservations.pickup(reservationId, new Date()),
     ).rejects.toMatchObject({ status: 409 });
-    expect(db.rows('reservas')[0]!.estado).toBe('CONFIRMADA');
-    expect(db.rows('ejemplares')[0]!.estado).toBe('RESERVADO');
+    expect(db.rows('reservas')[0]!.estado).toBe('CANCELADA');
+    expect(db.rows('ejemplares')[0]!.estado).toBe('DISPONIBLE');
+    expect(db.rows('prestamos')).toHaveLength(1);
+    expect(db.rows('prestamos')[0]!.estado).toBe('ACTIVO');
     db.rows('ejemplares')[0]!.estado = 'DISPONIBLE';
     await expect(
       reservations.create({

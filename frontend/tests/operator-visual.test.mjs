@@ -3,11 +3,11 @@ import assert from 'node:assert/strict'
 import { ref } from 'vue'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
+import { returnPolicy, closedLoan } from './helpers/loan-closure-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const Operations = await loadComponent('modules/loans/pages/LoanOperationsPage')
 const Requests = await loadComponent('modules/users/pages/RegistrationRequestsPage')
-const Checklist = await loadComponent('modules/loans/components/ReturnChecklist')
 const Reservations = await loadComponent('modules/loans/components/ReservationsPanel')
 const { useUserDetails } = await load('modules/users/useUserDetails')
 beforeEach(() => { testEnvironment(); auth.saveSession(session('OPERADOR')) })
@@ -20,7 +20,7 @@ test('panel: tarjetas reales, mora, detalles y resolución de ejemplar única en
   globalThis.fetch = async url => {
     calls.push(String(url))
     if (url.includes('/loans/')) return Response.json([loan])
-    if (url.includes('/copies/')) return Response.json({ id: loan.copyId, codigoInventario: 'TEST-01', recurso: { id: 'r', nombre: 'Equipo confirmado' } })
+    if (url.includes('/copies/')) return Response.json({ id: loan.copyId, recursoId: 'r', estado: 'PRESTADO', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'TEST-01', recurso: { id: 'r', nombre: 'Equipo confirmado' } })
     return Response.json({ id: loan.userId, name: 'Titular confirmado' })
   }
   const app = mount(Operations)
@@ -37,30 +37,31 @@ test('panel: tarjetas reales, mora, detalles y resolución de ejemplar única en
   } finally { app.unmount() }
 })
 
-test('checklist: ninguna selección implícita; guarda separado y no registra devolución', async () => {
-  const calls = []
-  const snapshot = { schemaVersion: 1, copyId: loan.copyId, resourceId: 'resource', policy: { resourceId: 'resource', categoryId: 'category', durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' }, accessories: [{ id: 'part', nombre: 'Cable de prueba' }] }
+test('cierre integral refresca activos/vencidos y reservas abiertas una sola vez; conserva resultado visible y foco', async () => {
+  let activeReads = 0, overdueReads = 0, reservationReads = 0, writes = 0, closed = false
   globalThis.fetch = async (url, options) => {
-    calls.push({ url: String(url), options })
-    if (options.method === 'GET') return Response.json({ ...loan, configurationSnapshot: snapshot, returnChecklist: null })
-    return Response.json({ id: 'inspection', loanId: loan.id, actorId: 'operator', configurationSnapshot: snapshot, parts: [{ accessoryId: 'part', nombre: 'Cable de prueba', received: false }], checkedAt: new Date().toISOString() })
+    if (url.includes('/reservations?')) { reservationReads++; return Response.json({ items: [], total: 0, page: 1, limit: 20 }) }
+    if (url.endsWith('/active')) { activeReads++; return Response.json(closed ? [] : [loan]) }
+    if (url.endsWith('/overdue')) { overdueReads++; return Response.json(closed ? [] : [loan]) }
+    if (url.endsWith('/return-policy')) return Response.json(returnPolicy(loan.id, []))
+    if (url.endsWith('/evidence')) return Response.json([])
+    if (url.endsWith('/return')) { writes++; closed = true; return Response.json(closedLoan(loan, JSON.parse(options.body))) }
+    if (url.includes('/copies/')) return Response.json({ id: loan.copyId, recursoId: 'r', codigoInventario: 'TEST-01', condicionFisica: 'APTO', habilitado: true, estado: 'PRESTADO', recurso: { id: 'r', nombre: 'Equipo' } })
+    return Response.json({ id: loan.userId, name: 'Titular' })
   }
-  const app = mount(Checklist, { loanId: loan.id, copyId: loan.copyId, disabled: false })
+  const app = mount(Operations)
   try {
-    await event(find(app.root, 'button', 'Consultar accesorios'), 'click'); await flush()
-    assert.equal(find(app.root, 'button', 'Guardar solo checklist').props.disabled, true)
-    const radios = findAll(app.root, node => node.tag === 'input' && node.props.type === 'radio')
-    assert.ok(radios.every(node => !node.checked))
-    await model(radios[1], false)
-    await event(find(app.root, 'button', 'Guardar solo checklist'), 'click')
-    assert.match(text(app.root), /Checklist confirmado por el servidor/)
-    assert.equal(calls.filter(call => call.options.method === 'POST').length, 1)
-    assert.ok(calls.at(-1).url.endsWith('/return-checklist'))
-    assert.ok(calls.every(call => !call.url.includes('/accessories') && !call.url.includes('/copies/')))
-    assert.equal(find(app.root, 'button', 'Guardar solo checklist').props.disabled, true)
-    const body = JSON.parse(calls.at(-1).options.body)
-    assert.deepEqual(body.parts, [{ accessoryId: 'part', received: false }])
-    assert.ok(Number.isFinite(Date.parse(body.checkedAt)))
+    await flush(); await event(find(app.root, 'button', 'Entregas de reservas'), 'click')
+    await event(find(app.root, 'button', 'Consultar / actualizar reservas'), 'click')
+    assert.equal(reservationReads, 1)
+    await event(find(app.root, 'button', 'Activos'), 'click')
+    await event(find(app.root, 'button', 'Registrar devolución'), 'click')
+    await flush(); await model(find(find(app.root, 'dialog'), 'input'), 'SANO')
+    await event(find(find(app.root, 'dialog'), 'form'), 'submit'); await flush()
+    assert.equal(writes, 1); assert.equal(activeReads, 2); assert.equal(overdueReads, 2); assert.equal(reservationReads, 2)
+    assert.match(text(find(app.root, 'dialog')), /Devolución real confirmada/)
+    assert.equal(document.activeElement.tag, 'h3')
+    assert.match(text(app.root), /Activos · 0/)
   } finally { app.unmount() }
 })
 

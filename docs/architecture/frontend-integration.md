@@ -6,13 +6,15 @@ La aplicación Vue usa los módulos de autenticación, usuarios, inventario, pr�
 
 ## Arquitectura y ejecución
 
+**Actualización préstamos · 25/11/2026:** rige el [contrato integral de cierre](../development/loans-contracts.md): política histórica, inspección sin defaults, mora automática, consecuencias/recompensa, pérdida/robo y rehabilitación. Backend y frontend se actualizan coordinadamente; no hay fallback de devolución básica. La idempotencia persistida del cierre es específica de esa operación, no una garantía general para todas las mutaciones. Las secciones fechadas de correcciones inferiores son evidencia histórica; sus límites de contrato provisional o devolución separada no describen este corte. OpenAPI/Showcase sincronizados a 84 operaciones; [verificación y fallos pendientes](../development/loan-integration-verification.md).
+
 - [Transporte HTTP único](../../frontend/src/shared/api/client.ts): base pública configurada o proxy local; bearer, cancelación y errores HTTP. No hay respuestas simuladas, servidor mock, polling ni fallback de datos en producción.
 - [Sesión y autenticación](../../frontend/src/modules/auth/api/auth-api.ts): sesión validada y persistida en localStorage, compartida entre pestañas del mismo origen con caducidad original; migración única del almacenamiento legado, cierre sincronizado y reconstrucción de rutas protegidas al cambiar de cuenta. Limpieza por 401 del token actual (no de peticiones obsoletas) y conservación por 403. El rol de acceso no se deduce del tipo institucional ni del correo. El Bearer sigue siendo accesible a JavaScript, no una cookie HttpOnly; véanse [persistencia y límites](../../frontend/README.md#áreas).
 - [Política de acceso](../../frontend/src/modules/auth/access-policy.ts) y [router](../../frontend/src/router.ts): ADMINISTRADOR accede a todas las operaciones de OPERADOR. Los destinos de retorno se validan mediante una allowlist. Los guards frontend no reemplazan autorización backend.
 - [Layout real](../../frontend/src/shared/layouts/AppLayout.vue): sidebar azul, cabecera blanca, navegación móvil, tarjetas, tablas con desplazamiento local, foco visible y enlace para saltar al contenido. Estilos restringidos al contenedor real o encapsulados en componentes. Sin marco de teléfono ni altura fija de aplicación.
 - [Cargas independientes](../../frontend/src/shared/composables/useRemote.ts): cancelan respuestas obsoletas, conservan error por bloque y permiten actualización manual. Las consultas operativas a demanda no reintentan automáticamente.
 - [Sección remota normal](../../frontend/src/shared/components/RemoteSection.vue): conserva presentación y consulta explícita, cancelación, carga, error, vacío configurable, reintento y detalle técnico solo en desarrollo. No conoce IDs Fxx ni rutas propuestas. Los consumidores de negocio usan sus adaptadores reales.
-- [Bloqueo de mutaciones inciertas](../../frontend/src/shared/api/mutation-guard.ts): reservas, recogida, cancelación, resoluciones, suspensión, levantamiento, alta de recurso/ejemplar y registro integral no se repiten automáticamente ni por reabrir el formulario. Conserva solo claves de operación, no cuerpos ni credenciales. Una consulta que confirma una operación permite reconciliarla; su ausencia no prueba que haya fallado. Sin lectura confirmatoria, el bloqueo incierto se mantiene durante la pestaña. El servidor no garantiza idempotencia.
+- [Bloqueo de mutaciones inciertas](../../frontend/src/shared/api/mutation-guard.ts): reservas, recogida, cancelación, resoluciones, suspensión, levantamiento, alta de recurso/ejemplar y registro integral no se repiten automáticamente ni por reabrir el formulario. Conserva solo claves de operación, no cuerpos ni credenciales. Una consulta que confirma una operación permite reconciliarla; su ausencia no prueba que haya fallado. Sin lectura confirmatoria, el bloqueo incierto se mantiene durante la pestaña. No presupone idempotencia general del servidor; el cierre integral sí tiene solicitud y resultado persistidos.
 - [Fechas](../../frontend/src/shared/format.ts): salida con zona America/Lima; los formularios etiquetan la hora local del dispositivo y convierten a ISO con zona antes del envío.
 
 El formulario de acceso real está aislado en [RealLoginForm.vue](../../frontend/src/modules/auth/components/RealLoginForm.vue). No importa componentes ni estado simulado de la referencia. El formulario visual compartido original, los módulos de referencia, sus assets y la configuración/dependencias permanecen sin cambios.
@@ -54,8 +56,8 @@ Inicio de sesión: USUARIO → inicio personal; OPERADOR → operaciones; ADMINI
 | V13 | Reserva de ejemplar y hora futura | Integrado: [reserva](../../frontend/src/modules/loans/components/ReservationDialog.vue); ID y límite confirmados por servidor |
 | V14 | Salir, inicio, navegación y roles | Integrado: [layout](../../frontend/src/shared/layouts/AppLayout.vue) y política compartida |
 | V15 | Activos, mora, contadores y recibir | Integrado: [operaciones](../../frontend/src/modules/loans/pages/LoanOperationsPage.vue); listas independientes |
-| V16 | Checklist y puntualidad de recepción | Puntualidad derivada; checklist F06/F09 separado: [revisión](../../frontend/src/modules/loans/components/ReturnChecklist.vue) |
-| V17 | Confirmar recepción, cerrar y errores | Integrado: [devolución](../../frontend/src/modules/loans/components/ReturnLoanDialog.vue); no promete sanción automática |
+| V16 | Checklist y puntualidad de recepción | Política histórica y hora servidor; decisiones explícitas sin defaults: [revisión](../../frontend/src/modules/loans/components/ReturnChecklist.vue:1) |
+| V17 | Confirmar recepción, cerrar y errores | [Cierre integral](../../frontend/src/modules/loans/components/ReturnLoanDialog.vue:1) con consecuencias, recompensa y conciliación idempotente |
 | V18 | Bandeja administrativa y pendientes | Parcial/API F04: [apelaciones](../../frontend/src/modules/trust/pages/AppealsPage.vue); cantidad desconocida si no se obtuvo lectura |
 | V19 | Aprobar/rechazar y fundamento | Integrado sobre IDs obtenidos por la bandeja; resolución real ACEPTADA/RECHAZADA. Descubrimiento bloqueado por F04 |
 | V20 | Usuarios, filtros, estado, correo y rol | Lista integrada: [usuarios](../../frontend/src/modules/users/pages/UsersManagementPage.vue); cuenta/correo/rol dependen de F10, teléfono no disponible |
@@ -70,7 +72,7 @@ Inicio de sesión: USUARIO → inicio personal; OPERADOR → operaciones; ADMINI
 | C01 | Recuperar/cancelar reservas y entregar | Acciones reales integradas; lectura F14 pendiente: [reservas](../../frontend/src/modules/loans/components/ReservationsPanel.vue) |
 | C02 | Consultar/aceptar versión de términos | [Términos](../../frontend/src/modules/auth/components/TermsPanel.vue): documento completo en modal público accesible con renderer seguro. Abrir/cargar habilita la casilla externa, no la acepta; recarga, cambio o fallo invalidan aceptación. No acredita lectura humana |
 | C03 | Revisar solicitud y crear acceso | [Solicitudes](../../frontend/src/modules/users/pages/RegistrationRequestsPage.vue): aprobación atómica crea usuario, vinculación, cuenta habilitada USUARIO y aceptación con correo/hash originales. Sin contraseña administrativa ni alta manual en este flujo; legados incompletos bloqueados con 409 y motivos seguros |
-| C04 | Renovación, notificaciones, pérdida/robo y motor de sanción | Fuera de las acciones de estas referencias; sin nueva UI ni rutas inventadas |
+| C04 | Pérdida/robo y motor de sanción | Cierre por incidencia y episodios conectados; renovación/notificaciones no se incorporan en este corte |
 
 ## Endpoints existentes usados
 
@@ -80,7 +82,7 @@ Los adaptadores de cada módulo concentran las rutas de negocio; los componentes
 - Usuario: GET /users; GET /users/:userId; GET /users/:userId/loan-eligibility; GET /users/:userId/trust; GET /users/:userId/sanctions.
 - Solicitudes: GET /users/registration-requests; POST /users/registration-requests/:requestId/approve y /reject.
 - Inventario: GET /inventory/categories; GET/POST /inventory/resources; GET/PATCH /inventory/resources/:resourceId; GET/POST /inventory/resources/:resourceId/copies; GET /inventory/copies/:copyId; PATCH /inventory/copies/:copyId/state.
-- Préstamos: GET /loans/active y /loans/overdue; GET /loans/user/:userId/history; GET /loans/:loanId; POST /loans/:loanId/return; POST /loans/reservations; DELETE /loans/reservations/:reservationId; POST /loans/reservations/:reservationId/pickup.
+- Préstamos: GET /loans/active y /loans/overdue; GET /loans/user/:userId/history; GET /loans/:loanId y /loans/:loanId/return-policy; POST /loans/:loanId/return y /loans/:loanId/close-incident; POST /loans/reservations; DELETE /loans/reservations/:reservationId; POST /loans/reservations/:reservationId/pickup.
 - Confianza/términos: POST /sanctions/:sanctionId/appeals; PATCH /appeals/:appealId/resolution; POST /terms/acceptances.
 
 No se pretende exponer las 53 operaciones del inventario backend como un backoffice nuevo: se conectan las necesarias para las acciones de la referencia y sus cuatro complementos.
@@ -88,7 +90,7 @@ No se pretende exponer las 53 operaciones del inventario backend como un backoff
 ## Semántica de errores y escrituras
 
 - Un resultado desconocido nunca se presenta como cero, vacío o éxito. Los listados distinguen sin respuesta de respuesta vacía.
-- Una incidencia de devolución exige texto; cualquier observación no vacía deja la copia NO_DISPONIBLE en el backend. Sin incidencia se omite la propiedad, no se envía «sin observaciones».
+- Daño o faltantes exigen gravedad guiada y fundamento; el sistema valida la política histórica y retiene el ejemplar. La observación libre no sustituye la condición física ni es por sí sola una clasificación de daño. Rehabilitar requiere verificación explícita y habilitación administrativa separada.
 - El [bloqueo de devolución](../../frontend/src/modules/loans/api/loans-api.ts) del primer corte se refuerza. Red, 5xx o cuerpo no confirmatorio requieren consultar el préstamo. Solo una devolución finalizada válida y coincidente libera el bloqueo. Una lectura ACTIVO, un 404 o un ID ajeno no prueban que un envío previo haya fallado ni habilitan repetirlo.
 - Accesorios, ejemplares, datos básicos y excepción de política se guardan por separado. El fallo de una etapa no deshace ni declara completas otras escrituras confirmadas.
 - Sanción no equivale a cuenta deshabilitada o vinculación no vigente. Resolver apelación no borra el historial ni absuelve otras sanciones.

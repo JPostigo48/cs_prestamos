@@ -8,6 +8,7 @@ import { JwtPort } from '../src/modules/auth/application/ports/jwt.port.js';
 import { AccessRole } from '../src/modules/auth/domain/entities/access-account.js';
 import { ReservationRepository } from '../src/modules/loans/domain/repositories/reservation.repository.js';
 import { LoanRepository } from '../src/modules/loans/domain/repositories/loan.repository.js';
+import { randomUUID } from 'node:crypto';
 
 describe('Loans authorization and lifecycle (e2e)', () => {
   let app: INestApplication;
@@ -207,7 +208,7 @@ describe('Loans authorization and lifecycle (e2e)', () => {
     await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ returnedAt: new Date().toISOString() })
+      .send({ requestId: randomUUID(), inspection: { parts: [], condition: 'SANO', evidenceIds: [] } })
       .expect(403);
 
     await request(app.getHttpServer())
@@ -228,11 +229,13 @@ describe('Loans authorization and lifecycle (e2e)', () => {
     expect(await loans.hasOverlappingLoan(copyId, interval!.endsAt, new Date(interval!.endsAt.getTime() + 1))).toBe(false);
     expect(await loans.hasOverlappingLoan(copyId, new Date(interval!.endsAt.getTime() - 1), interval!.endsAt)).toBe(true);
 
-    const returnedAt = new Date();
+    const beforeReturn = Date.now();
     const returned = await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`).auth(administratorToken, { type: 'bearer' })
-      .send({ returnedAt: returnedAt.toISOString() }).expect(201);
-    expect(returned.body.return.returnedAt).toBe(returnedAt.toISOString());
+      .send({ requestId: randomUUID(), inspection: { parts: [], condition: 'SANO', evidenceIds: [] } }).expect(201);
+    const returnedAt = new Date(returned.body.return.returnedAt);
+    expect(returnedAt.getTime()).toBeGreaterThanOrEqual(beforeReturn);
+    expect(returnedAt.getTime()).toBeLessThanOrEqual(Date.now());
     expect((await loans.findById(loanId))?.return?.returnedAt).toEqual(returnedAt);
     expect(await loans.hasOverlappingLoan(copyId, interval!.startsAt, interval!.endsAt)).toBe(false);
   }, 10000);

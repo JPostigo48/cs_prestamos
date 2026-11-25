@@ -246,6 +246,15 @@
           "list": true,
           "attributes": [],
           "kind": "relation"
+        },
+        {
+          "name": "episodios",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -690,6 +699,33 @@
             }
           ],
           "kind": "enum"
+        },
+        {
+          "name": "condicionFisica",
+          "type": "CondicionFisica",
+          "typeExpression": "CondicionFisica",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
+        },
+        {
+          "name": "habilitado",
+          "type": "Boolean",
+          "typeExpression": "Boolean",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "true"
+              ],
+              "named": {},
+              "raw": "@default(true)"
+            }
+          ],
+          "kind": "scalar"
         },
         {
           "name": "createdAt",
@@ -2714,6 +2750,24 @@
           "list": false,
           "attributes": [],
           "kind": "relation"
+        },
+        {
+          "name": "cierre",
+          "type": "CierrePrestamo",
+          "typeExpression": "CierrePrestamo",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "incumplimientos",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -2759,6 +2813,184 @@
           ],
           "named": {},
           "raw": "@@map(\"prestamos\")"
+        }
+      ]
+    },
+    {
+      "name": "CierrePrestamo",
+      "module": "PRÉSTAMOS",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "requestId",
+          "type": "VarChar",
+          "typeExpression": "VarChar(120)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "unique",
+              "positional": [],
+              "named": {},
+              "raw": "@unique"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "requestHash",
+          "type": "VarChar",
+          "typeExpression": "VarChar(64)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "actor",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "contexto",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "inspeccion",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "resultado",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "recompensa",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaEfectiva",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "prestamoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "map",
+          "positional": [
+            "cierres_prestamo"
+          ],
+          "named": {},
+          "raw": "@@map(\"cierres_prestamo\")"
         }
       ]
     },
@@ -3615,6 +3847,15 @@
             }
           ],
           "kind": "relation"
+        },
+        {
+          "name": "ajustes",
+          "type": "AjusteIncumplimiento",
+          "typeExpression": "AjusteIncumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
@@ -3703,6 +3944,42 @@
             }
           ],
           "kind": "scalar"
+        },
+        {
+          "name": "prestamoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "categoriaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "termsVersionId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "origen",
+          "type": "OrigenIncumplimiento",
+          "typeExpression": "OrigenIncumplimiento",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "enum"
         },
         {
           "name": "usuarioId",
@@ -3902,9 +4179,125 @@
             }
           ],
           "kind": "relation"
+        },
+        {
+          "name": "prestamo",
+          "type": "Prestamo",
+          "typeExpression": "Prestamo",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "prestamoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "categoria",
+          "type": "CategoriaRecurso",
+          "typeExpression": "CategoriaRecurso",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "categoriaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[categoriaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "terminos",
+          "type": "VersionTerminos",
+          "typeExpression": "VersionTerminos",
+          "nullable": true,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "termsVersionId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[termsVersionId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "ajustes",
+          "type": "AjusteIncumplimiento",
+          "typeExpression": "AjusteIncumplimiento",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
         }
       ],
       "attributes": [
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "prestamoId",
+              "origen"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([prestamoId, origen])"
+        },
+        {
+          "name": "index",
+          "positional": [
+            [
+              "categoriaId",
+              "termsVersionId",
+              "origen"
+            ]
+          ],
+          "named": {},
+          "raw": "@@index([categoriaId, termsVersionId, origen])"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "(\"prestamoId\" IS NULL AND origen IS NULL) OR (\"prestamoId\" IS NOT NULL AND \"categoriaId\" IS NOT NULL AND \"termsVersionId\" IS NOT NULL AND origen IS NOT NULL)",
+            "name": "incumplimientos_episodio_contexto_check"
+          },
+          "raw": "@@check(expression: \"(\\\"prestamoId\\\" IS NULL AND origen IS NULL) OR (\\\"prestamoId\\\" IS NOT NULL AND \\\"categoriaId\\\" IS NOT NULL AND \\\"termsVersionId\\\" IS NOT NULL AND origen IS NOT NULL)\", name: \"incumplimientos_episodio_contexto_check\")"
+        },
         {
           "name": "index",
           "positional": [
@@ -3934,6 +4327,288 @@
           ],
           "named": {},
           "raw": "@@map(\"incumplimientos\")"
+        }
+      ]
+    },
+    {
+      "name": "AjusteIncumplimiento",
+      "module": "REGLAS, INCUMPLIMIENTOS Y APELACIONES",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "id",
+              "positional": [],
+              "named": {},
+              "raw": "@id"
+            },
+            {
+              "name": "default",
+              "positional": [
+                "uuid()"
+              ],
+              "named": {},
+              "raw": "@default(uuid())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "incumplimientoId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "versionReglaId",
+          "type": "Uuid",
+          "typeExpression": "Uuid",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "severidad",
+          "type": "VarChar",
+          "typeExpression": "VarChar(40)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "efecto",
+          "type": "VarChar",
+          "typeExpression": "VarChar(20)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "nominalObjetivo",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "incrementoNominal",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "descuentoEfectivo",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "saldoAnterior",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "saldoPosterior",
+          "type": "Numeric",
+          "typeExpression": "Numeric(5, 2)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "duracionTotalDias",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "incrementoDias",
+          "type": "Int",
+          "typeExpression": "Int",
+          "nullable": true,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "fechaEfectiva",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "actor",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "contexto",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "calendarioAnterior",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "calendarioPosterior",
+          "type": "Jsonb",
+          "typeExpression": "Jsonb",
+          "nullable": false,
+          "list": false,
+          "attributes": [],
+          "kind": "scalar"
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamptz",
+          "typeExpression": "Timestamptz(3)",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "default",
+              "positional": [
+                "now()"
+              ],
+              "named": {},
+              "raw": "@default(now())"
+            }
+          ],
+          "kind": "scalar"
+        },
+        {
+          "name": "incumplimiento",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "incumplimientoId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        },
+        {
+          "name": "versionRegla",
+          "type": "VersionRegla",
+          "typeExpression": "VersionRegla",
+          "nullable": false,
+          "list": false,
+          "attributes": [
+            {
+              "name": "relation",
+              "positional": [],
+              "named": {
+                "fields": [
+                  "versionReglaId"
+                ],
+                "references": [
+                  "id"
+                ],
+                "onDelete": "Restrict",
+                "onUpdate": "Cascade"
+              },
+              "raw": "@relation(fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)"
+            }
+          ],
+          "kind": "relation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "unique",
+          "positional": [
+            [
+              "incumplimientoId",
+              "severidad",
+              "versionReglaId"
+            ]
+          ],
+          "named": {},
+          "raw": "@@unique([incumplimientoId, severidad, versionReglaId])"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "\"descuentoEfectivo\" >= 0 AND \"saldoAnterior\" BETWEEN 0 AND 100 AND \"saldoPosterior\" BETWEEN 0 AND 100 AND \"saldoAnterior\" - \"saldoPosterior\" = \"descuentoEfectivo\"",
+            "name": "ajustes_saldos_check"
+          },
+          "raw": "@@check(expression: \"\\\"descuentoEfectivo\\\" >= 0 AND \\\"saldoAnterior\\\" BETWEEN 0 AND 100 AND \\\"saldoPosterior\\\" BETWEEN 0 AND 100 AND \\\"saldoAnterior\\\" - \\\"saldoPosterior\\\" = \\\"descuentoEfectivo\\\"\", name: \"ajustes_saldos_check\")"
+        },
+        {
+          "name": "check",
+          "positional": [],
+          "named": {
+            "expression": "(efecto = 'SET_ZERO' AND \"nominalObjetivo\" IS NULL AND \"incrementoNominal\" IS NULL AND \"duracionTotalDias\" IS NULL AND \"incrementoDias\" IS NULL AND \"saldoPosterior\" = 0) OR (efecto = 'DISCOUNT' AND \"nominalObjetivo\" BETWEEN 0 AND 100 AND \"incrementoNominal\" BETWEEN 0 AND \"nominalObjetivo\" AND \"duracionTotalDias\" > 0 AND \"incrementoDias\" BETWEEN 0 AND \"duracionTotalDias\")",
+            "name": "ajustes_efecto_check"
+          },
+          "raw": "@@check(expression: \"(efecto = 'SET_ZERO' AND \\\"nominalObjetivo\\\" IS NULL AND \\\"incrementoNominal\\\" IS NULL AND \\\"duracionTotalDias\\\" IS NULL AND \\\"incrementoDias\\\" IS NULL AND \\\"saldoPosterior\\\" = 0) OR (efecto = 'DISCOUNT' AND \\\"nominalObjetivo\\\" BETWEEN 0 AND 100 AND \\\"incrementoNominal\\\" BETWEEN 0 AND \\\"nominalObjetivo\\\" AND \\\"duracionTotalDias\\\" > 0 AND \\\"incrementoDias\\\" BETWEEN 0 AND \\\"duracionTotalDias\\\")\", name: \"ajustes_efecto_check\")"
+        },
+        {
+          "name": "map",
+          "positional": [
+            "ajustes_incumplimiento"
+          ],
+          "named": {},
+          "raw": "@@map(\"ajustes_incumplimiento\")"
         }
       ]
     },
@@ -4346,6 +5021,15 @@
           "name": "solicitudes",
           "type": "SolicitudRegistro",
           "typeExpression": "SolicitudRegistro",
+          "nullable": false,
+          "list": true,
+          "attributes": [],
+          "kind": "relation"
+        },
+        {
+          "name": "episodios",
+          "type": "Incumplimiento",
+          "typeExpression": "Incumplimiento",
           "nullable": false,
           "list": true,
           "attributes": [],
@@ -4835,6 +5519,78 @@
         {
           "name": "FINALIZADO",
           "attributes": []
+        },
+        {
+          "name": "CERRADO_POR_INCIDENCIA",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "CondicionFisica",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "APTO",
+          "attributes": []
+        },
+        {
+          "name": "DANADO",
+          "attributes": []
+        },
+        {
+          "name": "INCOMPLETO",
+          "attributes": []
+        },
+        {
+          "name": "DANADO_E_INCOMPLETO",
+          "attributes": []
+        },
+        {
+          "name": "PERDIDO",
+          "attributes": []
+        },
+        {
+          "name": "ROBADO",
+          "attributes": []
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "positional": [
+            "pg/text@1"
+          ],
+          "named": {},
+          "raw": "@@type(\"pg/text@1\")"
+        }
+      ]
+    },
+    {
+      "name": "OrigenIncumplimiento",
+      "module": "ENUMERACIONES",
+      "values": [
+        {
+          "name": "MORA",
+          "attributes": []
+        },
+        {
+          "name": "DANO",
+          "attributes": []
+        },
+        {
+          "name": "PERDIDA",
+          "attributes": []
         }
       ],
       "attributes": [
@@ -5088,6 +5844,25 @@
       "sourceCardinality": "1",
       "targetCardinality": "0..n",
       "owner": "Recurso",
+      "fields": [
+        "categoriaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "CategoriaRecurso",
+      "field": "episodios",
+      "target": "Incumplimiento",
+      "inverse": "categoria",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
       "fields": [
         "categoriaId"
       ],
@@ -5877,6 +6652,63 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "Prestamo",
+      "field": "cierre",
+      "target": "CierrePrestamo",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..1",
+      "owner": "CierrePrestamo",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Prestamo",
+      "field": "incumplimientos",
+      "target": "Incumplimiento",
+      "inverse": "prestamo",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "CierrePrestamo",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "cierre",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "1",
+      "owner": "CierrePrestamo",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "Devolucion",
       "field": "prestamo",
       "target": "Prestamo",
@@ -6124,6 +6956,25 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "VersionRegla",
+      "field": "ajustes",
+      "target": "AjusteIncumplimiento",
+      "inverse": "versionRegla",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "AjusteIncumplimiento",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "Incumplimiento",
       "field": "usuario",
       "target": "Usuario",
@@ -6238,6 +7089,120 @@
       "onUpdate": "Cascade"
     },
     {
+      "source": "Incumplimiento",
+      "field": "prestamo",
+      "target": "Prestamo",
+      "inverse": "incumplimientos",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "prestamoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "categoria",
+      "target": "CategoriaRecurso",
+      "inverse": "episodios",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "categoriaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "terminos",
+      "target": "VersionTerminos",
+      "inverse": "episodios",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "0..1",
+      "owner": "Incumplimiento",
+      "fields": [
+        "termsVersionId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "Incumplimiento",
+      "field": "ajustes",
+      "target": "AjusteIncumplimiento",
+      "inverse": "incumplimiento",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "1",
+      "targetCardinality": "0..n",
+      "owner": "AjusteIncumplimiento",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AjusteIncumplimiento",
+      "field": "incumplimiento",
+      "target": "Incumplimiento",
+      "inverse": "ajustes",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "AjusteIncumplimiento",
+      "fields": [
+        "incumplimientoId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "AjusteIncumplimiento",
+      "field": "versionRegla",
+      "target": "VersionRegla",
+      "inverse": "ajustes",
+      "name": null,
+      "direction": "outgoing",
+      "sourceCardinality": "0..n",
+      "targetCardinality": "1",
+      "owner": "AjusteIncumplimiento",
+      "fields": [
+        "versionReglaId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
       "source": "Apelacion",
       "field": "incumplimiento",
       "target": "Incumplimiento",
@@ -6344,6 +7309,25 @@
       "owner": "SolicitudRegistro",
       "fields": [
         "versionTerminosId"
+      ],
+      "references": [
+        "id"
+      ],
+      "onDelete": "Restrict",
+      "onUpdate": "Cascade"
+    },
+    {
+      "source": "VersionTerminos",
+      "field": "episodios",
+      "target": "Incumplimiento",
+      "inverse": "terminos",
+      "name": null,
+      "direction": "incoming",
+      "sourceCardinality": "0..1",
+      "targetCardinality": "0..n",
+      "owner": "Incumplimiento",
+      "fields": [
+        "termsVersionId"
       ],
       "references": [
         "id"

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OpeningDayDto } from '../../../system/presentation/reservation-settings.dto.js';
 import { LoanStatus } from '../../domain/entities/loan.js';
 import { ReservationStatus } from '../../domain/entities/reservation.js';
+import { ClosedCopyResponseDto, LoanClosureResponseDto, LoanConsequenceResponseDto, LoanRewardResponseDto } from './loan-closure-response.dto.js';
 import {
   ResourceAccessoryResponseDto,
   ResourceLoanPolicyResponseDto,
@@ -19,7 +20,14 @@ export class ReservationNoShowSnapshotDto {
   @ApiProperty({ type: String, format: 'uuid' }) ruleVersionId!: string;
 }
 
+export class LoanPolicySnapshotDto {
+  @ApiProperty({ type: String, format: 'uuid' }) categoryId!: string;
+  @ApiProperty({ type: String, format: 'uuid' }) termsVersionId!: string;
+}
+
 export class CopyLoanSnapshotDto {
+  @ApiPropertyOptional({ type: LoanPolicySnapshotDto, description: 'Referencia común de políticas históricas del préstamo; ausente en legado.' })
+  loanPolicy?: LoanPolicySnapshotDto;
   @ApiProperty({ type: 'integer', enum: [1] }) schemaVersion!: 1;
   @ApiProperty({ type: String, format: 'uuid' }) copyId!: string;
   @ApiProperty({ type: String, format: 'uuid' }) resourceId!: string;
@@ -70,6 +78,11 @@ export class LoanReturnResponseDto {
 }
 
 export class LoanResponseDto {
+  @ApiProperty({ type: LoanClosureResponseDto, nullable: true }) closure!: LoanClosureResponseDto | null;
+  @ApiProperty({ type: [LoanConsequenceResponseDto] }) consequences!: LoanConsequenceResponseDto[];
+  @ApiProperty({ type: LoanRewardResponseDto, nullable: true }) reward!: LoanRewardResponseDto | null;
+  @ApiProperty({ type: ClosedCopyResponseDto, nullable: true }) copy!: ClosedCopyResponseDto | null;
+  @ApiProperty({ type: [String], format: 'uuid' }) cancelledReservationIds!: string[];
   @ApiProperty({ type: String, format: 'uuid' }) id!: string;
   @ApiProperty({ type: String, format: 'uuid' }) userId!: string;
   @ApiProperty({ type: String, format: 'uuid' }) copyId!: string;

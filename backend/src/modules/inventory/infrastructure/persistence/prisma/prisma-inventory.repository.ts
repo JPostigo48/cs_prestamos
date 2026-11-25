@@ -1,4 +1,6 @@
+import { lockLoanInventory } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -9,7 +11,9 @@ import { PrismaService } from '../../../../../shared/infrastructure/prisma/prism
 import type {
   InventoryCopyStateManaged,
   InventoryCopyStatus,
+  ManagedCopyUpdate,
 } from '../../../domain/entities/inventory.types.js';
+import { validCopyVerification } from '../../../domain/entities/inventory.types.js';
 import { InventoryRepository } from '../../../domain/repositories/inventory.repository.js';
 import type { CategoryDeletionPreview } from '../../../domain/entities/category-deletion.js';
 import { categoryPolicyConfiguration } from '../../../../rules/domain/category-policy.js';
@@ -28,6 +32,8 @@ type QueryRuntime = Pick<
 @Injectable()
 export class PrismaInventoryRepository extends InventoryRepository {
   private transactionRuntime?: QueryRuntime;
+  private auditActor?: AuditActor;
+  private copyTransitions: unknown[] = [];
   constructor(private readonly prisma: PrismaService) {
     super();
   }
@@ -154,8 +160,10 @@ export class PrismaInventoryRepository extends InventoryRepository {
   ): Promise<T> {
     try {
       return await this.prisma.client.transaction(async (tx) => {
+        await lockLoanInventory(this.prisma, tx);
         const scoped = new PrismaInventoryRepository(this.prisma);
         scoped.transactionRuntime = tx;
+        scoped.auditActor = actor;
         const result = await work(scoped);
         await tx.query(
           this.prisma.sql.public.auditorias_usuario
@@ -163,7 +171,11 @@ export class PrismaInventoryRepository extends InventoryRepository {
               {
                 usuarioId: actor.userId,
                 accion: action,
-                datosNuevos: JSON.stringify({ actor, result }),
+                datosNuevos: JSON.stringify({
+                  actor,
+                  result,
+                  copyTransitions: scoped.copyTransitions,
+                }),
               },
             ])
             .returning('id')
@@ -188,7 +200,10 @@ export class PrismaInventoryRepository extends InventoryRepository {
   ): Promise<T> {
     return this.transactionRuntime
       ? work(this.transactionRuntime)
-      : this.prisma.client.transaction(work);
+      : this.prisma.client.transaction(async (tx) => {
+          await lockLoanInventory(this.prisma, tx);
+          return work(tx);
+        });
   }
 
   private async lockCopy(runtime: QueryRuntime, copyId: string) {
@@ -196,17 +211,21 @@ export class PrismaInventoryRepository extends InventoryRepository {
       this.prisma.sql.public.ejemplares
         .update({ updatedAt: Temporal.Now.instant() })
         .where((row, fns) => fns.eq(row.id, copyId))
-        .returning('id', 'recursoId', 'codigoInventario', 'estado')
+        .returning(
+          'id',
+          'recursoId',
+          'codigoInventario',
+          'estado',
+          'condicionFisica',
+          'habilitado',
+        )
         .build(),
     );
     if (!rows[0]) throw new NotFoundException('Ejemplar no encontrado.');
     return rows[0];
   }
 
-  async updateManagedCopy(
-    copyId: string,
-    data: { codigoInventario?: string; estado?: InventoryCopyStateManaged },
-  ) {
+  async updateManagedCopy(copyId: string, data: ManagedCopyUpdate) {
     return this.copyTransaction(async (runtime) => {
       const copy = await this.lockCopy(runtime, copyId);
       if (copy.estado === 'PRESTADO' || copy.estado === 'RESERVADO')
@@ -217,7 +236,7 @@ export class PrismaInventoryRepository extends InventoryRepository {
         this.prisma.sql.public.prestamos
           .select('id')
           .where((row, fns) => fns.eq(row.ejemplarId, copyId))
-          .where((row, fns) => fns.ne(row.estado, 'FINALIZADO'))
+          .where((row, fns) => fns.in(row.estado, ['ACTIVO', 'PLANIFICADO']))
           .limit(1)
           .build(),
       );
@@ -233,13 +252,115 @@ export class PrismaInventoryRepository extends InventoryRepository {
         throw new ConflictException(
           'El ejemplar tiene reservas o préstamos pendientes.',
         );
+      const { verification, ...update } = data;
+      if (
+        verification !== undefined &&
+        (data.estado !== 'DISPONIBLE' || !validCopyVerification(verification))
+      )
+        throw new BadRequestException('Verificación de aptitud inválida.');
+      if (data.estado === 'DISPONIBLE') {
+        if ((data.habilitado ?? copy.habilitado) !== true)
+          throw new ConflictException(
+            'El ejemplar requiere habilitación administrativa explícita.',
+          );
+        // Bloqueos en el mismo orden que reserva/recogida: ejemplar -> recurso -> categoría.
+        const resources = await runtime.query(
+          this.prisma.sql.public.recursos
+            .update({ updatedAt: Temporal.Now.instant() })
+            .where((r, f) => f.eq(r.id, copy.recursoId))
+            .returning('id', 'categoriaId', 'activo')
+            .build(),
+        );
+        if (!resources[0]?.activo)
+          throw new ConflictException('El recurso está inactivo o no existe.');
+        const categories = await runtime.query(
+          this.prisma.sql.public.categorias_recurso
+            .update({ updatedAt: Temporal.Now.instant() })
+            .where((r, f) => f.eq(r.id, resources[0]!.categoriaId))
+            .returning('id', 'activo')
+            .build(),
+        );
+        if (!categories[0]?.activo)
+          throw new ConflictException(
+            'La categoría está inactiva o no existe.',
+          );
+        if (
+          copy.estado === 'NO_DISPONIBLE' ||
+          copy.condicionFisica !== 'APTO'
+        ) {
+          if (!verification)
+            throw new BadRequestException(
+              'Se requiere verificación explícita de aptitud y componentes completos.',
+            );
+        }
+        if (verification) {
+          if (!this.auditActor)
+            throw new ConflictException(
+              'La rehabilitación requiere actor y auditoría transaccional.',
+            );
+          if (verification.evidenceIds.length) {
+            const ids = verification.evidenceIds.map((id) => id.toLowerCase());
+            const evidence = await runtime.query(
+              this.prisma.sql.public.evidencias_prestamo
+                .select('id', 'prestamoId')
+                .where((r, f) => f.in(r.id, ids))
+                .build(),
+            );
+            if (evidence.length !== ids.length)
+              throw new BadRequestException(
+                'Evidencia inexistente o ajena al ejemplar.',
+              );
+            const contextual = await runtime.query(
+              this.prisma.sql.public.prestamos
+                .select('id')
+                .where((r, f) =>
+                  f.in(r.id, [...new Set(evidence.map((e) => e.prestamoId))]),
+                )
+                .where((r, f) => f.eq(r.ejemplarId, copyId))
+                .build(),
+            );
+            const contextualIds = new Set(contextual.map((loan) => loan.id));
+            if (evidence.some((e) => !contextualIds.has(e.prestamoId)))
+              throw new BadRequestException(
+                'Evidencia inexistente o ajena al ejemplar.',
+              );
+          }
+        }
+      }
       const rows = await runtime.query(
         this.prisma.sql.public.ejemplares
-          .update(data)
+          .update({
+            ...update,
+            ...(verification ? { condicionFisica: 'APTO' as const } : {}),
+          })
           .where((row, fns) => fns.eq(row.id, copyId))
-          .returning('id', 'recursoId', 'codigoInventario', 'estado')
+          .returning(
+            'id',
+            'recursoId',
+            'codigoInventario',
+            'estado',
+            'condicionFisica',
+            'habilitado',
+          )
           .build(),
       );
+      if (this.auditActor)
+        this.copyTransitions.push({
+          copyId,
+          before: copy,
+          after: rows[0],
+          ...(verification
+            ? {
+                verification: {
+                  ...verification,
+                  reason: verification.reason.trim(),
+                  evidenceIds: verification.evidenceIds.map((id) =>
+                    id.toLowerCase(),
+                  ),
+                },
+              }
+            : {}),
+        });
       return rows[0];
     });
   }
@@ -713,10 +834,16 @@ export class PrismaInventoryRepository extends InventoryRepository {
   }
 
   async countAvailableCopiesByResource(resourceId: string): Promise<number> {
+    const resource = await this.findResourceById(resourceId);
+    const category =
+      resource && (await this.findCategoryById(resource.categoriaId));
+    if (resource?.activo !== true || category?.activo !== true) return 0;
     const query = this.prisma.sql.public.ejemplares
       .select('id')
       .where((row, fns) => fns.eq(row.recursoId, resourceId))
       .where((row, fns) => fns.eq(row.estado, 'DISPONIBLE'))
+      .where((row, fns) => fns.eq(row.condicionFisica, 'APTO'))
+      .where((row, fns) => fns.eq(row.habilitado, true))
       .build();
     const rows = await this.runtime().query(query);
     return rows.length;
@@ -748,6 +875,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
           recursoId: data.recursoId,
           codigoInventario: data.codigoInventario,
           estado,
+          condicionFisica: 'APTO',
+          habilitado: true,
         },
       ])
       .returning(
@@ -755,6 +884,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'recursoId',
         'codigoInventario',
         'estado',
+        'condicionFisica',
+        'habilitado',
         'createdAt',
         'updatedAt',
       )
@@ -770,6 +901,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'recursoId',
         'codigoInventario',
         'estado',
+        'condicionFisica',
+        'habilitado',
         'createdAt',
         'updatedAt',
       )
@@ -785,6 +918,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
         'recursoId',
         'codigoInventario',
         'estado',
+        'condicionFisica',
+        'habilitado',
         'createdAt',
         'updatedAt',
       )
@@ -797,33 +932,24 @@ export class PrismaInventoryRepository extends InventoryRepository {
 
   async deleteCopy(copyId: string) {
     // Nunca se borra físicamente: observaciones, préstamos y reservas se conservan.
-    await this.updateManagedCopy(copyId, { estado: 'NO_DISPONIBLE' });
+    await this.updateManagedCopy(copyId, {
+      estado: 'NO_DISPONIBLE',
+      habilitado: false,
+    });
     return 1;
   }
 
   async updateCopyState(copyId: string, estado: InventoryCopyStateManaged) {
-    const nextState: InventoryCopyStateManaged =
-      estado as InventoryCopyStateManaged;
-    const query = this.prisma.sql.public.ejemplares
-      .update({ estado: nextState })
-      .where((row, fns) => fns.eq(row.id, copyId))
-      .returning(
-        'id',
-        'recursoId',
-        'codigoInventario',
-        'estado',
-        'createdAt',
-        'updatedAt',
-      )
-      .build();
-    const rows = await this.runtime().query(query);
-    return rows[0] ?? null;
+    return this.updateManagedCopy(copyId, { estado });
   }
 
   async markCopyAsLoaned(copyId: string) {
     const query = this.prisma.sql.public.ejemplares
       .update({ estado: 'PRESTADO' })
       .where((row, fns) => fns.eq(row.id, copyId))
+      .where((row, fns) => fns.eq(row.estado, 'DISPONIBLE'))
+      .where((row, fns) => fns.eq(row.condicionFisica, 'APTO'))
+      .where((row, fns) => fns.eq(row.habilitado, true))
       .returning(
         'id',
         'recursoId',
@@ -834,6 +960,8 @@ export class PrismaInventoryRepository extends InventoryRepository {
       )
       .build();
     const rows = await this.runtime().query(query);
+    if (!rows[0])
+      throw new ConflictException('El ejemplar no está apto y disponible.');
     return rows[0] ?? null;
   }
 

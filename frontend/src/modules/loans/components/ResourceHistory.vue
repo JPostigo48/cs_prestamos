@@ -15,13 +15,13 @@ function move(offset: number) { page.value += offset; void remote.refresh() }
   <section class="panel stack">
     <h2>Historial del recurso</h2>
     <form class="row" @submit.prevent="filter">
-      <label>Estado<select v-model="status" :disabled="remote.loading.value"><option value="">Todos</option><option value="PLANIFICADO">Planificado</option><option value="ACTIVO">Activo</option><option value="FINALIZADO">Finalizado</option></select></label>
+      <label>Estado<select v-model="status" :disabled="remote.loading.value"><option value="">Todos</option><option value="PLANIFICADO">Planificado</option><option value="ACTIVO">Activo</option><option value="FINALIZADO">Devuelto</option><option value="CERRADO_POR_INCIDENCIA">Pérdida o robo · sin devolución</option></select></label>
       <button :disabled="remote.loading.value">Consultar / actualizar historial</button>
     </form>
     <RemoteState :loading="remote.loading.value" :error="remote.error.value" @retry="remote.refresh">
       <template v-if="remote.data.value">
         <p>{{ remote.data.value.total }} préstamos</p>
-        <p v-for="loan in remote.data.value.items" :key="loan.id">{{ loan.id }} · {{ loan.status }} · {{ dateTime(loan.endsAt) }}</p>
+        <p v-for="loan in remote.data.value.items" :key="loan.id">{{ loan.id }} · {{ loan.status === 'CERRADO_POR_INCIDENCIA' ? (loan.closure?.reason === 'ROBO' ? 'Robo · sin devolución real' : 'Pérdida o robo · sin devolución real') : loan.status === 'FINALIZADO' ? 'Devuelto' : loan.status }} · {{ dateTime(loan.closure?.effectiveAt ?? loan.endsAt) }}</p>
         <p v-if="!remote.data.value.items.length">No hay préstamos en la respuesta recibida.</p>
         <nav class="row" aria-label="Páginas del historial">
           <button :disabled="remote.loading.value || page <= 1" @click="move(-1)">Anterior</button>

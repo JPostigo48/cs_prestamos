@@ -62,6 +62,47 @@ test('trust: detalle rechaza ID, titular o versión histórica ajenos; no consul
   globalThis.fetch = async () => Response.json(sanction({ rule: null, ruleVersionId: null, violation: null, reason: null }))
   assert.equal((await api.getSanction('sanction-real')).rule, null)
 })
+const scaledCurrent = () => ({
+  severity: 'GRAVE', rule: rule({ id: 'version-grave', number: 3, penaltyPercentage: 30, suspensionDays: 30 }),
+  nominalPenaltyTotal: 30, effectivePenaltyTotal: 25, suspensionDays: 30,
+  adjustments: ['LEVE', 'MODERADA', 'GRAVE'].map((severity, i) => ({
+    id: 'adjustment-' + i, ruleVersionId: i === 2 ? 'version-grave' : 'version-' + i,
+    severity, effect: 'DISCOUNT', nominalTarget: (i + 1) * 10, nominalIncrement: 10,
+    effectiveDiscount: i === 0 ? 5 : 10, previousTrust: i === 0 ? 5 : 80 - (i - 1) * 10,
+    resultingTrust: i === 0 ? 0 : 70 - (i - 1) * 10, suspensionDays: [7, 15, 30][i],
+    effectiveAt: `2026-10-28T0${i}:00:00Z`, recordedAt: '2026-10-28T04:00:00Z',
+  })),
+})
+test('H3: consumidor y detalle separan antecedente inicial de total efectivo/nominal y ajustes, incluso absuelta', async () => {
+  const detail = sanction({ previousTrust: 5, resultingTrust: 0, current: scaledCurrent(), status: 'ABSUELTA' })
+  globalThis.fetch = async () => Response.json(detail)
+  assert.deepEqual(await api.getSanction('sanction-real'), detail)
+  const app = mount(Details, { sanctionId: 'sanction-real' })
+  try {
+    await flush()
+    assert.match(text(app.root), /Antecedente inicial.*5 % → 0 %/)
+    assert.match(text(app.root), /Consecuencia actual acumulada · GRAVE/)
+    assert.match(text(app.root), /Objetivo nominal: 30 puntos · Descuento efectivo total: 25 puntos/)
+    assert.match(text(app.root), /Suspensión acumulada: 30 días/)
+    assert.match(text(app.root), /Historial de ajustes \(3\)/)
+    assert.match(text(app.root), /Sanción absuelta/)
+  } finally { app.unmount() }
+  assert.equal(contracts.validSanctionDetail(sanction({ current: null })), true)
+  const zero = scaledCurrent()
+  zero.rule = rule({ id: 'zero', suspensionType: 'INDEFINIDA', suspensionDays: null })
+  zero.nominalPenaltyTotal = null; zero.effectivePenaltyTotal = 42; zero.suspensionDays = null
+  zero.adjustments = [{ ...zero.adjustments[2], ruleVersionId: 'zero', effect: 'SET_ZERO', nominalTarget: null, nominalIncrement: null, previousTrust: 42, resultingTrust: 0, effectiveDiscount: 42, suspensionDays: null }]
+  assert.equal(contracts.validSanctionDetail(sanction({ current: zero })), true)
+  for (const change of [
+    { effectivePenaltyTotal: 30 }, { nominalPenaltyTotal: 40 }, { severity: 'LEVE' },
+    { rule: rule({ id: 'version-ajena' }) }, { adjustments: [] },
+    { adjustments: [...scaledCurrent().adjustments, scaledCurrent().adjustments[0]] },
+    { adjustments: scaledCurrent().adjustments.map(a => ({ ...a, effectiveDiscount: -1 })) },
+  ]) {
+    globalThis.fetch = async () => Response.json(sanction({ current: { ...scaledCurrent(), ...change } }))
+    await assert.rejects(api.getSanction('sanction-real'), e => e.status === 0)
+  }
+})
 test('sanción compacta: motivo de política histórica, impacto real y sin bloques técnicos ni vacíos', async () => {
   const detail = sanction({ reason: null, status: 'FINALIZADA', previousTrust: 100, resultingTrust: 98,
     rule: rule({ title: 'R-RES:LEVE', description: JSON.stringify({ format: 'epcc.official-policy/v1', kind: 'NO_SHOW' }), suspensionType: 'NINGUNA', suspensionDays: null }),
@@ -77,13 +118,19 @@ test('sanción compacta: motivo de política histórica, impacto real y sin bloq
     assert.ok(find(app.root, 'time').props.datetime)
   } finally { app.unmount() }
 })
-test('trust: reglas manuales excluyen mora, no recogida, acceso, confianza, recompensa y ausencia de suspensión', async () => {
+test('trust: reglas oficiales requieren contexto; suspensiones manuales legítimas se conservan', async () => {
   const official = kind => rule({ description: JSON.stringify({ format: 'epcc.official-policy/v1', kind, trustEffect: 'DISCOUNT' }) })
-  const candidates = [rule(), ...['LATENESS', 'NO_SHOW', 'ACCESS', 'TRUST', 'REWARD'].map(official), rule({ suspensionType: 'NINGUNA', suspensionDays: null }), rule({ status: 'INACTIVA' }), rule({ suspensionDays: 0 })]
+  const candidates = [rule(), ...['DAMAGE', 'LOSS', 'LATENESS', 'NO_SHOW', 'ACCESS', 'TRUST', 'REWARD'].map(official), rule({ suspensionType: 'NINGUNA', suspensionDays: null }), rule({ status: 'INACTIVA' }), rule({ suspensionDays: 0 })]
   globalThis.fetch = async url => { assert.equal(url, '/api/rules/active'); return Response.json(candidates) }
   assert.deepEqual(await api.listSuspensionRules(), [rule()])
-  assert.equal(contracts.manualSuspensionRule(official('DAMAGE')), true)
-  assert.equal(contracts.manualSuspensionRule(rule({ penaltyPercentage: 0, suspensionType: 'INDEFINIDA', suspensionDays: null, description: JSON.stringify({ format: 'epcc.official-policy/v1', kind: 'LOSS', trustEffect: 'SET_ZERO' }) })), true)
+  assert.equal(contracts.manualSuspensionRule(official('DAMAGE')), false)
+  assert.equal(contracts.manualSuspensionRule(rule({ penaltyPercentage: 0, suspensionType: 'INDEFINIDA', suspensionDays: null, description: JSON.stringify({ format: 'epcc.official-policy/v1', kind: 'LOSS', trustEffect: 'SET_ZERO' }) })), false)
+})
+test('trust: lectura de proyección escalada conserva regla inicial y acepta periodo efectivo ampliado', async () => {
+  const detail = sanction({ startsAt: '2026-01-01T00:00:00Z', endsAt: '2026-02-01T00:00:00Z', resultingTrust: 0 })
+  assert.equal(contracts.validSanctionDetail(detail), true)
+  globalThis.fetch = async () => Response.json(detail)
+  assert.deepEqual(await api.getSanction(detail.id), detail)
 })
 test('trust: suspensión envía regla, motivo y clave de reintento; calendario y efecto salen del servidor', async () => {
   const startsAt = new Date(Date.now() - 1000).toISOString()

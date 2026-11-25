@@ -75,6 +75,7 @@ export class PrismaTermsRepository implements TermsRepository {
           'tipoSuspension',
           'diasSuspension',
         )
+        .where((r, f) => f.in(r.id, manifest.ids))
         .build(),
     );
     const byId = new Map(versions.map((version) => [version.id, version]));

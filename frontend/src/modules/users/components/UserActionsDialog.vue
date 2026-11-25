@@ -115,7 +115,7 @@ async function run(action: 'role' | 'suspend' | 'lift') {
         <p v-if="rules.data.value?.length === 0">No hay reglas manuales vigentes con suspensión.</p>
         <template v-if="selectedRule"><p>{{ selectedRule.consequence }}</p><p>Tipo: {{ selectedRule.suspensionType }}<span v-if="selectedRule.suspensionDays !== null"> · {{ selectedRule.suspensionDays }} días</span>. Versión {{ selectedRule.number }}.</p></template>
       </RemoteState>
-      <p>El servidor calcula inicio y fin según la versión vigente y las sanciones pendientes. No se permiten fechas ni duraciones arbitrarias.</p>
+      <p>El servidor calcula inicio y fin según la versión vigente y las sanciones pendientes. No se permiten fechas ni duraciones arbitrarias. Los daños, faltantes, pérdida y robo oficiales se gestionan desde el cierre contextual del préstamo, no desde una suspensión genérica.</p>
       <label>Motivo<textarea v-model="reason" required maxlength="2000" :disabled="sending" /></label>
       <p v-if="pendingMutation('suspend:' + user.id)" role="status">Resultado incierto. Conserva el motivo y consulta las sanciones antes de actuar; no se reenviará.</p>
       <button class="danger-action" :disabled="sending || !selectedRule || !!rules.error.value || rules.loading.value || !reason.trim() || pendingMutation('suspend:' + user.id)">Confirmar solicitud de suspensión</button>

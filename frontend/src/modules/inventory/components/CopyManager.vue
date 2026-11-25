@@ -5,7 +5,10 @@ import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { getSession } from '../../auth/api/auth-api'
+import RehabilitateCopyDialog from './RehabilitateCopyDialog.vue'
+import { isStaff } from '../../auth/access-policy'
 const canCreate = getSession()?.user.role === 'ADMINISTRADOR'
+const canManage = isStaff(getSession()?.user.role ?? 'USUARIO')
 const props = defineProps<{ resourceId: string; disabled?: boolean }>()
 const emit = defineEmits<{ changed: []; busy: [value: boolean] }>()
 const copies = useRemote((signal) => getCopies(props.resourceId, signal))
@@ -14,6 +17,9 @@ const code = ref(''),
   error = ref(''),
   notice = ref('')
 const selected = ref<Copy | null>(null)
+const rehabilitating = ref<Copy | null>(null)
+function choose(copy: Copy) { if (copy.estado === 'NO_DISPONIBLE') rehabilitating.value = copy; else selected.value = copy }
+async function rehabilitated() { await copies.refresh(); notice.value = 'Rehabilitación verificada, sin cambios en sanciones ni confianza.'; emit('changed') }
 async function add() {
   if (sending.value || props.disabled || !code.value.trim() || !canCreate) return
   sending.value = true
@@ -34,7 +40,7 @@ async function add() {
   }
 }
 async function state() {
-  if (!selected.value || sending.value || props.disabled) return
+  if (!selected.value || sending.value || props.disabled || !canManage) return
   sending.value = true
   emit('busy', true)
   error.value = ''
@@ -65,13 +71,14 @@ async function state() {
       <ul class="copy-list">
         <li v-for="copy in copies.data.value" :key="copy.id">
           <div><strong>{{ copy.codigoInventario }}</strong><StatusBadge :tone="copy.estado === 'DISPONIBLE' ? 'success' : copy.estado === 'NO_DISPONIBLE' ? 'neutral' : 'warning'">{{ copy.estado.replaceAll('_', ' ') }}</StatusBadge></div>
+          <p>Condición: {{ copy.condicionFisica ?? 'Sin clasificación: requiere verificación' }} · {{ copy.habilitado ? 'Habilitado administrativamente' : 'Deshabilitado administrativamente' }}<span v-if="copy.estado === 'NO_DISPONIBLE'"> · Retenido / no prestable</span></p>
           <button
-            v-if="copy.estado === 'DISPONIBLE' || copy.estado === 'NO_DISPONIBLE'"
+            v-if="canManage && (copy.estado === 'DISPONIBLE' || copy.estado === 'NO_DISPONIBLE')"
             type="button"
-            :disabled="sending || disabled"
-            @click="selected = copy"
+            :disabled="sending || disabled || (copy.estado === 'NO_DISPONIBLE' && !copy.habilitado)"
+            @click="choose(copy)"
           >
-            {{ copy.estado === 'DISPONIBLE' ? 'Inhabilitar' : 'Habilitar' }}
+            {{ copy.estado === 'DISPONIBLE' ? 'Retener' : 'Verificar rehabilitación' }}
           </button>
         </li>
       </ul>
@@ -82,6 +89,7 @@ async function state() {
       <button type="button" :disabled="sending" @click="selected = null">Cancelar</button
       ><button type="button" :disabled="sending" @click="state">Confirmar cambio</button>
     </div>
+    <RehabilitateCopyDialog v-if="rehabilitating" :copy="rehabilitating" @close="rehabilitating = null" @changed="rehabilitated" @busy="sending = $event; emit('busy', $event)" />
     <form v-if="canCreate" class="row" @submit.prevent="add">
       <label
         >Código único del nuevo ejemplar<input

@@ -13,6 +13,7 @@ import { calculateTrustPenalty } from './domain/entities/violation.js';
 import { scheduleSanction } from './domain/entities/sanction-schedule.js';
 import { SuspensionType } from './domain/entities/usage-rule.js';
 import { validateSuspensionPolicy } from './application/suspension-policy.js';
+import { inMemoryPrisma } from '../../../test/helpers/in-memory-prisma.js';
 
 describe('Rules use cases', () => {
   it('registers a violation and penalty through one atomic repository operation', async () => {
@@ -75,6 +76,8 @@ describe('Rules use cases', () => {
 
   it('records violation, trust discount, sanction and audit in one transaction', async () => {
     const query = vi.fn()
+      .mockResolvedValueOnce([]) // Barrera de inventario.
+      .mockResolvedValueOnce([]) // Barrera de publicación.
       .mockResolvedValueOnce([{ id: 'u1', confianza: '5.00' }])
       .mockResolvedValueOnce([{ id: 'u1' }])
       .mockResolvedValueOnce([{
@@ -83,7 +86,10 @@ describe('Rules use cases', () => {
       }])
       .mockResolvedValueOnce([{ id: 's1' }])
       .mockResolvedValueOnce([{ id: 'audit-1' }])
-      .mockResolvedValueOnce([{ id: 'audit-2' }]);
+      .mockResolvedValueOnce([]) // Barrera reentrante de inventario.
+      .mockResolvedValueOnce([]) // Barrera reentrante de publicación.
+      .mockResolvedValueOnce([{ estado: 'FINALIZADA', fechaInicio: Temporal.Now.instant(), fechaFin: Temporal.Now.instant() }])
+      .mockResolvedValueOnce([]); // Sin reservas confirmadas pendientes de cancelación.
     const chain = (value: unknown): any => ({
       where: () => chain(value), limit: () => chain(value),
       returning: () => chain(value), build: () => value,
@@ -92,12 +98,13 @@ describe('Rules use cases', () => {
     const insertSanction = vi.fn((_rows: any[]) => chain('sanction-insert'));
     const updateUser = vi.fn((_data: any) => chain('user-update'));
     const prisma = {
-      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
       sql: { public: {
         usuarios: { select: () => chain('user-select'), update: updateUser },
         incumplimientos: { insert: insertViolation },
-        sanciones: { insert: insertSanction },
+        sanciones: { select: () => chain('sanctions-select'), insert: insertSanction },
         auditorias_usuario: { insert: () => chain('audit-insert') },
+        reservas: { select: () => chain('reservations-select') },
       } },
     };
     const repository = new PrismaViolationRepository(prisma as any);
@@ -107,7 +114,11 @@ describe('Rules use cases', () => {
     });
     expect(result.appliedPenalty).toBe(5);
     expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenCalledTimes(5);
+    expect(query).toHaveBeenCalledTimes(11);
+    expect(query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
+    expect(query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
+    expect(query).toHaveBeenLastCalledWith('reservations-select');
+    expect(query).toHaveBeenNthCalledWith(10, 'sanctions-select');
     expect(updateUser).toHaveBeenCalledWith({ confianza: '0.00' });
     expect(insertViolation.mock.calls[0][0][0].penalizacionAplicada).toBe('5.00');
     expect(insertSanction.mock.calls[0][0][0]).toMatchObject({
@@ -121,6 +132,8 @@ describe('Rules use cases', () => {
     vi.setSystemTime(at);
     try {
       const query = vi.fn()
+        .mockResolvedValueOnce([]) // Barrera de inventario.
+        .mockResolvedValueOnce([]) // Barrera de publicación.
         .mockResolvedValueOnce([{ id: 'u1', confianza: '80.00' }])
         .mockResolvedValueOnce([{ id: 'u1' }])
         .mockResolvedValueOnce([{ estado: 'ACTIVA', fechaFin: Temporal.Instant.from('2026-10-24T12:00:00.000Z') }])
@@ -129,19 +142,24 @@ describe('Rules use cases', () => {
           fecha: Temporal.Instant.from(at.toISOString()), penalizacionAplicada: '5.00',
         }])
         .mockResolvedValueOnce([{ id: 's1' }])
-        .mockResolvedValueOnce([{ id: 'audit-1' }]);
+        .mockResolvedValueOnce([{ id: 'audit-1' }])
+        .mockResolvedValueOnce([]) // Barrera reentrante de inventario.
+        .mockResolvedValueOnce([]) // Barrera reentrante de publicación.
+        .mockResolvedValueOnce([{ estado: 'ACTIVA', fechaInicio: Temporal.Instant.from(at.toISOString()), fechaFin: Temporal.Instant.from('2026-10-24T12:00:00.000Z') }])
+        .mockResolvedValueOnce([]);
       const chain = (value: unknown): any => ({
         select: () => chain(value), where: () => chain(value), limit: () => chain(value),
         returning: () => chain(value), build: () => value,
       });
       const insertSanction = vi.fn((_rows: any[]) => chain('sanction-insert'));
       const prisma = {
-        client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+        client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
         sql: { public: {
           usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
           sanciones: { select: () => chain('sanctions-select'), insert: insertSanction },
           incumplimientos: { insert: () => chain('violation-insert') },
           auditorias_usuario: { insert: () => chain('audit-insert') },
+          reservas: { select: () => chain('reservations-select') },
         } },
       };
       await new PrismaViolationRepository(prisma as any).createWithPenalty({
@@ -155,7 +173,11 @@ describe('Rules use cases', () => {
         confianzaAnterior: '80.00',
         confianzaPosterior: '75.00',
       });
-      expect(query).toHaveBeenCalledTimes(6);
+      expect(query).toHaveBeenCalledTimes(12);
+      expect(query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
+      expect(query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
+      expect(query).toHaveBeenLastCalledWith('reservations-select');
+      expect(query).toHaveBeenNthCalledWith(11, 'sanctions-select');
       expect(insertSanction.mock.calls[0][0][0].fechaInicio.epochMilliseconds).toBe(Date.parse('2026-10-24T12:00:00.000Z'));
       expect(insertSanction.mock.calls[0][0][0].fechaFin.epochMilliseconds).toBe(Date.parse('2026-10-31T12:00:00.000Z'));
     } finally {
@@ -165,6 +187,8 @@ describe('Rules use cases', () => {
 
   it('does not create a violation if trust changed concurrently', async () => {
     const query = vi.fn()
+      .mockResolvedValueOnce([]) // Barrera de inventario.
+      .mockResolvedValueOnce([]) // Barrera de publicación.
       .mockResolvedValueOnce([{ id: 'u1', confianza: '30.00' }])
       .mockResolvedValueOnce([]);
     const chain = (value: unknown): any => ({
@@ -173,7 +197,7 @@ describe('Rules use cases', () => {
     });
     const insertViolation = vi.fn((_rows: any[]) => chain('violation-insert'));
     const prisma = {
-      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
       sql: { public: {
         usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
         incumplimientos: { insert: insertViolation },
@@ -184,6 +208,9 @@ describe('Rules use cases', () => {
       userId: 'u1', ruleId: 'r1', ruleVersionId: 'rv1',
       occurredAt: new Date(), configuredPenalty: 10, suspensionType: SuspensionType.NONE, suspensionDays: null,
     })).rejects.toThrow('confianza cambió');
+    expect(query).toHaveBeenCalledTimes(4);
+    expect(query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
+    expect(query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
     expect(insertViolation).not.toHaveBeenCalled();
   });
 
@@ -285,6 +312,8 @@ describe('Rules use cases', () => {
         confianzaAnterior: '60.00', confianzaPosterior: '45.00',
       }])
       .mockResolvedValueOnce([{ id: 'u1', confianza: '55.00' }])
+      .mockResolvedValueOnce([]) // Legado: no tiene ajustes.
+      .mockResolvedValueOnce([{ id: 's1', estado: 'FINALIZADA', fechaInicio: Temporal.Instant.from('2026-10-01T00:00:00Z'), fechaFin: Temporal.Instant.from('2026-10-08T00:00:00Z') }])
       .mockResolvedValueOnce([{ id: 's1' }])
       .mockResolvedValueOnce([{ id: 'u1' }])
       .mockResolvedValueOnce([{ id: 'audit-1' }]);
@@ -302,6 +331,7 @@ describe('Rules use cases', () => {
         sanciones: { select: () => chain('sanction-select'), update: () => chain('sanction-update') },
         usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
         auditorias_usuario: { insert: () => chain('audit-insert') },
+        ajustes_incumplimiento: { select: () => chain('adjustments-select') },
       } },
     };
     const repository = new PrismaAppealRepository(prisma as any);
@@ -315,7 +345,8 @@ describe('Rules use cases', () => {
 
     expect(result.status).toBe('ACEPTADA');
     expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenCalledTimes(9);
+    expect(query).toHaveBeenCalledTimes(11);
+    expect(query).toHaveBeenCalledWith('adjustments-select');
     expect(query.mock.calls[1]).toEqual(['user-update']);
     expect(query).toHaveBeenCalledWith('audit-insert');
   });

@@ -1,6 +1,10 @@
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import { authenticatedRequest, getSession } from '../../auth/api/auth-api'
 import { guardedMutation, mutationConfirmation } from '../../../shared/api/mutation-guard'
+import { validCopy, validCopyVerification, type CopyVerification, type physicalConditions } from './copy-contracts'
+import { isStaff } from '../../auth/access-policy'
+import { getResourceHistory, getLoanEvidence } from '../../loans/api/loans-api'
+import type { LoanEvidence } from '../../loans/api/closure-contracts'
 
 export interface Category {
   id: string
@@ -39,6 +43,8 @@ export interface Copy {
   recursoId: string
   codigoInventario: string
   estado: 'DISPONIBLE' | 'PRESTADO' | 'NO_DISPONIBLE' | 'RESERVADO'
+  condicionFisica: typeof physicalConditions[number] | null
+  habilitado: boolean
 }
 export interface CopyDetail extends Copy {
   recurso: { id: string; nombre: string; categoriaId: string }
@@ -78,11 +84,15 @@ export async function getResource(id: string, signal?: AbortSignal) {
 export async function getCopies(id: string, signal?: AbortSignal) {
   const confirm = mutationConfirmation()
   const result = await apiRequest<Copy[]>('/inventory/resources/' + encodeURIComponent(id) + '/copies', { signal })
+  if (!Array.isArray(result) || result.some(copy => !validCopy(copy) || copy.recursoId !== id)) throw new ApiError('Respuesta de ejemplares incompatible.', 0)
   for (const copy of result) if (copy.id && copy.recursoId === id && copy.codigoInventario) confirm(copyIntent(id, copy.codigoInventario))
   return result
 }
-export const getCopy = (id: string, signal?: AbortSignal) =>
-  apiRequest<CopyDetail>('/inventory/copies/' + encodeURIComponent(id), { signal })
+export async function getCopy(id: string, signal?: AbortSignal) {
+  const result = await apiRequest<CopyDetail>('/inventory/copies/' + encodeURIComponent(id), { signal })
+  if (!validCopy(result) || result.id !== id) throw new ApiError('Respuesta de ejemplar incompatible.', 0)
+  return result
+}
 export async function getResources(filters: CatalogFilters, signal?: AbortSignal): Promise<ResourcePage> {
   const owner = getSession()?.user.id
   const confirm = mutationConfirmation()
@@ -187,18 +197,41 @@ export async function createCopy(resourceId: string, codigoInventario: string) {
   return result
   })
 }
-export async function changeCopyState(copy: Copy, estado: 'DISPONIBLE' | 'NO_DISPONIBLE') {
+export async function changeCopyState(copy: Copy, estado: 'DISPONIBLE' | 'NO_DISPONIBLE', verification?: CopyVerification) {
+  if (!isStaff(getSession()?.user.role ?? 'USUARIO')) throw new ApiError('Operación restringida al personal.', 403)
   if (copy.estado === 'PRESTADO' || copy.estado === 'RESERVADO')
     throw new ApiError('No se puede alterar una copia ocupada desde inventario.', 409)
   // Revalidar origen justo antes del envío; no soluciona la carrera del servidor.
   const current = await getCopy(copy.id)
   if (current.estado === 'PRESTADO' || current.estado === 'RESERVADO')
     throw new ApiError('El ejemplar está ocupado. Actualiza la lista.', 409)
+  if (estado === 'DISPONIBLE' && (!current.habilitado || !validCopyVerification(verification))) throw new ApiError('Se requiere habilitación administrativa y verificación explícita de aptitud, componentes, motivo y evidencias.', 400)
+  if (verification?.evidenceIds.length) {
+    const available = await getCopyEvidence(current)
+    if (verification.evidenceIds.some(id => !available.some(e => e.id === id))) throw new ApiError('Las evidencias no pertenecen a este ejemplar.', 400)
+  }
   const result = await authenticatedRequest<Copy>(
     '/inventory/copies/' + encodeURIComponent(copy.id) + '/state',
-    { method: 'PATCH', body: { estado } },
+    { method: 'PATCH', body: { estado, ...(verification ? { verification } : {}) } },
   )
-  if (result?.id !== copy.id || result.estado !== estado)
+  if (!validCopy(result) || result?.id !== copy.id || result.estado !== estado || (estado === 'DISPONIBLE' && (result.condicionFisica !== 'APTO' || !result.habilitado)))
     throw new ApiError('No se confirmó el cambio de estado.', 0)
   return result
+}
+export async function getCopyEvidence(copy: Copy, signal?: AbortSignal): Promise<LoanEvidence[]> {
+  const evidence: LoanEvidence[] = [], seen = new Set<string>()
+  let expected: number | undefined
+  let count = 0
+  for (let page = 1; ; page++) {
+    const history = await getResourceHistory(copy.recursoId, { page: String(page), limit: '100' }, signal)
+    if (expected !== undefined && history.total !== expected) throw new ApiError('El historial cambió: vuelve a consultar evidencias.', 409)
+    expected = history.total
+    for (const loan of history.items) {
+      if (seen.has(loan.id)) throw new ApiError('Historial duplicado: no se pudieron verificar evidencias.', 0)
+      seen.add(loan.id); count++
+      if (loan.copyId === copy.id) evidence.push(...await getLoanEvidence(loan.id, signal))
+    }
+    if (count === expected) return evidence
+    if (!history.items.length || count > expected) throw new ApiError('Historial incompleto: no se pudieron verificar evidencias.', 0)
+  }
 }

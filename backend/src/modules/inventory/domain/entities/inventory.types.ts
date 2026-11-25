@@ -6,6 +6,54 @@ export type InventoryCopyStateManaged = Extract<
   'DISPONIBLE' | 'NO_DISPONIBLE'
 >;
 
+export const physicalConditions = [
+  'APTO',
+  'DANADO',
+  'INCOMPLETO',
+  'DANADO_E_INCOMPLETO',
+  'PERDIDO',
+  'ROBADO',
+] as const;
+export type PhysicalCondition = (typeof physicalConditions)[number];
+
+export type CopyVerification = {
+  fitForLoan: true;
+  componentsComplete: true;
+  reason: string;
+  evidenceIds: string[];
+};
+
+export type ManagedCopyUpdate = {
+  codigoInventario?: string;
+  estado?: InventoryCopyStateManaged;
+  habilitado?: boolean;
+  verification?: CopyVerification;
+};
+
+export function validCopyVerification(
+  value: unknown,
+): value is CopyVerification {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Partial<CopyVerification>;
+  return (
+    v.fitForLoan === true &&
+    v.componentsComplete === true &&
+    typeof v.reason === 'string' &&
+    v.reason.trim().length > 0 &&
+    v.reason.length <= 1000 &&
+    Array.isArray(v.evidenceIds) &&
+    v.evidenceIds.every(
+      (id) =>
+        typeof id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          id,
+        ),
+    ) &&
+    new Set(v.evidenceIds.map((id) => id.toLowerCase())).size ===
+      v.evidenceIds.length
+  );
+}
+
 export type InventoryCategory = {
   id: string;
   nombre: string;
@@ -34,6 +82,8 @@ export type InventoryCopy = {
   recursoId: string;
   codigoInventario: string;
   estado: InventoryCopyStatus;
+  condicionFisica: PhysicalCondition | null;
+  habilitado: boolean;
   recurso?: InventoryResource;
   observaciones?: InventoryObservation[];
   createdAt?: Date;

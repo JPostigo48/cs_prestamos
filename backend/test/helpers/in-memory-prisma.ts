@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Temporal } from 'temporal-polyfill/full';
 
 type Row = Record<string, any>;
 type Predicate = (row: Row) => boolean;
@@ -52,6 +53,8 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
                 predicates.every((p) => p(row)),
             lt: (key: string, value: any) => (row: Row) =>
               comparable(row[key]) < comparable(value),
+            gt: (key: string, value: any) => (row: Row) =>
+              comparable(row[key]) > comparable(value),
             lte: (key: string, value: any) => (row: Row) =>
               comparable(row[key]) <= comparable(value),
             gte: (key: string, value: any) => (row: Row) =>
@@ -155,6 +158,10 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
                 motivoCancelacion: null,
               }
             : {}),
+          // DEFAULT now() del historial append-only, como Temporal nativo.
+          ...(plan.table === 'ajustes_incumplimiento'
+            ? { createdAt: Temporal.Instant.from(new Date().toISOString()) }
+            : {}),
           ...data,
         }));
         const unique =
@@ -164,6 +171,8 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
               ? ['codigoInventario']
               : plan.table === 'categorias_recurso'
                 ? ['nombre']
+                : plan.table === 'cierres_prestamo'
+                  ? ['prestamoId', 'requestId']
                 : plan.table === 'inspecciones_devolucion' ||
                     plan.table === 'devoluciones'
                   ? ['prestamoId']

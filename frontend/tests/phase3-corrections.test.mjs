@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, text, event, model } from './helpers/renderer.mjs'
 import { sanction as detailedSanction, rule, ruleId } from './helpers/trust-fixtures.mjs'
+import { activeLoan, returnPolicy, returnBody, closedLoan, requestId, partId } from './helpers/loan-closure-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const client = await load('shared/api/client')
@@ -46,11 +47,15 @@ test('I1: cuentas sucesivas, respuestas inversas no limpian bloqueos ajenos', as
   auth.saveSession(account('i1-A')); assert.equal(guard.pendingMutation('same'), false)
 })
 test('I1: reconciliación de devolución tardía afecta únicamente al titular capturado', async () => {
-  auth.saveSession(account('return-A')); loans.setPendingReturn('same-loan', true)
+  auth.saveSession({ ...account('return-A'), user: { ...account('return-A').user, role: 'OPERADOR' } })
+  globalThis.fetch = async () => Response.json({}, { status: 503 })
+  const body = returnBody()
+  await assert.rejects(loans.returnLoan('same-loan', body))
   const d = deferred(); globalThis.fetch = () => d.promise
   const reading = loans.reconcileReturn('same-loan')
   auth.saveSession(account('return-B')); loans.setPendingReturn('same-loan', true)
-  d.resolve(Response.json({ id: 'same-loan', status: 'FINALIZADO', return: { returnedAt: new Date().toISOString() } }))
+  const result = closedLoan(activeLoan('same-loan'), body); result.closure.actorUserId = 'return-A'
+  d.resolve(Response.json(result))
   assert.equal(await reading, true); assert.equal(loans.hasPendingReturn('same-loan'), true)
   auth.saveSession(account('return-A')); assert.equal(loans.hasPendingReturn('same-loan'), false)
 })
@@ -107,11 +112,11 @@ test('I3: alta A incierta no bloquea B; ausencia no libera A y evidencia exacta 
 test('I3: ejemplares con códigos distintos son independientes y lectura positiva reconcilia', async () => {
   globalThis.fetch = async () => Response.json(null, { status: 503 })
   await assert.rejects(inventory.createCopy('i3-resource', 'A'))
-  globalThis.fetch = async () => Response.json({ id: 'B', recursoId: 'i3-resource', codigoInventario: 'B' })
+  globalThis.fetch = async () => Response.json({ id: 'B', recursoId: 'i3-resource', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'B' })
   await inventory.createCopy('i3-resource', 'B')
   globalThis.fetch = async () => Response.json([])
   await inventory.getCopies('i3-resource'); assert.equal(guard.pendingMutation(inventory.copyIntent('i3-resource', 'A')), true)
-  globalThis.fetch = async () => Response.json([{ id: 'A-real', recursoId: 'i3-resource', codigoInventario: 'A' }])
+  globalThis.fetch = async () => Response.json([{ id: 'A-real', recursoId: 'i3-resource', estado: 'DISPONIBLE', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'A' }])
   await inventory.getCopies('i3-resource'); assert.equal(guard.pendingMutation(inventory.copyIntent('i3-resource', 'A')), false)
 })
 test('I4: montaje POST confirmado + F14 404 + confirmación humana cancela ID/owner reales', async () => {
@@ -125,7 +130,7 @@ test('I4: montaje POST confirmado + F14 404 + confirmación humana cancela ID/ow
     if (options.method === 'DELETE') { assert.equal(url, '/api/loans/reservations/i4-reservation-real'); return Response.json({ ...confirmed, status: 'CANCELADA' }) }
     return Response.json(null, { status: 404 })
   }
-  const mounted = mount(component, { copies: [{ id: 'i4-copy', estado: 'DISPONIBLE', codigoInventario: 'REAL' }], resourceName: 'Real' })
+  const mounted = mount(component, { copies: [{ id: 'i4-copy', estado: 'DISPONIBLE', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'REAL' }], resourceName: 'Real' })
   try {
     await model(find(mounted.root, 'select'), 'i4-copy')
     const { limaParts } = await load('modules/system/reservation-time')
@@ -151,10 +156,10 @@ test('I4: cancelación de titular ajeno se rechaza sin red; resultado incierto n
   await assert.rejects(reservations.cancelReservation('i4-owned', '', 'owner'), e => e.status === 0)
   assert.equal(calls, 1)
 })
-test('I5: reloj controlado rechaza futura/antedatada y conserva milisegundos actuales', () => {
-  const now = Date.parse('2026-10-28T12:00:00.123Z'), starts = '2026-10-28T11:00:00Z'
-  for (const delta of [-60000, -1, 1, 60000]) assert.throws(() => policy.returnInput(new Date(now + delta).toISOString(), false, '', starts, now))
-  assert.equal(policy.returnInput(new Date(now).toISOString(), false, '', starts, now).returnedAt, new Date(now).toISOString())
+test('I5: fecha de cierre exclusivamente de servidor, sin anticipar ni antedatar desde cliente', () => {
+  const body = policy.returnInput(requestId, returnPolicy(), { [partId]: true }, 'SANO', '', '', '', [])
+  assert.deepEqual(body, returnBody())
+  assert.doesNotMatch(JSON.stringify(body), /returnedAt|checkedAt|effectiveAt/)
 })
 test('I6: ida y retorno con categoría/disponibilidad/página en ambos orígenes y destino controlado', () => {
   const filters = { categoryId: 'cat & 1', available: 'false', page: '4', search: 'audio', limit: '10', returnTo: 'https://evil.invalid' }
@@ -231,7 +236,7 @@ function studentReads(sanctionId, onAppeal) {
     if (url.endsWith('/history')) return Response.json([{ id: 'loan', copyId: 'copy', status: 'ACTIVO', startsAt: new Date(Date.now() - 1000).toISOString(), endsAt: new Date(Date.now() + 60000).toISOString() }])
     if (url.endsWith('/categories')) return Response.json([{ id: 'cat', nombre: 'Cámaras', resourceCount: 5 }])
     if (url.endsWith('/availability')) return Response.json([{ id: 'resource', categoriaId: 'cat', availableCopies: 2 }])
-    if (url.includes('/copies/')) return Response.json({ id: 'copy', codigoInventario: 'C-REAL', recurso: { id: 'resource', nombre: 'Cámara real' } })
+    if (url.includes('/copies/')) return Response.json({ id: 'copy', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'C-REAL', recurso: { id: 'resource', nombre: 'Cámara real' } })
     return Response.json({ id: 'owner', name: 'Nombre real', enabled: true, percentage: 95, level: 'CONFIABLE' })
   }
 }
@@ -272,33 +277,41 @@ test('I2: montaje muestra ID confirmado y deshabilita reapelación al remontar',
     assert.equal(find(mounted.root, 'button', 'Apelar sanción').props.disabled, true)
   } finally { mounted.unmount(); await flush() }
 })
-test('I5: diálogo cruza vencimiento y envía instante de confirmación, sin fecha editable', async t => {
+test('I5: diálogo muestra proyección histórica read-only y no envía fecha editable ni calculada', async () => {
   const component = await loadComponent('modules/loans/components/ReturnLoanDialog')
-  const original = Date.now; let now = Date.parse('2026-10-28T12:00:00.123Z')
-  Date.now = () => now
-  auth.saveSession(account('owner'))
-  t.mock.timers.enable({ apis: ['setInterval'] })
-  const loan = { id: 'i5-cross-deadline', userId: 'owner', copyId: 'copy', status: 'ACTIVO', startsAt: '2026-10-28T11:00:00Z', endsAt: '2026-10-28T12:00:01Z' }
+  auth.saveSession({ ...account('owner'), user: { ...account('owner').user, role: 'OPERADOR' } })
+  const loan = activeLoan('i5-cross-deadline')
   let body
-  globalThis.fetch = async (_url, options) => { body = JSON.parse(options.body); return Response.json({ ...loan, status: 'FINALIZADO', return: { returnedAt: body.returnedAt } }) }
+  globalThis.fetch = async (url, options) => {
+    if (url.endsWith('/return-policy')) return Response.json(returnPolicy(loan.id, []))
+    if (url.endsWith('/evidence')) return Response.json([])
+    body = JSON.parse(options.body)
+    const result = closedLoan(loan, body); result.closure.actorUserId = 'owner'
+    return Response.json(result)
+  }
   const mounted = mount(component, { loan, copyLabel: 'Ejemplar real' })
   try {
     await flush()
-    assert.match(text(mounted.root), /dentro del plazo/)
+    assert.match(text(mounted.root), /Tardanza AUTOMÁTICA/)
+    assert.match(text(mounted.root), /Ya aplicada: LEVE/)
+    assert.match(text(mounted.root), /Proyectada al consultar: MODERADA/)
     assert.equal(findAll(mounted.root, n => n.tag === 'input' && n.props.type === 'datetime-local').length, 0)
-    now += 2000; t.mock.timers.tick(2000); await flush()
-    assert.match(text(mounted.root), /posterior al vencimiento/)
-    assert.match(text(mounted.root), new RegExp(Intl.DateTimeFormat().resolvedOptions().timeZone))
+    await model(find(mounted.root, 'input'), 'SANO')
     await event(find(mounted.root, 'form'), 'submit')
-    assert.equal(body.returnedAt, new Date(now).toISOString())
-  } finally { mounted.unmount(); Date.now = original; t.mock.timers.reset(); await flush() }
+    assert.doesNotMatch(JSON.stringify(body), /returnedAt|checkedAt|effectiveAt/)
+    assert.deepEqual(body.inspection.parts, [])
+  } finally { mounted.unmount(); await flush() }
 })
 test('I1: diálogo devolución 401 libera dueño original al relogin', async () => {
   const component = await loadComponent('modules/loans/components/ReturnLoanDialog')
   const loan = { id: 'i1-mounted-return', userId: 'owner', copyId: 'copy', status: 'ACTIVO', startsAt: new Date(Date.now() - 10000).toISOString(), endsAt: new Date(Date.now() + 60000).toISOString() }
-  globalThis.fetch = async () => Response.json(null, { status: 401 })
+  auth.saveSession({ ...account('owner'), user: { ...account('owner').user, role: 'OPERADOR' } })
+  globalThis.fetch = async url => Response.json(url.endsWith('/return-policy') ? returnPolicy(loan.id, []) : [])
   const mounted = mount(component, { loan, copyLabel: 'Real' })
   try {
+    await flush()
+    await model(find(mounted.root, 'input'), 'SANO')
+    globalThis.fetch = async () => Response.json(null, { status: 401 })
     await event(find(mounted.root, 'form'), 'submit')
     assert.equal(auth.getSession(), null)
     auth.saveSession(account('owner'))

@@ -64,13 +64,13 @@ export class FullRegistrationDto {
     minItems: 1,
     maxItems: 1,
     description:
-      'Una imagen PNG/JPEG como data URL base64, máximo 60 KiB binarios; no texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional. El personal revisa la vigencia del documento.',
+      'Una imagen PNG/JPEG de hasta 60 KiB o PDF de hasta 10 MiB como data URL base64. No texto ni URL externa. Estudiantes: carné o constancia de matrícula vigente. Profesores y administrativos: evidencia de vinculación institucional.',
   })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(1)
   @IsString({ each: true })
-  @MaxLength(82000, { each: true })
+  @MaxLength(14000000, { each: true })
   evidence!: string[];
 
   @ApiProperty({

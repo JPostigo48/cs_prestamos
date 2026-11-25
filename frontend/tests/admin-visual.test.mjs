@@ -108,7 +108,7 @@ test('editor: artículo, ejemplares, accesorios y duración conservan guardados 
 })
 
 test('ejemplares: no ofrece alterar ocupados y confirma antes de cambiar disponibilidad', async () => {
-  const calls = [], copy = { id: 'visual-copy', recursoId: resource.id, codigoInventario: 'TEST-COPY', estado: 'DISPONIBLE' }
+  const calls = [], copy = { id: 'visual-copy', recursoId: resource.id, condicionFisica: 'APTO', habilitado: true, codigoInventario: 'TEST-COPY', estado: 'DISPONIBLE' }
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
     if (url.endsWith('/state')) return Response.json({ ...copy, estado: 'NO_DISPONIBLE' })
@@ -118,8 +118,8 @@ test('ejemplares: no ofrece alterar ocupados y confirma antes de cambiar disponi
   const app = mount(Copies, { resourceId: resource.id })
   try {
     await flush()
-    assert.equal(findAll(app.root, n => n.tag === 'button' && text(n).includes('Inhabilitar')).length, 1)
-    await event(find(app.root, 'button', 'Inhabilitar'), 'click')
+    assert.equal(findAll(app.root, n => n.tag === 'button' && text(n).includes('Retener')).length, 1)
+    await event(find(app.root, 'button', 'Retener'), 'click')
     assert.equal(calls.length, 1)
     await event(find(app.root, 'button', 'Confirmar cambio'), 'click')
     assert.equal(calls.filter(c => c.options.method === 'PATCH').length, 1)

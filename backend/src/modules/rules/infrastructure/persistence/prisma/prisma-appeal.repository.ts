@@ -5,6 +5,11 @@ import {
   nullableInstantToDate,
 } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
 import { effectiveSanctionStatus } from '../../../domain/entities/sanction-schedule.js';
+import {
+  absolveEpisodeCalendar,
+  type CalendarEntry,
+} from '../../../domain/episode-calendar.js';
+import { appealRestitution } from '../../../domain/episode-adjustment.js';
 import { Temporal } from 'temporal-polyfill/full';
 import type { Appeal } from '../../../domain/entities/appeal.js';
 import {
@@ -240,13 +245,36 @@ export class PrismaAppealRepository implements AppealRepository {
         const user = users[0];
         if (!user)
           throw new ConflictException('Usuario de la sanción no encontrado.');
-        const deducted = Math.max(
-          0,
-          Number(sanction.confianzaAnterior) -
-            Number(sanction.confianzaPosterior),
+        const adjustments = await tx.query(
+          this.prisma.sql.public.ajustes_incumplimiento
+            .select('descuentoEfectivo')
+            .where((r, f) => f.eq(r.incumplimientoId, appeal.incumplimientoId))
+            .build(),
         );
         const previousTrust = Number(user.confianza);
-        const resultingTrust = Math.min(100, previousTrust + deducted);
+        const { resultingBalance: resultingTrust } = appealRestitution(
+          previousTrust,
+          adjustments.map((a) => Number(a.descuentoEfectivo)),
+          Number(sanction.confianzaAnterior),
+          Number(sanction.confianzaPosterior),
+        );
+        const calendarRows = await tx.query(
+          this.prisma.sql.public.sanciones
+            .select('id', 'estado', 'fechaInicio', 'fechaFin')
+            .where((r, f) => f.eq(r.usuarioId, appeal.usuarioId))
+            .build(),
+        );
+        const before: CalendarEntry[] = calendarRows.map((s) => ({
+          id: s.id,
+          status: s.estado,
+          startsAt: instantToDate(s.fechaInicio),
+          endsAt: nullableInstantToDate(s.fechaFin),
+        }));
+        const after = absolveEpisodeCalendar(
+          before,
+          sanction.id,
+          data.resolvedAt,
+        );
         const absolved = await tx.query(
           this.prisma.sql.public.sanciones
             .update({ estado: 'ABSUELTA' })
@@ -257,6 +285,28 @@ export class PrismaAppealRepository implements AppealRepository {
         );
         if (!absolved[0])
           throw new ConflictException('La sanción cambió durante la revisión.');
+        for (const entry of after) {
+          if (
+            entry.id === sanction.id ||
+            JSON.stringify(entry) ===
+              JSON.stringify(before.find((s) => s.id === entry.id))
+          )
+            continue;
+          await tx.query(
+            this.prisma.sql.public.sanciones
+              .update({
+                estado: entry.status,
+                fechaInicio: Temporal.Instant.from(
+                  entry.startsAt.toISOString(),
+                ),
+                fechaFin: entry.endsAt
+                  ? Temporal.Instant.from(entry.endsAt.toISOString())
+                  : null,
+              })
+              .where((r, f) => f.eq(r.id, entry.id))
+              .build(),
+          );
+        }
         const updatedUsers = await tx.query(
           this.prisma.sql.public.usuarios
             .update({ confianza: resultingTrust.toFixed(2) })
@@ -286,6 +336,9 @@ export class PrismaAppealRepository implements AppealRepository {
                   sancionId: sanction.id,
                   actorAccountId: data.resolvedByAccountId,
                   puntosRestituidos: resultingTrust - previousTrust,
+                  adjustmentCount: adjustments.length,
+                  calendarioAnterior: before,
+                  calendarioPosterior: after,
                 }),
               },
             ])

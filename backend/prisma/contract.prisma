@@ -32,6 +32,7 @@ model CategoriaRecurso {
   updatedAt                temporal.updatedAt()
 
   recursos                 Recurso[]
+  episodios                Incumplimiento[]
 
   @@map("categorias_recurso")
 }
@@ -80,6 +81,8 @@ model Ejemplar {
   recursoId        Uuid
   codigoInventario VarChar(80)           @unique
   estado           EstadoEjemplar        @default(DISPONIBLE)
+  condicionFisica  CondicionFisica?
+  habilitado       Boolean               @default(true)
 
   createdAt        Timestamptz(3)        @default(now())
   updatedAt        temporal.updatedAt()
@@ -283,11 +286,32 @@ model Prestamo {
   devolucion  Devolucion?
   evidencias  EvidenciaPrestamo[]
   inspeccion  InspeccionDevolucion?
+  cierre      CierrePrestamo?
+  incumplimientos Incumplimiento[]
 
   @@index([ejemplarId, estado, fechaInicio, fechaFin])
   @@index([usuarioId, estado])
   @@index([fechaFin, estado])
   @@map("prestamos")
+}
+
+// Idempotencia y resultado del cierre. No sustituye una devolución ni la inventa.
+model CierrePrestamo {
+  id Uuid @id @default(uuid())
+  prestamoId Uuid @unique
+  requestId VarChar(120) @unique
+  requestHash VarChar(64)
+  actor Jsonb
+  contexto Jsonb
+  inspeccion Jsonb?
+  resultado Jsonb
+  recompensa Jsonb?
+  fechaEfectiva Timestamptz(3)
+  createdAt Timestamptz(3) @default(now())
+
+  prestamo Prestamo @relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("cierres_prestamo")
 }
 
 model Devolucion {
@@ -376,6 +400,7 @@ model VersionRegla {
   reglaVigentePara       ReglaUso?        @relation("ReglaVersionVigente")
   incumplimientos        Incumplimiento[]
   sanciones              Sancion[]        @relation("VersionSanciones")
+  ajustes                AjusteIncumplimiento[]
 
   @@unique([reglaId, numero])
   @@index([estado])
@@ -386,6 +411,10 @@ model VersionRegla {
 model Incumplimiento {
   id                   Uuid           @id @default(uuid())
   reservaId            Uuid?          @unique
+  prestamoId           Uuid?
+  categoriaId          Uuid?
+  termsVersionId       Uuid?
+  origen               OrigenIncumplimiento?
   usuarioId            Uuid
   reglaId              Uuid
   versionReglaId       Uuid
@@ -400,10 +429,47 @@ model Incumplimiento {
   sancion              Sancion?       @relation("IncumplimientoSancion")
   apelacion            Apelacion?
   reserva              Reserva?       @relation(fields:[reservaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  prestamo             Prestamo?      @relation(fields:[prestamoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  categoria            CategoriaRecurso? @relation(fields:[categoriaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  terminos             VersionTerminos? @relation(fields:[termsVersionId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  ajustes              AjusteIncumplimiento[]
 
+  @@unique([prestamoId, origen])
+  @@index([categoriaId, termsVersionId, origen])
+  @@check(expression: "(\"prestamoId\" IS NULL AND origen IS NULL) OR (\"prestamoId\" IS NOT NULL AND \"categoriaId\" IS NOT NULL AND \"termsVersionId\" IS NOT NULL AND origen IS NOT NULL)", name: "incumplimientos_episodio_contexto_check")
   @@index([usuarioId, fecha])
   @@index([reglaId, versionReglaId])
   @@map("incumplimientos")
+}
+
+// Solo INSERT. Los saldos iniciales del incumplimiento/sanción no se reescriben.
+model AjusteIncumplimiento {
+  id Uuid @id @default(uuid())
+  incumplimientoId Uuid
+  versionReglaId Uuid
+  severidad VarChar(40)
+  efecto VarChar(20)
+  nominalObjetivo Numeric(5, 2)?
+  incrementoNominal Numeric(5, 2)?
+  descuentoEfectivo Numeric(5, 2)
+  saldoAnterior Numeric(5, 2)
+  saldoPosterior Numeric(5, 2)
+  duracionTotalDias Int?
+  incrementoDias Int?
+  fechaEfectiva Timestamptz(3)
+  actor Jsonb
+  contexto Jsonb
+  calendarioAnterior Jsonb
+  calendarioPosterior Jsonb
+  createdAt Timestamptz(3) @default(now())
+
+  incumplimiento Incumplimiento @relation(fields:[incumplimientoId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+  versionRegla VersionRegla @relation(fields:[versionReglaId], references:[id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([incumplimientoId, severidad, versionReglaId])
+  @@check(expression: "\"descuentoEfectivo\" >= 0 AND \"saldoAnterior\" BETWEEN 0 AND 100 AND \"saldoPosterior\" BETWEEN 0 AND 100 AND \"saldoAnterior\" - \"saldoPosterior\" = \"descuentoEfectivo\"", name: "ajustes_saldos_check")
+  @@check(expression: "(efecto = 'SET_ZERO' AND \"nominalObjetivo\" IS NULL AND \"incrementoNominal\" IS NULL AND \"duracionTotalDias\" IS NULL AND \"incrementoDias\" IS NULL AND \"saldoPosterior\" = 0) OR (efecto = 'DISCOUNT' AND \"nominalObjetivo\" BETWEEN 0 AND 100 AND \"incrementoNominal\" BETWEEN 0 AND \"nominalObjetivo\" AND \"duracionTotalDias\" > 0 AND \"incrementoDias\" BETWEEN 0 AND \"duracionTotalDias\")", name: "ajustes_efecto_check")
+  @@map("ajustes_incumplimiento")
 }
 
 model Apelacion {
@@ -445,6 +511,7 @@ model VersionTerminos {
 
   aceptaciones AceptacionTerminos[]
   solicitudes  SolicitudRegistro[]
+  episodios    Incumplimiento[]
 
   @@map("versiones_terminos")
 }
@@ -515,6 +582,26 @@ enum EstadoPrestamo {
   PLANIFICADO
   ACTIVO
   FINALIZADO
+  CERRADO_POR_INCIDENCIA
+}
+
+enum CondicionFisica {
+  @@type("pg/text@1")
+
+  APTO
+  DANADO
+  INCOMPLETO
+  DANADO_E_INCOMPLETO
+  PERDIDO
+  ROBADO
+}
+
+enum OrigenIncumplimiento {
+  @@type("pg/text@1")
+
+  MORA
+  DANO
+  PERDIDA
 }
 
 enum TipoEvidenciaPrestamo {

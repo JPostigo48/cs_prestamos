@@ -1,0 +1,1196 @@
+[
+  {
+    "id": "dropCheckConstraint.prestamos.prestamos_estado_check_005a5bcd",
+    "label": "Drop check constraint \"prestamos_estado_check_005a5bcd\" on \"prestamos\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "prestamos_estado_check_005a5bcd",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prestamos_estado_check_005a5bcd\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_estado_check_005a5bcd",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"prestamos_estado_check_005a5bcd\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\" DROP CONSTRAINT \"prestamos_estado_check_005a5bcd\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prestamos_estado_check_005a5bcd\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_estado_check_005a5bcd",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.ajustes_incumplimiento",
+    "label": "Create table \"ajustes_incumplimiento\"",
+    "summary": "Creates table \"ajustes_incumplimiento\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ajustes_incumplimiento\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ajustes_incumplimiento\"",
+        "sql": "CREATE TABLE \"public\".\"ajustes_incumplimiento\" (\n  \"actor\" jsonb NOT NULL,\n  \"calendarioAnterior\" jsonb NOT NULL,\n  \"calendarioPosterior\" jsonb NOT NULL,\n  \"contexto\" jsonb NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"descuentoEfectivo\" numeric(5,2) NOT NULL,\n  \"duracionTotalDias\" int4,\n  \"efecto\" character varying(20) NOT NULL,\n  \"fechaEfectiva\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"incrementoDias\" int4,\n  \"incrementoNominal\" numeric(5,2),\n  \"incumplimientoId\" uuid NOT NULL,\n  \"nominalObjetivo\" numeric(5,2),\n  \"saldoAnterior\" numeric(5,2) NOT NULL,\n  \"saldoPosterior\" numeric(5,2) NOT NULL,\n  \"severidad\" character varying(40) NOT NULL,\n  \"versionReglaId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ajustes_efecto_check_bddadac4\" CHECK ((efecto = 'SET_ZERO' AND \"nominalObjetivo\" IS NULL AND \"incrementoNominal\" IS NULL AND \"duracionTotalDias\" IS NULL AND \"incrementoDias\" IS NULL AND \"saldoPosterior\" = 0) OR (efecto = 'DISCOUNT' AND \"nominalObjetivo\" BETWEEN 0 AND 100 AND \"incrementoNominal\" BETWEEN 0 AND \"nominalObjetivo\" AND \"duracionTotalDias\" > 0 AND \"incrementoDias\" BETWEEN 0 AND \"duracionTotalDias\")),\n  CONSTRAINT \"ajustes_saldos_check_2259aaf4\" CHECK (\"descuentoEfectivo\" >= 0 AND \"saldoAnterior\" BETWEEN 0 AND 100 AND \"saldoPosterior\" BETWEEN 0 AND 100 AND \"saldoAnterior\" - \"saldoPosterior\" = \"descuentoEfectivo\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ajustes_incumplimiento\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.cierres_prestamo",
+    "label": "Create table \"cierres_prestamo\"",
+    "summary": "Creates table \"cierres_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "cierres_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"cierres_prestamo\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"cierres_prestamo\"",
+        "sql": "CREATE TABLE \"public\".\"cierres_prestamo\" (\n  \"actor\" jsonb NOT NULL,\n  \"contexto\" jsonb NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"fechaEfectiva\" timestamptz(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"inspeccion\" jsonb,\n  \"prestamoId\" uuid NOT NULL,\n  \"recompensa\" jsonb,\n  \"requestHash\" character varying(64) NOT NULL,\n  \"requestId\" character varying(120) NOT NULL,\n  \"resultado\" jsonb NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"cierres_prestamo\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.ejemplares.condicionFisica",
+    "label": "Add column \"condicionFisica\" to \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "condicionFisica",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"condicionFisica\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "ejemplares",
+          "condicionFisica"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"condicionFisica\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" ADD COLUMN \"condicionFisica\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"condicionFisica\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "ejemplares",
+          "condicionFisica"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.ejemplares.habilitado",
+    "label": "Add column \"habilitado\" to \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "habilitado",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"habilitado\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "ejemplares",
+          "habilitado"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"habilitado\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" ADD COLUMN \"habilitado\" bool DEFAULT true NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"habilitado\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "ejemplares",
+          "habilitado"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.incumplimientos.categoriaId",
+    "label": "Add column \"categoriaId\" to \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "categoriaId",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"categoriaId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "categoriaId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"categoriaId\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD COLUMN \"categoriaId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"categoriaId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "categoriaId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.incumplimientos.origen",
+    "label": "Add column \"origen\" to \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "origen",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"origen\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "origen"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"origen\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD COLUMN \"origen\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"origen\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "origen"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.incumplimientos.prestamoId",
+    "label": "Add column \"prestamoId\" to \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "prestamoId",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"prestamoId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "prestamoId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"prestamoId\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD COLUMN \"prestamoId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"prestamoId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "prestamoId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.incumplimientos.termsVersionId",
+    "label": "Add column \"termsVersionId\" to \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "termsVersionId",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"termsVersionId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "termsVersionId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"termsVersionId\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD COLUMN \"termsVersionId\" uuid"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"termsVersionId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "incumplimientos",
+          "termsVersionId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.ajustes_incumplimiento.ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key",
+    "label": "Add unique constraint on \"ajustes_incumplimiento\" (incumplimientoId, severidad, versionReglaId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key",
+        "table": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key\"",
+        "sql": "ALTER TABLE \"public\".\"ajustes_incumplimiento\" ADD CONSTRAINT \"ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key\" UNIQUE (\"incumplimientoId\", \"severidad\", \"versionReglaId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_incumplimientoId_severidad_versionReglaId_key",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.cierres_prestamo.cierres_prestamo_prestamoId_key",
+    "label": "Add unique constraint on \"cierres_prestamo\" (prestamoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "cierres_prestamo_prestamoId_key",
+        "table": "cierres_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"cierres_prestamo_prestamoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_prestamoId_key",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"cierres_prestamo_prestamoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"cierres_prestamo\" ADD CONSTRAINT \"cierres_prestamo_prestamoId_key\" UNIQUE (\"prestamoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"cierres_prestamo_prestamoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_prestamoId_key",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.cierres_prestamo.cierres_prestamo_requestId_key",
+    "label": "Add unique constraint on \"cierres_prestamo\" (requestId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "cierres_prestamo_requestId_key",
+        "table": "cierres_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"cierres_prestamo_requestId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_requestId_key",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"cierres_prestamo_requestId_key\"",
+        "sql": "ALTER TABLE \"public\".\"cierres_prestamo\" ADD CONSTRAINT \"cierres_prestamo_requestId_key\" UNIQUE (\"requestId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"cierres_prestamo_requestId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_requestId_key",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.ejemplares.ejemplares_condicionFisica_check_aa4d7703",
+    "label": "Add check constraint \"ejemplares_condicionFisica_check_aa4d7703\" on \"ejemplares\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "ejemplares_condicionFisica_check_aa4d7703",
+        "table": "ejemplares"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"ejemplares_condicionFisica_check_aa4d7703\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_condicionFisica_check_aa4d7703",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"ejemplares_condicionFisica_check_aa4d7703\"",
+        "sql": "ALTER TABLE \"public\".\"ejemplares\" ADD CONSTRAINT \"ejemplares_condicionFisica_check_aa4d7703\" CHECK (\"condicionFisica\" IN ('APTO', 'DANADO', 'INCOMPLETO', 'DANADO_E_INCOMPLETO', 'PERDIDO', 'ROBADO'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"ejemplares_condicionFisica_check_aa4d7703\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ejemplares_condicionFisica_check_aa4d7703",
+          "public",
+          "\"public\".\"ejemplares\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.incumplimientos.incumplimientos_episodio_contexto_check_431bd0a6",
+    "label": "Add check constraint \"incumplimientos_episodio_contexto_check_431bd0a6\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "incumplimientos_episodio_contexto_check_431bd0a6",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"incumplimientos_episodio_contexto_check_431bd0a6\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_episodio_contexto_check_431bd0a6",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"incumplimientos_episodio_contexto_check_431bd0a6\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD CONSTRAINT \"incumplimientos_episodio_contexto_check_431bd0a6\" CHECK ((\"prestamoId\" IS NULL AND origen IS NULL) OR (\"prestamoId\" IS NOT NULL AND \"categoriaId\" IS NOT NULL AND \"termsVersionId\" IS NOT NULL AND origen IS NOT NULL))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"incumplimientos_episodio_contexto_check_431bd0a6\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_episodio_contexto_check_431bd0a6",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.incumplimientos.incumplimientos_origen_check_79efc0b3",
+    "label": "Add check constraint \"incumplimientos_origen_check_79efc0b3\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "incumplimientos_origen_check_79efc0b3",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"incumplimientos_origen_check_79efc0b3\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_origen_check_79efc0b3",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"incumplimientos_origen_check_79efc0b3\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD CONSTRAINT \"incumplimientos_origen_check_79efc0b3\" CHECK (\"origen\" IN ('MORA', 'DANO', 'PERDIDA'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"incumplimientos_origen_check_79efc0b3\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_origen_check_79efc0b3",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.incumplimientos.incumplimientos_prestamoId_origen_key",
+    "label": "Add unique constraint on \"incumplimientos\" (prestamoId, origen)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "incumplimientos_prestamoId_origen_key",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"incumplimientos_prestamoId_origen_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_prestamoId_origen_key",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"incumplimientos_prestamoId_origen_key\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\" ADD CONSTRAINT \"incumplimientos_prestamoId_origen_key\" UNIQUE (\"prestamoId\", \"origen\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"incumplimientos_prestamoId_origen_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_prestamoId_origen_key",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prestamos.prestamos_estado_check_c9163860",
+    "label": "Add check constraint \"prestamos_estado_check_c9163860\" on \"prestamos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "prestamos_estado_check_c9163860",
+        "table": "prestamos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prestamos_estado_check_c9163860\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_estado_check_c9163860",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"prestamos_estado_check_c9163860\"",
+        "sql": "ALTER TABLE \"public\".\"prestamos\" ADD CONSTRAINT \"prestamos_estado_check_c9163860\" CHECK (\"estado\" IN ('PLANIFICADO', 'ACTIVO', 'FINALIZADO', 'CERRADO_POR_INCIDENCIA'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prestamos_estado_check_c9163860\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prestamos_estado_check_c9163860",
+          "public",
+          "\"public\".\"prestamos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ajustes_incumplimiento.ajustes_incumplimiento_incumplimientoId_idx_0499e809",
+    "label": "Create index \"ajustes_incumplimiento_incumplimientoId_idx_0499e809\" on \"ajustes_incumplimiento\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ajustes_incumplimiento_incumplimientoId_idx_0499e809",
+        "table": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ajustes_incumplimiento_incumplimientoId_idx_0499e809\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento_incumplimientoId_idx_0499e809\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ajustes_incumplimiento_incumplimientoId_idx_0499e809\"",
+        "sql": "CREATE INDEX \"ajustes_incumplimiento_incumplimientoId_idx_0499e809\" ON \"public\".\"ajustes_incumplimiento\" (\"incumplimientoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ajustes_incumplimiento_incumplimientoId_idx_0499e809\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento_incumplimientoId_idx_0499e809\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ajustes_incumplimiento.ajustes_incumplimiento_versionReglaId_idx_e53cdbcf",
+    "label": "Create index \"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\" on \"ajustes_incumplimiento\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ajustes_incumplimiento_versionReglaId_idx_e53cdbcf",
+        "table": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\"",
+        "sql": "CREATE INDEX \"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\" ON \"public\".\"ajustes_incumplimiento\" (\"versionReglaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ajustes_incumplimiento_versionReglaId_idx_e53cdbcf\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_categoriaId_idx_63b46427",
+    "label": "Create index \"incumplimientos_categoriaId_idx_63b46427\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_categoriaId_idx_63b46427",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_categoriaId_idx_63b46427\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_categoriaId_idx_63b46427\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_categoriaId_idx_63b46427\"",
+        "sql": "CREATE INDEX \"incumplimientos_categoriaId_idx_63b46427\" ON \"public\".\"incumplimientos\" (\"categoriaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_categoriaId_idx_63b46427\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_categoriaId_idx_63b46427\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8",
+    "label": "Create index \"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\"",
+        "sql": "CREATE INDEX \"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\" ON \"public\".\"incumplimientos\" (\"categoriaId\", \"termsVersionId\", \"origen\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_prestamoId_idx_8ecc28bd",
+    "label": "Create index \"incumplimientos_prestamoId_idx_8ecc28bd\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_prestamoId_idx_8ecc28bd",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_prestamoId_idx_8ecc28bd\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_prestamoId_idx_8ecc28bd\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_prestamoId_idx_8ecc28bd\"",
+        "sql": "CREATE INDEX \"incumplimientos_prestamoId_idx_8ecc28bd\" ON \"public\".\"incumplimientos\" (\"prestamoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_prestamoId_idx_8ecc28bd\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_prestamoId_idx_8ecc28bd\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incumplimientos.incumplimientos_termsVersionId_idx_d60c13f5",
+    "label": "Create index \"incumplimientos_termsVersionId_idx_d60c13f5\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incumplimientos_termsVersionId_idx_d60c13f5",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incumplimientos_termsVersionId_idx_d60c13f5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_termsVersionId_idx_d60c13f5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incumplimientos_termsVersionId_idx_d60c13f5\"",
+        "sql": "CREATE INDEX \"incumplimientos_termsVersionId_idx_d60c13f5\" ON \"public\".\"incumplimientos\" (\"termsVersionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incumplimientos_termsVersionId_idx_d60c13f5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incumplimientos_termsVersionId_idx_d60c13f5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ajustes_incumplimiento.ajustes_incumplimiento_incumplimientoId_fkey",
+    "label": "Add foreign key \"ajustes_incumplimiento_incumplimientoId_fkey\" on \"ajustes_incumplimiento\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ajustes_incumplimiento_incumplimientoId_fkey",
+        "table": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ajustes_incumplimiento_incumplimientoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ajustes_incumplimiento_incumplimientoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ajustes_incumplimiento\"\nADD CONSTRAINT \"ajustes_incumplimiento_incumplimientoId_fkey\"\nFOREIGN KEY (\"incumplimientoId\")\nREFERENCES \"public\".\"incumplimientos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ajustes_incumplimiento_incumplimientoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_incumplimientoId_fkey",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ajustes_incumplimiento.ajustes_incumplimiento_versionReglaId_fkey",
+    "label": "Add foreign key \"ajustes_incumplimiento_versionReglaId_fkey\" on \"ajustes_incumplimiento\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ajustes_incumplimiento_versionReglaId_fkey",
+        "table": "ajustes_incumplimiento"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ajustes_incumplimiento_versionReglaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_versionReglaId_fkey",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ajustes_incumplimiento_versionReglaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ajustes_incumplimiento\"\nADD CONSTRAINT \"ajustes_incumplimiento_versionReglaId_fkey\"\nFOREIGN KEY (\"versionReglaId\")\nREFERENCES \"public\".\"versiones_regla\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ajustes_incumplimiento_versionReglaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ajustes_incumplimiento_versionReglaId_fkey",
+          "public",
+          "\"public\".\"ajustes_incumplimiento\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.cierres_prestamo.cierres_prestamo_prestamoId_fkey",
+    "label": "Add foreign key \"cierres_prestamo_prestamoId_fkey\" on \"cierres_prestamo\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "cierres_prestamo_prestamoId_fkey",
+        "table": "cierres_prestamo"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"cierres_prestamo_prestamoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_prestamoId_fkey",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"cierres_prestamo_prestamoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"cierres_prestamo\"\nADD CONSTRAINT \"cierres_prestamo_prestamoId_fkey\"\nFOREIGN KEY (\"prestamoId\")\nREFERENCES \"public\".\"prestamos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"cierres_prestamo_prestamoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "cierres_prestamo_prestamoId_fkey",
+          "public",
+          "\"public\".\"cierres_prestamo\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_categoriaId_fkey",
+    "label": "Add foreign key \"incumplimientos_categoriaId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_categoriaId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_categoriaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_categoriaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_categoriaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_categoriaId_fkey\"\nFOREIGN KEY (\"categoriaId\")\nREFERENCES \"public\".\"categorias_recurso\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_categoriaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_categoriaId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_prestamoId_fkey",
+    "label": "Add foreign key \"incumplimientos_prestamoId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_prestamoId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_prestamoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_prestamoId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_prestamoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_prestamoId_fkey\"\nFOREIGN KEY (\"prestamoId\")\nREFERENCES \"public\".\"prestamos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_prestamoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_prestamoId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incumplimientos.incumplimientos_termsVersionId_fkey",
+    "label": "Add foreign key \"incumplimientos_termsVersionId_fkey\" on \"incumplimientos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incumplimientos_termsVersionId_fkey",
+        "table": "incumplimientos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incumplimientos_termsVersionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_termsVersionId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incumplimientos_termsVersionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incumplimientos\"\nADD CONSTRAINT \"incumplimientos_termsVersionId_fkey\"\nFOREIGN KEY (\"termsVersionId\")\nREFERENCES \"public\".\"versiones_terminos\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incumplimientos_termsVersionId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incumplimientos_termsVersionId_fkey",
+          "public",
+          "\"public\".\"incumplimientos\""
+        ]
+      }
+    ]
+  }
+]

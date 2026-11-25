@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Estas pruebas no cargan secretos ni construyen conexiones compartidas.
 vi.mock('dotenv/config', () => ({}));
 import { inMemoryPrisma } from '../../../test/helpers/in-memory-prisma.js';
+import { categoryPolicyFixture } from '../../../test/helpers/category-policy-fixture.js';
 import { seedRules } from '../../../prisma/seeds/rules.seed.js';
 import { authorizeRulesSeed } from '../../../prisma/seeds/rules.runner.js';
 import {
@@ -456,31 +457,25 @@ describe('Consulta y aplicación mínima de versiones persistidas', () => {
   });
 
   it.each(['R-DAN:ELECTRONICOS:GRAVE', 'R-PER'])(
-    'aplica %s a cero y conserva el descuento efectivo, sin −100 ficticio',
+    'rechaza %s manual sin cierre, inspección o evidencia contextual',
     async (key) => {
       const db = inMemoryPrisma({
+        ...categoryPolicyFixture('category'),
         usuarios: [{ id: 'user', confianza: '42.25' }],
       });
-      await seed(db);
       const useCase = new RegisterViolationUseCase(
         new PrismaViolationRepository(db as never),
         new PrismaRuleRepository(db as never),
       );
       const p = policy(key);
-      const result = await useCase.execute({
+      await expect(useCase.execute({
         userId: 'user',
         ruleId: p.ruleId,
         occurredAt: new Date(),
-      });
-      expect(result.appliedPenalty).toBe(42.25);
-      expect(db.rows('usuarios')[0].confianza).toBe('0.00');
-      expect(db.rows('sanciones')[0]).toMatchObject({
-        versionReglaId: p.versionId,
-        confianzaAnterior: '42.25',
-        confianzaPosterior: '0.00',
-        estado: 'ACTIVA',
-        fechaFin: null,
-      });
+      })).rejects.toMatchObject({ status: 409 });
+      expect(db.rows('usuarios')[0].confianza).toBe('42.25');
+      expect(db.rows('sanciones')).toHaveLength(0);
+      expect(db.rows('incumplimientos')).toHaveLength(0);
       expect(
         db.rows('versiones_regla').find((r) => r.id === p.versionId)!
           .penalizacionPorcentual,
@@ -488,11 +483,11 @@ describe('Consulta y aplicación mínima de versiones persistidas', () => {
     },
   );
 
-  it('consulta la versión administrativa vigente para descuento y duración, no el catálogo fuente', async () => {
+  it('consulta la versión administrativa vigente, pero no la aplica manualmente a un daño sin contexto', async () => {
     const db = inMemoryPrisma({
+      ...categoryPolicyFixture('category'),
       usuarios: [{ id: 'user', confianza: '75.00' }],
     });
-    await seed(db);
     const p = policy('R-DAN:LIBROS:LEVE');
     const old = db.rows('versiones_regla').find((r) => r.id === p.versionId)!;
     db.rows('versiones_regla').push({
@@ -508,19 +503,16 @@ describe('Consulta y aplicación mínima de versiones persistidas', () => {
       new PrismaViolationRepository(db as never),
       new PrismaRuleRepository(db as never),
     );
-    const result = await useCase.execute({
+    const current = await new PrismaRuleRepository(db as never).findById(p.ruleId);
+    expect(current?.currentVersionId).toBe('admin-v2');
+    expect(current?.versions.find((v) => v.id === 'admin-v2')).toMatchObject({ penaltyPercentage: 12, suspensionDays: 9 });
+    await expect(useCase.execute({
       userId: 'user',
       ruleId: p.ruleId,
       occurredAt: new Date(),
-    });
-    expect(result).toMatchObject({
-      appliedPenalty: 12,
-      ruleVersionId: 'admin-v2',
-    });
-    const sanction = db.rows('sanciones')[0];
-    expect(sanction.fechaFin.epochMilliseconds - sanction.fechaInicio.epochMilliseconds).toBe(
-      9 * 86400000,
-    );
+    })).rejects.toMatchObject({ status: 409 });
+    expect(db.rows('usuarios')[0].confianza).toBe('75.00');
+    expect(db.rows('sanciones')).toHaveLength(0);
     expect(old.penalizacionPorcentual).toBe('10.00');
   });
 

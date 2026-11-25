@@ -7,6 +7,7 @@ import { useUserDetails } from '../../users/useUserDetails'
 import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import ReturnLoanDialog from '../components/ReturnLoanDialog.vue'
+import CloseIncidentDialog from '../components/CloseIncidentDialog.vue'
 import ReservationsPanel from '../components/ReservationsPanel.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { dateTime } from '../../../shared/format'
@@ -16,6 +17,8 @@ const overdue = useRemote(getOverdueLoans)
 const tab = ref<'active' | 'overdue' | 'pickups'>('active')
 const current = computed(() => (tab.value === 'active' ? active : overdue))
 const selected = ref<Loan | null>(null)
+const incidentLoan = ref<Loan | null>(null)
+const reservationsPanel = ref<InstanceType<typeof ReservationsPanel> | null>(null)
 function selectLoan(loan: Loan) {
   selected.value = loan
   notice.value = ''
@@ -26,10 +29,10 @@ const users = useUserDetails(() => [...(active.data.value ?? []), ...(overdue.da
 function refresh() {
   void active.refresh()
   void overdue.refresh()
+  reservationsPanel.value?.refresh()
 }
 function success() {
-  selected.value = null
-  notice.value = 'Devolución confirmada por el servidor.'
+  notice.value = 'Cierre confirmado por el servidor. Consulta el resultado persistido en el diálogo.'
   refresh()
 }
 const date = dateTime
@@ -55,7 +58,7 @@ const copyLabel = (loan: Loan) =>
     <RouterLink to="/app/registrations"><ClipboardList :size="16" aria-hidden="true" />Solicitudes</RouterLink>
   </div>
   <div v-show="tab === 'pickups'" data-reservations-panel>
-    <ReservationsPanel staff @changed="refresh" />
+    <ReservationsPanel ref="reservationsPanel" staff @changed="refresh" />
   </div>
   <p v-if="tab !== 'pickups' && (tab === 'active' ? overdue.error.value : active.error.value)" class="error" role="alert">
     La otra lista no pudo cargarse. Selecciónala para consultar el error y reintentar.
@@ -88,6 +91,7 @@ const copyLabel = (loan: Loan) =>
           >
             <Check :size="16" aria-hidden="true" />Registrar devolución
           </button>
+          <button type="button" @click="incidentLoan = loan">Cerrar por pérdida o robo</button>
       </article>
     </div>
   </RemoteState>
@@ -99,6 +103,7 @@ const copyLabel = (loan: Loan) =>
     @changed="refresh"
     @success="success"
   />
+  <CloseIncidentDialog v-if="incidentLoan" :loan="incidentLoan" :copy-label="copyLabel(incidentLoan)" @close="incidentLoan = null" @changed="success" />
   </section>
 </template>
 <style scoped>

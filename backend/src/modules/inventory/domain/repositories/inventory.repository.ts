@@ -1,6 +1,7 @@
 import type {
   InventoryCopyStateManaged,
   InventoryCopyStatus,
+  ManagedCopyUpdate,
 } from '../entities/inventory.types.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 import type { CategoryPolicyConfiguration } from '../../../rules/domain/category-policy.js';
@@ -35,7 +36,7 @@ export abstract class InventoryRepository {
   ): Promise<T>;
   abstract updateManagedCopy(
     copyId: string,
-    data: { codigoInventario?: string; estado?: InventoryCopyStateManaged },
+    data: ManagedCopyUpdate,
   ): Promise<any>;
   abstract createCategory(data: {
     nombre: string;

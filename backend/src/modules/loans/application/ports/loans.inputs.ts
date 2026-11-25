@@ -1,8 +1,10 @@
-export interface ReturnLoanInput {
+import type { AuditActor } from '../../../../shared/application/audit-actor.js';
+import type { ReturnCommand } from '../../domain/entities/loan-closure.js';
+
+export type ReturnLoanInput = ReturnCommand & {
   loanId: string;
-  returnedAt: Date;
-  observation?: string;
-}
+  actor: AuditActor;
+};
 
 export interface GetLoanInput {
   loanId: string;

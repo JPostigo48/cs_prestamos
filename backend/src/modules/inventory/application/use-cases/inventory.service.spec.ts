@@ -49,7 +49,7 @@ describe('InventoryService', () => {
       findResourceById: vi.fn(),
       findAllResources: vi.fn().mockResolvedValue([]),
       countCopiesByResource: vi.fn(),
-      countAvailableCopiesByResource: vi.fn(),
+      countAvailableCopiesByResource: vi.fn().mockResolvedValue(1),
       countCopiesByResourceAndState: vi
         .fn()
         .mockImplementation((_resourceId, state) =>
@@ -210,6 +210,7 @@ describe('InventoryService', () => {
   });
 
   it('should calculate availability', async () => {
+    repository.countAvailableCopiesByResource.mockResolvedValue(2);
     repository.findResourceById.mockResolvedValue({
       id: resourceId,
       categoriaId: categoryId,
@@ -549,6 +550,7 @@ describe('InventoryService', () => {
       deleted: false,
       deactivated: true,
       estado: 'NO_DISPONIBLE',
+      habilitado: false,
       copyId,
     });
     repository.deleteCopy.mockResolvedValue(0);

@@ -41,6 +41,8 @@ export interface CopyLoanSnapshot {
   reservationSettings?: ReservationSettingsSnapshot;
   /** Referencias inmutables a la publicación usada al confirmar la reserva. */
   reservationNoShow?: { termsVersionId: string; ruleVersionId: string };
+  /** Referencia común inmutable de mora, daño, pérdida y recompensa. */
+  loanPolicy?: { termsVersionId: string; categoryId: string };
 }
 
 export const normalizeAccessoryName = (name: string): string =>

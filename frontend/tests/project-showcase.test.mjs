@@ -18,8 +18,10 @@ const Layout = await loadComponent('modules/project-showcase/ProjectLayout')
 
 test('contrato real completo: nombres, conteos, cada campo/tipo/atributo y cada relación', () => {
   const blocks = [...contract.matchAll(/^(model|enum) (\w+) \{\r?\n([\s\S]*?)^\}/gm)]
-  assert.equal(database.models.length, 23)
-  assert.equal(database.enums.length, 11)
+  assert.equal(database.models.length, 25)
+  assert.equal(database.enums.length, 13)
+  for (const name of ['CierrePrestamo', 'AjusteIncumplimiento']) assert.ok(database.models.some(model => model.name === name))
+  for (const name of ['CondicionFisica', 'OrigenIncumplimiento']) assert.ok(database.enums.some(item => item.name === name))
   assert.ok(database.models.some(model => model.name === 'ConfiguracionReservas'))
   const violation = database.models.find(model => model.name === 'Incumplimiento')
   assert.equal(violation.fields.find(field => field.name === 'reservaId').nullable, true)
@@ -116,10 +118,10 @@ test('fixtures Prisma Next: compuestos, listas, multiline, escapes, funciones, e
 
 test('metadata generada: público, autenticado sin roles, restringido y guard personalizado', () => {
   const operations = Object.values(api.paths).flatMap(path => Object.values(path))
-  assert.equal(operations.length, 81)
+  assert.equal(operations.length, 84)
   assert.equal(api.paths['/system/reservation-settings'].get['x-authentication'].scope, 'authenticated')
   assert.deepEqual(api.paths['/system/reservation-settings'].patch['x-roles'], ['ADMINISTRADOR'])
-  for (const [path, method] of [['/loans/resource/{resourceId}/history', 'get'], ['/loans/{loanId}/return-checklist', 'post']]) {
+  for (const [path, method] of [['/loans/resource/{resourceId}/history', 'get'], ['/loans/{loanId}/return-checklist', 'post'], ['/loans/{loanId}/return-policy', 'get'], ['/loans/{loanId}/return', 'post'], ['/loans/{loanId}/close-incident', 'post']]) {
     assert.deepEqual(api.paths[path][method]['x-roles'], ['OPERADOR', 'ADMINISTRADOR'])
     assert.equal(api.paths[path][method]['x-authentication'].required, true)
   }
@@ -183,18 +185,18 @@ test('candado montado: hover, foco, Escape, click táctil y público sin botón'
   publicView.unmount()
 })
 
-test('páginas montadas: 81 operaciones, DB completa, búsqueda, sin resultados y fallo de carga', async () => {
+test('páginas montadas: 84 operaciones, DB completa, búsqueda, sin resultados y fallo de carga', async () => {
   globalThis.fetch = async url => ({ ok: true, json: async () => String(url).endsWith('db.json') ? database : api })
   const apiView = mount(ApiPage)
   await flush()
-  assert.equal(findAll(apiView.root, node => node.tag === 'code' && /^\//.test(text(node))).length, 81)
+  assert.equal(findAll(apiView.root, node => node.tag === 'code' && /^\//.test(text(node))).length, 84)
   assert.ok(text(apiView.root).includes('/terms/current'))
   assert.ok(text(apiView.root).includes('/terms/versions/{versionId}'))
   assert.ok(!text(apiView.root).includes('forma de la respuesta aún'))
   apiView.unmount()
   const dbView = mount(DbPage)
   await flush()
-  assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 34)
+  assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 38)
   await model(find(dbView.root, 'input'), 'CuentaAcceso')
   assert.equal(findAll(dbView.root, node => node.tag === 'h3').length, 1)
   assert.ok(text(dbView.root).includes('passwordHash')) // Solo nombre/tipo, nunca un valor.

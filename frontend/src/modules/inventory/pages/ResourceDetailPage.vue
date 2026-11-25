@@ -37,13 +37,13 @@ const currentOperation = useRemote(async (signal) => {
 const reservationBlockedMessage = computed(() => {
   if (currentOperation.loading.value) return 'Consultando tus reservas y préstamos.'
   if (currentOperation.error.value || !currentOperation.data.value) return 'No pudimos comprobar tus operaciones. Actualiza la disponibilidad para reintentar.'
-  if (currentOperation.data.value.reservation) return 'Ya tienes una reserva activa.'
-  if (currentOperation.data.value.loan) return 'Ya tienes un préstamo activo o pendiente de entrega.'
+  if (session.user.userType === 'ESTUDIANTE' && currentOperation.data.value.reservation) return 'Ya tienes una reserva activa.'
+  if (session.user.userType === 'ESTUDIANTE' && currentOperation.data.value.loan) return 'Ya tienes un préstamo activo o pendiente de entrega.'
   return ''
 })
 const canReserve = computed(() => !reservationBlockedMessage.value && resource.data.value?.available !== false
   && !resource.loading.value && !resource.error.value && !copies.loading.value && !copies.error.value
-  && !!copies.data.value?.some((copy) => copy.estado === 'DISPONIBLE'))
+  && !!copies.data.value?.some((copy) => copy.estado === 'DISPONIBLE' && copy.condicionFisica === 'APTO' && copy.habilitado))
 async function openReservation() {
   if (!canReserve.value) return
   await currentOperation.refresh()

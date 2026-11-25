@@ -2,9 +2,10 @@ import type { Loan } from './api/loans-api'
 import { listReservations, type Reservation } from './api/reservations-api'
 import { ApiError } from '../../shared/api/client'
 
-export type HistoryState = 'DEVUELTO' | 'VENCIDO' | 'ACTIVO' | 'PROGRAMADO'
+export type HistoryState = 'DEVUELTO' | 'VENCIDO' | 'ACTIVO' | 'PROGRAMADO' | 'CERRADO_POR_INCIDENCIA'
 export function historyState(loan: Pick<Loan, 'status' | 'endsAt'>, now = Date.now()): HistoryState {
   if (loan.status === 'FINALIZADO') return 'DEVUELTO'
+  if (loan.status === 'CERRADO_POR_INCIDENCIA') return 'CERRADO_POR_INCIDENCIA'
   if (loan.status === 'PLANIFICADO') return 'PROGRAMADO'
   return Date.parse(loan.endsAt) < now ? 'VENCIDO' : 'ACTIVO'
 }
@@ -55,8 +56,8 @@ export function combineHistory(loans: Loan[], reservations: Reservation[], now =
     const state = historyState(loan, now)
     return {
       key: 'loan:' + loan.id, copyId: loan.copyId, state, loan, reservation,
-      relevantAt: loan.return?.returnedAt ?? (state === 'VENCIDO' ? loan.endsAt : loan.startsAt),
-      dateLabel: loan.return ? 'Devuelto el' : state === 'VENCIDO' ? 'Venció el' : 'Préstamo desde',
+      relevantAt: loan.closure?.effectiveAt ?? loan.return?.returnedAt ?? (state === 'VENCIDO' ? loan.endsAt : loan.startsAt),
+      dateLabel: state === 'CERRADO_POR_INCIDENCIA' ? 'Cerrado por incidencia el' : loan.return ? 'Devuelto el' : state === 'VENCIDO' ? 'Venció el' : 'Préstamo desde',
     }
   })
   for (const reservation of reservations) {

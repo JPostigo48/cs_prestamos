@@ -39,6 +39,8 @@ const initial = {
       recursoId: resourceId,
       codigoInventario: 'LIB-1',
       estado: 'DISPONIBLE',
+      condicionFisica: 'APTO',
+      habilitado: true,
     },
   ],
 };
@@ -58,6 +60,8 @@ describe('Categorías: repositorios reales sobre doble SQL offline, no garantía
     const builder = postgres({ contractJson });
     const query = vi.fn();
     for (const rows of [
+      [], // Barrera de inventario.
+      [], // Barrera de publicación.
       [],
       [{ id: categoryId, nombre: 'Vacía' }],
       [],
@@ -89,9 +93,17 @@ describe('Categorías: repositorios reales sobre doble SQL offline, no garantía
     expect(query.mock.calls[0][0].ast.parts.join('')).toContain(
       'SHARE ROW EXCLUSIVE MODE NOWAIT',
     );
+    expect(query.mock.calls[1][0].meta.lane).toBe('raw');
+    expect(query.mock.calls[1][0].ast.parts.join('')).toContain(
+      'SHARE MODE NOWAIT',
+    );
+    expect(query.mock.calls[2][0].meta.lane).toBe('raw');
+    expect(query.mock.calls[2][0].ast.parts.join('')).toContain(
+      'SHARE ROW EXCLUSIVE MODE NOWAIT',
+    );
     expect(
       query.mock.calls
-        .slice(1)
+        .slice(3)
         .every(([plan]) => plan.ast && plan.meta.lane === 'dsl'),
     ).toBe(true);
   });

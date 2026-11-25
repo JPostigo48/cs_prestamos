@@ -17,6 +17,7 @@ import type {
   UpdateResourceInput,
 } from '../ports/inventory.inputs.js';
 import { InventoryRepository } from '../../domain/repositories/inventory.repository.js';
+import { validCopyVerification, type ManagedCopyUpdate } from '../../domain/entities/inventory.types.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 import {
   normalizeAccessoryName,
@@ -151,17 +152,31 @@ export class InventoryService {
     );
   }
 
-  async updateCopy(copyId: string, dto: { codigoInventario: string }) {
+  async updateCopy(
+    copyId: string,
+    dto: { codigoInventario?: string; habilitado?: boolean },
+  ) {
     await this.ensureCopyExists(copyId);
     const codigoInventario = this.normalizeText(
       dto.codigoInventario,
       'codigoInventario',
     );
-    if (!codigoInventario || codigoInventario.length > 80)
+    if (
+      dto.codigoInventario !== undefined &&
+      (!codigoInventario || codigoInventario.length > 80)
+    )
       throw new BadRequestException('Código de inventario inválido.');
+    if (dto.habilitado !== undefined && typeof dto.habilitado !== 'boolean')
+      throw new BadRequestException('habilitado debe ser booleano.');
+    const data: ManagedCopyUpdate = {
+      ...(codigoInventario ? { codigoInventario } : {}),
+      ...(dto.habilitado !== undefined ? { habilitado: dto.habilitado } : {}),
+    };
+    if (!Object.keys(data).length)
+      throw new BadRequestException('Debe enviar al menos un campo.');
     try {
       return this.toCopyResponse(
-        await this.repository.updateManagedCopy(copyId, { codigoInventario }),
+        await this.repository.updateManagedCopy(copyId, data),
       );
     } catch (error) {
       if (this.isUniqueViolation(error))
@@ -266,7 +281,7 @@ export class InventoryService {
   }
 
   private async getAvailabilityCounts(resourceId: string) {
-    const [disponibles, prestados, noDisponibles, reservados] =
+    const [libres, prestados, retenidos, reservados, disponibles] =
       await Promise.all([
         this.repository.countCopiesByResourceAndState(resourceId, 'DISPONIBLE'),
         this.repository.countCopiesByResourceAndState(resourceId, 'PRESTADO'),
@@ -275,8 +290,14 @@ export class InventoryService {
           'NO_DISPONIBLE',
         ),
         this.repository.countCopiesByResourceAndState(resourceId, 'RESERVADO'),
+        this.repository.countAvailableCopiesByResource(resourceId),
       ]);
-    return { disponibles, prestados, noDisponibles, reservados };
+    return {
+      disponibles,
+      prestados,
+      noDisponibles: retenidos + libres - disponibles,
+      reservados,
+    };
   }
 
   private async mapResourceRows(rows: any[]) {
@@ -318,6 +339,8 @@ export class InventoryService {
       recursoId: row.recursoId,
       codigoInventario: row.codigoInventario,
       estado: row.estado,
+      condicionFisica: row.condicionFisica ?? null,
+      habilitado: row.habilitado === true,
     };
   }
 
@@ -768,6 +791,7 @@ export class InventoryService {
       deactivated: true,
       copyId,
       estado: 'NO_DISPONIBLE' as const,
+      habilitado: false,
     };
   }
 
@@ -802,15 +826,18 @@ export class InventoryService {
       configuration.eligibleForNewOperations;
     return {
       copyId,
-      available: copy.estado === 'DISPONIBLE' && enabled,
+      available:
+        copy.estado === 'DISPONIBLE' &&
+        copy.condicionFisica === 'APTO' &&
+        copy.habilitado === true &&
+        enabled,
       maximumLoanDays: policy.effectiveDurationHours / 24,
       maximumLoanHours: policy.effectiveDurationHours,
     };
   }
 
   async markCopyAsLoaned(copyId: string): Promise<void> {
-    const copy = await this.ensureCopyExists(copyId);
-    if (copy.estado !== 'DISPONIBLE') {
+    if (!(await this.getLoanAvailability(copyId)).available) {
       throw new ConflictException('El ejemplar no está disponible.');
     }
     await this.repository.markCopyAsLoaned(copyId);
@@ -846,14 +873,19 @@ export class InventoryService {
         'Estado inválido para inventario.',
       );
     }
-    if (copy.estado === dto.estado) {
-      return this.toCopyResponse(copy);
-    }
+    if (
+      dto.verification !== undefined &&
+      (dto.estado !== 'DISPONIBLE' || !validCopyVerification(dto.verification))
+    )
+      throw new BadRequestException('Verificación de aptitud inválida.');
     if (copy.estado === 'RESERVADO' || copy.estado === 'PRESTADO') {
       throw new ConflictException('El ejemplar está reservado o prestado.');
     }
     const updated = await this.repository.updateManagedCopy(copyId, {
       estado: dto.estado as 'DISPONIBLE' | 'NO_DISPONIBLE',
+      ...(dto.verification !== undefined
+        ? { verification: dto.verification }
+        : {}),
     });
     return this.toCopyResponse(updated);
   }
