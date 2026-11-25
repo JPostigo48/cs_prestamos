@@ -23,7 +23,7 @@ export class RegisterViolationUseCase {
     if (policy && (policy.trustEffect === 'NONE' || ['REWARD', 'ACCESS', 'TRUST'].includes(policy.kind))) {
       throw new BadRequestException('La configuración de acceso o recompensa no es una falta sancionable.');
     }
-    if (policy?.kind === 'LATENESS' || policy?.kind === 'NO_SHOW') {
+    if (policy && ['LATENESS', 'NO_SHOW', 'DAMAGE', 'LOSS'].includes(policy.kind)) {
       throw new ConflictException('La política automática requiere contexto de préstamo/reserva; este registro manual no permite aplicarla.');
     }
     if (policy?.trustEffect === 'SET_ZERO' && (version.penaltyPercentage !== 0 ||

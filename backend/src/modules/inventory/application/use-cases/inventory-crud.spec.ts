@@ -31,6 +31,8 @@ const initial = {
       recursoId: resourceId,
       codigoInventario: 'LIB-1',
       estado: 'DISPONIBLE',
+      condicionFisica: 'APTO',
+      habilitado: true,
     },
   ],
 };
@@ -123,6 +125,7 @@ describe('Inventory CRUD without database', () => {
       deactivated: true,
       copyId,
       estado: 'NO_DISPONIBLE',
+      habilitado: false,
     });
     expect(await service.getLoanAvailability(copyId)).toMatchObject({
       available: false,
@@ -134,7 +137,11 @@ describe('Inventory CRUD without database', () => {
     await expect(write((s) => s.deleteResource(resourceId))).rejects.toThrow(
       ConflictException,
     );
-    await write((s) => s.updateCopyState(copyId, { estado: 'DISPONIBLE' }));
+    await write((s) => s.updateCopy(copyId, { habilitado: true }));
+    await write((s) => s.updateCopyState(copyId, {
+      estado: 'DISPONIBLE',
+      verification: { fitForLoan: true, componentsComplete: true, reason: 'Inspeccionado y completo', evidenceIds: [] },
+    }));
     expect(await service.getLoanAvailability(copyId)).toMatchObject({
       available: false, // categoría sin publicación oficial completa
     });

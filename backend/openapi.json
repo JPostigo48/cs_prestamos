@@ -4838,7 +4838,7 @@
             "bearer": []
           }
         ],
-        "summary": "Editar código de inventario sin alterar sus relaciones",
+        "summary": "Editar código o habilitación administrativa sin alterar aptitud ni liberar retenciones",
         "tags": [
           "Inventario"
         ],
@@ -4859,6 +4859,7 @@
     },
     "/inventory/copies/{copyId}/state": {
       "patch": {
+        "description": "OPERADOR/ADMINISTRADOR. DISPONIBLE exige habilitado=true, recurso/categoría activos y ausencia de compromisos. Desde NO_DISPONIBLE o condición distinta de APTO (incluido null), exige verification completa. Persiste APTO, actor y auditoría en una transacción. No modifica sanciones ni confianza. La habilitación solo se administra mediante PATCH del ejemplar.",
         "operationId": "InventoryController_updateCopyState",
         "parameters": [
           {
@@ -4974,7 +4975,7 @@
             "bearer": []
           }
         ],
-        "summary": "Modificar estado de un ejemplar",
+        "summary": "Modificar estado o rehabilitar explícitamente un ejemplar",
         "tags": [
           "Inventario"
         ],
@@ -5604,7 +5605,8 @@
               "enum": [
                 "PLANIFICADO",
                 "ACTIVO",
-                "FINALIZADO"
+                "FINALIZADO",
+                "CERRADO_POR_INCIDENCIA"
               ],
               "type": "string"
             }
@@ -5728,7 +5730,7 @@
     },
     "/loans/{loanId}/return-checklist": {
       "post": {
-        "description": "Captura única e inmutable de un préstamo ACTIVO, auditada con actor JWT y snapshot original. No devuelve el préstamo ni aplica sanciones. Reintentos con iguales partes recuperan la captura original, incluso tras devolver; diferencias devuelven 409. Sin snapshot histórico solo admite parts vacío. Faltantes exigen describir incidencia al ejecutar la devolución separada existente.",
+        "description": "Captura antecedente única e inmutable de un préstamo ACTIVO, auditada con actor JWT y snapshot original. No devuelve el préstamo, no aplica sanciones ni determina condición física final. Reintentos con iguales partes recuperan la captura original, incluso tras devolver; diferencias devuelven 409. Sin snapshot histórico solo admite parts vacío. El cierre exige una inspección FINAL nueva e independiente y no sustituye este antecedente.",
         "operationId": "LoansController_returnChecklist",
         "parameters": [
           {
@@ -5835,7 +5837,7 @@
             "bearer": []
           }
         ],
-        "summary": "Guardar inspección de devolución",
+        "summary": "Guardar checklist antecedente de devolución",
         "tags": [
           "Préstamos"
         ],
@@ -6426,6 +6428,262 @@
         }
       }
     },
+    "/loans/{loanId}/return-policy": {
+      "get": {
+        "operationId": "LoansController_returnPolicy",
+        "parameters": [
+          {
+            "name": "loanId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnPolicyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar política histórica de devolución, sin escrituras",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
+    "/loans/{loanId}/close-incident": {
+      "post": {
+        "operationId": "LoansController_closeIncident",
+        "parameters": [
+          {
+            "name": "loanId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIncidentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnhandledErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cerrar por pérdida o robo confirmado, sin devolución ficticia",
+        "tags": [
+          "Préstamos"
+        ],
+        "x-implementation-status": "implemented",
+        "x-roles": [
+          "OPERADOR",
+          "ADMINISTRADOR"
+        ],
+        "x-authentication": {
+          "required": true,
+          "scope": "roles",
+          "description": "Roles efectivos exigidos por RolesGuard; pueden existir restricciones adicionales de propiedad o negocio.",
+          "guards": [
+            "AuthGuard",
+            "RolesGuard"
+          ]
+        }
+      }
+    },
     "/loans/{loanId}/return": {
       "post": {
         "operationId": "LoansController_registerReturn",
@@ -6471,7 +6729,7 @@
             }
           },
           "401": {
-            "description": "Token bearer requerido o inválido.",
+            "description": "UNAUTHORIZED",
             "content": {
               "application/json": {
                 "schema": {
@@ -6481,7 +6739,7 @@
             }
           },
           "403": {
-            "description": "Rol no autorizado.",
+            "description": "FORBIDDEN",
             "content": {
               "application/json": {
                 "schema": {
@@ -6523,6 +6781,16 @@
                       "$ref": "#/components/schemas/UnhandledErrorDto"
                     }
                   ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
                 }
               }
             }
@@ -10384,6 +10652,23 @@
       "CopyResponseDto": {
         "type": "object",
         "properties": {
+          "condicionFisica": {
+            "type": "string",
+            "enum": [
+              "APTO",
+              "DANADO",
+              "INCOMPLETO",
+              "DANADO_E_INCOMPLETO",
+              "PERDIDO",
+              "ROBADO"
+            ],
+            "nullable": true,
+            "description": "null: legado desconocido, no apto para nuevas operaciones."
+          },
+          "habilitado": {
+            "type": "boolean",
+            "description": "Habilitación administrativa independiente de ocupación y aptitud."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -10410,6 +10695,8 @@
           }
         },
         "required": [
+          "condicionFisica",
+          "habilitado",
           "id",
           "recursoId",
           "codigoInventario",
@@ -10473,6 +10760,23 @@
       "CopyDetailResponseDto": {
         "type": "object",
         "properties": {
+          "condicionFisica": {
+            "type": "string",
+            "enum": [
+              "APTO",
+              "DANADO",
+              "INCOMPLETO",
+              "DANADO_E_INCOMPLETO",
+              "PERDIDO",
+              "ROBADO"
+            ],
+            "nullable": true,
+            "description": "null: legado desconocido, no apto para nuevas operaciones."
+          },
+          "habilitado": {
+            "type": "boolean",
+            "description": "Habilitación administrativa independiente de ocupación y aptitud."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -10508,6 +10812,8 @@
           }
         },
         "required": [
+          "condicionFisica",
+          "habilitado",
           "id",
           "recursoId",
           "codigoInventario",
@@ -10519,6 +10825,12 @@
       "DeactivatedCopyResponseDto": {
         "type": "object",
         "properties": {
+          "habilitado": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
           "deleted": {
             "type": "boolean",
             "enum": [
@@ -10543,6 +10855,7 @@
           }
         },
         "required": [
+          "habilitado",
           "deleted",
           "deactivated",
           "copyId",
@@ -10555,10 +10868,48 @@
           "codigoInventario": {
             "type": "string",
             "maxLength": 80
+          },
+          "habilitado": {
+            "type": "boolean",
+            "description": "Habilitación administrativa explícita; no modifica aptitud ni libera un ejemplar retenido."
+          }
+        }
+      },
+      "CopyVerificationDto": {
+        "type": "object",
+        "properties": {
+          "fitForLoan": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "componentsComplete": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "evidenceIds": {
+            "uniqueItems": true,
+            "description": "Obligatorio, admite []. Evidencias existentes de préstamos del mismo ejemplar.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         },
         "required": [
-          "codigoInventario"
+          "fitForLoan",
+          "componentsComplete",
+          "reason",
+          "evidenceIds"
         ]
       },
       "UpdateCopyStateDto": {
@@ -10572,6 +10923,14 @@
               "NO_DISPONIBLE"
             ],
             "example": "NO_DISPONIBLE"
+          },
+          "verification": {
+            "description": "Obligatoria para DISPONIBLE desde NO_DISPONIBLE o condición distinta de APTO (incluido null). No habilita administrativamente.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CopyVerificationDto"
+              }
+            ]
           }
         },
         "required": [
@@ -10705,6 +11064,23 @@
           "descripcion"
         ]
       },
+      "LoanPolicySnapshotDto": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "categoryId",
+          "termsVersionId"
+        ]
+      },
       "ReservationSettingsSnapshotDto": {
         "type": "object",
         "properties": {
@@ -10758,6 +11134,14 @@
       "CopyLoanSnapshotDto": {
         "type": "object",
         "properties": {
+          "loanPolicy": {
+            "description": "Referencia común de políticas históricas del préstamo; ausente en legado.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoanPolicySnapshotDto"
+              }
+            ]
+          },
           "schemaVersion": {
             "type": "integer",
             "enum": [
@@ -10920,6 +11304,275 @@
           "limit"
         ]
       },
+      "FinalInspectionPartDto": {
+        "type": "object",
+        "properties": {
+          "accessoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "received": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accessoryId",
+          "received"
+        ]
+      },
+      "ClosureInspectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "uniqueItems": true,
+            "description": "Snapshot histórico completo y exacto, sin duplicados. Vacío solo si no tenía componentes.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinalInspectionPartDto"
+            }
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "SANO",
+              "DESGASTE_NORMAL",
+              "DANADO"
+            ]
+          },
+          "damageSeverity": {
+            "type": "string",
+            "enum": [
+              "LEVE",
+              "MODERADA",
+              "GRAVE"
+            ],
+            "description": "Obligatoria con daño o faltantes; debe omitirse sin incidente. Se agrega un único daño."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Obligatoria y no vacía con daño o faltantes."
+          },
+          "evidenceIds": {
+            "uniqueItems": true,
+            "description": "Obligatoria aunque vacía. Evidencias existentes de devolución/daño de este préstamo.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "parts",
+          "condition",
+          "evidenceIds",
+          "id"
+        ]
+      },
+      "LoanClosureResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "DEVOLUCION",
+              "PERDIDA",
+              "ROBO"
+            ]
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inspection": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClosureInspectionResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "requestId",
+          "reason",
+          "effectiveAt",
+          "actorAccountId",
+          "actorUserId",
+          "categoryId",
+          "termsVersionId",
+          "inspection"
+        ]
+      },
+      "LoanConsequenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "violationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sanctionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true
+          },
+          "ruleVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "configuredPenaltyPoints": {
+            "type": "number",
+            "nullable": true
+          },
+          "effectivePenaltyTotal": {
+            "type": "number"
+          },
+          "suspensionType": {
+            "type": "string"
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "violationId",
+          "sanctionId",
+          "kind",
+          "severity",
+          "ruleVersionId",
+          "configuredPenaltyPoints",
+          "effectivePenaltyTotal",
+          "suspensionType",
+          "suspensionDays",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "LoanRewardResponseDto": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "PUNTUAL_Y_COMPLETO",
+              "MORA",
+              "INCIDENTE"
+            ]
+          },
+          "ruleVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "referencePoints": {
+            "type": "number"
+          },
+          "fraction": {
+            "type": "number"
+          },
+          "calculatedPoints": {
+            "type": "number"
+          },
+          "effectivePoints": {
+            "type": "number"
+          },
+          "previousTrust": {
+            "type": "number"
+          },
+          "resultingTrust": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "eligible",
+          "reason",
+          "ruleVersionId",
+          "referencePoints",
+          "fraction",
+          "calculatedPoints",
+          "effectivePoints",
+          "previousTrust",
+          "resultingTrust"
+        ]
+      },
+      "ClosedCopyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "DISPONIBLE",
+              "NO_DISPONIBLE"
+            ]
+          },
+          "condicionFisica": {
+            "type": "string",
+            "nullable": true
+          },
+          "habilitado": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "condicionFisica",
+          "habilitado"
+        ]
+      },
       "LoanReturnResponseDto": {
         "type": "object",
         "properties": {
@@ -11016,6 +11669,46 @@
       "LoanResponseDto": {
         "type": "object",
         "properties": {
+          "closure": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoanClosureResponseDto"
+              }
+            ]
+          },
+          "consequences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoanConsequenceResponseDto"
+            }
+          },
+          "reward": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoanRewardResponseDto"
+              }
+            ]
+          },
+          "copy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClosedCopyResponseDto"
+              }
+            ]
+          },
+          "cancelledReservationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -11041,7 +11734,8 @@
             "enum": [
               "PLANIFICADO",
               "ACTIVO",
-              "FINALIZADO"
+              "FINALIZADO",
+              "CERRADO_POR_INCIDENCIA"
             ]
           },
           "return": {
@@ -11073,6 +11767,11 @@
           }
         },
         "required": [
+          "closure",
+          "consequences",
+          "reward",
+          "copy",
+          "cancelledReservationIds",
           "id",
           "userId",
           "copyId",
@@ -11180,22 +11879,339 @@
           }
         }
       },
-      "ReturnLoanDto": {
+      "HistoricalAccessoryResponseDto": {
         "type": "object",
         "properties": {
-          "returnedAt": {
+          "id": {
             "type": "string",
-            "format": "date-time",
-            "example": "2030-01-20T10:00:00.000Z"
+            "format": "uuid"
           },
-          "observation": {
-            "type": "string",
-            "maxLength": 1000,
-            "example": "Devolución sin observaciones"
+          "nombre": {
+            "type": "string"
           }
         },
         "required": [
-          "returnedAt"
+          "id",
+          "nombre"
+        ]
+      },
+      "ReturnPolicyOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "LATENESS",
+              "DAMAGE",
+              "LOSS",
+              "NO_SHOW",
+              "REWARD",
+              "ACCESS",
+              "TRUST"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "null: aplica a todas las categorías o no depende de categoría."
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true
+          },
+          "trustEffect": {
+            "type": "string",
+            "enum": [
+              "DISCOUNT",
+              "SET_ZERO",
+              "NONE"
+            ]
+          },
+          "penaltyPoints": {
+            "type": "number",
+            "nullable": true,
+            "description": "Puntos porcentuales de descuento; null: no aplica, no significa cero."
+          },
+          "suspensionType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "NINGUNA",
+              "TEMPORAL",
+              "INDEFINIDA",
+              null
+            ]
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "null se interpreta según suspensionType, no como cero días."
+          },
+          "consequence": {
+            "type": "string"
+          },
+          "criteria": {
+            "$ref": "#/components/schemas/PolicyCriteriaDto"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "ruleId",
+          "number",
+          "title",
+          "key",
+          "kind",
+          "category",
+          "categoryId",
+          "severity",
+          "trustEffect",
+          "penaltyPoints",
+          "suspensionType",
+          "suspensionDays",
+          "consequence",
+          "criteria",
+          "versionId"
+        ]
+      },
+      "ReturnLatenessResponseDto": {
+        "type": "object",
+        "properties": {
+          "automatic": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "currentSeverity": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetSeverity": {
+            "type": "string",
+            "nullable": true
+          },
+          "appliedPenaltyPoints": {
+            "type": "number"
+          },
+          "targetPenaltyPoints": {
+            "type": "number"
+          },
+          "targetSuspensionDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "automatic",
+          "currentSeverity",
+          "targetSeverity",
+          "appliedPenaltyPoints",
+          "targetPenaltyPoints",
+          "targetSuspensionDays"
+        ]
+      },
+      "ReturnPolicyResponseDto": {
+        "type": "object",
+        "properties": {
+          "loanId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "policySource": {
+            "type": "string",
+            "enum": [
+              "LOAN_SNAPSHOT",
+              "LOAN_NO_SHOW_SNAPSHOT",
+              "RESERVATION_SNAPSHOT",
+              "RESERVATION_CONFIRMATION"
+            ]
+          },
+          "accessories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalAccessoryResponseDto"
+            }
+          },
+          "damageOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReturnPolicyOptionResponseDto"
+            }
+          },
+          "lateness": {
+            "$ref": "#/components/schemas/ReturnLatenessResponseDto"
+          },
+          "lossPolicy": {
+            "$ref": "#/components/schemas/ReturnPolicyOptionResponseDto"
+          },
+          "rewardPolicy": {
+            "$ref": "#/components/schemas/ReturnPolicyOptionResponseDto"
+          }
+        },
+        "required": [
+          "loanId",
+          "serverNow",
+          "endsAt",
+          "categoryId",
+          "termsVersionId",
+          "policySource",
+          "accessories",
+          "damageOptions",
+          "lateness",
+          "lossPolicy",
+          "rewardPolicy"
+        ]
+      },
+      "CloseIncidentDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PERDIDA",
+              "ROBO"
+            ]
+          },
+          "confirmed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "evidenceIds": {
+            "uniqueItems": true,
+            "description": "Obligatoria aunque vacía. Evidencias existentes de pérdida del mismo préstamo.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "requestId",
+          "kind",
+          "confirmed",
+          "description",
+          "evidenceIds"
+        ]
+      },
+      "FinalInspectionDto": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "uniqueItems": true,
+            "description": "Snapshot histórico completo y exacto, sin duplicados. Vacío solo si no tenía componentes.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinalInspectionPartDto"
+            }
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "SANO",
+              "DESGASTE_NORMAL",
+              "DANADO"
+            ]
+          },
+          "damageSeverity": {
+            "type": "string",
+            "enum": [
+              "LEVE",
+              "MODERADA",
+              "GRAVE"
+            ],
+            "description": "Obligatoria con daño o faltantes; debe omitirse sin incidente. Se agrega un único daño."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Obligatoria y no vacía con daño o faltantes."
+          },
+          "evidenceIds": {
+            "uniqueItems": true,
+            "description": "Obligatoria aunque vacía. Evidencias existentes de devolución/daño de este préstamo.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "parts",
+          "condition",
+          "evidenceIds"
+        ]
+      },
+      "ReturnLoanDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inspection": {
+            "$ref": "#/components/schemas/FinalInspectionDto"
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "requestId",
+          "inspection"
         ]
       },
       "LoanEvidenceResponseDto": {
@@ -11414,6 +12430,110 @@
           "status"
         ]
       },
+      "SanctionAdjustmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "DISCOUNT",
+              "SET_ZERO"
+            ]
+          },
+          "nominalTarget": {
+            "type": "number",
+            "nullable": true
+          },
+          "nominalIncrement": {
+            "type": "number",
+            "nullable": true
+          },
+          "effectiveDiscount": {
+            "type": "number"
+          },
+          "previousTrust": {
+            "type": "number"
+          },
+          "resultingTrust": {
+            "type": "number"
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ruleVersionId",
+          "severity",
+          "effect",
+          "nominalTarget",
+          "nominalIncrement",
+          "effectiveDiscount",
+          "previousTrust",
+          "resultingTrust",
+          "suspensionDays",
+          "effectiveAt",
+          "recordedAt"
+        ]
+      },
+      "SanctionCurrentResponseDto": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/RuleVersionResponseDto"
+          },
+          "nominalPenaltyTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Objetivo nominal acumulado; null para SET_ZERO."
+          },
+          "effectivePenaltyTotal": {
+            "type": "number",
+            "description": "Suma de descuentos efectivos, incluido el inicial una sola vez; no saldo actual del usuario."
+          },
+          "suspensionDays": {
+            "type": "number",
+            "nullable": true
+          },
+          "adjustments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SanctionAdjustmentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "severity",
+          "rule",
+          "nominalPenaltyTotal",
+          "effectivePenaltyTotal",
+          "suspensionDays",
+          "adjustments"
+        ]
+      },
       "ViolationResponseDto": {
         "type": "object",
         "properties": {
@@ -11526,6 +12646,16 @@
           },
           "resultingTrust": {
             "type": "number"
+          },
+          "current": {
+            "nullable": true,
+            "description": "Consecuencia acumulada desde ajustes; null para legado sin ajustes. Los campos superiores conservan el antecedente inicial inmutable. Absolución no borra el historial.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SanctionCurrentResponseDto"
+              }
+            ]
           },
           "reason": {
             "type": "string",

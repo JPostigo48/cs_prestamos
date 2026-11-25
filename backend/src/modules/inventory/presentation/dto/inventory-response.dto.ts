@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PageMetadataDto } from '../../../../shared/presentation/dto/http-error.dto.js';
 import { ResourceLoanPolicyResponseDto } from './resource-configuration.dto.js';
+import { physicalConditions, type PhysicalCondition } from '../../domain/entities/inventory.types.js';
 
 const categoryId = '550e8400-e29b-41d4-a716-446655440000';
 const resourceId = '550e8400-e29b-41d4-a716-446655440001';
@@ -109,6 +110,12 @@ export class ResourceDetailResponseDto extends ResourceResponseDto {
 }
 
 export class CopyResponseDto {
+  @ApiProperty({ type: String, enum: [...physicalConditions], nullable: true, description: 'null: legado desconocido, no apto para nuevas operaciones.' })
+  condicionFisica!: PhysicalCondition | null;
+
+  @ApiProperty({ type: Boolean, description: 'Habilitación administrativa independiente de ocupación y aptitud.' })
+  habilitado!: boolean;
+
   @ApiProperty({ type: String, format: 'uuid', example: copyId })
   id!: string;
 
@@ -203,6 +210,7 @@ export class DeletedResourceResponseDto {
 }
 
 export class DeactivatedCopyResponseDto {
+  @ApiProperty({ type: Boolean, enum: [false] }) habilitado!: false;
   @ApiProperty({ type: Boolean, enum: [false] }) deleted!: false;
   @ApiProperty({ type: Boolean, enum: [true] }) deactivated!: true;
   @ApiProperty({ type: String, format: 'uuid' }) copyId!: string;

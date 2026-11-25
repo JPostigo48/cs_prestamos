@@ -27,6 +27,8 @@ import { SanctionsController } from './presentation/controllers/sanctions.contro
 import { ManageSanctionsUseCase } from './application/use-cases/manage-sanctions.use-case.js';
 import { SanctionRepository } from './domain/repositories/sanction.repository.js';
 import { PrismaSanctionRepository } from './infrastructure/persistence/prisma/prisma-sanction.repository.js';
+import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service.js';
+import { LoanEpisodeEngine } from './infrastructure/persistence/prisma/loan-episode.engine.js';
 
 const useCases = [
   ReadPublicTermsUseCase,
@@ -52,6 +54,7 @@ const useCases = [
     PublicTermsController,
   ],
   providers: [
+    { provide: LoanEpisodeEngine, useFactory: (prisma: PrismaService) => new LoanEpisodeEngine(prisma), inject: [PrismaService] },
     ManageSanctionsUseCase,
     { provide: SanctionRepository, useClass: PrismaSanctionRepository },
     ...useCases,
@@ -72,6 +75,6 @@ const useCases = [
       useClass: PrismaTermsRepository,
     },
   ],
-  exports: [TermsRepository],
+  exports: [TermsRepository, LoanEpisodeEngine],
 })
 export class RulesModule {}

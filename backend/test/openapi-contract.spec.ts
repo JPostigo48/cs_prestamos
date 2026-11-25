@@ -70,6 +70,22 @@ function schema(name: string): SchemaObject {
 }
 
 describe('Contrato OpenAPI generado desde Nest', () => {
+  it('H3 separa consecuencia actual y ajustes del antecedente inicial, compatible con legado', () => {
+    expect(schema('SanctionDetailResponseDto').properties!.current).toMatchObject({
+      nullable: true,
+      allOf: [{ $ref: '#/components/schemas/SanctionCurrentResponseDto' }],
+    });
+    expect(schema('SanctionDetailResponseDto').properties).toHaveProperty('previousTrust');
+    expect(schema('SanctionDetailResponseDto').properties).toHaveProperty('ruleVersionId');
+    expect(schema('SanctionCurrentResponseDto').required).toEqual([
+      'severity', 'rule', 'nominalPenaltyTotal', 'effectivePenaltyTotal', 'suspensionDays', 'adjustments',
+    ]);
+    expect(schema('SanctionCurrentResponseDto').properties!.adjustments).toMatchObject({
+      type: 'array', items: { $ref: '#/components/schemas/SanctionAdjustmentResponseDto' },
+    });
+    expect(schema('SanctionAdjustmentResponseDto').properties!.effect).toMatchObject({ enum: ['DISCOUNT', 'SET_ZERO'] });
+    expect(schema('SanctionAdjustmentResponseDto').properties!.nominalTarget).toMatchObject({ nullable: true });
+  });
   it('documenta configuración autenticada, edición ADMIN y migración pendiente 503', () => {
     const settings = document.paths['/system/reservation-settings']!;
     expect((settings.get as DocumentedOperation)['x-authentication']).toMatchObject({ required: true });
@@ -155,8 +171,8 @@ describe('Contrato OpenAPI generado desde Nest', () => {
         .map((name) => `${controller.name}_${name}`),
     );
     expect(
-      operations.map(({ operation }) => operation.operationId).sort(),
-    ).toEqual(handlers.sort());
+      operations.map(({ operation }) => operation.operationId).sort((a, b) => (a ?? '').localeCompare(b ?? '')),
+    ).toEqual(handlers.sort((a, b) => a.localeCompare(b)));
   });
 
   it.each([
@@ -262,10 +278,10 @@ describe('Contrato OpenAPI generado desde Nest', () => {
       copyId: { format: 'uuid' },
       requestedAt: { type: 'string', format: 'date-time' },
     });
-    expect(schema('ReturnLoanDto').properties!.returnedAt).toMatchObject({
-      type: 'string',
-      format: 'date-time',
-    });
+    expect(schema('ReturnLoanDto').properties).not.toHaveProperty('returnedAt');
+    expect(schema('ReturnLoanDto').required).toEqual(['requestId', 'inspection']);
+    expect(schema('ReturnLoanDto').properties!.requestId).toMatchObject({ type: 'string', format: 'uuid' });
+    expect(schema('FinalInspectionDto').required).toEqual(['parts', 'condition', 'evidenceIds']);
     expect(
       schema('LoanReturnResponseDto').properties!.returnedAt,
     ).toMatchObject({ type: 'string', format: 'date-time' });
@@ -277,6 +293,22 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     expect(
       document.paths['/loans/{loanId}/return']!.post!.responses['201'],
     ).toBeDefined();
+  });
+
+  it('documenta cierre integral conciliable, política solo lectura y pérdida confirmada sin campos cliente privilegiados', () => {
+    const policy = document.paths['/loans/{loanId}/return-policy']!.get! as DocumentedOperation;
+    const incident = document.paths['/loans/{loanId}/close-incident']!.post! as DocumentedOperation;
+    expect(policy['x-roles']).toEqual(['OPERADOR', 'ADMINISTRADOR']);
+    expect(incident['x-roles']).toEqual(['OPERADOR', 'ADMINISTRADOR']);
+    for (const status of ['403', '404', '503']) expect(policy.responses[status]).toBeDefined();
+    expect(incident.responses['201']).toBeDefined();
+    expect(schema('CloseIncidentDto').required).toEqual(['requestId', 'kind', 'confirmed', 'description', 'evidenceIds']);
+    expect(Object.keys(schema('LoanClosureResponseDto').properties!).sort()).toEqual([
+      'id', 'requestId', 'reason', 'effectiveAt', 'actorAccountId', 'actorUserId', 'categoryId', 'termsVersionId', 'inspection',
+    ].sort());
+    expect(Object.keys(schema('ReturnPolicyResponseDto').properties!).sort()).toEqual([
+      'loanId', 'serverNow', 'endsAt', 'categoryId', 'termsVersionId', 'policySource', 'accessories', 'damageOptions', 'lateness', 'lossPolicy', 'rewardPolicy',
+    ].sort());
   });
 
   it('entradas incluyen registro integral, retirada básica, query y cuerpos administrativos reales', () => {
@@ -380,18 +412,18 @@ describe('Contrato OpenAPI generado desde Nest', () => {
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AccessRole.ADMINISTRATOR)
 class GuardFixture {
-  @Get() inherited() {}
-  @Get('override') @Roles(AccessRole.OPERATOR) overridden() {}
-  @Get('any') @Roles() anyAuthenticated() {}
+  @Get() inherited(this: void) {}
+  @Get('override') @Roles(AccessRole.OPERATOR) overridden(this: void) {}
+  @Get('any') @Roles() anyAuthenticated(this: void) {}
 }
 
 @Controller('unguarded-fixture')
 class UnguardedFixture {
-  @Get() @Roles(AccessRole.ADMINISTRATOR) decorativeRolesOnly() {}
+  @Get() @Roles(AccessRole.ADMINISTRATOR) decorativeRolesOnly(this: void) {}
   @Get('combined')
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR)
-  combined() {}
+  combined(this: void) {}
 }
 
 describe('Derivación de guards y override real de RolesGuard', () => {

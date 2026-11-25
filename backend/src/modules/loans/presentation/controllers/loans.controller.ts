@@ -41,7 +41,8 @@ import { ListActiveLoansUseCase } from '../../application/use-cases/list-active-
 import { ListOverdueLoansUseCase } from '../../application/use-cases/list-overdue-loans.use-case.js';
 import { ListUserLoanHistoryUseCase } from '../../application/use-cases/list-user-loan-history.use-case.js';
 import { ReturnLoanUseCase } from '../../application/use-cases/return-loan.use-case.js';
-import { ReturnLoanDto } from '../dto/return-loan.dto.js';
+import { ReturnLoanDto, CloseIncidentDto } from '../dto/return-loan.dto.js';
+import { ReturnPolicyResponseDto } from '../dto/loan-closure-response.dto.js';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard.js';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard.js';
 import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator.js';
@@ -149,9 +150,9 @@ export class LoansController {
   @ApiCreatedResponse({ type: ReturnChecklistResponseDto })
   @ApiHttpErrors(400, 401, 403, 404, 409)
   @ApiOperation({
-    summary: 'Guardar inspección de devolución',
+    summary: 'Guardar checklist antecedente de devolución',
     description:
-      'Captura única e inmutable de un préstamo ACTIVO, auditada con actor JWT y snapshot original. No devuelve el préstamo ni aplica sanciones. Reintentos con iguales partes recuperan la captura original, incluso tras devolver; diferencias devuelven 409. Sin snapshot histórico solo admite parts vacío. Faltantes exigen describir incidencia al ejecutar la devolución separada existente.',
+      'Captura antecedente única e inmutable de un préstamo ACTIVO, auditada con actor JWT y snapshot original. No devuelve el préstamo, no aplica sanciones ni determina condición física final. Reintentos con iguales partes recuperan la captura original, incluso tras devolver; diferencias devuelven 409. Sin snapshot histórico solo admite parts vacío. El cierre exige una inspección FINAL nueva e independiente y no sustituye este antecedente.',
   })
   @ApiExtension('x-implementation-status', 'implemented')
   returnChecklist(
@@ -280,8 +281,43 @@ export class LoansController {
     return loan;
   }
 
-  @ApiHttpErrors(400, 404, 409)
+  @Get(':loanId/return-policy')
+  @UseGuards(RolesGuard)
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiParam({ name: 'loanId', type: String, format: 'uuid' })
+  @ApiOkResponse({ type: ReturnPolicyResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 503)
+  @ApiOperation({ summary: 'Consultar política histórica de devolución, sin escrituras' })
+  @ApiExtension('x-implementation-status', 'implemented')
+  returnPolicy(@Param('loanId', new ParseUUIDPipe()) loanId: string) {
+    return this.returnLoan.readPolicy(loanId);
+  }
+
+  @Post(':loanId/close-incident')
+  @HttpCode(201)
+  @UseGuards(RolesGuard)
+  @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
+  @ApiParam({ name: 'loanId', type: String, format: 'uuid' })
+  @ApiBody({ type: CloseIncidentDto })
+  @ApiCreatedResponse({ type: LoanResponseDto })
+  @ApiHttpErrors(400, 401, 403, 404, 409, 503)
+  @ApiOperation({ summary: 'Cerrar por pérdida o robo confirmado, sin devolución ficticia' })
+  @ApiExtension('x-implementation-status', 'implemented')
+  closeIncident(
+    @Param('loanId', new ParseUUIDPipe()) loanId: string,
+    @Body() input: CloseIncidentDto,
+    @CurrentUser() user: AuthenticatedIdentity,
+  ) {
+    return this.returnLoan.closeIncident({
+      loanId, requestId: input.requestId, kind: input.kind, confirmed: input.confirmed,
+      description: input.description, evidenceIds: input.evidenceIds,
+      actor: { accountId: user.accountId, userId: user.userId },
+    });
+  }
+
+  @ApiHttpErrors(400, 401, 403, 404, 409, 503)
   @Post(':loanId/return')
+  @HttpCode(201)
   @ApiCreatedResponse({ type: LoanResponseDto })
   @UseGuards(RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
@@ -291,11 +327,14 @@ export class LoansController {
   registerReturn(
     @Param('loanId', new ParseUUIDPipe()) loanId: string,
     @Body() input: ReturnLoanDto,
+    @CurrentUser() user: AuthenticatedIdentity,
   ) {
     return this.returnLoan.execute({
       loanId,
-      returnedAt: input.returnedAt,
+      requestId: input.requestId,
+      inspection: input.inspection,
       observation: input.observation,
+      actor: { accountId: user.accountId, userId: user.userId },
     });
   }
 

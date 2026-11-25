@@ -11,6 +11,8 @@ import { scheduleSanction } from '../../../domain/entities/sanction-schedule.js'
 import { SuspensionType } from '../../../domain/entities/usage-rule.js';
 import { Temporal } from 'temporal-polyfill/full';
 import { instantToDate } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
+import { PrismaSanctionRepository } from './prisma-sanction.repository.js';
+import { lockLoanInventory } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
 import {
   ViolationRepository,
   type RegisterViolationData,
@@ -56,6 +58,7 @@ export class PrismaViolationRepository implements ViolationRepository {
     data: RegisterViolationData & { reservationId?: string },
     registeredAt: Date,
   ): Promise<Violation> {
+    await lockLoanInventory(this.prisma, tx);
     const users = await tx.query(
       this.prisma.sql.public.usuarios
         .update({ id: data.userId })
@@ -193,6 +196,9 @@ export class PrismaViolationRepository implements ViolationRepository {
     );
     if (!audit[0])
       throw new ConflictException('No se pudo registrar la auditoría.');
+    await new PrismaSanctionRepository(this.prisma).cancelReservations(
+      tx, data.userId, `Incumplimiento ${violation.id}`, registeredAt,
+    );
     return violation;
   }
 

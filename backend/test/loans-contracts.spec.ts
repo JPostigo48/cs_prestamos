@@ -77,6 +77,11 @@ const checklistBody = () => ({
   checkedAt: new Date().toISOString(),
   parts: [{ accessoryId, received: true }],
 });
+const returnBody = (n = 90) => ({
+  requestId: uuid(n),
+  inspection: { parts: [{ accessoryId, received: true }], condition: 'SANO' as const, evidenceIds: [] as string[] },
+});
+const returnData = (n = 90) => ({ ...returnBody(n), loanId, actor: { accountId: AccessRole.OPERATOR, userId: actorId } });
 
 describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions in memory (not PostgreSQL)', () => {
   let app: INestApplication;
@@ -86,6 +91,16 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
   let inventory: InventoryService;
   let jwt: JwtTokenAdapter;
   let enabled = true;
+  const pickupAt = async (reservationId: string, at: Date) => {
+    // Recogida reconsulta la hora después del bloqueo: el cliente no fija el reloj.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at);
+    try {
+      return await reservations.pickup(reservationId, at);
+    } finally {
+      vi.useRealTimers();
+    }
+  };
   beforeEach(async () => {
     vi.stubEnv('JWT_SECRET', 'isolated-loans-contract-tests-only');
     vi.stubEnv('JWT_EXPIRES_IN', '3600s');
@@ -94,10 +109,16 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       configuracion_reservas: [{ id: 1, pickupWaitMinutes: 30, weeklySchedule: null, version: 1, updatedAt: new Date() }],
       sanciones: [],
       ...categoryPolicyFixture(categoryId),
+      aceptaciones_terminos: [userId, otherUser].map((usuarioId, index) => ({
+        id: uuid(100 + index),
+        usuarioId,
+        versionTerminosId: categoryPolicyFixture(categoryId).versiones_terminos[0].id,
+        fecha: Temporal.Instant.from(past().toISOString()),
+      })),
       usuarios: [
-        { id: userId, vinculacionVigente: true },
+        { id: userId, vinculacionVigente: true, confianza: '80.00' },
         { id: actorId, vinculacionVigente: true },
-        { id: otherUser, vinculacionVigente: true },
+        { id: otherUser, vinculacionVigente: true, confianza: '80.00' },
       ],
       recursos: [
         {
@@ -130,12 +151,16 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
           recursoId: resourceId,
           codigoInventario: 'T-1',
           estado: 'PRESTADO',
+          habilitado: true,
+          condicionFisica: 'APTO',
         },
         {
           id: otherCopy,
           recursoId: resourceId,
           codigoInventario: 'T-2',
           estado: 'NO_DISPONIBLE',
+          condicionFisica: 'APTO',
+          habilitado: true,
         },
       ],
       prestamos: [
@@ -146,7 +171,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
           fechaInicio: past(),
           fechaFin: new Date(Date.now() + 3600000),
           estado: 'ACTIVO',
-          configurationSnapshot: structuredClone(snapshot),
+          configurationSnapshot: { ...structuredClone(snapshot), loanPolicy: { categoryId, termsVersionId: categoryPolicyFixture(categoryId).versiones_terminos[0].id } },
         },
       ],
       reservas: [
@@ -180,8 +205,8 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     for (const table of ['prestamos', 'reservas', 'configuracion_reservas'])
       for (const row of db.rows(table)) {
         for (const [key, value] of Object.entries(row))
-          if (value instanceof Date)
-            row[key] = Temporal.Instant.from(value.toISOString());
+          if (Object.prototype.toString.call(value) === '[object Date]')
+            row[key] = Temporal.Instant.from((value as Date).toISOString());
       }
     const prisma = db as unknown as PrismaService;
     loans = new PrismaLoanRepository(prisma);
@@ -208,7 +233,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       ['resourceHistory', [String, ResourceHistoryQueryDto]],
       ['returnChecklist', [String, SaveReturnChecklistDto, Object]],
       ['getById', [String, Object]],
-      ['registerReturn', [String, ReturnLoanDto]],
+      ['registerReturn', [String, ReturnLoanDto, Object]],
     ] as const)
       Reflect.defineMetadata(
         'design:paramtypes',
@@ -456,61 +481,44 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       ...checklistBody(),
       parts: [{ accessoryId, received: false }],
     }).expect(201);
-    await loans.registerReturnWithCopy({ loanId, returnedAt: new Date() }).then(
-      () => {
-        throw new Error('expected rejection');
-      },
-      (e) => expect(e.status).toBe(409),
-    );
+    const data = { ...returnData(), inspection: { ...returnBody().inspection, parts: [{ accessoryId, received: false }] } };
+    await expect(loans.closeLoan(data)).rejects.toMatchObject({ status: 400 });
     expect(db.rows('devoluciones')).toHaveLength(0);
-    await loans.registerReturnWithCopy({
-      loanId,
-      returnedAt: new Date(),
-      observation: 'Falta cable',
-    });
+    const incidentData = { ...data, inspection: { ...data.inspection, damageSeverity: 'LEVE' as const, description: 'Falta cable' } };
+    const closed = await loans.closeLoan(incidentData);
     expect(db.rows('ejemplares')[0]!.estado).toBe('NO_DISPONIBLE');
-    expect(db.rows('observaciones_ejemplar')).toHaveLength(1);
+    expect(closed.consequences).toHaveLength(1);
     db.rows('ejemplares')[0]!.estado = 'RESERVADO';
-    await expect(
-      loans.registerReturnWithCopy({
-        loanId,
-        returnedAt: new Date(),
-        observation: 'Falta cable',
-      }),
-    ).rejects.toMatchObject({ status: 409 });
+    await expect(loans.closeLoan(incidentData)).resolves.toEqual(closed);
     expect(db.rows('devoluciones')).toHaveLength(1);
-    expect(db.rows('observaciones_ejemplar')).toHaveLength(1);
+    expect(db.rows('cierres_prestamo')).toHaveLength(1);
     expect(db.rows('ejemplares')[0]!.estado).toBe('RESERVADO');
     const retry = await inspect({
       ...checklistBody(),
       parts: [{ accessoryId, received: false }],
     }).expect(201);
     expect(retry.body.id).toBe(inspection.body.id);
-    expect(db.rows('sanciones')).toHaveLength(0);
+    expect(db.rows('sanciones')).toHaveLength(1);
   });
-  it('allows existing basic return without inspection, and rolls back all effects on persistence error', async () => {
+  it('requires final inspection, and rolls back all effects on persistence error', async () => {
     const runtime = db.client.runtime();
     const original = runtime.query.bind(runtime);
     const spy = vi.spyOn(runtime, 'query').mockImplementation(async (plan) => {
       if (
-        plan.table === 'observaciones_ejemplar' &&
+        plan.table === 'auditorias_usuario' &&
         plan.operation === 'insert'
       )
         throw new Error('isolated storage failure');
       return original(plan);
     });
     await expect(
-      loans.registerReturnWithCopy({
-        loanId,
-        returnedAt: new Date(),
-        observation: 'Revisar',
-      }),
+      loans.closeLoan(returnData()),
     ).rejects.toThrow('isolated storage failure');
     expect(db.rows('devoluciones')).toHaveLength(0);
     expect(db.rows('prestamos')[0]!.estado).toBe('ACTIVO');
     expect(db.rows('ejemplares')[0]!.estado).toBe('PRESTADO');
     spy.mockRestore();
-    await loans.registerReturnWithCopy({ loanId, returnedAt: new Date() });
+    await loans.closeLoan(returnData());
     expect(db.rows('ejemplares')[0]!.estado).toBe('DISPONIBLE');
   });
   it('captures effective policy/accessories inside create transaction and transfers without consulting changed inventory', async () => {
@@ -525,11 +533,11 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     });
     expect(reservation.loanDurationHours).toBe(8);
     const noShow = db.rows('versiones_regla').find(r => JSON.parse(r.descripcion).key === 'R-RES:LEVE')!;
-    const expectedSnapshot = { ...snapshot, reservationSettings: { version: 1, pickupWaitMinutes: 30, weeklySchedule: null, timeZone: 'America/Lima' }, reservationNoShow: { termsVersionId: db.rows('versiones_terminos')[0].id, ruleVersionId: noShow.id } };
+    const expectedSnapshot = { ...snapshot, loanPolicy: { categoryId, termsVersionId: db.rows('versiones_terminos')[0].id }, reservationSettings: { version: 1, pickupWaitMinutes: 30, weeklySchedule: null, timeZone: 'America/Lima' }, reservationNoShow: { termsVersionId: db.rows('versiones_terminos')[0].id, ruleVersionId: noShow.id } };
     expect(reservation.configurationSnapshot).toEqual(expectedSnapshot);
     await inventory.updateLoanPolicy(resourceId, 3);
     await inventory.replaceAccessories(resourceId, []);
-    const picked = await reservations.pickup(reservation.id, requestedAt);
+    const picked = await pickupAt(reservation.id, requestedAt);
     expect(picked.loan.configurationSnapshot).toEqual(expectedSnapshot);
     expect(picked.loan.endsAt.getTime() - picked.loan.startsAt.getTime()).toBe(
       8 * 3600000,
@@ -542,6 +550,9 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     expect(writes.some((p) => p.table === 'categorias_recurso')).toBe(true);
   });
   it('uses current locked settings for new reservations only; pickup retains the stored deadline/snapshot', async () => {
+    // El préstamo previo ya terminó antes de reutilizar el ejemplar. De otro modo,
+    // avanzar 70 minutos genera mora real y cancela correctamente la nueva reserva.
+    db.rows('prestamos')[0].estado = 'FINALIZADO';
     db.rows('ejemplares')[0].estado = 'DISPONIBLE';
     db.rows('configuracion_reservas')[0].pickupWaitMinutes = 75;
     db.rows('configuracion_reservas')[0].version = 2;
@@ -552,7 +563,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     expect(db.calls.some(p => p.operation === 'lock' && p.text?.includes('configuracion_reservas') && p.text.includes('FOR UPDATE'))).toBe(true);
     db.rows('configuracion_reservas')[0].pickupWaitMinutes = 1;
     db.rows('configuracion_reservas')[0].weeklySchedule = Array.from({ length: 7 }, (_, i) => ({ day: i + 1, intervals: [] }));
-    const picked = await reservations.pickup(reservation.id, new Date(requestedAt.getTime() + 70 * 60_000));
+    const picked = await pickupAt(reservation.id, new Date(requestedAt.getTime() + 70 * 60_000));
     expect(picked.reservation.pickupDeadline).toEqual(reservation.pickupDeadline);
     expect(picked.loan.configurationSnapshot).toEqual(reservation.configurationSnapshot);
   });
@@ -572,7 +583,12 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     db.rows('usuarios').find(r => r.id === otherUser)!.confianza = '80.00';
     row.fechaLimiteRecogida = Temporal.Instant.from(deadline.toISOString());
     db.rows('ejemplares')[1].estado = 'RESERVADO';
-    const sanction = { id: 'historical-no-show', usuarioId: otherUser, tipo: 'NO_SHOW', reservaId: row.id };
+    const sanction = {
+      id: 'historical-no-show', usuarioId: otherUser, tipo: 'NO_SHOW', reservaId: row.id,
+      estado: 'FINALIZADA', bloqueoIndefinido: false,
+      fechaInicio: Temporal.Instant.from(new Date(Date.now() - 2 * 86_400_000).toISOString()),
+      fechaFin: Temporal.Instant.from(new Date(Date.now() - 86_400_000).toISOString()),
+    };
     db.rows('sanciones').push(sanction);
     db.rows('configuracion_reservas').splice(0);
     expect(await reservations.expire(deadline)).toEqual([]);
@@ -619,7 +635,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
         source,
       });
       db.rows('categorias_recurso')[0]!.tiempoMaximoPrestamoHoras = 1;
-      const picked = await reservations.pickup(reservation.id, reservation.requestedAt);
+      const picked = await pickupAt(reservation.id, reservation.requestedAt);
       expect(
         picked.loan.endsAt.getTime() - picked.loan.startsAt.getTime(),
       ).toBe(expected * 3600000);
@@ -630,7 +646,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     const result = await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`)
       .auth(token(), { type: 'bearer' })
-      .send({ returnedAt: new Date().toISOString() })
+      .send(returnBody())
       .expect(201);
     expect(result.body.status).toBe('FINALIZADO');
     expect(result.body.return).toBeTruthy();
@@ -638,7 +654,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     await request(app.getHttpServer())
       .post(`/loans/${loanId}/return`)
       .auth(token(), { type: 'bearer' })
-      .send({ returnedAt: new Date().toISOString() })
+      .send(returnBody(91))
       .expect(409);
     expect(db.rows('devoluciones')).toHaveLength(1);
   });
@@ -652,7 +668,7 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
       await request(app.getHttpServer())
         .post(`/loans/${loanId}/return`)
         .auth(token(role), { type: 'bearer' })
-        .send({ returnedAt: new Date().toISOString() })
+        .send(returnBody())
         .expect(201);
       expect(db.rows('prestamos')[0].estado).toBe('FINALIZADO');
     },
@@ -767,8 +783,8 @@ describe('F08/F09/F14 HTTP + production repositories, isolated SQL/transactions 
     expect(a.id).toBe(b.id);
     expect(db.rows('inspecciones_devolucion')).toHaveLength(1);
     const returns = await Promise.allSettled([
-      loans.registerReturnWithCopy({ loanId, returnedAt: new Date() }),
-      loans.registerReturnWithCopy({ loanId, returnedAt: new Date() }),
+      loans.closeLoan(returnData()),
+      loans.closeLoan(returnData(91)),
     ]);
     expect(returns.map((r) => r.status).sort()).toEqual([
       'fulfilled',

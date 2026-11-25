@@ -4,6 +4,7 @@ import type { PrismaService } from '../../../../shared/infrastructure/prisma/pri
 import { InventoryService } from '../../../inventory/application/use-cases/inventory.service.js';
 import { PrismaInventoryRepository } from '../../../inventory/infrastructure/persistence/prisma/prisma-inventory.repository.js';
 import { reservationNoShowPolicy } from '../../../rules/domain/reservation-no-show-policy.js';
+import { lockLoanInventory } from '../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
 
 type Runtime = Pick<ReturnType<PrismaService['client']['runtime']>, 'query'>;
 
@@ -38,6 +39,10 @@ export async function captureLoanConfiguration(
   const snapshot = await new InventoryService(repository).getCopyLoanSnapshot(copyId);
   return {
     ...snapshot,
+    loanPolicy: {
+      termsVersionId: configuration.termsVersionId!,
+      categoryId: resource.categoriaId,
+    },
     reservationNoShow: {
       termsVersionId: configuration.termsVersionId!,
       ruleVersionId: noShow.id,
@@ -51,14 +56,17 @@ export async function assertActiveInventory(
   tx: Runtime,
   copyId: string,
 ) {
+  await lockLoanInventory(prisma, tx);
   const copies = await tx.query(
     prisma.sql.public.ejemplares
-      .select('recursoId')
+      .select('recursoId', 'condicionFisica', 'habilitado')
       .where((r, f) => f.eq(r.id, copyId))
       .limit(1)
       .build(),
   );
   if (!copies[0]) throw new NotFoundException('Ejemplar no encontrado.');
+  if (copies[0].condicionFisica !== 'APTO' || copies[0].habilitado !== true)
+    throw new ConflictException('El ejemplar no está apto y habilitado para préstamo.');
   const resources = await tx.query(
     prisma.sql.public.recursos
       .update({ updatedAt: Temporal.Now.instant() })

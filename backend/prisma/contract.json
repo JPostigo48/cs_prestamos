@@ -12,6 +12,10 @@
       "model": "AceptacionTerminos",
       "namespace": "public"
     },
+    "ajustes_incumplimiento": {
+      "model": "AjusteIncumplimiento",
+      "namespace": "public"
+    },
     "apelaciones": {
       "model": "Apelacion",
       "namespace": "public"
@@ -22,6 +26,10 @@
     },
     "categorias_recurso": {
       "model": "CategoriaRecurso",
+      "namespace": "public"
+    },
+    "cierres_prestamo": {
+      "model": "CierrePrestamo",
       "namespace": "public"
     },
     "configuracion_reservas": {
@@ -101,6 +109,35 @@
     "namespaces": {
       "public": {
         "enum": {
+          "CondicionFisica": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "APTO",
+                "value": "APTO"
+              },
+              {
+                "name": "DANADO",
+                "value": "DANADO"
+              },
+              {
+                "name": "INCOMPLETO",
+                "value": "INCOMPLETO"
+              },
+              {
+                "name": "DANADO_E_INCOMPLETO",
+                "value": "DANADO_E_INCOMPLETO"
+              },
+              {
+                "name": "PERDIDO",
+                "value": "PERDIDO"
+              },
+              {
+                "name": "ROBADO",
+                "value": "ROBADO"
+              }
+            ]
+          },
           "EstadoApelacion": {
             "codecId": "pg/text@1",
             "members": [
@@ -153,6 +190,10 @@
               {
                 "name": "FINALIZADO",
                 "value": "FINALIZADO"
+              },
+              {
+                "name": "CERRADO_POR_INCIDENCIA",
+                "value": "CERRADO_POR_INCIDENCIA"
               }
             ]
           },
@@ -225,6 +266,23 @@
               {
                 "name": "RECHAZADA",
                 "value": "RECHAZADA"
+              }
+            ]
+          },
+          "OrigenIncumplimiento": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "MORA",
+                "value": "MORA"
+              },
+              {
+                "name": "DANO",
+                "value": "DANO"
+              },
+              {
+                "name": "PERDIDA",
+                "value": "PERDIDA"
               }
             ]
           },
@@ -507,6 +565,262 @@
               },
               "namespaceId": "public",
               "table": "aceptaciones_terminos"
+            }
+          },
+          "AjusteIncumplimiento": {
+            "fields": {
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "calendarioAnterior": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "calendarioPosterior": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "contexto": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "descuentoEfectivo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                }
+              },
+              "duracionTotalDias": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "efecto": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 20
+                  }
+                }
+              },
+              "fechaEfectiva": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "incrementoDias": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "incrementoNominal": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                }
+              },
+              "incumplimientoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "nominalObjetivo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                }
+              },
+              "saldoAnterior": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                }
+              },
+              "saldoPosterior": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                }
+              },
+              "severidad": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 40
+                  }
+                }
+              },
+              "versionReglaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "incumplimiento": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "incumplimientoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
+                  "namespace": "public"
+                }
+              },
+              "versionRegla": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "versionReglaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "VersionRegla",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actor": {
+                  "column": "actor"
+                },
+                "calendarioAnterior": {
+                  "column": "calendarioAnterior"
+                },
+                "calendarioPosterior": {
+                  "column": "calendarioPosterior"
+                },
+                "contexto": {
+                  "column": "contexto"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descuentoEfectivo": {
+                  "column": "descuentoEfectivo"
+                },
+                "duracionTotalDias": {
+                  "column": "duracionTotalDias"
+                },
+                "efecto": {
+                  "column": "efecto"
+                },
+                "fechaEfectiva": {
+                  "column": "fechaEfectiva"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "incrementoDias": {
+                  "column": "incrementoDias"
+                },
+                "incrementoNominal": {
+                  "column": "incrementoNominal"
+                },
+                "incumplimientoId": {
+                  "column": "incumplimientoId"
+                },
+                "nominalObjetivo": {
+                  "column": "nominalObjetivo"
+                },
+                "saldoAnterior": {
+                  "column": "saldoAnterior"
+                },
+                "saldoPosterior": {
+                  "column": "saldoPosterior"
+                },
+                "severidad": {
+                  "column": "severidad"
+                },
+                "versionReglaId": {
+                  "column": "versionReglaId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "ajustes_incumplimiento"
             }
           },
           "Apelacion": {
@@ -929,6 +1243,21 @@
               }
             },
             "relations": {
+              "episodios": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "categoriaId"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
+                  "namespace": "public"
+                }
+              },
               "recursos": {
                 "cardinality": "1:N",
                 "on": {
@@ -974,6 +1303,156 @@
               },
               "namespaceId": "public",
               "table": "categorias_recurso"
+            }
+          },
+          "CierrePrestamo": {
+            "fields": {
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "contexto": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "fechaEfectiva": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "inspeccion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "prestamoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "recompensa": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 64
+                  }
+                }
+              },
+              "requestId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 120
+                  }
+                }
+              },
+              "resultado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "prestamo": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "prestamoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actor": {
+                  "column": "actor"
+                },
+                "contexto": {
+                  "column": "contexto"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "fechaEfectiva": {
+                  "column": "fechaEfectiva"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "inspeccion": {
+                  "column": "inspeccion"
+                },
+                "prestamoId": {
+                  "column": "prestamoId"
+                },
+                "recompensa": {
+                  "column": "recompensa"
+                },
+                "requestHash": {
+                  "column": "requestHash"
+                },
+                "requestId": {
+                  "column": "requestId"
+                },
+                "resultado": {
+                  "column": "resultado"
+                }
+              },
+              "namespaceId": "public",
+              "table": "cierres_prestamo"
             }
           },
           "ConfiguracionReservas": {
@@ -1299,6 +1778,19 @@
                   }
                 }
               },
+              "condicionFisica": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "CondicionFisica",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1320,6 +1812,13 @@
                   "entityName": "EstadoEjemplar",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "habilitado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
                 }
               },
               "id": {
@@ -1412,11 +1911,17 @@
                 "codigoInventario": {
                   "column": "codigoInventario"
                 },
+                "condicionFisica": {
+                  "column": "condicionFisica"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "estado": {
                   "column": "estado"
+                },
+                "habilitado": {
+                  "column": "habilitado"
                 },
                 "id": {
                   "column": "id"
@@ -1680,6 +2185,13 @@
           },
           "Incumplimiento": {
             "fields": {
+              "categoriaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1707,6 +2219,19 @@
                   "kind": "scalar"
                 }
               },
+              "origen": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "OrigenIncumplimiento",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "penalizacionAplicada": {
                 "nullable": false,
                 "type": {
@@ -1718,6 +2243,13 @@
                   }
                 }
               },
+              "prestamoId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
               "reglaId": {
                 "nullable": false,
                 "type": {
@@ -1726,6 +2258,13 @@
                 }
               },
               "reservaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "termsVersionId": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/uuid@1",
@@ -1748,6 +2287,21 @@
               }
             },
             "relations": {
+              "ajustes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "incumplimientoId"
+                  ]
+                },
+                "to": {
+                  "model": "AjusteIncumplimiento",
+                  "namespace": "public"
+                }
+              },
               "apelacion": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -1761,6 +2315,38 @@
                 },
                 "to": {
                   "model": "Apelacion",
+                  "namespace": "public"
+                }
+              },
+              "categoria": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "categoriaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CategoriaRecurso",
+                  "namespace": "public"
+                }
+              },
+              "prestamo": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "prestamoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Prestamo",
                   "namespace": "public"
                 }
               },
@@ -1812,6 +2398,22 @@
                   "namespace": "public"
                 }
               },
+              "terminos": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "termsVersionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "VersionTerminos",
+                  "namespace": "public"
+                }
+              },
               "usuario": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1847,6 +2449,9 @@
             },
             "storage": {
               "fields": {
+                "categoriaId": {
+                  "column": "categoriaId"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -1856,14 +2461,23 @@
                 "id": {
                   "column": "id"
                 },
+                "origen": {
+                  "column": "origen"
+                },
                 "penalizacionAplicada": {
                   "column": "penalizacionAplicada"
+                },
+                "prestamoId": {
+                  "column": "prestamoId"
                 },
                 "reglaId": {
                   "column": "reglaId"
                 },
                 "reservaId": {
                   "column": "reservaId"
+                },
+                "termsVersionId": {
+                  "column": "termsVersionId"
                 },
                 "usuarioId": {
                   "column": "usuarioId"
@@ -2169,6 +2783,22 @@
               }
             },
             "relations": {
+              "cierre": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "prestamoId"
+                  ]
+                },
+                "to": {
+                  "model": "CierrePrestamo",
+                  "namespace": "public"
+                }
+              },
               "devolucion": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -2213,6 +2843,21 @@
                 },
                 "to": {
                   "model": "EvidenciaPrestamo",
+                  "namespace": "public"
+                }
+              },
+              "incumplimientos": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "prestamoId"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
                   "namespace": "public"
                 }
               },
@@ -3662,6 +4307,21 @@
               }
             },
             "relations": {
+              "ajustes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "versionReglaId"
+                  ]
+                },
+                "to": {
+                  "model": "AjusteIncumplimiento",
+                  "namespace": "public"
+                }
+              },
               "incumplimientos": {
                 "cardinality": "1:N",
                 "on": {
@@ -3822,6 +4482,21 @@
                 },
                 "to": {
                   "model": "AceptacionTerminos",
+                  "namespace": "public"
+                }
+              },
+              "episodios": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "termsVersionId"
+                  ]
+                },
+                "to": {
+                  "model": "Incumplimiento",
                   "namespace": "public"
                 }
               },
@@ -4095,6 +4770,218 @@
                   "columns": [
                     "usuarioId",
                     "versionTerminosId"
+                  ]
+                }
+              ]
+            },
+            "ajustes_incumplimiento": {
+              "checks": [
+                {
+                  "expression": "(efecto = 'SET_ZERO' AND \"nominalObjetivo\" IS NULL AND \"incrementoNominal\" IS NULL AND \"duracionTotalDias\" IS NULL AND \"incrementoDias\" IS NULL AND \"saldoPosterior\" = 0) OR (efecto = 'DISCOUNT' AND \"nominalObjetivo\" BETWEEN 0 AND 100 AND \"incrementoNominal\" BETWEEN 0 AND \"nominalObjetivo\" AND \"duracionTotalDias\" > 0 AND \"incrementoDias\" BETWEEN 0 AND \"duracionTotalDias\")",
+                  "name": "ajustes_efecto_check_bddadac4",
+                  "prefix": "ajustes_efecto_check"
+                },
+                {
+                  "expression": "\"descuentoEfectivo\" >= 0 AND \"saldoAnterior\" BETWEEN 0 AND 100 AND \"saldoPosterior\" BETWEEN 0 AND 100 AND \"saldoAnterior\" - \"saldoPosterior\" = \"descuentoEfectivo\"",
+                  "name": "ajustes_saldos_check_2259aaf4",
+                  "prefix": "ajustes_saldos_check"
+                }
+              ],
+              "columns": {
+                "actor": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "calendarioAnterior": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "calendarioPosterior": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "contexto": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "descuentoEfectivo": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                },
+                "duracionTotalDias": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "efecto": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 20
+                  }
+                },
+                "fechaEfectiva": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "incrementoDias": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "incrementoNominal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                },
+                "incumplimientoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "nominalObjetivo": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                },
+                "saldoAnterior": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                },
+                "saldoPosterior": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 5,
+                    "scale": 2
+                  }
+                },
+                "severidad": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 40
+                  }
+                },
+                "versionReglaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "incumplimientoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ajustes_incumplimiento"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "versionReglaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ajustes_incumplimiento"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "versiones_regla"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "incumplimientoId"
+                  ],
+                  "name": "ajustes_incumplimiento_incumplimientoId_idx_0499e809",
+                  "prefix": "ajustes_incumplimiento_incumplimientoId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "versionReglaId"
+                  ],
+                  "name": "ajustes_incumplimiento_versionReglaId_idx_e53cdbcf",
+                  "prefix": "ajustes_incumplimiento_versionReglaId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "incumplimientoId",
+                    "severidad",
+                    "versionReglaId"
                   ]
                 }
               ]
@@ -4551,6 +5438,119 @@
                 }
               ]
             },
+            "cierres_prestamo": {
+              "columns": {
+                "actor": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "contexto": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "fechaEfectiva": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "inspeccion": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
+                "prestamoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "recompensa": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
+                "requestHash": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 64
+                  }
+                },
+                "requestId": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 120
+                  }
+                },
+                "resultado": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "prestamoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "cierres_prestamo"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "prestamoId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "requestId"
+                  ]
+                }
+              ]
+            },
             "configuracion_reservas": {
               "checks": [
                 {
@@ -4826,6 +5826,11 @@
             "ejemplares": {
               "checks": [
                 {
+                  "expression": "\"condicionFisica\" IN ('APTO', 'DANADO', 'INCOMPLETO', 'DANADO_E_INCOMPLETO', 'PERDIDO', 'ROBADO')",
+                  "name": "ejemplares_condicionFisica_check_aa4d7703",
+                  "prefix": "ejemplares_condicionFisica_check"
+                },
+                {
                   "expression": "\"estado\" IN ('DISPONIBLE', 'RESERVADO', 'PRESTADO', 'NO_DISPONIBLE')",
                   "name": "ejemplares_estado_check_edc0183f",
                   "prefix": "ejemplares_estado_check"
@@ -4838,6 +5843,17 @@
                   "nullable": false,
                   "typeParams": {
                     "length": 80
+                  }
+                },
+                "condicionFisica": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "CondicionFisica",
+                    "namespaceId": "public",
+                    "plane": "storage"
                   }
                 },
                 "createdAt": {
@@ -4866,6 +5882,15 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "habilitado": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
                 },
                 "id": {
                   "codecId": "pg/uuid@1",
@@ -5183,7 +6208,24 @@
               "uniques": []
             },
             "incumplimientos": {
+              "checks": [
+                {
+                  "expression": "(\"prestamoId\" IS NULL AND origen IS NULL) OR (\"prestamoId\" IS NOT NULL AND \"categoriaId\" IS NOT NULL AND \"termsVersionId\" IS NOT NULL AND origen IS NOT NULL)",
+                  "name": "incumplimientos_episodio_contexto_check_431bd0a6",
+                  "prefix": "incumplimientos_episodio_contexto_check"
+                },
+                {
+                  "expression": "\"origen\" IN ('MORA', 'DANO', 'PERDIDA')",
+                  "name": "incumplimientos_origen_check_79efc0b3",
+                  "prefix": "incumplimientos_origen_check"
+                }
+              ],
               "columns": {
+                "categoriaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -5213,6 +6255,17 @@
                   "nativeType": "uuid",
                   "nullable": false
                 },
+                "origen": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "OrigenIncumplimiento",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
                 "penalizacionAplicada": {
                   "codecId": "pg/numeric@1",
                   "nativeType": "numeric",
@@ -5222,12 +6275,22 @@
                     "scale": 2
                   }
                 },
+                "prestamoId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
                 "reglaId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
                   "nullable": false
                 },
                 "reservaId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "termsVersionId": {
                   "codecId": "pg/uuid@1",
                   "nativeType": "uuid",
                   "nullable": true
@@ -5315,9 +6378,89 @@
                     "namespaceId": "public",
                     "tableName": "reservas"
                   }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "prestamoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "prestamos"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "categoriaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "categorias_recurso"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "termsVersionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incumplimientos"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "versiones_terminos"
+                  }
                 }
               ],
               "indexes": [
+                {
+                  "columns": [
+                    "categoriaId"
+                  ],
+                  "name": "incumplimientos_categoriaId_idx_63b46427",
+                  "prefix": "incumplimientos_categoriaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "categoriaId",
+                    "termsVersionId",
+                    "origen"
+                  ],
+                  "name": "incumplimientos_categoriaId_termsVersionId_origen_idx_9e61a3f8",
+                  "prefix": "incumplimientos_categoriaId_termsVersionId_origen_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "prestamoId"
+                  ],
+                  "name": "incumplimientos_prestamoId_idx_8ecc28bd",
+                  "prefix": "incumplimientos_prestamoId_idx",
+                  "unique": false
+                },
                 {
                   "columns": [
                     "reglaId"
@@ -5333,6 +6476,14 @@
                   ],
                   "name": "incumplimientos_reglaId_versionReglaId_idx_6f818c35",
                   "prefix": "incumplimientos_reglaId_versionReglaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "termsVersionId"
+                  ],
+                  "name": "incumplimientos_termsVersionId_idx_d60c13f5",
+                  "prefix": "incumplimientos_termsVersionId_idx",
                   "unique": false
                 },
                 {
@@ -5370,6 +6521,12 @@
                 {
                   "columns": [
                     "reservaId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "prestamoId",
+                    "origen"
                   ]
                 }
               ]
@@ -5574,8 +6731,8 @@
             "prestamos": {
               "checks": [
                 {
-                  "expression": "\"estado\" IN ('PLANIFICADO', 'ACTIVO', 'FINALIZADO')",
-                  "name": "prestamos_estado_check_005a5bcd",
+                  "expression": "\"estado\" IN ('PLANIFICADO', 'ACTIVO', 'FINALIZADO', 'CERRADO_POR_INCIDENCIA')",
+                  "name": "prestamos_estado_check_c9163860",
                   "prefix": "prestamos_estado_check"
                 }
               ],
@@ -6965,6 +8122,17 @@
             }
           },
           "valueSet": {
+            "CondicionFisica": {
+              "kind": "valueSet",
+              "values": [
+                "APTO",
+                "DANADO",
+                "INCOMPLETO",
+                "DANADO_E_INCOMPLETO",
+                "PERDIDO",
+                "ROBADO"
+              ]
+            },
             "EstadoApelacion": {
               "kind": "valueSet",
               "values": [
@@ -6987,7 +8155,8 @@
               "values": [
                 "PLANIFICADO",
                 "ACTIVO",
-                "FINALIZADO"
+                "FINALIZADO",
+                "CERRADO_POR_INCIDENCIA"
               ]
             },
             "EstadoRegla": {
@@ -7021,6 +8190,14 @@
                 "PENDIENTE",
                 "APROBADA",
                 "RECHAZADA"
+              ]
+            },
+            "OrigenIncumplimiento": {
+              "kind": "valueSet",
+              "values": [
+                "MORA",
+                "DANO",
+                "PERDIDA"
               ]
             },
             "RolAcceso": {
@@ -7062,10 +8239,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "21bf2bbc35dc01507a1ee4e804cfa31bde531b5023de21adc4a21e09e27ea036"
+    "storageHash": "cc2b201bafbcbb0245956beddd7a63637bab481b2272a588f6a6747324bb3b48"
   },
   "execution": {
-    "executionHash": "96ccfa6264fdd2e237426a95c02a11e04a1512ee301d3bf0049fb0a2e8803a26",
+    "executionHash": "ddd3566be2e3636ff2378d6a0aba8f8b4e100a2f436d1129a20a2ca60240f73b",
     "mutations": {
       "defaults": [
         {
@@ -7103,6 +8280,17 @@
             "column": "id",
             "namespace": "public",
             "table": "aceptaciones_terminos"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "ajustes_incumplimiento"
           }
         },
         {
@@ -7166,6 +8354,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "categorias_recurso"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "cierres_prestamo"
           }
         },
         {

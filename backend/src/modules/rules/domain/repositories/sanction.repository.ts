@@ -12,6 +12,7 @@ export interface AppealsQuery {
   limit: number;
 }
 export interface SanctionDetail extends Sanction {
+  current?: SanctionCurrent | null;
   reason: string | null;
   rule: RuleVersion | null;
   violation: Violation | null;
@@ -22,6 +23,28 @@ export interface SanctionDetail extends Sanction {
     actorAccountId: string | null;
     reason: string | null;
   }[];
+}
+export interface SanctionAdjustment {
+  id: string;
+  ruleVersionId: string;
+  severity: string;
+  effect: 'DISCOUNT' | 'SET_ZERO';
+  nominalTarget: number | null;
+  nominalIncrement: number | null;
+  effectiveDiscount: number;
+  previousTrust: number;
+  resultingTrust: number;
+  suspensionDays: number | null;
+  effectiveAt: Date;
+  recordedAt: Date;
+}
+export interface SanctionCurrent {
+  severity: string;
+  rule: RuleVersion;
+  nominalPenaltyTotal: number | null;
+  effectivePenaltyTotal: number;
+  suspensionDays: number | null;
+  adjustments: SanctionAdjustment[];
 }
 export interface SuspendUserData {
   userId: string;

@@ -1,3 +1,8 @@
+import { lockLoanInventory } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
+import { lockPublishedLoanPolicy } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
+import { copyTrustAllowed } from '../../../../loans/infrastructure/integration/loan-trust-access.js';
+import { releaseReservedCopy } from '../../../../loans/infrastructure/integration/release-reserved-copy.js';
+import { hasEffectiveUserRestriction } from './effective-user-restriction.js';
 import {
   BadRequestException,
   ConflictException,
@@ -308,6 +313,24 @@ export class PrismaSanctionRepository implements SanctionRepository {
       );
     });
     const registered = audit.find((a) => a.accion === 'SUSPENSION_REGISTRADA');
+    const adjustments = row.incumplimientoId
+      ? await runtime.query(this.prisma.sql.public.ajustes_incumplimiento
+          .select('id', 'versionReglaId', 'severidad', 'efecto', 'nominalObjetivo',
+            'incrementoNominal', 'descuentoEfectivo', 'saldoAnterior', 'saldoPosterior',
+            'duracionTotalDias', 'fechaEfectiva', 'createdAt')
+          .where((r, f) => f.eq(r.incumplimientoId, row.incumplimientoId!))
+          .orderBy(r => r.fechaEfectiva, { direction: 'asc' })
+          .orderBy(r => r.createdAt, { direction: 'asc' })
+          .orderBy(r => r.id, { direction: 'asc' }).build())
+      : [];
+    const latest = adjustments.at(-1);
+    const currentVersion = latest ? (await runtime.query(
+      this.prisma.sql.public.versiones_regla
+        .select('id', 'reglaId', 'numero', 'titulo', 'descripcion', 'penalizacionPorcentual',
+          'consecuencia', 'tipoSuspension', 'diasSuspension', 'estado')
+        .where((r, f) => f.eq(r.id, latest.versionReglaId)).limit(1).build(),
+    ))[0] : null;
+    if (latest && !currentVersion) throw new ConflictException('Versión histórica del ajuste no encontrada.');
     return {
       id,
       userId: row.usuarioId,
@@ -320,6 +343,32 @@ export class PrismaSanctionRepository implements SanctionRepository {
       resultingTrust: Number(row.confianzaPosterior),
       reason: registered?.motivo ?? null,
       rule,
+      // No sumar de nuevo el descuento inicial: ya es el primer ajuste.
+      current: latest && currentVersion ? {
+        severity: latest.severidad,
+        rule: {
+          id: currentVersion.id, ruleId: currentVersion.reglaId,
+          number: currentVersion.numero, title: currentVersion.titulo,
+          description: currentVersion.descripcion,
+          penaltyPercentage: Number(currentVersion.penalizacionPorcentual),
+          consequence: currentVersion.consecuencia,
+          suspensionType: currentVersion.tipoSuspension as SuspensionType | null,
+          suspensionDays: currentVersion.diasSuspension,
+          status: currentVersion.estado as RuleStatus,
+        },
+        nominalPenaltyTotal: latest.nominalObjetivo === null ? null : Number(latest.nominalObjetivo),
+        effectivePenaltyTotal: Math.round(adjustments.reduce((sum, a) => sum + Math.round(Number(a.descuentoEfectivo) * 100), 0)) / 100,
+        suspensionDays: latest.duracionTotalDias,
+        adjustments: adjustments.map(a => ({
+          id: a.id, ruleVersionId: a.versionReglaId, severity: a.severidad,
+          effect: a.efecto as 'DISCOUNT' | 'SET_ZERO',
+          nominalTarget: a.nominalObjetivo === null ? null : Number(a.nominalObjetivo),
+          nominalIncrement: a.incrementoNominal === null ? null : Number(a.incrementoNominal),
+          effectiveDiscount: Number(a.descuentoEfectivo), previousTrust: Number(a.saldoAnterior),
+          resultingTrust: Number(a.saldoPosterior), suspensionDays: a.duracionTotalDias,
+          effectiveAt: instantToDate(a.fechaEfectiva), recordedAt: instantToDate(a.createdAt),
+        })),
+      } : null,
       violation: violation
         ? {
             id: violation.id,
@@ -346,6 +395,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
 
   async suspend(data: SuspendUserData): Promise<SanctionDetail> {
     return this.prisma.client.transaction(async (tx) => {
+      await lockLoanInventory(this.prisma, tx);
       const user = await this.lockUser(data.userId, tx);
       const fingerprint = JSON.stringify({
         ruleId: data.ruleId,
@@ -408,18 +458,12 @@ export class PrismaSanctionRepository implements SanctionRepository {
       if (!version)
         throw new NotFoundException('Versión activa no encontrada.');
       const policy = readOfficialPolicyEffect(version.descripcion);
-      if (policy && !['DAMAGE', 'LOSS'].includes(policy.kind))
+      if (policy)
         throw new ConflictException(
           'Esta política no admite suspensión manual sin su contexto específico.',
         );
       const penalty = Number(version.penalizacionPorcentual);
-      if (
-        policy?.trustEffect === 'SET_ZERO'
-          ? penalty !== 0 ||
-            version.tipoSuspension !== SuspensionType.INDEFINITE ||
-            version.diasSuspension !== null
-          : policy?.trustEffect === 'NONE' || penalty <= 0 || penalty > 100
-      )
+      if (!Number.isFinite(penalty) || penalty <= 0 || penalty > 100)
         throw new ConflictException(
           'La versión no configura una penalización manual válida.',
         );
@@ -475,7 +519,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
       const previousTrust = Number(user.confianza);
       const { appliedPenalty, resultingTrust } = calculateTrustPenalty(
         previousTrust,
-        policy?.trustEffect === 'SET_ZERO' ? previousTrust : penalty,
+        penalty,
       );
       const violation = (
         await tx.query(
@@ -552,50 +596,83 @@ export class PrismaSanctionRepository implements SanctionRepository {
     });
   }
 
-  private async cancelReservations(
+  /** Compartido por TODO origen. El llamador debe haber bloqueado al usuario. */
+  async cancelReservations(
     tx: Runtime,
     userId: string,
     reason: string,
     now: Date,
   ) {
-    const reservations = await tx.query(
+    await lockLoanInventory(this.prisma, tx);
+    const suspended = await hasEffectiveUserRestriction(
+      this.prisma,
+      tx,
+      userId,
+      now,
+    );
+    const candidates = await tx.query(
       this.prisma.sql.public.reservas
-        .update({
-          estado: 'CANCELADA',
-          fechaCancelacion: this.instant(now),
-          motivoCancelacion: `Suspensión: ${reason}`,
-        })
+        .select('id', 'ejemplarId', 'fechaRecogida')
         .where((r, f) => f.eq(r.usuarioId, userId))
         .where((r, f) => f.eq(r.estado, 'CONFIRMADA'))
-        .returning('id', 'ejemplarId')
         .build(),
     );
+    const reservations = [];
+    const categoryCache = new Map<string, boolean | null>();
+    if (!suspended && candidates.length)
+      await lockPublishedLoanPolicy(this.prisma, tx);
+    for (const candidate of candidates
+      .filter((r) => r.fechaRecogida === null)
+      .sort((a, b) => a.id.localeCompare(b.id))) {
+      if (!suspended) {
+        if (
+          (await copyTrustAllowed(
+            this.prisma,
+            tx,
+            userId,
+            candidate.ejemplarId,
+            categoryCache,
+          )) !== false
+        )
+          continue;
+      }
+      reservations.push(candidate);
+    }
     for (const reservation of reservations) {
-      const loans = await tx.query(
-        this.prisma.sql.public.prestamos
-          .select('id')
-          .where((r, f) => f.eq(r.ejemplarId, reservation.ejemplarId))
-          .where((r, f) => f.eq(r.estado, 'ACTIVO'))
-          .limit(1)
+      await tx.query(
+        this.prisma.sql.public.reservas
+          .update({
+            estado: 'CANCELADA',
+            fechaCancelacion: this.instant(now),
+            motivoCancelacion: `Sanción/incumplimiento: ${reason}`,
+          })
+          .where((r, f) => f.eq(r.id, reservation.id))
+          .where((r, f) => f.eq(r.estado, 'CONFIRMADA'))
           .build(),
       );
-      if (loans[0])
-        throw new ConflictException(
-          'Reserva inconsistente con un préstamo activo; no se liberó el ejemplar.',
-        );
-      const copies = await tx.query(
-        this.prisma.sql.public.ejemplares
-          .update({ estado: 'DISPONIBLE' })
-          .where((r, f) => f.eq(r.id, reservation.ejemplarId))
-          .where((r, f) => f.eq(r.estado, 'RESERVADO'))
+    }
+    for (const copyId of [
+      ...new Set(reservations.map((r) => r.ejemplarId)),
+    ].sort())
+      await releaseReservedCopy(this.prisma, tx, copyId);
+    if (reservations.length)
+      await tx.query(
+        this.prisma.sql.public.auditorias_usuario
+          .insert([
+            {
+              usuarioId: userId,
+              accion: 'RESERVAS_CANCELADAS_POR_SANCION',
+              motivo: reason,
+              datosNuevos: JSON.stringify({
+                reservationIds: reservations.map((r) => r.id),
+                noShow: false,
+              }),
+              fecha: this.instant(now),
+            },
+          ])
           .returning('id')
           .build(),
       );
-      if (!copies[0])
-        throw new ConflictException(
-          'El ejemplar de la reserva ya no está reservado; reintente tras revisar su estado.',
-        );
-    }
     return reservations.map((r) => r.id);
   }
 
@@ -605,6 +682,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
     actor: AuditActor,
   ): Promise<SanctionDetail> {
     return this.prisma.client.transaction(async (tx) => {
+      await lockLoanInventory(this.prisma, tx);
       const initial = (
         await tx.query(
           this.sanctions()

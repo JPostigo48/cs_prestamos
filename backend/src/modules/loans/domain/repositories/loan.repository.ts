@@ -1,15 +1,10 @@
-import type { Loan, LoanReturn, ReturnChecklist } from '../entities/loan.js';
+import type { Loan, ReturnChecklist } from '../entities/loan.js';
+import type { CloseLoanData, ReturnPolicy } from '../entities/loan-closure.js';
 import type {
   Page,
   ResourceHistoryQuery,
   SaveReturnChecklistData,
 } from './loan-queries.js';
-
-export interface RegisterLoanReturnData {
-  loanId: string;
-  returnedAt: Date;
-  observation?: string;
-}
 
 export abstract class LoanRepository {
   abstract findResourceHistory(
@@ -28,8 +23,6 @@ export abstract class LoanRepository {
     startsAt: Date,
     endsAt: Date,
   ): Promise<boolean>;
-  abstract registerReturn(data: RegisterLoanReturnData): Promise<LoanReturn>;
-  abstract registerReturnWithCopy(
-    data: RegisterLoanReturnData,
-  ): Promise<LoanReturn>;
+  abstract closeLoan(data: CloseLoanData): Promise<Loan>;
+  abstract readReturnPolicy(loanId: string): Promise<ReturnPolicy>;
 }

@@ -194,7 +194,7 @@ export class PrismaUserRepository extends UserRepository {
           this.prisma.sql.public.prestamos
             .select('id')
             .where((row, fns) => fns.eq(row.usuarioId, userId))
-            .where((row, fns) => fns.ne(row.estado, 'FINALIZADO'))
+            .where((row, fns) => fns.in(row.estado, ['ACTIVO', 'PLANIFICADO']))
             .limit(1)
             .build(),
         );
@@ -380,6 +380,9 @@ export class PrismaUserRepository extends UserRepository {
     const reasons = [
       ...(user.hasCurrentAffiliation ? [] : ['VINCULACION_NO_VIGENTE']),
       ...(active ? ['SANCION_ACTIVA'] : []),
+      ...(deriveTrustLevel(user.trustPercentage) === 'CRITICO'
+        ? ['CONFIANZA_INSUFICIENTE']
+        : []),
     ];
     return {
       userId,

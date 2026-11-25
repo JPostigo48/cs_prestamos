@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
@@ -9,7 +8,6 @@ import { instantToDate } from '../../../../../shared/infrastructure/prisma/insta
 import { Temporal } from 'temporal-polyfill/full';
 import type {
   Loan,
-  LoanReturn,
   ReturnChecklist,
 } from '../../../domain/entities/loan.js';
 import type {
@@ -20,8 +18,10 @@ import type {
 import { inspectionParts } from '../../../domain/entities/return-inspection.js';
 import {
   LoanRepository,
-  type RegisterLoanReturnData,
 } from '../../../domain/repositories/loan.repository.js';
+
+import { PrismaLoanClosure } from './prisma-loan-closure.js';
+import { restoreClosedLoan, type CloseLoanData } from '../../../domain/entities/loan-closure.js';
 
 @Injectable()
 export class PrismaLoanRepository implements LoanRepository {
@@ -45,6 +45,7 @@ export class PrismaLoanRepository implements LoanRepository {
       status: row.estado,
       configurationSnapshot: row.configurationSnapshot ?? null,
       returnChecklist: null,
+      closure: null, consequences: [], reward: null, copy: null, cancelledReservationIds: [],
       return: returned
         ? {
             id: returned.id,
@@ -71,6 +72,11 @@ export class PrismaLoanRepository implements LoanRepository {
   private async withReturns(rows: any[]): Promise<Loan[]> {
     return Promise.all(
       rows.map(async (row) => {
+        const closed = await this.runtime().query(
+          this.prisma.sql.public.cierres_prestamo.select('resultado')
+            .where((r, f) => f.eq(r.prestamoId, row.id)).limit(1).build(),
+        );
+        if (closed[0]) return restoreClosedLoan(closed[0].resultado);
         const returns = await this.runtime().query(
           this.prisma.sql.public.devoluciones
             .select('id', 'prestamoId', 'fecha', 'observacion')
@@ -288,124 +294,17 @@ export class PrismaLoanRepository implements LoanRepository {
     );
     return rows.some(
       (row: any) =>
-        row.estado !== 'FINALIZADO' &&
+        (row.estado === 'ACTIVO' || row.estado === 'PLANIFICADO') &&
         instantToDate(row.fechaInicio).getTime() < endsAt.getTime() &&
         instantToDate(row.fechaFin).getTime() > startsAt.getTime(),
     );
   }
 
-  async registerReturn(data: RegisterLoanReturnData): Promise<LoanReturn> {
-    return this.registerReturnWithCopy(data);
+  closeLoan(data: CloseLoanData): Promise<Loan> {
+    return new PrismaLoanClosure(this.prisma).close(data);
   }
 
-  async registerReturnWithCopy(
-    data: RegisterLoanReturnData,
-  ): Promise<LoanReturn> {
-    return this.prisma.client.transaction(async (tx) => {
-      // Serializa devolución/inspección; evita que un reintento libere un ejemplar
-      // ya reservado de nuevo o duplique observaciones.
-      await tx.query(
-        this.prisma.sql.public.prestamos
-          .update({ updatedAt: Temporal.Now.instant() })
-          .where((r, f) => f.eq(r.id, data.loanId))
-          .returning('id')
-          .build(),
-      );
-      const loanRows = await tx.query(
-        this.loanSelect()
-          .where((row, fns) => fns.eq(row.id, data.loanId))
-          .limit(1)
-          .build(),
-      );
-      const loan = loanRows[0];
-      if (!loan) throw new ConflictException('El préstamo no existe.');
-      const existingReturn = await tx.query(
-        this.prisma.sql.public.devoluciones
-          .select('id')
-          .where((row, fns) => fns.eq(row.prestamoId, data.loanId))
-          .limit(1)
-          .build(),
-      );
-      if (existingReturn[0] || loan.estado === 'FINALIZADO') {
-        throw new ConflictException('El préstamo ya fue devuelto.');
-      }
-      if (loan.estado !== 'ACTIVO' && loan.estado !== 'PLANIFICADO')
-        throw new ConflictException(
-          'Estado de préstamo no válido para devolución.',
-        );
-      if (
-        data.returnedAt < instantToDate(loan.fechaInicio) ||
-        data.returnedAt.getTime() > Date.now()
-      )
-        throw new ConflictException('Fecha de devolución inválida.');
-      const inspections = await tx.query(
-        this.checklistSelect()
-          .where((r, f) => f.eq(r.prestamoId, data.loanId))
-          .limit(1)
-          .build(),
-      );
-      if (inspections[0]) {
-        const inspection = this.mapChecklist(inspections[0]);
-        if (data.returnedAt < inspection.checkedAt)
-          throw new ConflictException(
-            'La devolución no puede preceder a la inspección.',
-          );
-        if (
-          inspection.parts.some((p) => !p.received) &&
-          !data.observation?.trim()
-        )
-          throw new ConflictException(
-            'Describa la incidencia de accesorios faltantes antes de devolver.',
-          );
-      }
-      const returnedRows = await tx.query(
-        this.prisma.sql.public.devoluciones
-          .insert([
-            {
-              prestamoId: data.loanId,
-              fecha: this.instant(data.returnedAt),
-              observacion: data.observation?.trim() || null,
-            },
-          ])
-          .returning('id', 'prestamoId', 'fecha', 'observacion')
-          .build(),
-      );
-      await tx.query(
-        this.prisma.sql.public.prestamos
-          .update({ estado: 'FINALIZADO' })
-          .where((row, fns) => fns.eq(row.id, data.loanId))
-          .build(),
-      );
-      const state = data.observation?.trim() ? 'NO_DISPONIBLE' : 'DISPONIBLE';
-      const copyRows = await tx.query(
-        this.prisma.sql.public.ejemplares
-          .update({ estado: state })
-          .where((row, fns) => fns.eq(row.id, loan.ejemplarId))
-          .returning('id')
-          .build(),
-      );
-      if (!copyRows[0])
-        throw new InternalServerErrorException('Ejemplar no encontrado.');
-      if (data.observation?.trim()) {
-        await tx.query(
-          this.prisma.sql.public.observaciones_ejemplar
-            .insert([
-              {
-                ejemplarId: loan.ejemplarId,
-                descripcion: data.observation.trim(),
-              },
-            ])
-            .returning('id')
-            .build(),
-        );
-      }
-      const row = returnedRows[0];
-      return {
-        id: row.id,
-        loanId: row.prestamoId,
-        returnedAt: instantToDate(row.fecha),
-        observation: row.observacion,
-      };
-    });
+  readReturnPolicy(loanId: string) {
+    return new PrismaLoanClosure(this.prisma).readReturnPolicy(loanId);
   }
 }

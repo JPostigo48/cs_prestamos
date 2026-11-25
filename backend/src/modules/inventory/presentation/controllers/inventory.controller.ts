@@ -436,7 +436,7 @@ export class InventoryController {
   @ApiBody({ type: UpdateCopyDto })
   @ApiOkResponse({ type: CopyResponseDto })
   @ApiOperation({
-    summary: 'Editar código de inventario sin alterar sus relaciones',
+    summary: 'Editar código o habilitación administrativa sin alterar aptitud ni liberar retenciones',
   })
   updateCopy(
     @Param('copyId') copyId: string,
@@ -456,7 +456,7 @@ export class InventoryController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiBody({ type: UpdateCopyStateDto })
-  @ApiOperation({ summary: 'Modificar estado de un ejemplar' })
+  @ApiOperation({ summary: 'Modificar estado o rehabilitar explícitamente un ejemplar', description: 'OPERADOR/ADMINISTRADOR. DISPONIBLE exige habilitado=true, recurso/categoría activos y ausencia de compromisos. Desde NO_DISPONIBLE o condición distinta de APTO (incluido null), exige verification completa. Persiste APTO, actor y auditoría en una transacción. No modifica sanciones ni confianza. La habilitación solo se administra mediante PATCH del ejemplar.' })
   @ApiOkResponse({ type: CopyResponseDto })
   @ApiExtension('x-implementation-status', 'implemented')
   updateCopyState(

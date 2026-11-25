@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Temporal } from 'temporal-polyfill/full';
-import { ServiceUnavailableException } from '@nestjs/common';
 import { PrismaReservationRepository } from './prisma-reservation.repository.js';
 import { inMemoryPrisma } from '../../../../../../test/helpers/in-memory-prisma.js';
 import { categoryPolicyFixture } from '../../../../../../test/helpers/category-policy-fixture.js';
@@ -22,7 +21,9 @@ function setup(trust = 80) {
       { id: 'user', confianza: trust.toFixed(2), vinculacionVigente: true },
       { id: 'other', confianza: '95.00' },
     ],
-    ejemplares: [{ id: 'copy', estado: 'RESERVADO' }],
+    ejemplares: [{ id: 'copy', recursoId: 'resource', estado: 'RESERVADO', condicionFisica: 'APTO', habilitado: true }],
+    recursos: [{ id: 'resource', categoriaId: 'category', activo: true }],
+    categorias_recurso: [{ id: 'category', activo: true }],
     reservas: [
       {
         id: 'reservation',
@@ -186,9 +187,7 @@ describe('vencimiento + NO_SHOW LEVE, repositorios reales con doble transacciona
             throw new Error('simulated persistence failure');
           return query(plan);
         });
-      await expect(repository.expire(after)).rejects.toBeInstanceOf(
-        ServiceUnavailableException,
-      );
+      expect(await repository.expire(after)).toEqual([]);
       expect(db.rows('reservas')[0].estado).toBe('CONFIRMADA');
       expect(db.rows('ejemplares')[0].estado).toBe('RESERVADO');
       expect(db.rows('usuarios')[0].confianza).toBe('80.00');
@@ -207,7 +206,7 @@ describe('vencimiento + NO_SHOW LEVE, repositorios reales con doble transacciona
     'suspension',
     'version',
     'missing',
-  ])('no usa una política incorrecta (%s), rollback y 503', async (invalid) => {
+  ])('no usa una política incorrecta (%s), revierte la unidad y sigue el recorrido', async (invalid) => {
     const { db, repository } = setup();
     const version = db
       .rows('versiones_regla')
@@ -228,9 +227,7 @@ describe('vencimiento + NO_SHOW LEVE, repositorios reales con doble transacciona
         1,
       );
     version.descripcion = JSON.stringify(metadata);
-    await expect(repository.expire(after)).rejects.toMatchObject({
-      status: 503,
-    });
+    expect(await repository.expire(after)).toEqual([]);
     expect(db.rows('reservas')[0].estado).toBe('CONFIRMADA');
     expect(db.rows('usuarios')[0].confianza).toBe('80.00');
     expect(db.rows('sanciones')).toHaveLength(0);
@@ -257,14 +254,13 @@ describe('vencimiento + NO_SHOW LEVE, repositorios reales con doble transacciona
     expect(db.rows('usuarios')[0].confianza).toBe('75.75');
   });
 
-  it.each([0, 1.5])('no baja de cero con confianza %s', async (trust) => {
+  it.each([0, 1.5])('confianza crítica %s cancela sin atribuir una inasistencia', async (trust) => {
     const { db, repository } = setup(trust);
     await repository.expire(after);
-    expect(db.rows('usuarios')[0].confianza).toBe('0.00');
-    expect(db.rows('incumplimientos')[0].penalizacionAplicada).toBe(
-      trust.toFixed(2),
-    );
-    expect(db.rows('sanciones')).toHaveLength(1);
+    expect(db.rows('usuarios')[0].confianza).toBe(trust.toFixed(2));
+    expect(db.rows('reservas')[0].estado).toBe('CANCELADA');
+    expect(db.rows('incumplimientos')).toHaveLength(0);
+    expect(db.rows('sanciones')).toHaveLength(0);
   });
 
   it('otra reserva del mismo usuario vuelve a usar LEVE sin escalamiento', async () => {
@@ -320,10 +316,9 @@ describe('vencimiento + NO_SHOW LEVE, repositorios reales con doble transacciona
           .insert([{ id: 'loan', ejemplarId: 'copy', estado: 'ACTIVO' }])
           .build(),
       );
-    await expect(repository.expire(after)).rejects.toMatchObject({
-      status: 503,
-    });
-    expect(db.rows('ejemplares')[0].estado).toBe('RESERVADO');
-    expect(db.rows('reservas')[0].estado).toBe('CONFIRMADA');
+    expect(await repository.expire(after)).toHaveLength(1);
+    expect(db.rows('ejemplares')[0].estado).toBe('NO_DISPONIBLE');
+    expect(db.rows('reservas')[0].estado).toBe('VENCIDA');
+    expect(db.rows('prestamos')[0].estado).toBe('ACTIVO');
   });
 });

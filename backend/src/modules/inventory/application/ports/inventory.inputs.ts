@@ -25,6 +25,7 @@ export type CreateCopyInput = {
 
 export type UpdateCopyStateInput = {
   estado: InventoryCopyStatus;
+  verification?: import('../../domain/entities/inventory.types.js').CopyVerification;
 };
 
 export type CreateCopyObservationInput = {

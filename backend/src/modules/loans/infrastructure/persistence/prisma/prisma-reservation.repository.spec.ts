@@ -37,42 +37,30 @@ describe('PrismaReservationRepository', () => {
       fechaLimiteRecogida: Temporal.Instant.from('2026-10-21T10:30:00.123Z'),
       duracionPrestamoHoras: 8,
       fechaRecogida: null,
-      fechaCancelacion: Temporal.Instant.from('2026-10-21T10:31:00.123Z'),
-      estado: 'VENCIDA',
-      motivoCancelacion: 'Ventana de recogida vencida',
+      fechaCancelacion: null,
+      estado: 'CONFIRMADA',
+      motivoCancelacion: null,
     };
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce([{ id: 'user-1' }])
-      .mockResolvedValueOnce([row])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: 'copy-1' }]);
-    const register = vi.spyOn(noShow, 'registerReservationNoShow').mockResolvedValue(undefined);
-    const chain = (value: string): any => ({
-      where: () => chain(value),
-      returning: () => chain(value),
-      limit: () => chain(value),
-      orderBy: () => chain(value),
-      build: () => value,
+    const register = vi
+      .spyOn(noShow, 'registerReservationNoShow')
+      .mockResolvedValue(undefined);
+    const db = inMemoryPrisma({
+      usuarios: [{ id: 'user-1', vinculacionVigente: true }],
+      reservas: [{ ...row, fechaSolicitada: null, fechaLimiteRecogida: null }],
+      ejemplares: [{ id: 'copy-1', recursoId: 'resource', estado: 'RESERVADO', condicionFisica: 'APTO', habilitado: true }],
+      recursos: [{ id: 'resource', categoriaId: 'category', activo: true }],
+      categorias_recurso: [{ id: 'category', activo: true }],
     });
-    const tx = { query };
-    const transaction = vi.fn(
-      async (callback: (transaction: typeof tx) => Promise<unknown>) =>
-        callback(tx),
-    );
-    const prisma = {
-      client: { transaction, runtime: () => ({ query: vi.fn().mockResolvedValue([row]) }) },
-      sql: {
-        public: {
-          reservas: { update: () => chain('expire-reservations'), select: () => chain('select-reservations') },
-          ejemplares: { update: () => chain('release-copy') },
-          usuarios: { update: () => chain('lock-user') },
-          prestamos: { select: () => chain('active-loans') },
-        },
-      },
-    };
-    const repository = new PrismaReservationRepository(prisma as any);
+    Object.assign(db.rows('reservas')[0], row);
+    const groups: (typeof db.calls)[] = [];
+    const transaction = db.client.transaction.bind(db.client);
+    vi.spyOn(db.client, 'transaction').mockImplementation(async (work) => {
+      const start = db.calls.length;
+      const result = await transaction(work);
+      groups.push(db.calls.slice(start));
+      return result;
+    });
+    const repository = new PrismaReservationRepository(db as any);
     await expect(
       repository.expire(new Date('2026-10-21T10:31:00.000Z')),
     ).resolves.toMatchObject([
@@ -80,15 +68,24 @@ describe('PrismaReservationRepository', () => {
         id: 'reservation-1',
         status: 'VENCIDA',
         requestedAt: new Date('2026-10-21T10:00:00.123Z'),
-        cancelledAt: new Date('2026-10-21T10:31:00.123Z'),
+        cancelledAt: new Date('2026-10-21T10:31:00.000Z'),
         pickedUpAt: null,
       },
     ]);
-    expect(transaction).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenNthCalledWith(1, 'lock-user');
-    expect(query).toHaveBeenNthCalledWith(2, 'expire-reservations');
-    expect(query).toHaveBeenNthCalledWith(5, 'release-copy');
-    expect(register).toHaveBeenCalledExactlyOnceWith(prisma, tx, row, new Date('2026-10-21T10:31:00.000Z'));
+    const expiryWrites = groups.at(-1)!.filter((p) => p.operation === 'update');
+    expect(expiryWrites.map((p) => p.table)).toEqual([
+      'usuarios',
+      'reservas',
+      'ejemplares',
+      'ejemplares',
+    ]);
+    expect(db.rows('ejemplares')[0].estado).toBe('DISPONIBLE');
+    expect(register).toHaveBeenCalledExactlyOnceWith(
+      db,
+      db.client.runtime(),
+      expect.objectContaining({ id: row.id, estado: 'VENCIDA' }),
+      new Date('2026-10-21T10:31:00.000Z'),
+    );
     register.mockRestore();
   });
 });

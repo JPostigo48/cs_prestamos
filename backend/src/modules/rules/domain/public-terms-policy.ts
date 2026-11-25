@@ -204,6 +204,14 @@ export function projectPublicPolicy(
   const criteria = publicCriteria(metadata.criteria);
   const penalty = Number(row.penalizacionPorcentual);
   if (!criteria || !Number.isFinite(penalty)) return null;
+  if (
+    metadata.trustEffect === 'SET_ZERO' &&
+    (!['DAMAGE', 'LOSS'].includes(String(metadata.kind)) ||
+      penalty !== 0 ||
+      row.tipoSuspension !== 'INDEFINIDA' ||
+      row.diasSuspension !== null)
+  )
+    return null;
   return {
     id: row.id,
     ruleId: row.reglaId,

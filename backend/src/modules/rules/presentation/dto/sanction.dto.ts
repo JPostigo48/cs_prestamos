@@ -112,7 +112,31 @@ export class SanctionHistoryDto {
   actorAccountId!: string | null;
   @ApiProperty({ type: String, nullable: true }) reason!: string | null;
 }
+export class SanctionAdjustmentResponseDto {
+  @ApiProperty({ type: String, format: 'uuid' }) id!: string;
+  @ApiProperty({ type: String, format: 'uuid' }) ruleVersionId!: string;
+  @ApiProperty({ type: String }) severity!: string;
+  @ApiProperty({ enum: ['DISCOUNT', 'SET_ZERO'] }) effect!: string;
+  @ApiProperty({ type: Number, nullable: true }) nominalTarget!: number | null;
+  @ApiProperty({ type: Number, nullable: true }) nominalIncrement!: number | null;
+  @ApiProperty({ type: Number }) effectiveDiscount!: number;
+  @ApiProperty({ type: Number }) previousTrust!: number;
+  @ApiProperty({ type: Number }) resultingTrust!: number;
+  @ApiProperty({ type: Number, nullable: true }) suspensionDays!: number | null;
+  @ApiProperty({ type: String, format: 'date-time' }) effectiveAt!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) recordedAt!: string;
+}
+export class SanctionCurrentResponseDto {
+  @ApiProperty({ type: String }) severity!: string;
+  @ApiProperty({ type: RuleVersionResponseDto }) rule!: RuleVersionResponseDto;
+  @ApiProperty({ type: Number, nullable: true, description: 'Objetivo nominal acumulado; null para SET_ZERO.' }) nominalPenaltyTotal!: number | null;
+  @ApiProperty({ type: Number, description: 'Suma de descuentos efectivos, incluido el inicial una sola vez; no saldo actual del usuario.' }) effectivePenaltyTotal!: number;
+  @ApiProperty({ type: Number, nullable: true }) suspensionDays!: number | null;
+  @ApiProperty({ type: [SanctionAdjustmentResponseDto] }) adjustments!: SanctionAdjustmentResponseDto[];
+}
 export class SanctionDetailResponseDto extends SanctionResponseDto {
+  @ApiPropertyOptional({ type: SanctionCurrentResponseDto, nullable: true, description: 'Consecuencia acumulada desde ajustes; null para legado sin ajustes. Los campos superiores conservan el antecedente inicial inmutable. Absolución no borra el historial.' })
+  current?: SanctionCurrentResponseDto | null;
   @ApiProperty({
     type: String,
     nullable: true,
