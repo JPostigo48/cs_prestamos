@@ -166,7 +166,7 @@ export class AuthController {
   })
   @ApiBody({ type: FullRegistrationDto })
   @ApiCreatedResponse({ type: PendingRegistrationResponseDto })
-  @ApiHttpErrors(400, 409)
+  @ApiHttpErrors(400, 409, 413)
   registerFull(@Body() input: FullRegistrationDto) {
     return this.fullRegistration.execute(input);
   }

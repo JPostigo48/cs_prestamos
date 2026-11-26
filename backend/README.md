@@ -122,6 +122,16 @@ Endpoints disponibles:
   La aprobación vuelve a validar la evidencia persistida antes de cualquier alta.
   La autenticidad y vigencia documental requieren revisión humana, no automática.
   Solo se persiste el hash Argon2id, sin mostrarlo en respuestas ni auditorías.
+  Todos los campos del alta nueva son requeridos, incluidos identificador y
+  teléfono; no se rellenan filas antiguas ni se cambia su nulabilidad. Nombre,
+  identificador y teléfono se recortan exteriormente; correo se recorta y pasa
+  a minúsculas antes de validar el dominio exacto. La contraseña de 8–128 no
+  admite solo blancos y nunca se recorta. El parser JSON permite 15 MiB solo
+  en la ruta de registro; otras rutas mantienen 100 KiB, con exceso 413 JSON.
+  Revisión PDF: firma nueva por preparación, endpoint protegido sin caché y
+  enlace nativo explícito seguro, con errores visibles junto a la evidencia.
+  [Contrato, matriz 11–18 y límites verificados](../docs/development/registration-review-verification.md:9).
+  [Integración documental y OpenAPI vigente](../docs/development/final-contract-integration.md:1).
 - `POST /users/registration-requests`: retirado; responde 410 y remite a la entrada
   integral. Las consultas, aprobación y rechazo siguen disponibles.
 - `POST /users/registration-requests/:requestId/approve`: OPERADOR o

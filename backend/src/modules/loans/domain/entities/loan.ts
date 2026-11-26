@@ -31,6 +31,8 @@ export interface LoanReturn {
 }
 
 export interface Loan {
+  /** Unavailable history is not evidence that this loan has no closure. */
+  closureHistory?: 'AVAILABLE' | 'UNAVAILABLE';
   closure?: ClosureProjection['closure'];
   consequences?: ClosureProjection['consequences'];
   reward?: ClosureProjection['reward'];

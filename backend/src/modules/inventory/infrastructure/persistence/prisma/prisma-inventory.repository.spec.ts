@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PrismaInventoryRepository } from './prisma-inventory.repository.js';
 import { inMemoryPrisma } from '../../../../../../test/helpers/in-memory-prisma.js';
+import { inventorySchema } from '../../../../../../test/helpers/inventory-schema.js';
 
 describe('PrismaInventoryRepository', () => {
   const query = { sql: 'QUERY' };
   let repository: PrismaInventoryRepository;
   let runtime: {
-    query: ReturnType<typeof vi.fn>;
+    query: ReturnType<typeof vi.fn<(...args: any[]) => Promise<any[]>>>;
     execute: ReturnType<typeof vi.fn>;
   };
   let builders: Record<string, any>;
@@ -34,6 +35,7 @@ describe('PrismaInventoryRepository', () => {
       return builder;
     };
     prisma = {
+      schemaCapabilities: inMemoryPrisma().schemaCapabilities,
       sql: {
         public: {
           categorias_recurso: table('categorias_recurso'),
@@ -51,7 +53,16 @@ describe('PrismaInventoryRepository', () => {
       client: {
         raw: inMemoryPrisma().client.raw,
         runtime: vi.fn().mockReturnValue(runtime),
-        transaction: vi.fn((work) => work(runtime)),
+        transaction: vi.fn((work) =>
+          work({
+            query: (plan: any) =>
+              plan.text?.includes('pg_catalog.pg_class')
+                ? Promise.resolve([
+                    { metadata: JSON.stringify(inventorySchema()) },
+                  ])
+                : runtime.query(plan),
+          }),
+        ),
       },
     };
     repository = new PrismaInventoryRepository(prisma);
@@ -180,22 +191,51 @@ describe('PrismaInventoryRepository', () => {
     'builds and executes %s through query',
     async (_name, operation, table, builderMethod, runtimeMethod) => {
       if (_name === 'countAvailableCopiesByResource')
-        runtime.query.mockResolvedValue([{ id: 'resource-1', categoriaId: 'cat-1', activo: true }]);
+        runtime.query.mockResolvedValue([
+          { id: 'resource-1', categoriaId: 'cat-1', activo: true },
+        ]);
       if (_name === 'updateCopyState')
         runtime.query
           .mockResolvedValueOnce([]) // Barrera de inventario.
           .mockResolvedValueOnce([]) // Barrera de publicación.
-          .mockResolvedValueOnce([{ id: 'copy-1', recursoId: 'resource-1', estado: 'DISPONIBLE', condicionFisica: 'APTO', habilitado: true }])
+          .mockResolvedValueOnce([
+            {
+              id: 'copy-1',
+              recursoId: 'resource-1',
+              estado: 'DISPONIBLE',
+              condicionFisica: 'APTO',
+              habilitado: true,
+            },
+          ])
           .mockResolvedValueOnce([])
           .mockResolvedValueOnce([])
-          .mockResolvedValueOnce([{ id: 'resource-1', categoriaId: 'cat-1', activo: true }])
+          .mockResolvedValueOnce([
+            { id: 'resource-1', categoriaId: 'cat-1', activo: true },
+          ])
           .mockResolvedValueOnce([{ id: 'cat-1', activo: true }])
-          .mockResolvedValueOnce([{ id: 'copy-1', estado: 'DISPONIBLE', condicionFisica: 'APTO', habilitado: true }]);
+          .mockResolvedValueOnce([
+            {
+              id: 'copy-1',
+              estado: 'DISPONIBLE',
+              condicionFisica: 'APTO',
+              habilitado: true,
+            },
+          ]);
       await operation();
       if (_name === 'updateCopyState') {
         expect(runtime.query).toHaveBeenCalledTimes(8);
-        expect(runtime.query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
-        expect(runtime.query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
+        expect(runtime.query).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({
+            text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT'),
+          }),
+        );
+        expect(runtime.query).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            text: expect.stringContaining('IN SHARE MODE NOWAIT'),
+          }),
+        );
       }
       expect(builders[table][builderMethod]).toHaveBeenCalled();
       expect(builders[table].build).toHaveBeenCalled();
@@ -222,8 +262,18 @@ describe('PrismaInventoryRepository', () => {
     });
     expect(prisma.client.transaction).toHaveBeenCalledTimes(1);
     expect(runtime.query).toHaveBeenCalledTimes(6);
-    expect(runtime.query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
-    expect(runtime.query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
+    expect(runtime.query).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT'),
+      }),
+    );
+    expect(runtime.query).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        text: expect.stringContaining('IN SHARE MODE NOWAIT'),
+      }),
+    );
     expect(runtime.query).toHaveBeenCalledWith(query);
   });
 
@@ -261,9 +311,24 @@ describe('PrismaInventoryRepository', () => {
     await expect(operation()).resolves.toBe(1);
     if (_name === 'deleteCategory') {
       expect(runtime.query).toHaveBeenCalledTimes(13);
-      expect(runtime.query).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT') }));
-      expect(runtime.query).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: expect.stringContaining('IN SHARE MODE NOWAIT') }));
-      expect(runtime.query).toHaveBeenNthCalledWith(3, expect.objectContaining({ text: expect.stringContaining('public.inspecciones_devolucion') }));
+      expect(runtime.query).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          text: expect.stringContaining('IN SHARE ROW EXCLUSIVE MODE NOWAIT'),
+        }),
+      );
+      expect(runtime.query).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          text: expect.stringContaining('IN SHARE MODE NOWAIT'),
+        }),
+      );
+      expect(runtime.query).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          text: expect.stringContaining('public.inspecciones_devolucion'),
+        }),
+      );
     }
     expect(builders[table].delete).toHaveBeenCalled();
     expect(runtime.query).toHaveBeenCalledWith(query);

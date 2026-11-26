@@ -43,7 +43,7 @@ Inicio de sesión: USUARIO → inicio personal; OPERADOR → operaciones; ADMINI
 | --- | --- | --- |
 | V01 | Acceso, visibilidad de contraseña y envío | Integrado: [login](../../frontend/src/modules/auth/pages/LoginPage.vue) |
 | V02 | Google, correo y volver | Parcial/API F01: [acceso Google](../../frontend/src/modules/auth/pages/GoogleAccessPage.vue); no emite sesión por correo |
-| V03 | Registro integral único | [Registro](../../frontend/src/modules/auth/pages/RegistrationRequestPage.vue): contraseña elegida para todos, imagen PNG/JPEG hasta 60 KiB y aceptación explícita de términos. Estudiantes: carné o constancia de matrícula vigente. No crea acceso hasta aprobar |
+| V03 | Registro integral único | [Registro](../../frontend/src/modules/auth/pages/RegistrationRequestPage.vue): todos los campos nuevos requeridos, contraseña no recortada ni solo blancos, correo institucional exacto normalizado, PNG/JPEG hasta 60 KiB o PDF hasta 10 MiB y aceptación explícita de términos. Body JSON de registro 15 MiB; otras rutas 100 KiB. No crea acceso hasta aprobar. [Revisión 11–18](../development/registration-review-verification.md:9) |
 | V04 | Bienvenida, habilitación y confianza | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue), bloques independientes |
 | V05 | Categorías, contadores, ver todo y búsqueda | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue); contador rotulado como recursos, no ejemplares disponibles |
 | V06 | Préstamos propios, estado/mora e historial | Integrado: [inicio](../../frontend/src/modules/users/pages/StudentAppPage.vue), nombres enriquecidos o ID real |

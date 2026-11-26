@@ -1,4 +1,5 @@
 import { lockLoanInventory } from '../../../shared/infrastructure/prisma/lock-loan-inventory.js';
+import { assertLoanSchema, loanSchemaTransaction, SANCTION_OPERATION_SCHEMA } from './loan-schema.js';
 import {
   ConflictException,
   Injectable,
@@ -27,6 +28,10 @@ const USER_PAGE_SIZE = 25;
 export class LoanOverdueSynchronizer {
   constructor(private readonly prisma: PrismaService) {}
 
+  async assertAvailable(): Promise<void> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue');
+  }
+
   async candidates(
     at: Date,
     limit: number,
@@ -49,6 +54,7 @@ export class LoanOverdueSynchronizer {
   }
 
   async lockUser(tx: RulesTransaction, userId: string): Promise<void> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue', tx);
     await lockLoanInventory(this.prisma, tx);
     const rows = await tx.query(
       this.prisma.sql.public.usuarios
@@ -87,7 +93,7 @@ export class LoanOverdueSynchronizer {
   }
 
   async synchronizeLoan(userId: string, loanId: string): Promise<void> {
-    await this.prisma.client.transaction(async (tx) => {
+    await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       await this.lockUser(tx, userId);
       await this.synchronizeLockedLoan(tx, userId, loanId);
@@ -96,6 +102,7 @@ export class LoanOverdueSynchronizer {
 
   /** Fase confirmada independiente: una transacción por préstamo. */
   async synchronizeUser(userId: string): Promise<void> {
+    await this.assertAvailable();
     const at = new Date();
     let after: string | null = null;
     let work = 0;
@@ -104,7 +111,7 @@ export class LoanOverdueSynchronizer {
     do {
       const rows = await this.candidates(at, USER_PAGE_SIZE, after, userId);
       for (const row of rows) {
-        const result = await this.prisma.client.transaction(async (tx) => {
+        const result = await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue', async (tx) => {
           await this.lockUser(tx, userId);
           return this.synchronizePending(tx, userId, row.id, work);
         });
@@ -117,7 +124,7 @@ export class LoanOverdueSynchronizer {
       }
       hasMore = !pending && rows.length === USER_PAGE_SIZE;
     } while (hasMore);
-    await this.prisma.client.transaction(async (tx) => {
+    await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       await this.lockUser(tx, userId);
       await this.cancelRestricted(tx, userId, new Date());
@@ -131,6 +138,7 @@ export class LoanOverdueSynchronizer {
     tx: RulesTransaction,
     userId: string,
   ): Promise<ConflictException | ServiceUnavailableException | null> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'loans.synchronizeOverdue', tx);
     const at = new Date();
     let after: string | null = null;
     let work = 0;

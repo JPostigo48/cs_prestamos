@@ -5,6 +5,7 @@ import type { RegistrationRequest } from '../../domain/entities/registration-req
 import { RegistrationRequestRepository } from '../../domain/repositories/registration-request.repository.js';
 import type { PendingAccessData } from '../../domain/repositories/registration-request.repository.js';
 import { UserRepository } from '../../domain/repositories/user.repository.js';
+import { registrationFields } from '../../domain/policies/registration-fields.policy.js';
 
 @Injectable()
 export class SubmitRegistrationRequestUseCase {
@@ -17,12 +18,9 @@ export class SubmitRegistrationRequestUseCase {
     input: SubmitRegistrationRequestInput,
     access?: PendingAccessData,
   ): Promise<RegistrationRequest> {
-    const name = input.name?.trim();
-    if (!name) throw new BadRequestException('name es obligatorio.');
-    if (!input.userType)
-      throw new BadRequestException('userType es obligatorio.');
-    const institutionalId = input.institutionalId?.trim() || null;
-    const phone = input.phone?.trim() || null;
+    const { name, institutionalId, phone } = registrationFields(input);
+    if (!Array.isArray(input.evidence) || input.evidence.length !== 1 || typeof input.evidence[0] !== 'string' || !input.evidence[0].trim())
+      throw new BadRequestException(['evidence requiere exactamente una evidencia.']);
     if (institutionalId) {
       const linkedUser =
         await this.users.findByInstitutionalId(institutionalId);

@@ -34,6 +34,7 @@ describe('Users registration request use cases', () => {
       name: ' Ada Lovelace ',
       userType: 'ESTUDIANTE',
       institutionalId: ' A-1 ',
+      phone: ' 987654321 ',
       evidence: [' carnet '],
     });
     expect(repository.create).toHaveBeenCalledWith({
@@ -41,13 +42,15 @@ describe('Users registration request use cases', () => {
       userType: 'ESTUDIANTE',
       institutionalId: 'A-1',
       evidence: ['carnet'],
-      phone: null,
+      phone: '987654321',
     });
     await expect(
       useCase.execute({
         name: 'Otra',
         userType: 'ESTUDIANTE',
         institutionalId: 'A-1',
+        phone: '987654321',
+        evidence: ['carnet'],
       }),
     ).rejects.toThrow(ConflictException);
   });
@@ -60,9 +63,10 @@ describe('Users registration request use cases', () => {
     const users = { findByInstitutionalId: vi.fn().mockResolvedValue(null) };
     await new SubmitRegistrationRequestUseCase(repository as any, users as any).execute({
       name: 'Ada', userType: 'ESTUDIANTE', institutionalId: 'A-1', phone: ' 987654321 ',
+      evidence: ['carnet'],
     });
     expect(repository.create).toHaveBeenCalledWith({
-      name: 'Ada', userType: 'ESTUDIANTE', institutionalId: 'A-1', phone: '987654321', evidence: [],
+      name: 'Ada', userType: 'ESTUDIANTE', institutionalId: 'A-1', phone: '987654321', evidence: ['carnet'],
     });
   });
 

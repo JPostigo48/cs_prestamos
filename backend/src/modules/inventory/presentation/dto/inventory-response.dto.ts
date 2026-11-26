@@ -1,11 +1,50 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PageMetadataDto } from '../../../../shared/presentation/dto/http-error.dto.js';
 import { ResourceLoanPolicyResponseDto } from './resource-configuration.dto.js';
-import { physicalConditions, type PhysicalCondition } from '../../domain/entities/inventory.types.js';
+import {
+  physicalConditions,
+  type PhysicalCondition,
+} from '../../domain/entities/inventory.types.js';
 
 const categoryId = '550e8400-e29b-41d4-a716-446655440000';
 const resourceId = '550e8400-e29b-41d4-a716-446655440001';
 const copyId = '550e8400-e29b-41d4-a716-446655440002';
+
+class InventoryCapabilitiesDto {
+  @ApiProperty({ type: Boolean }) physicalCondition!: boolean;
+  @ApiProperty({ type: Boolean }) administrativeEnablement!: boolean;
+  @ApiProperty({ type: Boolean }) verifiedAvailability!: boolean;
+}
+
+class InventoryActionsDto {
+  @ApiProperty({ type: Boolean, enum: [true] }) descriptiveEdits!: true;
+  @ApiProperty({ type: Boolean }) create!: boolean;
+  @ApiProperty({ type: Boolean }) activate!: boolean;
+  @ApiProperty({ type: Boolean }) release!: boolean;
+  @ApiProperty({ type: Boolean }) rehabilitate!: boolean;
+  @ApiProperty({ type: Boolean }) manageCopy!: boolean;
+}
+
+export class InventoryCompatibilityDto {
+  @ApiProperty({ enum: ['READY', 'UPDATE_PENDING'] }) status!:
+    'READY' | 'UPDATE_PENDING';
+  @ApiProperty({ type: String, nullable: true }) message!: string | null;
+  @ApiProperty({ type: InventoryCapabilitiesDto })
+  capabilities!: InventoryCapabilitiesDto;
+  @ApiProperty({
+    type: InventoryActionsDto,
+    description:
+      'Prerrequisitos del esquema; no reemplazan autorización ni elegibilidad del ejemplar.',
+  })
+  actions!: InventoryActionsDto;
+}
+
+export class RegisteredStockDto {
+  @ApiProperty({ type: 'integer' }) libres!: number;
+  @ApiProperty({ type: 'integer' }) prestados!: number;
+  @ApiProperty({ type: 'integer' }) retenidos!: number;
+  @ApiProperty({ type: 'integer' }) reservados!: number;
+}
 
 export class CategoryResponseDto {
   @ApiProperty({ type: String, nullable: true }) descripcion!: string | null;
@@ -28,6 +67,13 @@ export class CategoryResponseDto {
 }
 
 export class ResourceResponseDto {
+  @ApiProperty({ type: InventoryCompatibilityDto })
+  compatibility!: InventoryCompatibilityDto;
+  @ApiProperty({
+    type: RegisteredStockDto,
+    description: 'Ocupación registrada, no disponibilidad.',
+  })
+  registeredStock!: RegisteredStockDto;
   @ApiProperty({ type: Boolean }) activo!: boolean;
   @ApiProperty({
     type: 'integer',
@@ -53,14 +99,14 @@ export class ResourceResponseDto {
   })
   descripcion!: string | null;
 
-  @ApiProperty({ type: Boolean, example: false })
-  available!: boolean;
+  @ApiProperty({ type: Boolean, nullable: true, example: false })
+  available!: boolean | null;
 
   @ApiProperty({ type: Number, example: 0 })
   totalCopies!: number;
 
-  @ApiProperty({ type: Number, example: 0 })
-  availableCopies!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 0 })
+  availableCopies!: number | null;
 }
 
 export class CatalogCategoryResponseDto {
@@ -77,14 +123,18 @@ export class CatalogResourceResponseDto extends ResourceResponseDto {
 }
 
 export class ResourcesPageResponseDto extends PageMetadataDto {
+  @ApiProperty({ type: InventoryCompatibilityDto })
+  compatibility!: InventoryCompatibilityDto;
   @ApiProperty({ type: [CatalogResourceResponseDto] })
   data!: CatalogResourceResponseDto[];
 }
 
 export class GlobalAvailabilityResponseDto extends CatalogResourceResponseDto {
-  @ApiProperty({ type: 'integer' }) disponibles!: number;
+  @ApiProperty({ type: 'integer', nullable: true }) disponibles!: number | null;
   @ApiProperty({ type: 'integer' }) prestados!: number;
-  @ApiProperty({ type: 'integer' }) noDisponibles!: number;
+  @ApiProperty({ type: 'integer', nullable: true }) noDisponibles!:
+    number | null;
+  @ApiProperty({ type: 'integer' }) reservados!: number;
 }
 
 class ResourceCategoryDto {
@@ -110,11 +160,24 @@ export class ResourceDetailResponseDto extends ResourceResponseDto {
 }
 
 export class CopyResponseDto {
-  @ApiProperty({ type: String, enum: [...physicalConditions], nullable: true, description: 'null: legado desconocido, no apto para nuevas operaciones.' })
+  @ApiProperty({ type: InventoryCompatibilityDto })
+  compatibility!: InventoryCompatibilityDto;
+  @ApiProperty({
+    type: String,
+    enum: [...physicalConditions],
+    nullable: true,
+    description:
+      'null: condición desconocida; no acredita ni descarta aptitud.',
+  })
   condicionFisica!: PhysicalCondition | null;
 
-  @ApiProperty({ type: Boolean, description: 'Habilitación administrativa independiente de ocupación y aptitud.' })
-  habilitado!: boolean;
+  @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    description:
+      'Habilitación administrativa independiente de ocupación y aptitud; null cuando la columna no está disponible.',
+  })
+  habilitado!: boolean | null;
 
   @ApiProperty({ type: String, format: 'uuid', example: copyId })
   id!: string;
@@ -174,20 +237,25 @@ export class CopyDetailResponseDto extends CopyResponseDto {
 }
 
 export class ResourceAvailabilityResponseDto {
+  @ApiProperty({ type: InventoryCompatibilityDto })
+  compatibility!: InventoryCompatibilityDto;
+  @ApiProperty({ type: RegisteredStockDto })
+  registeredStock!: RegisteredStockDto;
+  @ApiProperty({ type: 'integer' }) reservados!: number;
   @ApiProperty({ type: String, format: 'uuid', example: resourceId })
   resourceId!: string;
 
-  @ApiProperty({ type: Boolean, example: true })
-  available!: boolean;
+  @ApiProperty({ type: Boolean, nullable: true, example: true })
+  available!: boolean | null;
 
   @ApiProperty({ type: Number, example: 2 })
   totalCopies!: number;
 
-  @ApiProperty({ type: Number, example: 1 })
-  disponibles!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 1 })
+  disponibles!: number | null;
 
-  @ApiProperty({ type: Number, example: 1 })
-  noDisponibles!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 1 })
+  noDisponibles!: number | null;
 
   @ApiProperty({ type: Number, example: 0 })
   prestados!: number;

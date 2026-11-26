@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill';
 import { isEmail } from 'class-validator';
+import { param } from '@prisma/orm-postgres/relational-core/expression';
 import { isRegistrationImage } from '../../../../../shared/domain/registration-image.js';
 import { registrationEvidenceMetadata } from '../../../../../shared/domain/registration-evidence.js';
 import type { AuditActor } from '../../../../../shared/application/audit-actor.js';
@@ -344,40 +345,67 @@ export class PrismaRegistrationRequestRepository extends RegistrationRequestRepo
   }
 
   async list(filters: RegistrationRequestFilters) {
-    let base = this.prisma.sql.public.solicitudes_registro.select(
-      'id',
-      'nombre',
-      'tipoUsuario',
-      'identificadorInstitucional',
-      'telefono',
-      'fechaSolicitud',
-      'estado',
-      'motivoRechazo',
-      'usuarioAprobadoId',
-      'email',
-      'passwordHash',
-      'versionTerminosId',
-      'fechaAceptacionTerminos',
-    );
-    if (filters.status)
-      base = base.where((row, fns) => fns.eq(row.estado, filters.status!));
-    if (filters.institutionalId)
-      base = base.where((row, fns) =>
-        fns.eq(row.identificadorInstitucional, filters.institutionalId!),
-      );
-    const rows = await this.runtime().query(
-      base
-        .offset((filters.page - 1) * filters.limit)
-        .limit(filters.limit)
-        .build(),
-    );
-    const countRows = await this.runtime().query(base.build());
-    return {
-      items: await Promise.all(rows.map((row: any) => this.withEvidence(row))),
-      total: countRows.length,
-      page: filters.page,
-      limit: filters.limit,
-    };
+    const status = filters.status || null;
+    const institutionalId = filters.institutionalId || null;
+    const offset = (filters.page - 1) * filters.limit;
+    // One statement gives count/page one snapshot, including an empty page.
+    // Only the limited page projects credentials; count never materializes them.
+    const query = this.prisma.client.raw.sql`
+      WITH criteria AS (
+        SELECT ${param(status, { codecId: 'pg/text@1' })}::text AS status,
+               ${param(institutionalId, { codecId: 'pg/text@1' })}::text AS institutional_id
+      ), page AS (
+        SELECT r.id, r.nombre, r."tipoUsuario", r."identificadorInstitucional",
+               r.telefono, r."fechaSolicitud", r.estado, r."motivoRechazo",
+               r."usuarioAprobadoId", r.email, r."passwordHash",
+               r."versionTerminosId", r."fechaAceptacionTerminos"
+        FROM public.solicitudes_registro r CROSS JOIN criteria c
+        WHERE (c.status IS NULL OR r.estado = c.status)
+          AND (c.institutional_id IS NULL OR r."identificadorInstitucional" = c.institutional_id)
+        ORDER BY r."fechaSolicitud" DESC, r.id DESC
+        LIMIT ${filters.limit} OFFSET ${offset}
+      )
+      SELECT (
+        SELECT count(*) FROM public.solicitudes_registro r CROSS JOIN criteria c
+        WHERE (c.status IS NULL OR r.estado = c.status)
+          AND (c.institutional_id IS NULL OR r."identificadorInstitucional" = c.institutional_id)
+      )::text AS total,
+      COALESCE((
+        SELECT jsonb_agg(to_jsonb(p) ORDER BY p."fechaSolicitud" DESC, p.id DESC)
+        FROM page p
+      ), '[]'::jsonb)::text AS items
+    `
+      .returnsRow({ total: 'pg/text@1', items: 'pg/text@1' })
+      .build();
+    return this.prisma.client.transaction(async (tx) => {
+      const snapshots = await tx.query(query);
+      const snapshot = snapshots[0];
+      if (
+        snapshots.length !== 1 || !snapshot ||
+        typeof snapshot.total !== 'string' || typeof snapshot.items !== 'string'
+      )
+        throw new Error('Invalid registration list snapshot');
+      const total = Number(snapshot.total);
+      const rows: unknown = JSON.parse(snapshot.items);
+      if (
+        !/^\d+$/.test(snapshot.total) || !Number.isSafeInteger(total) ||
+        !Array.isArray(rows) || rows.length > filters.limit
+      )
+        throw new Error('Invalid registration list snapshot');
+      return {
+        items: await Promise.all(rows.map((row) => this.withEvidence(
+          {
+            ...row,
+            // JSON bypasses the native timestamp codec; restore its domain type.
+            fechaSolicitud: Temporal.Instant.from(row.fechaSolicitud),
+          },
+          tx,
+        ))),
+        total,
+        page: filters.page,
+        limit: filters.limit,
+      };
+    });
   }
 
   async updateStatus(

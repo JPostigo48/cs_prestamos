@@ -13,6 +13,7 @@ import { Temporal } from 'temporal-polyfill/full';
 import { instantToDate } from '../../../../../shared/infrastructure/prisma/instant-to-date.js';
 import { PrismaSanctionRepository } from './prisma-sanction.repository.js';
 import { lockLoanInventory } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
+import { assertLoanSchema, loanSchemaTransaction, SANCTION_OPERATION_SCHEMA } from '../../../../loans/infrastructure/loan-schema.js';
 import {
   ViolationRepository,
   type RegisterViolationData,
@@ -39,7 +40,7 @@ export class PrismaViolationRepository implements ViolationRepository {
     };
   }
   async createWithPenalty(data: RegisterViolationData): Promise<Violation> {
-    return this.prisma.client.transaction((tx) =>
+    return loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'violations.register', (tx) =>
       this.register(tx, data, new Date()),
     );
   }
@@ -58,6 +59,7 @@ export class PrismaViolationRepository implements ViolationRepository {
     data: RegisterViolationData & { reservationId?: string },
     registeredAt: Date,
   ): Promise<Violation> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'violations.register', tx);
     await lockLoanInventory(this.prisma, tx);
     const users = await tx.query(
       this.prisma.sql.public.usuarios

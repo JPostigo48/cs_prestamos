@@ -3,9 +3,9 @@ import type { UserType } from '../../domain/entities/registration-request.js';
 export type SubmitRegistrationRequestInput = {
   name: string;
   userType: UserType;
-  institutionalId?: string;
-  phone?: string;
-  evidence?: string[];
+  institutionalId: string;
+  phone: string;
+  evidence: string[];
 };
 
 export type ListRegistrationRequestsInput = {

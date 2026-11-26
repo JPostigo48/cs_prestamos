@@ -70,6 +70,17 @@ function schema(name: string): SchemaObject {
 }
 
 describe('Contrato OpenAPI generado desde Nest', () => {
+  it('H2 declara disponibilidad de historial opcional, no nullable y ausencia desconocida', () => {
+    const loan = schema('LoanResponseDto');
+    const history = loan.properties!.closureHistory as SchemaObject;
+    expect(history.type).toBe('string');
+    expect(history.enum).toEqual(['AVAILABLE', 'UNAVAILABLE']);
+    expect(history.nullable).not.toBe(true);
+    expect(loan.required).not.toContain('closureHistory');
+    expect(history.description).toContain('Ausente significa desconocida');
+    const frontend = JSON.parse(readFileSync(new URL('../../frontend/public/generated/project/openapi.json', import.meta.url), 'utf8')) as OpenAPIObject;
+    expect(frontend).toEqual(document);
+  });
   it('H3 separa consecuencia actual y ajustes del antecedente inicial, compatible con legado', () => {
     expect(schema('SanctionDetailResponseDto').properties!.current).toMatchObject({
       nullable: true,
@@ -263,14 +274,17 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     });
     expect(
       Object.keys(schema('ResourcesPageResponseDto').properties!).sort(),
-    ).toEqual(['data', 'limit', 'page', 'total']);
+    ).toEqual(['compatibility', 'data', 'limit', 'page', 'total']);
     expect(
       Object.keys(schema('ResourceAvailabilityResponseDto').properties!).sort(),
     ).toEqual([
       'available',
+      'compatibility',
       'disponibles',
       'noDisponibles',
       'prestados',
+      'registeredStock',
+      'reservados',
       'resourceId',
       'totalCopies',
     ]);
@@ -330,7 +344,10 @@ describe('Contrato OpenAPI generado desde Nest', () => {
     expect(
       schema('FullRegistrationDto').properties!.evidence,
     ).toMatchObject({ type: 'array', items: { type: 'string' } });
-    expect(schema('FullRegistrationDto').required ?? []).not.toContain('phone');
+    expect([...(schema('FullRegistrationDto').required ?? [])].sort()).toEqual([
+      'email', 'evidence', 'institutionalId', 'name', 'password', 'phone',
+      'termsVersionId', 'userType',
+    ]);
     expect(schema('FullRegistrationDto').properties!.password).toMatchObject({ writeOnly: true, minLength: 8, maxLength: 128 });
     const retired = document.paths['/users/registration-requests']!.post!;
     expect(retired.deprecated).toBe(true);

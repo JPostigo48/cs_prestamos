@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -6,13 +6,15 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
-  IsOptional,
+  Matches,
+  ValidateBy,
   IsString,
   IsUUID,
   Length,
   MaxLength,
 } from 'class-validator';
 import { UserType } from '../../../users/domain/entities/registration-request.js';
+import { InstitutionalEmailPolicy } from '../../domain/policies/institutional-email.policy.js';
 
 export class FullRegistrationDto {
   @ApiProperty({ type: String, minLength: 2, maxLength: 180 })
@@ -27,6 +29,11 @@ export class FullRegistrationDto {
     maxLength: 254,
     description: 'Correo institucional @unsa.edu.pe.',
   })
+  @Transform(({ value }) => typeof value === 'string' ? InstitutionalEmailPolicy.normalize(value) : value)
+  @ValidateBy({ name: 'institutionalEmail', validator: {
+    validate: (value) => typeof value === 'string' && InstitutionalEmailPolicy.isValid(value),
+    defaultMessage: () => 'email debe pertenecer al dominio @unsa.edu.pe.',
+  } })
   @IsEmail()
   @MaxLength(254)
   email!: string;
@@ -40,24 +47,24 @@ export class FullRegistrationDto {
   })
   @IsString()
   @Length(8, 128)
+  @Matches(/\S/u, { message: 'password no puede contener solo espacios.' })
   password!: string;
 
   @ApiProperty({ type: String, enum: UserType, description: 'Tipo institucional; DOCENTE se presenta como Profesor. No determina el rol de acceso, que será USUARIO.' })
   @IsEnum(UserType)
   userType!: UserType;
 
-  @ApiPropertyOptional({ type: String, maxLength: 80 })
-  @IsOptional()
+  @ApiProperty({ type: String, minLength: 1, maxLength: 80 })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @Length(1, 80)
-  institutionalId?: string;
+  institutionalId!: string;
 
-  @ApiPropertyOptional({ type: String, maxLength: 20 })
-  @IsOptional()
+  @ApiProperty({ type: String, minLength: 1, maxLength: 20 })
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @MaxLength(20)
-  phone?: string;
+  @Length(1, 20)
+  phone!: string;
 
   @ApiProperty({
     type: [String],

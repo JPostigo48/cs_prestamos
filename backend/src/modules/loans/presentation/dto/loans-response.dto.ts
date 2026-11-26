@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OpeningDayDto } from '../../../system/presentation/reservation-settings.dto.js';
-import { LoanStatus } from '../../domain/entities/loan.js';
+import { LoanStatus, type Loan } from '../../domain/entities/loan.js';
 import { ReservationStatus } from '../../domain/entities/reservation.js';
 import { ClosedCopyResponseDto, LoanClosureResponseDto, LoanConsequenceResponseDto, LoanRewardResponseDto } from './loan-closure-response.dto.js';
 import {
@@ -78,6 +78,12 @@ export class LoanReturnResponseDto {
 }
 
 export class LoanResponseDto {
+  @ApiPropertyOptional({
+    type: String,
+    enum: ['AVAILABLE', 'UNAVAILABLE'],
+    description: 'Disponibilidad de consulta del historial integral de cierre. Ausente significa desconocida; no acredita ausencia de cierre.',
+  })
+  closureHistory?: Loan['closureHistory'];
   @ApiProperty({ type: LoanClosureResponseDto, nullable: true }) closure!: LoanClosureResponseDto | null;
   @ApiProperty({ type: [LoanConsequenceResponseDto] }) consequences!: LoanConsequenceResponseDto[];
   @ApiProperty({ type: LoanRewardResponseDto, nullable: true }) reward!: LoanRewardResponseDto | null;

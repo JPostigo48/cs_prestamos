@@ -40,11 +40,16 @@ import {
   INSTITUTION_TIME_ZONE,
 } from '../../../../system/domain/reservation-settings.js';
 import { registerReservationNoShow } from '../../integration/reservation-no-show.js';
+import { LoanJobMonitor } from '../../loan-job-monitor.js';
+import { SchemaCapabilityUnavailableException } from '../../../../../shared/infrastructure/prisma/schema-capabilities.js';
+import { assertLoanSchema, loanSchemaTransaction, SANCTION_OPERATION_SCHEMA } from '../../loan-schema.js';
 
 @Injectable()
 export class PrismaReservationRepository implements ReservationRepository {
   private expiryAfter: string | null = null;
+  private expiryTraversalFailed = false;
   private readonly logger = new Logger(PrismaReservationRepository.name);
+  private readonly expiryMonitor = LoanJobMonitor.forOwner(this, this.logger);
   constructor(private readonly prisma: PrismaService) {}
 
   private async operationEligibility(
@@ -193,10 +198,11 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async create(data: CreateReservationData): Promise<Reservation> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.create');
     await this.overdue.synchronizeUser(data.userId);
     await this.expire(new Date());
     try {
-      const rows = await this.prisma.client.transaction(async (tx) => {
+      const rows = await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.create', async (tx) => {
         await lockLoanInventory(this.prisma, tx);
         // Todos los tipos de usuario se serializan con la baja administrativa.
         const users = await tx.query(
@@ -364,6 +370,7 @@ export class PrismaReservationRepository implements ReservationRepository {
     reservationId: string,
     pickedUpAt: Date,
   ): Promise<{ reservation: Reservation; loan: Loan }> {
+    await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.pickup');
     const initial = await this.runtime().query(
       this.select()
         .where((r, f) => f.eq(r.id, reservationId))
@@ -374,7 +381,7 @@ export class PrismaReservationRepository implements ReservationRepository {
       throw new ConflictException('La reserva ya no está disponible.');
     await this.overdue.synchronizeUser(initial[0].usuarioId);
     await this.expire(pickedUpAt);
-    const result = await this.prisma.client.transaction(async (tx) => {
+    const result = await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.pickup', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       const reservations = await tx.query(
         this.select()
@@ -569,7 +576,7 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async cancel(data: CancelReservationData): Promise<Reservation> {
-    const result = await this.prisma.client.transaction(async (tx) => {
+    const result = await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.cancel', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       const initial = (
         await tx.query(
@@ -653,6 +660,7 @@ export class PrismaReservationRepository implements ReservationRepository {
 
   async expire(at: Date): Promise<Reservation[]> {
     try {
+      await assertLoanSchema(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.expire');
       let query = this.select()
         .where((r, f) => f.eq(r.estado, 'CONFIRMADA'))
         .where((r, f) => f.lt(r.fechaLimiteRecogida, this.instant(at)));
@@ -674,7 +682,7 @@ export class PrismaReservationRepository implements ReservationRepository {
             // Confirmar consecuencias antes de reclamar VENCIDA: nunca fabricar no-show
             // para una reserva que el motor debía cancelar.
             await this.overdue.synchronizeUser(candidate.usuarioId);
-            const result = await this.prisma.client.transaction(async (tx) => {
+            const result = await loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'reservations.expire', async (tx) => {
               await lockLoanInventory(this.prisma, tx);
               // Mismo orden que pickup/create/sanciones: usuario -> reserva -> ejemplar.
               const users = await tx.query(
@@ -694,17 +702,25 @@ export class PrismaReservationRepository implements ReservationRepository {
             });
             if (result) expired.push(result);
             break;
-          } catch {
-            if (attempt === 1)
-              this.logger.warn(
-                'Reserva pendiente de vencimiento: unidad revertida; se reintentará tras avanzar el cursor.',
-              );
+          } catch (error) {
+            if (error instanceof SchemaCapabilityUnavailableException) throw error;
+            if (attempt === 1) {
+              this.expiryTraversalFailed = true;
+              this.expiryMonitor.failed(error);
+            }
           }
         }
       }
-      if (candidates.length < 100) this.expiryAfter = null;
+      const completed = candidates.length < 100;
+      if (completed) this.expiryAfter = null;
+      if (completed && !this.expiryTraversalFailed) this.expiryMonitor.ready();
+      // A clean tail cannot recover a failed traversal; start fresh next time.
+      if (completed) this.expiryTraversalFailed = false;
       return expired;
     } catch (error) {
+      if (this.expiryAfter !== null) this.expiryTraversalFailed = true;
+      this.expiryMonitor.failed(error);
+      if (error instanceof ServiceUnavailableException) throw error;
       throw new ServiceUnavailableException(
         'No se pudo consultar el vencimiento. Reintente más tarde.',
         { cause: error },

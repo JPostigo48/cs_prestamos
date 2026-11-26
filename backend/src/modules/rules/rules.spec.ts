@@ -15,6 +15,23 @@ import { SuspensionType } from './domain/entities/usage-rule.js';
 import { validateSuspensionPolicy } from './application/suspension-policy.js';
 import { inMemoryPrisma } from '../../../test/helpers/in-memory-prisma.js';
 
+/** Keep metadata queries separate from the ordered business-query assertions,
+ * while exercising the real provider before and inside the mocked transaction. */
+function schemaAwareClient(query: (plan: any) => Promise<any>) {
+  const schema = inMemoryPrisma();
+  return {
+    schemaCapabilities: schema.schemaCapabilities,
+    client: {
+      ...schema.client,
+      transaction: vi.fn(async (callback: any) => callback({
+        query: (plan: any) => plan.text?.includes('pg_catalog.pg_class')
+          ? schema.client.runtime().query(plan)
+          : query(plan),
+      })),
+    },
+  };
+}
+
 describe('Rules use cases', () => {
   it('registers a violation and penalty through one atomic repository operation', async () => {
     const violation = { id: 'v1', userId: 'u1', ruleId: 'r1', ruleVersionId: 'rv1', occurredAt: new Date(), appliedPenalty: 10 };
@@ -98,7 +115,7 @@ describe('Rules use cases', () => {
     const insertSanction = vi.fn((_rows: any[]) => chain('sanction-insert'));
     const updateUser = vi.fn((_data: any) => chain('user-update'));
     const prisma = {
-      client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
+      ...schemaAwareClient(query),
       sql: { public: {
         usuarios: { select: () => chain('user-select'), update: updateUser },
         incumplimientos: { insert: insertViolation },
@@ -153,7 +170,7 @@ describe('Rules use cases', () => {
       });
       const insertSanction = vi.fn((_rows: any[]) => chain('sanction-insert'));
       const prisma = {
-        client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
+        ...schemaAwareClient(query),
         sql: { public: {
           usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
           sanciones: { select: () => chain('sanctions-select'), insert: insertSanction },
@@ -197,7 +214,7 @@ describe('Rules use cases', () => {
     });
     const insertViolation = vi.fn((_rows: any[]) => chain('violation-insert'));
     const prisma = {
-      client: { raw: inMemoryPrisma().client.raw, transaction: vi.fn(async (callback: any) => callback({ query })) },
+      ...schemaAwareClient(query),
       sql: { public: {
         usuarios: { select: () => chain('user-select'), update: () => chain('user-update') },
         incumplimientos: { insert: insertViolation },
@@ -325,7 +342,7 @@ describe('Rules use cases', () => {
     });
 
     const prisma = {
-      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      ...schemaAwareClient(query),
       sql: { public: {
         apelaciones: { select: () => chain('appeal-select'), update: () => chain('appeal-update') },
         sanciones: { select: () => chain('sanction-select'), update: () => chain('sanction-update') },
@@ -364,7 +381,7 @@ describe('Rules use cases', () => {
       returning: () => chain(value), build: () => value,
     });
     const prisma = {
-      client: { transaction: vi.fn(async (callback: any) => callback({ query })) },
+      ...schemaAwareClient(query),
       sql: { public: {
         apelaciones: { select: () => chain('appeal-select'), update: () => chain('appeal-update') },
         usuarios: { update: () => chain('user-lock') },

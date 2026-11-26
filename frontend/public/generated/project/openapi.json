@@ -516,6 +516,16 @@
               }
             }
           },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorDto"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno HTTP normalizado o excepción no HTTP manejada por Nest.",
             "content": {
@@ -9020,10 +9030,12 @@
           },
           "institutionalId": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 80
           },
           "phone": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 20
           },
           "evidence": {
@@ -9046,6 +9058,8 @@
           "email",
           "password",
           "userType",
+          "institutionalId",
+          "phone",
           "evidence",
           "termsVersionId"
         ]
@@ -10331,9 +10345,129 @@
           "nombre"
         ]
       },
+      "InventoryCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "physicalCondition": {
+            "type": "boolean"
+          },
+          "administrativeEnablement": {
+            "type": "boolean"
+          },
+          "verifiedAvailability": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "physicalCondition",
+          "administrativeEnablement",
+          "verifiedAvailability"
+        ]
+      },
+      "InventoryActionsDto": {
+        "type": "object",
+        "properties": {
+          "descriptiveEdits": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "create": {
+            "type": "boolean"
+          },
+          "activate": {
+            "type": "boolean"
+          },
+          "release": {
+            "type": "boolean"
+          },
+          "rehabilitate": {
+            "type": "boolean"
+          },
+          "manageCopy": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "descriptiveEdits",
+          "create",
+          "activate",
+          "release",
+          "rehabilitate",
+          "manageCopy"
+        ]
+      },
+      "InventoryCompatibilityDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "READY",
+              "UPDATE_PENDING"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/InventoryCapabilitiesDto"
+          },
+          "actions": {
+            "description": "Prerrequisitos del esquema; no reemplazan autorización ni elegibilidad del ejemplar.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InventoryActionsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "capabilities",
+          "actions"
+        ]
+      },
+      "RegisteredStockDto": {
+        "type": "object",
+        "properties": {
+          "libres": {
+            "type": "integer"
+          },
+          "prestados": {
+            "type": "integer"
+          },
+          "retenidos": {
+            "type": "integer"
+          },
+          "reservados": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "libres",
+          "prestados",
+          "retenidos",
+          "reservados"
+        ]
+      },
       "ResourceResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
+          "registeredStock": {
+            "description": "Ocupación registrada, no disponibilidad.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RegisteredStockDto"
+              }
+            ]
+          },
           "activo": {
             "type": "boolean"
           },
@@ -10364,6 +10498,7 @@
           },
           "available": {
             "type": "boolean",
+            "nullable": true,
             "example": false
           },
           "totalCopies": {
@@ -10372,10 +10507,13 @@
           },
           "availableCopies": {
             "type": "number",
+            "nullable": true,
             "example": 0
           }
         },
         "required": [
+          "compatibility",
+          "registeredStock",
           "activo",
           "durationHours",
           "id",
@@ -10406,6 +10544,17 @@
       "CatalogResourceResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
+          "registeredStock": {
+            "description": "Ocupación registrada, no disponibilidad.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RegisteredStockDto"
+              }
+            ]
+          },
           "activo": {
             "type": "boolean"
           },
@@ -10436,6 +10585,7 @@
           },
           "available": {
             "type": "boolean",
+            "nullable": true,
             "example": false
           },
           "totalCopies": {
@@ -10444,6 +10594,7 @@
           },
           "availableCopies": {
             "type": "number",
+            "nullable": true,
             "example": 0
           },
           "categoria": {
@@ -10456,6 +10607,8 @@
           }
         },
         "required": [
+          "compatibility",
+          "registeredStock",
           "activo",
           "durationHours",
           "id",
@@ -10483,6 +10636,9 @@
             "minimum": 1,
             "maximum": 100
           },
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
           "data": {
             "type": "array",
             "items": {
@@ -10494,6 +10650,7 @@
           "total",
           "page",
           "limit",
+          "compatibility",
           "data"
         ]
       },
@@ -10528,6 +10685,17 @@
       "ResourceDetailResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
+          "registeredStock": {
+            "description": "Ocupación registrada, no disponibilidad.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RegisteredStockDto"
+              }
+            ]
+          },
           "activo": {
             "type": "boolean"
           },
@@ -10558,6 +10726,7 @@
           },
           "available": {
             "type": "boolean",
+            "nullable": true,
             "example": false
           },
           "totalCopies": {
@@ -10566,6 +10735,7 @@
           },
           "availableCopies": {
             "type": "number",
+            "nullable": true,
             "example": 0
           },
           "loanPolicy": {
@@ -10582,6 +10752,8 @@
           }
         },
         "required": [
+          "compatibility",
+          "registeredStock",
           "activo",
           "durationHours",
           "id",
@@ -10652,6 +10824,9 @@
       "CopyResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
           "condicionFisica": {
             "type": "string",
             "enum": [
@@ -10663,11 +10838,12 @@
               "ROBADO"
             ],
             "nullable": true,
-            "description": "null: legado desconocido, no apto para nuevas operaciones."
+            "description": "null: condición desconocida; no acredita ni descarta aptitud."
           },
           "habilitado": {
             "type": "boolean",
-            "description": "Habilitación administrativa independiente de ocupación y aptitud."
+            "nullable": true,
+            "description": "Habilitación administrativa independiente de ocupación y aptitud; null cuando la columna no está disponible."
           },
           "id": {
             "type": "string",
@@ -10695,6 +10871,7 @@
           }
         },
         "required": [
+          "compatibility",
           "condicionFisica",
           "habilitado",
           "id",
@@ -10760,6 +10937,9 @@
       "CopyDetailResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
           "condicionFisica": {
             "type": "string",
             "enum": [
@@ -10771,11 +10951,12 @@
               "ROBADO"
             ],
             "nullable": true,
-            "description": "null: legado desconocido, no apto para nuevas operaciones."
+            "description": "null: condición desconocida; no acredita ni descarta aptitud."
           },
           "habilitado": {
             "type": "boolean",
-            "description": "Habilitación administrativa independiente de ocupación y aptitud."
+            "nullable": true,
+            "description": "Habilitación administrativa independiente de ocupación y aptitud; null cuando la columna no está disponible."
           },
           "id": {
             "type": "string",
@@ -10812,6 +10993,7 @@
           }
         },
         "required": [
+          "compatibility",
           "condicionFisica",
           "habilitado",
           "id",
@@ -10940,6 +11122,15 @@
       "ResourceAvailabilityResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
+          "registeredStock": {
+            "$ref": "#/components/schemas/RegisteredStockDto"
+          },
+          "reservados": {
+            "type": "integer"
+          },
           "resourceId": {
             "type": "string",
             "format": "uuid",
@@ -10947,6 +11138,7 @@
           },
           "available": {
             "type": "boolean",
+            "nullable": true,
             "example": true
           },
           "totalCopies": {
@@ -10955,10 +11147,12 @@
           },
           "disponibles": {
             "type": "number",
+            "nullable": true,
             "example": 1
           },
           "noDisponibles": {
             "type": "number",
+            "nullable": true,
             "example": 1
           },
           "prestados": {
@@ -10967,6 +11161,9 @@
           }
         },
         "required": [
+          "compatibility",
+          "registeredStock",
+          "reservados",
           "resourceId",
           "available",
           "totalCopies",
@@ -10978,6 +11175,17 @@
       "GlobalAvailabilityResponseDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "$ref": "#/components/schemas/InventoryCompatibilityDto"
+          },
+          "registeredStock": {
+            "description": "Ocupación registrada, no disponibilidad.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RegisteredStockDto"
+              }
+            ]
+          },
           "activo": {
             "type": "boolean"
           },
@@ -11008,6 +11216,7 @@
           },
           "available": {
             "type": "boolean",
+            "nullable": true,
             "example": false
           },
           "totalCopies": {
@@ -11016,6 +11225,7 @@
           },
           "availableCopies": {
             "type": "number",
+            "nullable": true,
             "example": 0
           },
           "categoria": {
@@ -11027,16 +11237,23 @@
             ]
           },
           "disponibles": {
-            "type": "integer"
+            "type": "integer",
+            "nullable": true
           },
           "prestados": {
             "type": "integer"
           },
           "noDisponibles": {
+            "type": "integer",
+            "nullable": true
+          },
+          "reservados": {
             "type": "integer"
           }
         },
         "required": [
+          "compatibility",
+          "registeredStock",
           "activo",
           "durationHours",
           "id",
@@ -11048,7 +11265,8 @@
           "availableCopies",
           "disponibles",
           "prestados",
-          "noDisponibles"
+          "noDisponibles",
+          "reservados"
         ]
       },
       "CreateCopyObservationDto": {
@@ -11669,6 +11887,14 @@
       "LoanResponseDto": {
         "type": "object",
         "properties": {
+          "closureHistory": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ],
+            "description": "Disponibilidad de consulta del historial integral de cierre. Ausente significa desconocida; no acredita ausencia de cierre."
+          },
           "closure": {
             "nullable": true,
             "type": "object",

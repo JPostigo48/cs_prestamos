@@ -1,4 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
+import { loanSchemaTransaction, APPEAL_OPERATION_SCHEMA } from '../../../../loans/infrastructure/loan-schema.js';
 import { PrismaService } from '../../../../../shared/infrastructure/prisma/prisma.service.js';
 import {
   instantToDate,
@@ -42,7 +43,7 @@ export class PrismaAppealRepository implements AppealRepository {
   }
   async create(data: SubmitAppealData): Promise<Appeal> {
     try {
-      const rows = await this.runtime().query(
+      const rows = await loanSchemaTransaction(this.prisma, APPEAL_OPERATION_SCHEMA, 'appeals.create', async (tx) => tx.query(
         this.prisma.sql.public.apelaciones
           .insert([
             {
@@ -66,7 +67,7 @@ export class PrismaAppealRepository implements AppealRepository {
             'resueltaPorCuentaId',
           )
           .build(),
-      );
+      ));
       return this.map(rows[0]);
     } catch (error) {
       if ((error as { code?: string }).code === '23505') {
@@ -157,7 +158,7 @@ export class PrismaAppealRepository implements AppealRepository {
   }
 
   async resolve(data: ResolveAppealData): Promise<Appeal> {
-    return this.prisma.client.transaction(async (tx) => {
+    return loanSchemaTransaction(this.prisma, APPEAL_OPERATION_SCHEMA, 'appeals.resolve', async (tx) => {
       const pending = (
         await tx.query(
           this.prisma.sql.public.apelaciones

@@ -5,6 +5,8 @@ import {
   type FullRegistrationInput,
 } from '../ports/registration.port.js';
 import { InstitutionalEmailPolicy } from '../../domain/policies/institutional-email.policy.js';
+import { isEmail, isUUID } from 'class-validator';
+import { registrationFields } from '../../../users/domain/policies/registration-fields.policy.js';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   decodeRegistrationEvidence,
@@ -27,9 +29,16 @@ export class FullRegistrationUseCase {
   ) {}
 
   async execute(input: FullRegistrationInput) {
-    const email = InstitutionalEmailPolicy.assertValid(input.email);
+    const fields = registrationFields(input);
+    const email = typeof input.email === 'string' ? InstitutionalEmailPolicy.normalize(input.email) : '';
+    if (email.length > 254 || !isEmail(email) || !InstitutionalEmailPolicy.isValid(email))
+      throw new BadRequestException(['email debe ser un correo institucional del dominio exacto @unsa.edu.pe.']);
+    if (typeof input.password !== 'string' || input.password.length < 8 || input.password.length > 128 || !/\S/u.test(input.password))
+      throw new BadRequestException(['password debe tener entre 8 y 128 caracteres y no contener solo espacios.']);
+    if (typeof input.termsVersionId !== 'string' || !isUUID(input.termsVersionId))
+      throw new BadRequestException(['termsVersionId es obligatorio: acepte los términos vigentes.']);
     if (
-      input.evidence.length !== 1 ||
+      !Array.isArray(input.evidence) || input.evidence.length !== 1 ||
       !(await isRegistrationEvidence(input.evidence[0]))
     )
       throw new BadRequestException(
@@ -76,6 +85,7 @@ export class FullRegistrationUseCase {
     try {
       result = await this.registrations.submit({
         ...safe,
+        ...fields,
         evidence,
         email,
         passwordHash: await this.credentials.hash(password),
