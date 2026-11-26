@@ -42,7 +42,7 @@ import {
 import { registerReservationNoShow } from '../../integration/reservation-no-show.js';
 import { LoanJobMonitor } from '../../loan-job-monitor.js';
 import { SchemaCapabilityUnavailableException } from '../../../../../shared/infrastructure/prisma/schema-capabilities.js';
-import { assertLoanSchema, loanSchemaTransaction, SANCTION_OPERATION_SCHEMA } from '../../loan-schema.js';
+import { assertLoanSchema, loanFailureDiagnostic, loanSchemaTransaction, SANCTION_OPERATION_SCHEMA } from '../../loan-schema.js';
 
 @Injectable()
 export class PrismaReservationRepository implements ReservationRepository {
@@ -65,7 +65,12 @@ export class PrismaReservationRepository implements ReservationRepository {
     )
       return new ConflictException('Debe aceptar los términos vigentes.');
     try {
-      if (!(await copyTrustAllowed(this.prisma, tx, userId, copyId)))
+      const allowed = await copyTrustAllowed(this.prisma, tx, userId, copyId);
+      if (allowed === null)
+        return new ConflictException(
+          'No se pudo verificar la política de acceso de esta categoría. Contacta con el personal.',
+        );
+      if (!allowed)
         return new ConflictException(
           'La confianza no autoriza esta categoría.',
         );
@@ -343,7 +348,11 @@ export class PrismaReservationRepository implements ReservationRepository {
       return this.map(rows);
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new ConflictException('No se pudo crear la reserva.');
+      const diagnostic = loanFailureDiagnostic(error);
+      this.logger.error(`reservations.create: ${diagnostic}`);
+      if (diagnostic === 'CONNECTION_UNAVAILABLE')
+        throw new ServiceUnavailableException('La conexión con la base de datos no está disponible.');
+      throw new InternalServerErrorException('No se pudo confirmar la reserva. Consulta tus reservas antes de volver a intentar.');
     }
   }
 

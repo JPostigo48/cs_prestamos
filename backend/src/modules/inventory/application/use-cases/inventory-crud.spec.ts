@@ -50,6 +50,21 @@ const setup = (extra = {}) => {
 };
 
 describe('Inventory CRUD without database', () => {
+  it('distinguishes unverified physical condition from missing category policy', async () => {
+    const { service } = setup();
+    expect(await service.getLoanAvailability(copyId)).toMatchObject({
+      available: false,
+      unavailableReason: expect.stringContaining('política de préstamo'),
+    });
+    const unverified = setup({
+      ejemplares: [{ ...initial.ejemplares[0], condicionFisica: null }],
+    });
+    expect(await unverified.service.getLoanAvailability(copyId)).toMatchObject({
+      available: false,
+      unavailableReason: expect.stringContaining('condición física'),
+    });
+  });
+
   it('creates, reads, lists, edits and deletes unreferenced categories and resources', async () => {
     const { service, write, db } = setup();
     const category = await write((s) =>

@@ -33,7 +33,9 @@ export class CreateReservationUseCase {
     assertFuturePickup(input.requestedAt);
     const availability = await this.inventory.getAvailability(input.copyId);
     if (!availability.available) {
-      throw new ConflictException('El ejemplar no está disponible.');
+      throw new ConflictException(
+        availability.unavailableReason ?? 'El ejemplar no está disponible.',
+      );
     }
     // El repositorio calcula el plazo con la configuración bloqueada en la tx.
     return this.reservations.create({

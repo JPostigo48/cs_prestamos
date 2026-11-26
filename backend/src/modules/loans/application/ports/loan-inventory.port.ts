@@ -1,6 +1,7 @@
 export interface CopyLoanAvailability {
   copyId: string;
   available: boolean;
+  unavailableReason?: string;
   maximumLoanDays: number;
   maximumLoanHours: number;
 }

@@ -854,17 +854,20 @@ export class InventoryService {
     const configuration = await this.repository.getCategoryPolicies(
       resource.categoriaId,
     );
-    const enabled =
-      resource.activo !== false &&
-      category.activo !== false &&
-      configuration.eligibleForNewOperations;
+    const unavailableReason =
+      copy.estado !== 'DISPONIBLE' ? 'El ejemplar ya no está disponible.'
+      : copy.condicionFisica == null ? 'La condición física del ejemplar aún no ha sido verificada.'
+      : copy.condicionFisica !== 'APTO' ? 'El ejemplar no está físicamente apto para préstamo.'
+      : copy.habilitado !== true ? 'El ejemplar está deshabilitado para préstamo.'
+      : resource.activo === false ? 'El recurso está inactivo.'
+      : category.activo === false ? 'La categoría está inactiva.'
+      : !configuration.eligibleForNewOperations
+        ? 'La categoría no tiene una política de préstamo completa y vigente. Contacta con el personal.'
+        : undefined;
     return {
       copyId,
-      available:
-        copy.estado === 'DISPONIBLE' &&
-        copy.condicionFisica === 'APTO' &&
-        copy.habilitado === true &&
-        enabled,
+      available: unavailableReason === undefined,
+      ...(unavailableReason ? { unavailableReason } : {}),
       maximumLoanDays: policy.effectiveDurationHours / 24,
       maximumLoanHours: policy.effectiveDurationHours,
     };

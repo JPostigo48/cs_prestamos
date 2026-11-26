@@ -20,6 +20,20 @@ const reservation = {
 };
 
 describe('Reservation use cases', () => {
+  it('propagates the inventory reason without attempting to create a reservation', async () => {
+    const create = vi.fn();
+    const unavailableReason = 'La categoría no tiene una política de préstamo completa y vigente.';
+    const useCase = new CreateReservationUseCase(
+      { create } as any,
+      { getByUserId: vi.fn().mockResolvedValue({ enabled: true, institutionalType: 'DOCENTE' }) } as any,
+      { getAvailability: vi.fn().mockResolvedValue({ available: false, unavailableReason }) } as any,
+      { hasAcceptedCurrentVersion: vi.fn().mockResolvedValue(true) } as any,
+    );
+    await expect(useCase.execute({ userId: 'user-1', copyId: 'copy-1', requestedAt }))
+      .rejects.toThrow(unavailableReason);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('creates a reservation for an available copy', async () => {
     const reservations = {
       hasOpenReservationOrLoan: vi.fn().mockResolvedValue(false),

@@ -101,7 +101,7 @@ async function submit() {
         <p v-if="settings.data.value?.scheduleStatus === 'UNCONFIGURED'"> <AlertHint :message="settings.data.value.warning || 'La disponibilidad por horario aún no está configurada.'" /> Horario sin configurar</p>
         <p v-if="validation" role="status"><AlertHint :message="validation" label="Revisar fecha y hora" /> {{ validation }}</p>
       </template>
-      <p v-if="error" role="alert" class="error"><AlertHint :message="error" label="Detalle del error" /> No se pudo confirmar la operación.</p>
+      <p v-if="error" role="alert" class="error">{{ error }}</p>
       <p v-if="uncertain" role="status" class="error">
         <AlertHint message="Resultado incierto. Cerrar no cancela la solicitud; usa el identificador disponible para consultar al personal." /> No repitas; consulta tus reservas. <RouterLink to="/app/history">Mis reservas</RouterLink>
       </p>
