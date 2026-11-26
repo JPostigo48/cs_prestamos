@@ -2,11 +2,12 @@ import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, model, event, text } from './helpers/renderer.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 const auth = await load('modules/auth/api/auth-api')
 const inventory = await load('modules/inventory/api/inventory-api')
 const contracts = await load('modules/inventory/api/copy-contracts')
 const Dialog = await loadComponent('modules/inventory/components/RehabilitateCopyDialog')
-const copy = { id: 'copy-rehab', recursoId: 'resource', codigoInventario: 'REHAB', estado: 'NO_DISPONIBLE', condicionFisica: 'DANADO', habilitado: true }
+const copy = { id: 'copy-rehab', recursoId: 'resource', codigoInventario: 'REHAB', estado: 'NO_DISPONIBLE', condicionFisica: 'DANADO', habilitado: true, compatibility: compatibility() }
 const verification = { fitForLoan: true, componentsComplete: true, reason: 'Reparación comprobada', evidenceIds: [] }
 beforeEach(() => { testEnvironment(); auth.saveSession(session('OPERADOR')) })
 for (const invalid of [undefined, {}, { ...verification, fitForLoan: false }, { ...verification, componentsComplete: false }, { ...verification, reason: '  ' }, { ...verification, reason: 'x'.repeat(1001) }, { ...verification, evidenceIds: undefined }, { ...verification, evidenceIds: ['invalid'] }, { ...verification, evidenceIds: ['AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'] }]) test(`verificación inválida ${JSON.stringify(invalid)}`, async () => {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, text, event, model } from './helpers/renderer.mjs'
+import { compatibility, inventoryCopy, inventoryResource } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const inventory = await load('modules/inventory/api/inventory-api')
@@ -29,12 +30,13 @@ test('R1: editor recupera A, confirma renombre B y Nuevo A crea otro ID y asigna
     const method = options.method ?? 'GET'; calls.push([url, method])
     if (url.endsWith('/accessories')) return Response.json({ resourceId: url.includes('new-A') ? 'new-A' : 'old-A', items: [] })
     if (url.endsWith('/copies')) {
-      if (method === 'POST') return Response.json({ id: 'new-copy', recursoId: 'new-A', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'CODE-A' })
+      if (method === 'POST') return Response.json(inventoryCopy(true, { id: 'new-copy', recursoId: 'new-A', codigoInventario: 'CODE-A' }))
       return Response.json([])
     }
-    if (method === 'PATCH') return Response.json({ ...a, nombre: 'Renombrado B', id: 'old-A' })
-    if (method === 'POST') return Response.json({ ...a, id: 'new-A' })
-    return Response.json({ ...a, id: url.includes('new-A') ? 'new-A' : 'old-A', loanPolicy: { categoryId: category.id, categoryDurationHours: 48, individualDurationHours: null, effectiveDurationHours: 48, source: 'CATEGORY' } })
+    if (method === 'PATCH') return Response.json(inventoryResource(true, { ...a, nombre: 'Renombrado B', id: 'old-A' }))
+    if (method === 'POST') return Response.json(inventoryResource(true, { ...a, id: 'new-A' }))
+    const id = url.includes('new-A') ? 'new-A' : 'old-A'
+    return Response.json(inventoryResource(true, { ...a, id, categoria: category, loanPolicy: { resourceId: id, categoryId: category.id, durationHours: null, effectiveDurationHours: 48, source: 'CATEGORY' } }))
   }
   async function fillEditor(mounted, name = a.nombre) {
     await model(find(mounted.root, 'input'), name)
@@ -42,7 +44,7 @@ test('R1: editor recupera A, confirma renombre B y Nuevo A crea otro ID y asigna
     await model(find(mounted.root, 'select'), a.categoriaId)
     await event(find(mounted.root, 'form'), 'submit'); await flush()
   }
-  const recovered = mount(component, { resource: null, categories: [category] })
+  const recovered = mount(component, { resource: null, categories: [category], compatibility: compatibility() })
   try {
     await fillEditor(recovered)
     assert.match(text(recovered.root), /Datos básicos confirmados/)
@@ -51,7 +53,7 @@ test('R1: editor recupera A, confirma renombre B y Nuevo A crea otro ID y asigna
     await model(find(recovered.root, 'input'), 'Renombrado B')
     await event(find(recovered.root, 'form'), 'submit')
   } finally { recovered.unmount(); await flush() }
-  const fresh = mount(component, { resource: null, categories: [category] })
+  const fresh = mount(component, { resource: null, categories: [category], compatibility: compatibility() })
   try {
     await fillEditor(fresh)
     assert.equal(calls.filter(([url, method]) => url === '/api/inventory/resources' && method === 'POST').length, 1)
@@ -120,8 +122,8 @@ test('R2: pestañas controlan el DOM estable y conservan lectura de reservas pen
 
 for (const available of [1, 0]) test(`R3: detalle con ${available} disponible y reservado presenta total completo y reserva segura`, async () => {
   const component = await loadComponent('modules/inventory/pages/ResourceDetailPage')
-  const copies = [{ id: 'reserved', recursoId: 'r-final', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'RES', estado: 'RESERVADO' }, ...(available ? [{ id: 'free', recursoId: 'r-final', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'FREE', estado: 'DISPONIBLE' }] : [])]
-  globalThis.fetch = async url => Response.json(url.includes('/loans/user/') ? [] : url.includes('/loans/reservations?') ? { items: [], total: 0, page: 1, limit: 1 } : url.endsWith('/accessories') ? { items: [] } : url.endsWith('/copies') ? copies : { ...a, id: 'r-final', availableCopies: available, totalCopies: available })
+  const copies = [inventoryCopy(true, { id: 'reserved', recursoId: 'r-final', codigoInventario: 'RES', estado: 'RESERVADO' }), ...(available ? [inventoryCopy(true, { id: 'free', recursoId: 'r-final', codigoInventario: 'FREE' })] : [])]
+  globalThis.fetch = async url => Response.json(url.includes('/loans/user/') ? [] : url.includes('/loans/reservations?') ? { items: [], total: 0, page: 1, limit: 1 } : url.endsWith('/accessories') ? { items: [] } : url.endsWith('/copies') ? copies : inventoryResource(true, { ...a, id: 'r-final', available: !!available, availableCopies: available, totalCopies: copies.length, registeredStock: { libres: available, prestados: 0, retenidos: 0, reservados: 1 } }))
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/app/catalog/:resourceId', component: { template: '<div />' } }] })
   await router.push('/app/catalog/r-final'); await router.isReady()
   const mounted = mount(component, {}, [router])
@@ -141,7 +143,8 @@ for (const available of [1, 0]) test(`R3: detalle con ${available} disponible y 
 test('R3: inventario agregado incompleto no anuncia total exacto ni consulta copias por fila', async () => {
   const component = await loadComponent('modules/inventory/pages/CatalogPage'), router = await routerAt('/app/admin/catalog')
   const calls = []
-  globalThis.fetch = async url => { calls.push(url); return Response.json(url.includes('/categories') ? [category] : { data: [{ ...a, id: 'r-final', availableCopies: 0, totalCopies: 0 }], total: 1 }) }
+  // Legacy: el total omitido queda desconocido, no se sustituye por el stock libre.
+  globalThis.fetch = async url => { calls.push(url); return Response.json(url.includes('/categories') ? [category] : { data: [{ ...a, id: 'r-final', availableCopies: 0 }], total: 1 }) }
   const mounted = mount(component, { management: true }, [router])
   try {
     await flush(); await flush()

@@ -10,6 +10,8 @@ import RemoteState from '../../../shared/components/RemoteState.vue'
 import { Search, Plus, Pencil } from '@lucide/vue'
 import CategoryIcon from '../components/CategoryIcon.vue'
 import { getSession } from '../../auth/api/auth-api'
+import { inventoryActionAllowed } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from '../components/InventoryCompatibilityNotice.vue'
 
 const route = useRoute()
 const props = defineProps<{ management?: boolean }>()
@@ -53,6 +55,7 @@ function searchChanged() {
   timer = setTimeout(() => update({ search: search.value.trim() || undefined }), 300)
 }
 function edit(resource: Resource | null) {
+  if (!resource && (resources.loading.value || !!resources.error.value || !inventoryActionAllowed(resources.data.value?.compatibility, 'create'))) return
   selected.value = resource
   editing.value = true
 }
@@ -62,7 +65,7 @@ function refreshInventory() {
 }
 onBeforeUnmount(() => clearTimeout(timer))
 const pages = computed(() =>
-  resources.data.value
+  resources.data.value && resources.data.value.total !== null
     ? Math.max(1, Math.ceil(resources.data.value.total / filters.value.limit))
     : 1,
 )
@@ -80,12 +83,14 @@ const pages = computed(() =>
     <button
       v-if="management"
       class="primary"
+      :disabled="resources.loading.value || !!resources.error.value || !inventoryActionAllowed(resources.data.value?.compatibility, 'create')"
       @click="edit(null)"
     >
       <Plus :size="18" aria-hidden="true" /> <span class="new-article-label">Nuevo recurso</span>
     </button>
     </div>
   </div>
+  <InventoryCompatibilityNotice v-if="resources.data.value" :compatibility="resources.data.value.compatibility" />
   <form class="panel catalog-filters" role="search" aria-label="Filtrar catálogo" @submit.prevent="update({ search: search.trim() || undefined })">
     <label class="catalog-search"
       ><span class="sr-only">Buscar por nombre</span><Search :size="18" aria-hidden="true" />
@@ -120,17 +125,17 @@ const pages = computed(() =>
   >
     <template v-if="resources.data.value">
       <p class="muted" role="status">
-        {{ resources.data.value.total }} recursos encontrados · página {{ filters.page }} de
+        {{ resources.data.value.total ?? 'Cantidad desconocida de' }} recursos encontrados · página {{ filters.page }} de
         {{ pages }}
       </p>
       <div v-if="management" class="panel table-wrap desktop-only inventory-table" tabindex="0" role="region" aria-label="Inventario de recursos">
         <table>
-          <caption>Inventario · {{ resources.data.value.total }} recursos</caption>
+          <caption>Inventario · {{ resources.data.value.total ?? 'Cantidad desconocida de' }} recursos</caption>
           <thead><tr><th>Recurso</th><th>Categoría</th><th>Disponibilidad</th><th>Acciones</th></tr></thead>
           <tbody><tr v-for="resource in resources.data.value.data" :key="resource.id">
             <td><RouterLink :to="resourceDestination(resource.id, route.query, true)">{{ resource.nombre }}</RouterLink><p v-if="resource.descripcion" class="muted inventory-description">{{ resource.descripcion }}</p></td>
             <td><span class="inventory-category">{{ categories.data.value?.find(c => c.id === resource.categoriaId)?.nombre || 'Categoría no disponible' }}</span></td>
-            <td><strong class="inventory-stock" :class="{ empty: resource.availableCopies === 0 }">{{ resource.availableCopies }}</strong> disponibles<small>Total de ejemplares desconocido; consultar detalle</small></td>
+            <td><strong class="inventory-stock" :class="{ empty: resource.availableCopies === 0 }">{{ resource.availableCopies ?? 'Desconocida' }}</strong> disponibles<small v-if="resource.totalCopies === null">Total de ejemplares desconocido; consultar detalle</small><small v-else>Stock registrado: {{ resource.totalCopies }} ejemplares</small></td>
             <td><button class="inventory-edit" @click="edit(resource)"><Pencil :size="15" aria-hidden="true" /> Editar recurso y ejemplares</button></td>
           </tr></tbody>
         </table>
@@ -178,6 +183,7 @@ const pages = computed(() =>
     v-if="editing"
     :resource="selected"
     :categories="categories.data.value ?? []"
+    :compatibility="resources.data.value?.compatibility"
     @close="editing = false"
     @changed="refreshInventory"
   />

@@ -72,9 +72,11 @@ test('registro único usa alta integral; el consumidor básico deja de exportars
   await access.requestFullRegistration({
     name: 'Prueba',
     userType: 'DOCENTE',
-    email: 'test@example.invalid',
+    email: 'test@unsa.edu.pe',
     password: 'solo-test',
-    evidence: [],
+    institutionalId: 'DOC-123',
+    phone: '999123456',
+    evidence: [png],
     termsVersionId: 't1',
   })
   assert.equal(calls.length, 1)
@@ -116,6 +118,8 @@ test('registro público: un formulario, contraseña para todos, imagen y aceptac
     await model(inputs[0], ' Solicitante público ')
     await model(inputs[1], ' user@unsa.edu.pe ')
     await model(password, 'ClaveElegida-2026!')
+    await model(inputs[3], 'DOC-123')
+    await model(inputs[4], '999123456')
     const file = inputs.find(node => node.props.type === 'file')
     await event(file, 'change', { target: { files: [imageFile()] } })
     assert.equal(find(app.root, 'img').props.src, png)
@@ -135,7 +139,7 @@ test('registro público: un formulario, contraseña para todos, imagen y aceptac
     const sent = calls.filter(call => call.options.method === 'POST')
     assert.equal(sent.length, 1)
     assert.equal(sent[0].url, '/api/auth/registration-requests')
-    assert.deepEqual(JSON.parse(sent[0].options.body), { name: 'Solicitante público', email: 'user@unsa.edu.pe', password: 'ClaveElegida-2026!', userType: 'ESTUDIANTE', evidence: [png], termsVersionId: terms.id })
+    assert.deepEqual(JSON.parse(sent[0].options.body), { name: 'Solicitante público', email: 'user@unsa.edu.pe', password: 'ClaveElegida-2026!', userType: 'ESTUDIANTE', institutionalId: 'DOC-123', phone: '999123456', evidence: [png], termsVersionId: terms.id })
     assert.match(text(app.root), /PENDIENTE/)
     assert.equal(password.value, '')
     assert.equal(auth.getSession(), null)
@@ -228,7 +232,7 @@ test('registro: un resultado incierto mantiene el formulario bloqueado al remont
   auth.clearSession(); confirmMutation('full-registration')
   let calls = 0
   globalThis.fetch = async () => { calls++; return Response.json({}, { status: 500 }) }
-  const body = { name: 'Prueba', email: 'public@unsa.edu.pe', password: 'NO-PERSISTIR-CLAVE', userType: 'ESTUDIANTE', evidence: [png], termsVersionId: terms.id }
+  const body = { name: 'Prueba', email: 'public@unsa.edu.pe', password: 'NO-PERSISTIR-CLAVE', userType: 'ESTUDIANTE', institutionalId: 'DOC-123', phone: '999123456', evidence: [png], termsVersionId: terms.id }
   await assert.rejects(access.requestFullRegistration(body))
   try {
     for (let i = 0; i < 2; i++) {

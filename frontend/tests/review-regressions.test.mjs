@@ -45,7 +45,7 @@ test('altas inciertas: recurso y registro integral no se reenvían por reabrir f
   await assert.rejects(inventory.saveResource(null, resource), e => e.status === 500)
   await assert.rejects(inventory.saveResource(null, resource), e => e.status === 0 && e.message.includes('pendiente'))
   assert.equal(calls, 1)
-  const registration = { name: 'Prueba', email: 'test@example.invalid', password: 'solo-test', userType: 'DOCENTE', evidence: [], termsVersionId: 'terms-review' }
+  const registration = { name: 'Prueba', email: 'test@unsa.edu.pe', password: 'solo-test', userType: 'DOCENTE', institutionalId: 'DOC-123', phone: '999123456', evidence: ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4//8/AAX+Av5Y8msOAAAAAElFTkSuQmCC'], termsVersionId: 'terms-review' }
   await assert.rejects(access.requestFullRegistration(registration), e => e.status === 500)
   await assert.rejects(access.requestFullRegistration(registration), e => e.status === 0 && e.message.includes('pendiente'))
   assert.equal(calls, 2)
@@ -82,7 +82,14 @@ test('estructura del detalle: confirmar reserva no recarga/desmonta el diálogo'
   walk(ast)
   assert.ok(reservation)
   const event = name => reservation.props.find(p => p.type === 7 && p.name === 'on' && p.arg?.content === name)?.exp?.content
-  assert.equal(event('created'), 'reservationChanged = true')
+  assert.equal(event('created'), 'reservationUpdated')
+  // El manejador nombrado añade la consulta de operaciones propias, pero no
+  // refresca recurso/copias ni cierra el diálogo hasta el cierre explícito.
+  const updated = descriptor.scriptSetup.content.match(/function reservationUpdated\(\) \{([^}]+)\}/)?.[1]
+  assert.ok(updated)
+  assert.match(updated, /reservationChanged\.value = true/)
+  assert.match(updated, /refreshCurrentOperation\(\)/)
+  assert.doesNotMatch(updated, /(?:resource|copies)\.refresh|reserving\.value\s*=/)
   assert.equal(event('close'), 'closeReservation')
   assert.match(descriptor.scriptSetup.content, /function closeReservation\(\)[\s\S]*reserving\.value = false[\s\S]*if \(reservationChanged\.value\)[\s\S]*copies\.refresh\(\)[\s\S]*resource\.refresh\(\)/)
 })

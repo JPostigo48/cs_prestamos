@@ -3,7 +3,7 @@ import { uncertainReturn, type ReturnInput, type IncidentInput, type ClosureInpu
 import { validReturnPolicy, type LoanClosure, type LoanConsequence, type LoanReward, type ClosedCopy, type LoanEvidence } from './closure-contracts'
 import { ApiError } from '../../../shared/api/client'
 import { isStaff } from '../../auth/access-policy'
-import { pagination, parsePage, validChecklist, validLoan, validLoanConfiguration, type CopyLoanSnapshot, type ReturnChecklistCapture } from './loan-contracts'
+import { pagination, parsePage, parseLoan, parseLoans, validChecklist, validLoan, validLoanConfiguration, type CopyLoanSnapshot, type ReturnChecklistCapture } from './loan-contracts'
 export type { CopyLoanSnapshot, ReturnChecklistCapture } from './loan-contracts'
 
 export interface Loan {
@@ -16,6 +16,7 @@ export interface Loan {
   return: { returnedAt: string; observation?: string | null } | null
   configurationSnapshot: CopyLoanSnapshot | null
   returnChecklist: ReturnChecklistCapture | null
+  closureHistory?: 'AVAILABLE' | 'UNAVAILABLE'
   closure?: LoanClosure | null
   consequences?: LoanConsequence[]
   reward?: LoanReward | null
@@ -28,17 +29,18 @@ export async function getResourceHistory(resourceId: string, query: Record<strin
   if (query.status && !['PLANIFICADO', 'ACTIVO', 'FINALIZADO', 'CERRADO_POR_INCIDENCIA'].includes(query.status)) throw new ApiError('Estado inválido.', 400)
   const params = new URLSearchParams({ page: String(page), limit: String(limit), ...(query.status ? { status: query.status } : {}) })
   const result = await authenticatedRequest<unknown>('/loans/resource/' + encodeURIComponent(resourceId) + '/history?' + params, { signal })
-  return parsePage<Loan>(result, validLoan, page, limit)
+  const parsed = parsePage<Loan>(result, validLoan, page, limit)
+  return { ...parsed, items: parsed.items.map(parseLoan) }
 }
-export const getActiveLoans = (signal?: AbortSignal) =>
-  authenticatedRequest<Loan[]>('/loans/active', { signal })
-export const getOverdueLoans = (signal?: AbortSignal) =>
-  authenticatedRequest<Loan[]>('/loans/overdue', { signal })
+export const getActiveLoans = async (signal?: AbortSignal) =>
+  parseLoans(await authenticatedRequest<unknown>('/loans/active', { signal }))
+export const getOverdueLoans = async (signal?: AbortSignal) =>
+  parseLoans(await authenticatedRequest<unknown>('/loans/overdue', { signal }))
 export async function getLoan(id: string, signal?: AbortSignal): Promise<Loan> {
   const result = await authenticatedRequest<Loan>('/loans/' + encodeURIComponent(id), { signal })
   if (!result || result.id !== id || !validLoan(result) ||
     !validLoanConfiguration(result as unknown as Record<string, unknown>)) throw new ApiError('Respuesta incompatible con el préstamo solicitado.', 0)
-  return result
+  return parseLoan(result)
 }
 export function confirmsReturn(result: Loan | null, id: string, body?: ClosureInput, actorUserId = getSession()?.user.id): boolean {
   const operation = body ?? getPendingClosure(id)

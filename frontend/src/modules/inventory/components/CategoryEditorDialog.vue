@@ -7,8 +7,11 @@ import { mutationConfirmation, pendingMutation } from '../../../shared/api/mutat
 import { getCategories, type Category } from '../api/inventory-api'
 import { categoryMatches, categorySaveKey, readCategory, readCategoryPolicies, saveCategory, type CategoryInput } from '../api/categories-api'
 import { confidenceLabel, criteriaDetails, policyFamilies, suspensionLabel } from '../../project-showcase/services/termsPresentation'
+import { inventoryActionAllowed, type InventoryCompatibility } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from './InventoryCompatibilityNotice.vue'
 
-const props = defineProps<{ category: Category | null }>()
+const props = defineProps<{ category: Category | null; compatibility?: InventoryCompatibility | null }>()
+const descriptiveOnly = computed(() => !inventoryActionAllowed(props.compatibility, 'activate'))
 const emit = defineEmits<{ close: []; changed: [] }>()
 const id = ref(props.category?.id ?? null)
 const name = ref(props.category?.nombre ?? '')
@@ -18,18 +21,20 @@ const hours = ref<number | ''>(props.category?.tiempoMaximoPrestamoHoras ?? 24)
 const section = ref('General')
 const sections = ['General', 'Préstamos', 'Confianza', 'Sanciones']
 const busy = ref(false), error = ref(''), notice = ref('')
+const submittedDescriptiveOnly = ref<boolean | null>(null)
 const input = computed<CategoryInput>(() => ({ nombre: name.value.trim(), descripcion: description.value.trim() || null, activo: active.value,
-  tiempoMaximoPrestamoHoras: Number(hours.value), tiempoMaximoPrestamoDias: Math.max(1, Math.ceil(Number(hours.value) / 24)) }))
+  tiempoMaximoPrestamoHoras: Number(hours.value), tiempoMaximoPrestamoDias: descriptiveOnly.value && props.category ? props.category.tiempoMaximoPrestamoDias : Math.max(1, Math.ceil(Number(hours.value) / 24)) }))
 const pending = computed(() => pendingMutation(categorySaveKey(id.value, input.value)))
 const policies = useRemote(signal => id.value ? readCategoryPolicies(id.value, signal) : Promise.resolve(null), id)
 const shownPolicies = computed(() => (policies.data.value?.policies ?? []).filter(policy => section.value === 'Confianza'
   ? ['ACCESS', 'TRUST'].includes(policy.kind) : section.value === 'Préstamos'
     ? ['ACCESS', 'REWARD'].includes(policy.kind) : ['LATENESS', 'DAMAGE', 'LOSS', 'NO_SHOW'].includes(policy.kind)))
 async function save() {
-  if (busy.value || pending.value) return
+  if (busy.value || pending.value || (!id.value && !inventoryActionAllowed(props.compatibility, 'create'))) return
   busy.value = true; error.value = ''; notice.value = ''
   try {
-    const result = await saveCategory(id.value, input.value)
+    submittedDescriptiveOnly.value = !!id.value && descriptiveOnly.value
+    const result = await saveCategory(id.value, input.value, { descriptiveOnly: submittedDescriptiveOnly.value })
     id.value = result.id
     notice.value = 'Categoría confirmada. No se han modificado ni copiado reglas publicadas.'
     emit('changed')
@@ -44,7 +49,7 @@ async function consult() {
     const key = categorySaveKey(id.value, input.value)
     const confirm = mutationConfirmation()
     const matches = id.value ? [await readCategory(id.value)] : (await getCategories()).filter(item => categoryMatches(item, input.value))
-    if (matches.length !== 1 || !categoryMatches(matches[0]!, input.value)) throw new Error('No se pudo confirmar el guardado exacto. Se conserva el formulario; no se repetirá la creación automáticamente.')
+    if (matches.length !== 1 || !categoryMatches(matches[0]!, input.value, { descriptiveOnly: submittedDescriptiveOnly.value ?? (!!id.value && descriptiveOnly.value) })) throw new Error('No se pudo confirmar el guardado exacto. Se conserva el formulario; no se repetirá la creación automáticamente.')
     confirm(key)
     id.value = matches[0]!.id
     notice.value = 'Estado consultado: los datos coinciden con el servidor.'
@@ -56,6 +61,7 @@ async function consult() {
 </script>
 <template>
   <ModalDialog :title="id ? 'Editar categoría' : 'Nueva categoría'" subtitle="Categoría: condiciones de préstamo. Ejemplar: unidad física." :busy="busy" @close="emit('close')">
+    <InventoryCompatibilityNotice :compatibility="compatibility" />
     <nav class="category-tabs" aria-label="Secciones de categoría"><button v-for="item in sections" :key="item" :aria-pressed="section === item" :disabled="busy" @click="section = item">{{ item }}</button></nav>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
@@ -68,16 +74,16 @@ async function consult() {
         <legend>General</legend>
         <label>Nombre<input v-model="name" required maxlength="120" /></label>
         <label>Descripción<textarea v-model="description" maxlength="2000" rows="3" /></label>
-        <label>Estado<select v-model="active"><option :value="true">Activa</option><option :value="false">Inactiva</option></select></label>
+        <label>Estado<select v-model="active" :disabled="descriptiveOnly"><option :value="true">Activa</option><option :value="false">Inactiva</option></select></label>
         <p>Desactivar es reversible y conserva recursos, ejemplares e historia.</p>
       </fieldset>
       <fieldset v-show="section === 'Préstamos'" :disabled="busy || pending">
         <legend>Préstamos</legend>
-        <label>Duración predeterminada (horas)<input v-model.number="hours" required type="number" min="1" max="2147483647" step="1" /></label>
+        <label>Duración predeterminada (horas)<input v-model.number="hours" :disabled="descriptiveOnly" required type="number" min="1" max="2147483647" step="1" /></label>
         <p>Los recursos heredan esta duración salvo excepción individual. Solo afecta nuevas operaciones; no cambia reservas ni préstamos existentes.</p>
         <h3>Condiciones de uso publicadas</h3>
       </fieldset>
-      <button v-if="section === 'General' || section === 'Préstamos'" type="submit" class="primary" :disabled="busy || pending || !name.trim() || !Number.isInteger(Number(hours)) || Number(hours) < 1 || Number(hours) > 2147483647">Guardar categoría</button>
+      <button v-if="section === 'General' || section === 'Préstamos'" type="submit" class="primary" :disabled="busy || pending || (!id && !inventoryActionAllowed(compatibility, 'create')) || !name.trim() || (!descriptiveOnly && (!Number.isInteger(Number(hours)) || Number(hours) < 1 || Number(hours) > 2147483647))">Guardar categoría</button>
     </form>
     <section v-if="section !== 'General'" class="policy-reading" :aria-label="section + ': reglas publicadas'">
       <h3 v-if="section === 'Confianza'">Niveles permitidos</h3>

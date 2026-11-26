@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const api = await load('modules/inventory/api/categories-api')
@@ -63,7 +64,7 @@ test('formulario crea con horas enteras y cuatro secciones; ninguna política se
     if (options.method === 'POST') { writes.push(JSON.parse(options.body)); return Response.json({ ...category, ...writes.at(-1) }) }
     return Response.json(policies)
   }
-  const app = mount(Editor, { category: null })
+  const app = mount(Editor, { category: null, compatibility: compatibility() })
   try {
     assert.match(text(app.root), /no apta para nuevos préstamos/)
     assert.deepEqual(findAll(app.root, n => n.tag === 'nav')[0].children.filter(n => n.tag === 'button').map(text), ['General', 'Préstamos', 'Confianza', 'Sanciones'])
@@ -231,6 +232,7 @@ test('lista incluye inactivas, conteos exactos y activar/desactivar refresca sin
   const calls = []
   globalThis.fetch = async (url, options) => {
     calls.push([url, options.method])
+    if (url.startsWith('/api/inventory/resources?')) return Response.json({ data: [], total: 0, page: 1, limit: 1, compatibility: compatibility() })
     if (options.method === 'PATCH') active = JSON.parse(options.body).activo
     return Response.json(options.method === 'PATCH' ? { ...category, activo: active } : [{ ...category, activo: active }])
   }
@@ -239,8 +241,13 @@ test('lista incluye inactivas, conteos exactos y activar/desactivar refresca sin
     await flush(); assert.match(text(app.root), /Inactiva/); assert.match(text(app.root), /Cantidad de recursos 2/)
     await event(find(app.root, 'button', 'Activar'), 'click'); assert.match(text(app.root), /Activa/)
     await event(find(app.root, 'button', 'Desactivar'), 'click'); assert.match(text(app.root), /Inactiva/)
-    assert.deepEqual(calls.map(call => call[1]), ['GET', 'PATCH', 'GET', 'PATCH', 'GET'])
-    assert.ok(calls.every(([url]) => url === '/api/inventory/categories' || url === '/api/inventory/categories/category'))
+    assert.deepEqual(calls, [
+      ['/api/inventory/categories', 'GET'], ['/api/inventory/resources?page=1&limit=1', 'GET'],
+      ['/api/inventory/categories/category', 'PATCH'],
+      ['/api/inventory/categories', 'GET'],
+      ['/api/inventory/categories/category', 'PATCH'],
+      ['/api/inventory/categories', 'GET'],
+    ])
   } finally { app.unmount() }
 })
 

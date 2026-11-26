@@ -4,6 +4,7 @@ import { getResourceHistory, type Loan } from '../api/loans-api'
 import { useRemote } from '../../../shared/composables/useRemote'
 import RemoteState from '../../../shared/components/RemoteState.vue'
 import { dateTime } from '../../../shared/format'
+import ClosureHistoryNotice from './ClosureHistoryNotice.vue'
 const props = defineProps<{ resourceId: string }>()
 const page = ref(1)
 const status = ref<'' | Loan['status']>('')
@@ -22,6 +23,7 @@ function move(offset: number) { page.value += offset; void remote.refresh() }
       <template v-if="remote.data.value">
         <p>{{ remote.data.value.total }} préstamos</p>
         <p v-for="loan in remote.data.value.items" :key="loan.id">{{ loan.id }} · {{ loan.status === 'CERRADO_POR_INCIDENCIA' ? (loan.closure?.reason === 'ROBO' ? 'Robo · sin devolución real' : 'Pérdida o robo · sin devolución real') : loan.status === 'FINALIZADO' ? 'Devuelto' : loan.status }} · {{ dateTime(loan.closure?.effectiveAt ?? loan.endsAt) }}</p>
+        <ClosureHistoryNotice v-for="loan in remote.data.value.items" :key="'closure:' + loan.id" :loan="loan" />
         <p v-if="!remote.data.value.items.length">No hay préstamos en la respuesta recibida.</p>
         <nav class="row" aria-label="Páginas del historial">
           <button :disabled="remote.loading.value || page <= 1" @click="move(-1)">Anterior</button>

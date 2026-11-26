@@ -16,6 +16,7 @@ import { useCopyDetails } from '../../inventory/useCopyDetails'
 import { useUserDetails } from '../../users/useUserDetails'
 import { dateTime } from '../../../shared/format'
 import { ApiError } from '../../../shared/api/client'
+import { inventoryActionAllowed, inventoryCompatibilityMessage } from '../../inventory/api/compatibility-contracts'
 const props = defineProps<{ staff?: boolean }>()
 const emit = defineEmits<{ changed: [] }>()
 const session = getSession()!
@@ -44,7 +45,7 @@ onScopeDispose(() => {
   window.removeEventListener('focus', refreshVisible)
   if (timer) clearInterval(timer)
 })
-const copies = useCopyDetails(() => remote.data.value?.items ?? null)
+const copies = useCopyDetails(() => remote.data.value?.items ?? null, { revalidateOnChange: true })
 const users = useUserDetails(() => props.staff ? remote.data.value?.items ?? null : null)
 const selected = ref<Reservation | null>(null),
   reason = ref(''),
@@ -61,6 +62,7 @@ function select(item: Reservation) {
 }
 async function confirm() {
   if (!selected.value || sending.value || uncertain.value) return
+  if (!inventoryActionAllowed(copies.value[selected.value.copyId]?.compatibility, 'release')) return
   if (props.staff && !isStaff(session.user.role)) return
   sending.value = true
   error.value = ''
@@ -105,11 +107,13 @@ async function confirm() {
             <p v-if="item.status === 'VENCIDA'" class="muted">La reserva venció y conserva su historial. <RouterLink to="/app/personal">Consultar mi historial de sanciones</RouterLink>.</p>
             <p v-if="staff" class="reservation-resource"><RouterLink v-if="copies[item.copyId]" :to="'/app/catalog/' + copies[item.copyId]!.recurso.id">{{ copies[item.copyId]!.recurso.nombre }}</RouterLink><span v-else>Reserva de recurso</span></p>
             <p class="muted">Ejemplar {{ copies[item.copyId]?.codigoInventario || item.copyId }}</p>
+            <p v-if="item.status === 'CONFIRMADA' && inventoryCompatibilityMessage(copies[item.copyId]?.compatibility)" role="status">{{ inventoryCompatibilityMessage(copies[item.copyId]?.compatibility) }}</p>
             <dl class="reservation-dates"><div><dt>Hora de recogida</dt><dd>{{ dateTime(item.requestedAt) }}</dd></div><div><dt>Límite de recogida</dt><dd>{{ dateTime(item.pickupDeadline) }}</dd></div></dl>
             <details class="muted"><summary>Referencia de reserva</summary><p>Reserva {{ item.id }}</p><p v-if="staff">Titular · {{ item.userId }}</p></details>
             <button
               :class="{ primary: staff }"
               v-if="item.status === 'CONFIRMADA' && (staff || item.userId === session.user.id)"
+              :disabled="!inventoryActionAllowed(copies[item.copyId]?.compatibility, 'release')"
               @click="select(item)"
             >
               {{ staff ? 'Confirmar entrega' : 'Cancelar mi reserva' }}
@@ -142,7 +146,7 @@ async function confirm() {
       </p>
       <div class="row">
         <button type="button" :disabled="sending" @click="selected = null">Cerrar</button
-        ><button class="primary" :disabled="sending || uncertain">{{ sending ? 'Procesando…' : 'Confirmar' }}</button>
+        ><button class="primary" :disabled="sending || uncertain || !inventoryActionAllowed(copies[selected.copyId]?.compatibility, 'release')">{{ sending ? 'Procesando…' : 'Confirmar' }}</button>
       </div>
     </form></ModalDialog
   >

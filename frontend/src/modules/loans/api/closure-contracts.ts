@@ -20,6 +20,7 @@ const text = (v: unknown): v is string => typeof v === 'string' && !!v.trim()
 const instant = (v: unknown) => text(v) && Number.isFinite(Date.parse(v))
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0
 const nullableNum = (v: unknown) => v === null || num(v)
+const nullableSeverity = (v: unknown) => v === null || v === 'LEVE' || v === 'MODERADA' || v === 'GRAVE'
 function option(v: unknown): v is PolicyOption {
   return obj(v) && ['id', 'ruleId', 'versionId', 'title', 'key', 'kind', 'consequence'].every(k => text(v[k])) &&
     Number.isInteger(v.number) && ['DISCOUNT', 'SET_ZERO', 'NONE'].includes(String(v.trustEffect)) && nullableNum(v.penaltyPoints) && nullableNum(v.suspensionDays) &&
@@ -32,10 +33,15 @@ export function validReturnPolicy(v: unknown, loanId: string): v is ReturnPolicy
     Array.isArray(v.accessories) && v.accessories.every(p => obj(p) && text(p.id) && text(p.nombre)) && new Set(v.accessories.map(p => p.id)).size === v.accessories.length &&
     Array.isArray(v.damageOptions) && damageOptions.length === 3 && ['LEVE', 'MODERADA', 'GRAVE'].every(s => damageOptions.filter((p: unknown) => option(p) && p.kind === 'DAMAGE' && p.severity === s).length === 1) &&
     option(v.lossPolicy) && v.lossPolicy.kind === 'LOSS' && option(v.rewardPolicy) && v.rewardPolicy.kind === 'REWARD' &&
-    obj(v.lateness) && v.lateness.automatic === true && num(v.lateness.appliedPenaltyPoints) && num(v.lateness.targetPenaltyPoints) && num(v.lateness.targetSuspensionDays)
+    obj(v.lateness) && v.lateness.automatic === true && nullableSeverity(v.lateness.currentSeverity) && nullableSeverity(v.lateness.targetSeverity) && num(v.lateness.appliedPenaltyPoints) && num(v.lateness.targetPenaltyPoints) && num(v.lateness.targetSuspensionDays)
 }
 export function validClosureFields(v: Record<string, unknown>): boolean {
   const reward = v.reward
+  if (Object.hasOwn(v, 'closureHistory') && (v.closure === undefined ||
+    !Array.isArray(v.consequences) || !Array.isArray(v.cancelledReservationIds) ||
+    !Object.hasOwn(v, 'reward') || !Object.hasOwn(v, 'copy'))) return false
+  if (v.closureHistory && v.closure === null &&
+    ((v.consequences as unknown[]).length !== 0 || (v.cancelledReservationIds as unknown[]).length !== 0 || reward !== null || v.copy !== null)) return false
   if (v.closure === undefined || v.closure === null) return true // Lecturas legadas, nunca confirman una operación nueva.
   const c = v.closure
   if (!obj(c) || !['id', 'requestId', 'actorAccountId', 'actorUserId', 'categoryId', 'termsVersionId'].every(k => text(c[k])) || !instant(c.effectiveAt) || !['DEVOLUCION', 'PERDIDA', 'ROBO'].includes(String(c.reason))) return false

@@ -4,6 +4,7 @@ import { ref, defineComponent, h } from 'vue'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
 import { activeLoan, returnPolicy, returnBody, closedLoan, partId, requestId } from './helpers/loan-closure-fixtures.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 const auth = await load('modules/auth/api/auth-api')
 const api = await load('modules/loans/api/loans-api')
 const policy = await load('modules/loans/return-policy')
@@ -43,7 +44,7 @@ test('F09 controlado: ninguna selección implícita ni red ni guardado independi
 })
 test('F09: partes y condición explícitas obligatorias; UNA llamada integral sin fecha cliente ni sanción/copy independiente', async () => {
   const calls = []; fixtureFetch(calls)
-  const app = mount(Dialog, { loan: activeLoan(), copyLabel: 'Histórico' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Histórico' })
   try {
     await flush()
     const submit = () => find(app.root, 'button', 'Confirmar devolución integral')
@@ -67,7 +68,7 @@ test('F09: partes y condición explícitas obligatorias; UNA llamada integral si
 })
 test('F09: daño/faltantes exige descripción y gravedades; una falta de mayor gravedad y política histórica visible', async () => {
   const calls = []; fixtureFetch(calls)
-  const app = mount(Dialog, { loan: activeLoan(), copyLabel: 'Histórico' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Histórico' })
   try {
     await flush()
     await event(find(app.root, 'select'), 'change', { target: { value: 'false' } })
@@ -116,14 +117,14 @@ test('snapshot vacío confirmado admite []; snapshot ausente no equivale a vací
 })
 for (const status of ['PLANIFICADO', 'FINALIZADO', 'CERRADO_POR_INCIDENCIA']) test(`${status}: no ofrece una nueva devolución`, async () => {
   const calls = []; fixtureFetch(calls)
-  const app = mount(Dialog, { loan: { ...activeLoan(), status }, copyLabel: 'No activo' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: { ...activeLoan(), status }, copyLabel: 'No activo' })
   try { await flush(); await selectHealthy(app.root); assert.equal(find(app.root, 'button', 'Confirmar devolución integral').props.disabled, true); await event(find(app.root, 'form'), 'submit'); assert.equal(posts(calls).length, 0) }
   finally { app.unmount() }
 })
 test('política fallida: no devolución básica, no snapshot supuesto; lectura se puede reintentar', async () => {
   let fail = true, writes = 0
   globalThis.fetch = async (url, o) => { if (o.method === 'POST') writes++; return url.endsWith('/evidence') ? Response.json([]) : fail ? Response.json({}, { status: 503 }) : Response.json(returnPolicy()) }
-  const app = mount(Dialog, { loan: activeLoan(), copyLabel: 'Histórico' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Histórico' })
   try {
     await flush(); assert.match(text(app.root), /No se permite cerrar sin política histórica/)
     assert.equal(find(app.root, 'form'), undefined); assert.doesNotMatch(text(app.root), /Continuar con devolución básica/)
@@ -152,7 +153,7 @@ test('GET finalizado sin cierre o cierre de otra operación/actor no constituye 
   globalThis.fetch = async () => Response.json({}, { status: 503 })
   await assert.rejects(api.returnLoan('loan', body))
   const original = closedLoan(activeLoan(), body)
-  for (const result of [{ ...original, closure: null }, { ...original, closure: { ...original.closure, requestId: 'other' } }, { ...original, closure: { ...original.closure, actorUserId: 'other' } }]) {
+  for (const result of [{ ...original, closure: null, reward: null, copy: null }, { ...original, closure: { ...original.closure, requestId: 'other' } }, { ...original, closure: { ...original.closure, actorUserId: 'other' } }]) {
     globalThis.fetch = async () => Response.json(result)
     assert.equal(await api.reconcileClosure('loan'), null)
     assert.equal(api.hasPendingReturn('loan'), true)
@@ -162,10 +163,10 @@ test('GET finalizado sin cierre o cierre de otra operación/actor no constituye 
 })
 test('modal incierto: reabrir conserva cuerpo; solo habilita retry exacto tras consulta, no cambios', async () => {
   const calls = []; fixtureFetch(calls, () => Promise.reject(new Error('timeout')))
-  const first = mount(Dialog, { loan: activeLoan(), copyLabel: 'Histórico' })
+  const first = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Histórico' })
   await flush(); await selectHealthy(first.root); await event(find(first.root, 'form'), 'submit')
   assert.match(text(first.root), /Resultado incierto/); first.unmount()
-  const second = mount(Dialog, { loan: activeLoan(), copyLabel: 'Histórico' })
+  const second = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Histórico' })
   try {
     await flush(); assert.equal(find(second.root, 'form'), undefined)
     assert.equal(find(second.root, 'button', 'Reintentar mismo cuerpo'), undefined)
@@ -183,7 +184,7 @@ for (const status of [400, 409, 503]) test(`error ${status}: no éxito; conserva
 })
 for (const kind of ['PERDIDA', 'ROBO']) test(`${kind}: confirmación/descr obligatorias, UNA llamada contextual; no devolución/inspección/fecha/recompensa`, async () => {
   const calls = []; fixtureFetch(calls)
-  const app = mount(Incident, { loan: activeLoan(), copyLabel: 'Incidente' })
+  const app = mount(Incident, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Incidente' })
   try {
     await flush(); assert.equal(find(app.root, 'button', 'Confirmar cierre por incidencia').props.disabled, true)
     await model(find(app.root, 'textarea'), 'Hecho acreditado')
@@ -226,7 +227,7 @@ test('evidencias disponibles: solo devolución/daño del préstamo; selección e
     { id: evidenceId, loanId: 'loan', type: 'DANO', originalName: 'Daño acreditado', description: 'Mismo préstamo' },
     { id: 'delivery', loanId: 'loan', type: 'ENTREGA', originalName: 'Entrega', description: null },
   ]) : transport(url, options)
-  const app = mount(Dialog, { loan: activeLoan(), copyLabel: 'Evidencias' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Evidencias' })
   try {
     await flush(); await selectHealthy(app.root)
     const boxes = findAll(app.root, n => n.tag === 'input' && n.props.type === 'checkbox')
@@ -238,7 +239,7 @@ test('evidencias disponibles: solo devolución/daño del préstamo; selección e
 })
 test('evidencia ajena provoca lectura fallida, nunca habilita devolución silenciosamente sin evidencias', async () => {
   globalThis.fetch = async url => Response.json(url.endsWith('/return-policy') ? returnPolicy() : [{ id: 'other', loanId: 'foreign', type: 'DANO', originalName: 'Ajena' }])
-  const app = mount(Dialog, { loan: activeLoan(), copyLabel: 'Evidencias' })
+  const app = mount(Dialog, { compatibility: compatibility(), loan: activeLoan(), copyLabel: 'Evidencias' })
   try { await flush(); assert.equal(find(app.root, 'form'), undefined); assert.match(text(app.root), /No se permite cerrar sin política histórica/) }
   finally { app.unmount() }
 })

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { getCategories, durationLabel, type Category } from '../api/inventory-api'
+import { getCategories, getInventoryCompatibility, durationLabel, type Category } from '../api/inventory-api'
+import { inventoryActionAllowed } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from '../components/InventoryCompatibilityNotice.vue'
 import { setCategoryActive, readCategory } from '../api/categories-api'
 import { mutationConfirmation, pendingMutation } from '../../../shared/api/mutation-guard'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
@@ -9,11 +11,12 @@ import CategoryEditorDialog from '../components/CategoryEditorDialog.vue'
 import CategoryDeleteDialog from '../components/CategoryDeleteDialog.vue'
 
 const categories = useRemote(getCategories)
+const compatibility = useRemote(getInventoryCompatibility)
 const editing = ref(false), selected = ref<Category | null>(null), deleting = ref<Category | null>(null)
 const busy = ref(false), error = ref(''), notice = ref('')
-function edit(category: Category | null) { selected.value = category; editing.value = true }
+function edit(category: Category | null) { if (!category && (compatibility.loading.value || compatibility.error.value || !inventoryActionAllowed(compatibility.data.value, 'create'))) return; selected.value = category; editing.value = true }
 async function toggle(category: Category) {
-  if (busy.value) return
+  if (busy.value || (!category.activo && (compatibility.loading.value || compatibility.error.value || !inventoryActionAllowed(compatibility.data.value, 'activate')))) return
   busy.value = true; error.value = ''; notice.value = ''
   try {
     await setCategoryActive(category.id, !category.activo)
@@ -37,19 +40,20 @@ async function consult(category: Category) {
 }
 </script>
 <template>
-  <header class="row categories-heading"><div><h1>Categorías</h1><p class="muted">Condiciones de los recursos. Incluye categorías activas e inactivas.</p></div><button class="primary" :disabled="busy" @click="edit(null)">Nueva categoría</button></header>
+  <header class="row categories-heading"><div><h1>Categorías</h1><p class="muted">Condiciones de los recursos. Incluye categorías activas e inactivas.</p></div><button class="primary" :disabled="busy || compatibility.loading.value || !!compatibility.error.value || !inventoryActionAllowed(compatibility.data.value, 'create')" @click="edit(null)">Nueva categoría</button></header>
+  <RemoteState :loading="compatibility.loading.value" :error="compatibility.error.value" @retry="compatibility.refresh"><InventoryCompatibilityNotice :compatibility="compatibility.data.value" /></RemoteState>
   <p v-if="error" class="error" role="alert">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
   <RemoteState :loading="categories.loading.value" :error="categories.error.value" @retry="categories.refresh">
     <div class="category-list">
       <article v-for="category in categories.data.value" :key="category.id" class="panel category-item">
         <div><h2>{{ category.nombre }}</h2><p class="category-description">{{ category.descripcion || 'Sin descripción' }}</p></div>
         <dl><div><dt>Duración general</dt><dd>{{ durationLabel(category) }}</dd></div><div><dt>Cantidad de recursos</dt><dd>{{ category.resourceCount }}</dd></div><div><dt>Ejemplares</dt><dd>{{ category.copyCount }}</dd></div><div><dt>Estado</dt><dd>{{ category.activo ? 'Activa' : 'Inactiva' }}</dd></div></dl>
-        <div class="row category-actions"><button :disabled="busy" @click="edit(category)">Editar</button><button :disabled="busy || pendingMutation('category-active:' + category.id)" @click="toggle(category)">{{ category.activo ? 'Desactivar' : 'Activar' }}</button><button v-if="pendingMutation('category-active:' + category.id)" :disabled="busy" @click="consult(category)">Consultar estado</button><button :disabled="busy" @click="deleting = category">Eliminar</button></div>
+        <div class="row category-actions"><button :disabled="busy" @click="edit(category)">Editar</button><button :disabled="busy || pendingMutation('category-active:' + category.id) || (!category.activo && (compatibility.loading.value || !!compatibility.error.value || !inventoryActionAllowed(compatibility.data.value, 'activate')))" @click="toggle(category)">{{ category.activo ? 'Desactivar' : 'Activar' }}</button><button v-if="pendingMutation('category-active:' + category.id)" :disabled="busy" @click="consult(category)">Consultar estado</button><button :disabled="busy" @click="deleting = category">Eliminar</button></div>
       </article>
       <p v-if="categories.data.value?.length === 0" class="panel">No hay categorías registradas.</p>
     </div>
   </RemoteState>
-  <CategoryEditorDialog v-if="editing" :category="selected" @close="editing = false" @changed="categories.refresh" />
+  <CategoryEditorDialog v-if="editing" :category="selected" :compatibility="compatibility.loading.value || compatibility.error.value ? null : compatibility.data.value" @close="editing = false" @changed="categories.refresh" />
   <CategoryDeleteDialog v-if="deleting" :category="deleting" @close="deleting = null" @changed="categories.refresh" />
 </template>
 <style scoped>

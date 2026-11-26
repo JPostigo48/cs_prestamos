@@ -35,7 +35,8 @@ const appealStatuses = { PENDIENTE: 'Pendiente de revisión', ACEPTADA: 'Aceptad
             <ol><li v-for="a in detail.current.adjustments" :key="a.id">{{ a.severity }} · versión {{ a.ruleVersionId }} · efectivo {{ a.effectiveDiscount }} puntos · {{ a.previousTrust }} % → {{ a.resultingTrust }} % · <time :datetime="a.effectiveAt">{{ dateTime(a.effectiveAt) }}</time></li></ol>
           </details>
         </section>
-        <p v-else>Sin historial de ajustes: se muestra el antecedente inicial disponible.</p>
+        <p v-else-if="detail.current === null">Sin episodio de ajustes asociado: se muestra el antecedente inicial disponible.</p>
+        <p v-else role="status">Historial de ajustes desconocido en esta respuesta antigua; el antecedente inicial no acredita la consecuencia acumulada actual.</p>
         <p v-if="currentRule?.suspensionType === 'TEMPORAL' || currentRule?.suspensionType === 'INDEFINIDA'" class="suspension">Suspensión {{ currentRule.suspensionType === 'INDEFINIDA' ? 'indefinida' : 'temporal' }}<template v-if="detail.endsAt"> · hasta <time :datetime="detail.endsAt">{{ dateTime(detail.endsAt) }}</time></template><template v-else-if="currentRule.suspensionDays"> · {{ currentRule.suspensionDays }} días</template>.</p>
         <details v-if="detail.appeals.length" class="appeal-details"><summary>Apelaciones de esta sanción ({{ detail.appeals.length }})</summary>
           <article v-for="appeal in detail.appeals" :key="appeal.id"><strong>{{ appealStatuses[appeal.status] }}</strong> · <time :datetime="appeal.submittedAt">{{ dateTime(appeal.submittedAt) }}</time><p>{{ appeal.reason }}</p><p v-if="appeal.resolution">Resolución: {{ appeal.resolution }}</p></article>

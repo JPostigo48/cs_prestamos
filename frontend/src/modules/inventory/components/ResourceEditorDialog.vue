@@ -17,7 +17,9 @@ import RemoteState from '../../../shared/components/RemoteState.vue'
 import { errorMessage, useRemote } from '../../../shared/composables/useRemote'
 import { getSession } from '../../auth/api/auth-api'
 import { Package, ClipboardList, Clock, Layers } from '@lucide/vue'
-const props = defineProps<{ resource: Resource | null; categories: Category[] }>()
+import { inventoryActionAllowed, type InventoryCompatibility } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from './InventoryCompatibilityNotice.vue'
+const props = defineProps<{ resource: Resource | null; categories: Category[]; compatibility?: InventoryCompatibility | null }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
 const id = ref(props.resource?.id ?? null),
   name = ref(props.resource?.nombre ?? ''),
@@ -35,25 +37,32 @@ const category = computed(() => props.categories.find((c) => c.id === categoryId
 const canConfigure = getSession()?.user.role === 'ADMINISTRADOR'
 const accessories = useRemote(signal => id.value ? getAccessories(id.value, signal) : Promise.resolve(null), id)
 const details = useRemote(signal => id.value ? getResource(id.value, signal) : Promise.resolve(null), id)
+const compatibility = computed(() => {
+  if (!id.value) return props.compatibility ?? null
+  if (details.loading.value || details.error.value) return null
+  return details.data.value ? details.data.value.compatibility : props.resource?.compatibility ?? null
+})
+const descriptiveOnly = computed(() => !inventoryActionAllowed(compatibility.value, 'manageCopy'))
 const existingParts = ref<AccessoryInput[]>([])
 watch(accessories.data, value => { if (value) existingParts.value = value.items.map(item => ({ ...item })) })
 watch(details.data, value => { if (value) hours.value = value.loanPolicy.durationHours })
 async function save() {
-  if (busy.value || !canConfigure) return
+  if (busy.value || !canConfigure || (!id.value && !inventoryActionAllowed(compatibility.value, 'create'))) return
   sending.value = true
   error.value = ''
   notice.value = ''
   try {
     const result = await saveResource(id.value, {
       nombre: name.value.trim(),
-      categoriaId: categoryId.value,
+      categoriaId: id.value && descriptiveOnly.value ? details.data.value?.categoriaId ?? props.resource?.categoriaId ?? categoryId.value : categoryId.value,
       ...(description.value.trim()
         ? { descripcion: description.value.trim() }
         : id.value
           ? { descripcion: null }
           : {}),
-    })
+    }, { descriptiveOnly: !!id.value && descriptiveOnly.value })
     id.value = result.id
+    await details.refresh()
     notice.value =
       'Datos básicos confirmados. Ejemplares, accesorios y excepción de duración se guardan por separado.'
     emit('changed')
@@ -107,13 +116,14 @@ async function extra(kind: 'parts' | 'policy') {
     @close="emit('close')"
   >
     <div class="resource-editor">
+    <InventoryCompatibilityNotice :compatibility="compatibility" />
     <nav v-if="id" class="editor-tabs" aria-label="Secciones del recurso"><button :aria-pressed="section === 'basic'" :disabled="busy" @click="section = 'basic'"><Package :size="16" aria-hidden="true" /> Recurso</button><button :aria-pressed="section === 'copies'" :disabled="busy" @click="section = 'copies'"><Layers :size="16" aria-hidden="true" /> Ejemplares</button><button :aria-pressed="section === 'parts'" :disabled="busy" @click="section = 'parts'"><ClipboardList :size="16" aria-hidden="true" /> Accesorios</button><button :aria-pressed="section === 'policy'" :disabled="busy" @click="section = 'policy'"><Clock :size="16" aria-hidden="true" /> Duración</button></nav>
     <form v-show="section === 'basic'" class="stack" @submit.prevent="save">
       <fieldset :disabled="busy || !canConfigure" class="basic-fields">
         <legend>Datos del recurso</legend>
         <label>Nombre<input v-model="name" required maxlength="180" /></label>
         <label
-          >Categoría<select v-model="categoryId" required>
+          >Categoría<select v-model="categoryId" required :disabled="!!id && descriptiveOnly">
             <option value="">Seleccionar</option>
             <option v-for="item in categories" :key="item.id" :value="item.id" :disabled="item.activo === false">
               {{ item.nombre }}{{ item.activo === false ? ' (inactiva)' : '' }}
@@ -124,7 +134,7 @@ async function extra(kind: 'parts' | 'policy') {
         <p v-if="category" class="category-policy full-field"><Clock :size="16" aria-hidden="true" />
           Duración de la categoría: {{ durationLabel(category) }}. Esta regla se hereda; guardar el recurso no modifica la categoría.
         </p>
-        <button v-if="canConfigure" class="primary full-field" :disabled="sending || !name.trim() || !categoryId || category?.activo === false">
+        <button v-if="canConfigure" class="primary full-field" :disabled="sending || !name.trim() || !categoryId || (!descriptiveOnly && category?.activo === false) || (!id && !inventoryActionAllowed(compatibility, 'create'))">
           Guardar datos básicos
         </button>
       </fieldset>
@@ -136,6 +146,7 @@ async function extra(kind: 'parts' | 'policy') {
         :key="id"
         :resource-id="id"
         :disabled="sending"
+        :compatibility="details.loading.value || details.error.value ? null : compatibility"
         @busy="copyBusy = $event"
         @changed="emit('changed')"
       /></section>

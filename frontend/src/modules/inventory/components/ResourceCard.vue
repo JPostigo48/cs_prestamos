@@ -4,21 +4,24 @@ import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { useRoute } from 'vue-router'
 import { resourceDestination } from '../catalog-query'
 import { durationLabel, type Category, type Resource } from '../api/inventory-api'
+import InventoryCompatibilityNotice from './InventoryCompatibilityNotice.vue'
 defineProps<{ resource: Resource; category?: Category; management?: boolean; grouped?: boolean }>()
 const route = useRoute()
 </script>
 <template>
   <article class="panel resource-card" :class="{ grouped, management }">
     <div class="card-content">
-      <span class="mobile-stock" :class="{ unavailable: resource.availableCopies === 0 }">{{ resource.availableCopies ? resource.availableCopies + ' disponibles' : 'Sin disponibilidad' }}</span>
-      <span v-if="management" class="management-stock" :class="{ unavailable: resource.availableCopies === 0 }">{{ resource.availableCopies }}<small> disponibles</small></span>
+      <span class="mobile-stock" :class="{ unavailable: resource.availableCopies === 0 }">{{ resource.availableCopies === null ? 'Disponibilidad desconocida' : resource.availableCopies + ' disponibles' }}</span>
+      <span v-if="management" class="management-stock" :class="{ unavailable: resource.availableCopies === 0 }">{{ resource.availableCopies ?? 'Desconocida' }}<small> disponibles</small></span>
       <span class="category-label">{{ category?.nombre || 'Categoría no disponible' }}</span>
       <h2>
         <RouterLink :to="resourceDestination(resource.id, route.query, management)">{{ resource.nombre }}</RouterLink>
       </h2>
       <p class="muted description">{{ resource.descripcion || 'Sin descripción registrada.' }}</p>
+      <p>Stock registrado: {{ resource.totalCopies ?? 'desconocido' }} ejemplares.</p>
+      <InventoryCompatibilityNotice :compatibility="resource.compatibility" />
       <footer>
-        <StatusBadge :tone="resource.availableCopies > 0 ? 'success' : 'danger'">{{ resource.availableCopies }} disponibles</StatusBadge>
+        <StatusBadge :tone="resource.availableCopies === null ? 'neutral' : resource.availableCopies > 0 ? 'success' : 'danger'">{{ resource.availableCopies === null ? 'Disponibilidad desconocida' : resource.availableCopies + ' disponibles' }}</StatusBadge>
         <span v-if="category" class="duration"><Clock :size="14" aria-hidden="true" /> {{ durationLabel({ ...category, tiempoMaximoPrestamoHoras: resource.durationHours ?? category.tiempoMaximoPrestamoHoras }) }}</span>
         <span class="detail-hint" aria-hidden="true">Ver detalle →</span>
       </footer>

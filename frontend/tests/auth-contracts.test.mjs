@@ -120,7 +120,7 @@ test('contrato de revisión: approvalBlockers vacío permite; ausente, inválido
 })
 
 test('registro incierto o respuesta 2xx incompatible bloquean repetición; 4xx conocido permite corregir', async () => {
-  const body = { name: 'Prueba', email: 'user@unsa.edu.pe', password: 'Clave-2026!', userType: 'DOCENTE', evidence: [png], termsVersionId: 'terms' }
+  const body = { name: 'Prueba', email: 'user@unsa.edu.pe', password: 'Clave-2026!', userType: 'DOCENTE', institutionalId: 'DOC-123', phone: '999123456', evidence: [png], termsVersionId: 'terms' }
   let calls = 0
   try {
     for (const response of [Response.json({}, { status: 500 }), Response.json({ status: 'APROBADA' })]) {

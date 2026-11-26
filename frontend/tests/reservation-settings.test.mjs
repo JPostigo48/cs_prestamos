@@ -15,7 +15,8 @@ const settings = (weeklySchedule = null) => ({ pickupWaitMinutes: 30, weeklySche
 const week = () => Array.from({ length: 7 }, (_, i) => ({ day: i + 1, intervals: [{ opens: '08:00', closes: '12:00' }, { opens: '13:00', closes: '18:00' }] }))
 const input = (root, type) => findAll(root, n => n.tag === 'input' && n.props.type === type)[0]
 function setup(role = 'USUARIO') { testEnvironment(); auth.saveSession(session(role)) }
-const copies = [{ id: 'copy-settings', estado: 'DISPONIBLE', codigoInventario: 'C1' }]
+const copies = [{ id: 'copy-settings', estado: 'DISPONIBLE', codigoInventario: 'C1', condicionFisica: 'APTO', habilitado: true,
+  compatibility: { status: 'READY', message: null, capabilities: { physicalCondition: true, administrativeEnablement: true, verifiedAvailability: true }, actions: { descriptiveEdits: true, create: true, activate: true, release: true, rehabilitate: true, manageCopy: true } } }]
 
 test('Lima, presets futuros redondeados y cruce de medianoche sin zona del dispositivo', () => {
   const now = Date.parse('2026-11-05T04:59:40Z')
