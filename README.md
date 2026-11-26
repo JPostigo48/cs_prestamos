@@ -98,6 +98,18 @@ npm run front
 
 `db` inicia PostgreSQL en segundo plano. `back` y `front` mantienen procesos activos y deben ejecutarse en terminales separadas. La ruta `/login` requiere el backend en el puerto 3000; Vite redirige `/api` a ese servidor. `/prototype` continúa disponible sin backend como demostración. Project Showcase puede actualizar sus datos y SVG con `npm run project:generate`; los requisitos de generación están en [`frontend/README.md`](frontend/README.md).
 
+### Actualizar el esquema de la base configurada
+
+Desde la raíz, con el backend detenido, se pueden consultar y aplicar las migraciones pendientes a la conexión ya configurada (incluida Neon):
+
+```bash
+npm run prisma:status
+npm run prisma
+npm run prisma:status
+```
+
+Estos alias ejecutan la CLI local dentro del backend. `prisma` aplica las migraciones pendientes existentes; no es generación de tipos, reset ni seed. Sus efectos dependen de cada migración y deben revisarse antes de aplicarlas. Si un comando falla, no continuar con el siguiente. Después de una aplicación exitosa, volver a iniciar el backend. No hace falta iniciar el servicio Docker si la conexión utilizada es Neon.
+
 ## Arquitectura
 
 El backend separa cada módulo en las capas que necesita:
