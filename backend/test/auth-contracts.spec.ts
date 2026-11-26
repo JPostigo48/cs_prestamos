@@ -40,6 +40,7 @@ import { GetRegistrationRequestUseCase } from '../src/modules/users/application/
 import { ApproveRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/approve-registration-request.use-case.js';
 import { RejectRegistrationRequestUseCase } from '../src/modules/users/application/use-cases/reject-registration-request.use-case.js';
 import { ListRegistrationRequestsUseCase } from '../src/modules/users/application/use-cases/list-registration-requests.use-case.js';
+import { SupabaseStorageService } from '../src/shared/infrastructure/storage/supabase-storage.service.js';
 
 vi.mock('dotenv/config', () => ({}));
 const userId = '123e4567-e89b-42d3-a456-426614174001';
@@ -72,6 +73,8 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
   };
   const states = { findById: vi.fn().mockImplementation(async () => account) };
   const submitBasic = vi.fn();
+  const getRequest = vi.fn();
+  const sign = vi.fn().mockResolvedValue('https://project.supabase.co/storage/v1/object/sign/loan-evidence/registration-evidence/document.pdf?token=new');
 
   beforeAll(async () => {
     vi.stubEnv('GOOGLE_CLIENT_ID', '');
@@ -92,6 +95,7 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       ApproveRegistrationRequestUseCase,
       RejectRegistrationRequestUseCase,
       ListRegistrationRequestsUseCase,
+      SupabaseStorageService,
     ];
     Reflect.defineMetadata(
       'design:paramtypes',
@@ -130,7 +134,8 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
         })),
         ...reviewTypes.map((provide) => ({
           provide,
-          useValue: { execute: submitBasic },
+          useValue: provide === SupabaseStorageService ? { createSignedUrl: sign }
+            : provide === GetRegistrationRequestUseCase ? { execute: getRequest } : { execute: submitBasic },
         })),
       ],
     })
@@ -158,6 +163,24 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
     states.findById.mockResolvedValue({ ...account, role });
     return role;
   }
+  it('PDF signatures require staff, resolve evidence only from requested record, renew and disable HTTP caching', async () => {
+    const path = `/users/registration-requests/${otherId}/evidence/0`;
+    const metadata = { kind: 'pdf', bucket: 'loan-evidence', path: 'registration-evidence/document.pdf', originalName: 'constancia.pdf', mimeType: 'application/pdf', sizeBytes: 100, hash: 'a'.repeat(64) };
+    getRequest.mockResolvedValue({ evidence: [{ information: JSON.stringify(metadata) }] });
+    await request(app.getHttpServer()).get(path).expect(401);
+    await request(app.getHttpServer()).get(path).auth(authorize(AccessRole.USER), { type: 'bearer' }).expect(403);
+    expect(sign).not.toHaveBeenCalled();
+    for (const role of [AccessRole.OPERATOR, AccessRole.ADMINISTRATOR]) {
+      const response = await request(app.getHttpServer()).get(path).auth(authorize(role), { type: 'bearer' }).expect(200);
+      expect(response.headers['cache-control']).toContain('no-store');
+      expect(response.headers.pragma).toBe('no-cache');
+    }
+    expect(sign).toHaveBeenCalledTimes(2);
+    expect(getRequest).toHaveBeenLastCalledWith({ requestId: otherId });
+    expect(sign).toHaveBeenLastCalledWith(metadata.path, metadata.bucket);
+    await request(app.getHttpServer()).get(path.replace('/evidence/0', '/evidence/1')).auth(authorize(AccessRole.OPERATOR), { type: 'bearer' }).expect(400);
+    expect(sign).toHaveBeenCalledTimes(2);
+  });
   it('F10 requires admin, validates exact userId, returns only safe fields', async () => {
     await request(app.getHttpServer()).get('/auth/accounts').expect(401);
     for (const role of [AccessRole.USER, AccessRole.OPERATOR])
@@ -220,6 +243,8 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       email: 'new@unsa.edu.pe',
       password: 'isolated-test',
       userType: 'ESTUDIANTE',
+      institutionalId: 'DOC-123',
+      phone: '999123456',
       termsVersionId: otherId,
       evidence: [
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1kAAAAASUVORK5CYII=',
@@ -231,6 +256,8 @@ describe('Auth contracts HTTP + live Swagger metadata, no DB or generated artifa
       'email',
       'password',
       'userType',
+      'institutionalId',
+      'phone',
       'termsVersionId',
       'evidence',
     ] as const) {

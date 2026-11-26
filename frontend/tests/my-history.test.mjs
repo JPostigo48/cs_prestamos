@@ -4,6 +4,7 @@ import { activeLoan, closedLoan, requestId } from './helpers/loan-closure-fixtur
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadModule, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, text } from './helpers/renderer.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const { historyState } = await loadModule('modules/loans/pages/MyHistoryPage')
@@ -253,7 +254,7 @@ test('historial: carga visible sin clic y cancelar recarga ambas fuentes sin rep
       return Response.json({ items: [{ ...reservation, ...(cancelled ? { status: 'CANCELADA', cancelledAt: futureIso(0) } : {}) }], total: 1, page: 1, limit: 100 })
     }
     if (String(url).includes('/history')) { reads++; return Response.json([]) }
-    return Response.json({ id: 'copy-ux', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'UX', recurso: { id: 'resource-ux', nombre: 'Recurso UX' } })
+    return Response.json({ id: 'copy-ux', recursoId: 'resource-ux', estado: 'RESERVADO', compatibility: compatibility(), condicionFisica: 'APTO', habilitado: true, codigoInventario: 'UX', recurso: { id: 'resource-ux', nombre: 'Recurso UX' } })
   }
   const app = mount(Page)
   try {

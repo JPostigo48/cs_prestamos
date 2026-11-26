@@ -7,7 +7,8 @@ import type { LoanEvidence } from '../api/closure-contracts'
 import type { ReturnPolicy } from '../return-policy'
 import { useLoanClosure } from '../useLoanClosure'
 import ClosureResult from './ClosureResult.vue'
-const props = defineProps<{ loan: Loan; copyLabel: string }>()
+import { inventoryActionAllowed, inventoryCompatibilityMessage, type InventoryCompatibility } from '../../inventory/api/compatibility-contracts'
+const props = defineProps<{ loan: Loan; copyLabel: string; compatibility?: InventoryCompatibility | null }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
 const closure = useLoanClosure(props.loan.id, () => emit('changed'))
 const { busy, locked, result, error, notice, pending, reconciled } = closure
@@ -20,13 +21,14 @@ async function load() {
   finally { loading.value = false }
 }
 async function confirm() {
-  if ((kind.value !== 'PERDIDA' && kind.value !== 'ROBO') || props.loan.status !== 'ACTIVO' || !confirmed.value || !description.value.trim() || !policy.value || locked.value || busy.value) return
+  if (!inventoryActionAllowed(props.compatibility, 'release') || (kind.value !== 'PERDIDA' && kind.value !== 'ROBO') || props.loan.status !== 'ACTIVO' || !confirmed.value || !description.value.trim() || !policy.value || locked.value || busy.value) return
   await closure.send({ requestId: crypto.randomUUID(), kind: kind.value, confirmed: true, description: description.value.trim(), evidenceIds: [...evidenceIds.value] })
 }
 onMounted(() => { if (!locked.value) void load() })
 </script>
 <template>
   <ModalDialog title="Cerrar por pérdida o robo" :subtitle="copyLabel" :busy="busy || loading" @close="emit('close')">
+    <p v-if="inventoryCompatibilityMessage(compatibility)" role="status">{{ inventoryCompatibilityMessage(compatibility) }} No se habilita un cierre nuevo; el servidor revalida las garantías del cierre integral.</p>
     <ClosureResult v-if="result" :loan="result" />
     <form v-else-if="policy && !locked" class="stack" @submit.prevent="confirm">
       <fieldset :disabled="busy" class="stack"><legend>Incidente terminal confirmado</legend>
@@ -37,7 +39,7 @@ onMounted(() => { if (!locked.value) void load() })
         <fieldset><legend>Evidencias de pérdida del mismo préstamo</legend><label v-for="e in evidence" :key="e.id"><input v-model="evidenceIds" type="checkbox" :value="e.id" />{{ e.originalName }}</label><p v-if="!evidence.length">Sin evidencias disponibles; colección vacía permitida.</p></fieldset>
         <label><input v-model="confirmed" type="checkbox" required /> Confirmo la pérdida o robo y el cierre irreversible por incidencia, no una devolución.</label>
       </fieldset>
-      <button class="primary" :disabled="(kind !== 'PERDIDA' && kind !== 'ROBO') || loan.status !== 'ACTIVO' || busy || !confirmed || !description.trim()">Confirmar cierre por incidencia</button>
+      <button class="primary" :disabled="!inventoryActionAllowed(compatibility, 'release') || (kind !== 'PERDIDA' && kind !== 'ROBO') || loan.status !== 'ACTIVO' || busy || !confirmed || !description.trim()">Confirmar cierre por incidencia</button>
     </form>
     <p v-if="loading" role="status">Consultando política y evidencias…</p>
     <button v-if="!loading && !policy && !locked" @click="load">Reintentar lectura</button>

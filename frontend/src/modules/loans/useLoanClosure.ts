@@ -19,7 +19,9 @@ export function useLoanClosure(id: string, changed: () => void) {
       locked.value = hasPendingReturn(id)
       pending.value = getPendingClosure(id)
       reconciled.value = false
-      error.value = uncertainReturn(cause instanceof ApiError ? cause.status : undefined)
+      error.value = cause instanceof ApiError && cause.status === 503
+        ? errorMessage(cause) + ' Cierre integral temporalmente no disponible. Se conservan la intención, el cuerpo y la clave; no se utilizará una devolución básica alternativa.'
+        : uncertainReturn(cause instanceof ApiError ? cause.status : undefined)
         ? 'Resultado incierto. Se conservan la clave y el cuerpo; consulta el cierre antes de reintentar.' : errorMessage(cause)
       if (locked.value && uncertainReturn(cause instanceof ApiError ? cause.status : undefined)) {
         try {

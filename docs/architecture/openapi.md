@@ -3,6 +3,11 @@
 La fuente es Nest: controllers y DTOs de presentación de cada módulo. No editar
 manualmente los JSON generados ni mantener una matriz paralela de roles en Vue.
 
+Estado posterior de compatibilidad y registro: **84 operaciones, 129 esquemas**,
+ambas copias regeneradas. Prueba focal: **117/118**; permanece la omisión de
+[closureHistory](../../backend/src/modules/loans/domain/entities/loan.ts:35)
+en el DTO, sin ocultar el fallo estricto. [Resultados y límites](../development/final-contract-integration.md:1).
+
 ## Generación focalizada, sin base de datos
 
 Desde la raíz del repositorio:
@@ -20,10 +25,17 @@ sin proveedores de negocio, inicialización de Prisma, seeds ni servidor HTTP.
 El modo focalizado de Showcase copia exclusivamente el JSON; no procesa notas,
 planificación ni diagramas. La comprobación compara ambas copias con la generación.
 
+En Windows usar el wrapper del comando focal, no la suite backend predeterminada:
+[test-openapi.ts](../../backend/scripts/test-openapi.ts:1) normaliza la ruta
+canónica y dirige el cargador de entorno al dispositivo nulo. La
+[prueba documental](../../backend/test/openapi-contract.spec.ts:42) también
+anula ese cargador. No necesita configuración de DB ni debe sustituirse por
+una ejecución general que pueda leer el entorno.
+
 Salidas: [backend](../../backend/openapi.json) y
 [copia de Showcase](../../frontend/public/generated/project/openapi.json).
 
-Corte de integración de episodios (25/11/2026): 84 operaciones desde fuentes,
+Corte histórico de integración de episodios (25/11/2026): 84 operaciones desde fuentes,
 117 pruebas OpenAPI aprobadas; catálogo ORM con 25 modelos, 13 enums y 84
 direcciones de relación. Se usaron exclusivamente los modos focales anteriores
 y el modo DB inferior, no la generación completa. La migración de episodios
@@ -62,7 +74,9 @@ apelaciones tienen controles adicionales documentados en las respuestas.
 - Catálogo: `{ data, total, page, limit }`; usuarios y solicitudes:
   `{ items, total, page, limit }`.
 - Disponibilidad expone `disponibles`, `prestados` y `noDisponibles`; el total
-  incluye reservas aunque no se exponga un contador separado.
+  incluye reservas y expone también su contador y stock registrado. Con esquema
+  físico incompleto, disponibilidad desconocida es nula, no cero; catálogo y
+  ocupación legacy se conservan. [Matriz vigente](../development/final-contract-integration.md:13).
 - Reservas y devoluciones usan fechas `date-time`; devolución y recogida
   responden 201. Cancelar reserva devuelve su objeto con 200, no 204.
   No hay operaciones 204 actualmente; el validador exige ausencia de contenido
@@ -70,8 +84,11 @@ apelaciones tienen controles adicionales documentados en las respuestas.
 - Auth documenta solo la cuenta segura, sin hash. Registrar cuenta requiere
   administrador, pero el caso de uso sigue creando exclusivamente rol USUARIO.
 - Registro público canónico: POST /auth/registration-requests recibe el formulario
-  integral (contraseña writeOnly, evidencia PNG/JPEG hasta 60 KiB y versión de
-  términos). POST /users/registration-requests está obsoleto y responde solo 410,
+  integral (contraseña writeOnly, evidencia PNG/JPEG hasta 60 KiB o PDF hasta
+  10 MiB y versión de términos). Todos los campos nuevos son requeridos,
+  incluidos identificador y teléfono. JSON hasta 15 MiB solo en esa ruta;
+  otras rutas conservan 100 KiB. Correo normalizado de dominio exacto;
+  contraseña no recortada y no solo blancos. POST /users/registration-requests está obsoleto y responde solo 410,
   sin cuerpo de alta ni éxito ficticio; el validador admite esta retirada explícita
   con esquema de error. Consultar/aprobar/rechazar solicitudes se conserva.
   La aprobación crea atómicamente usuario, vinculación, cuenta habilitada USUARIO

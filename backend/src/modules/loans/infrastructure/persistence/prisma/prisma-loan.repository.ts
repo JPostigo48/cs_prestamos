@@ -22,6 +22,7 @@ import {
 
 import { PrismaLoanClosure } from './prisma-loan-closure.js';
 import { restoreClosedLoan, type CloseLoanData } from '../../../domain/entities/loan-closure.js';
+import type { KnownSchemaCapabilities } from '../../../../../shared/infrastructure/prisma/schema-capabilities.js';
 
 @Injectable()
 export class PrismaLoanRepository implements LoanRepository {
@@ -70,13 +71,23 @@ export class PrismaLoanRepository implements LoanRepository {
   }
 
   private async withReturns(rows: any[]): Promise<Loan[]> {
+    const read = (snapshot: KnownSchemaCapabilities) => this.readReturns(rows, snapshot);
+    return this.prisma.schemaCapabilities.read('loanClosure', 'loans.read', read, read);
+  }
+
+  private async readReturns(rows: any[], snapshot: KnownSchemaCapabilities): Promise<Loan[]> {
+    // Read only the actual columns required, independent of write constraints.
+    const closureHistoryAvailable = ['prestamoId', 'resultado'].every(
+      (name) => snapshot.capabilities[`column:cierres_prestamo.${name}`] === true,
+    );
     return Promise.all(
       rows.map(async (row) => {
-        const closed = await this.runtime().query(
+        const closed = closureHistoryAvailable ? await this.runtime().query(
           this.prisma.sql.public.cierres_prestamo.select('resultado')
             .where((r, f) => f.eq(r.prestamoId, row.id)).limit(1).build(),
-        );
-        if (closed[0]) return restoreClosedLoan(closed[0].resultado);
+        ) : [];
+        const closureHistory = closureHistoryAvailable ? 'AVAILABLE' : 'UNAVAILABLE';
+        if (closed[0]) return { ...restoreClosedLoan(closed[0].resultado), closureHistory };
         const returns = await this.runtime().query(
           this.prisma.sql.public.devoluciones
             .select('id', 'prestamoId', 'fecha', 'observacion')
@@ -92,6 +103,7 @@ export class PrismaLoanRepository implements LoanRepository {
         );
         return {
           ...this.map(row, returns[0] ?? null),
+          closureHistory,
           returnChecklist: inspections[0]
             ? this.mapChecklist(inspections[0])
             : null,

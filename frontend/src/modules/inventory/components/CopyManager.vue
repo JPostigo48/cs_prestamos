@@ -7,9 +7,11 @@ import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { getSession } from '../../auth/api/auth-api'
 import RehabilitateCopyDialog from './RehabilitateCopyDialog.vue'
 import { isStaff } from '../../auth/access-policy'
+import { inventoryActionAllowed, type InventoryCompatibility } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from './InventoryCompatibilityNotice.vue'
 const canCreate = getSession()?.user.role === 'ADMINISTRADOR'
 const canManage = isStaff(getSession()?.user.role ?? 'USUARIO')
-const props = defineProps<{ resourceId: string; disabled?: boolean }>()
+const props = defineProps<{ resourceId: string; disabled?: boolean; compatibility?: InventoryCompatibility | null }>()
 const emit = defineEmits<{ changed: []; busy: [value: boolean] }>()
 const copies = useRemote((signal) => getCopies(props.resourceId, signal))
 const code = ref(''),
@@ -18,10 +20,14 @@ const code = ref(''),
   notice = ref('')
 const selected = ref<Copy | null>(null)
 const rehabilitating = ref<Copy | null>(null)
-function choose(copy: Copy) { if (copy.estado === 'NO_DISPONIBLE') rehabilitating.value = copy; else selected.value = copy }
+function canChange(copy: Copy) {
+  return !props.disabled && !copies.loading.value && !copies.error.value && inventoryActionAllowed(props.compatibility, 'manageCopy') && inventoryActionAllowed(copy.compatibility, 'manageCopy') &&
+    (copy.estado === 'DISPONIBLE' || (copy.estado === 'NO_DISPONIBLE' && copy.habilitado === true && inventoryActionAllowed(copy.compatibility, 'rehabilitate') && inventoryActionAllowed(copy.compatibility, 'release')))
+}
+function choose(copy: Copy) { if (!canChange(copy)) return; if (copy.estado === 'NO_DISPONIBLE') rehabilitating.value = copy; else selected.value = copy }
 async function rehabilitated() { await copies.refresh(); notice.value = 'Rehabilitación verificada, sin cambios en sanciones ni confianza.'; emit('changed') }
 async function add() {
-  if (sending.value || props.disabled || !code.value.trim() || !canCreate) return
+  if (sending.value || props.disabled || !code.value.trim() || !canCreate || !inventoryActionAllowed(props.compatibility, 'create')) return
   sending.value = true
   emit('busy', true)
   error.value = ''
@@ -40,7 +46,7 @@ async function add() {
   }
 }
 async function state() {
-  if (!selected.value || sending.value || props.disabled || !canManage) return
+  if (!selected.value || sending.value || !canChange(selected.value) || !canManage) return
   sending.value = true
   emit('busy', true)
   error.value = ''
@@ -65,17 +71,19 @@ async function state() {
 <template>
   <section class="stack copy-manager">
     <h3>Ejemplares y códigos de inventario</h3>
+    <InventoryCompatibilityNotice :compatibility="compatibility" />
     <p class="muted">Cada ejemplar tiene un código único. Las cantidades se calculan a partir de los ejemplares registrados.</p>
     <RemoteState :loading="copies.loading.value" :error="copies.error.value" @retry="copies.refresh"
       ><p v-if="copies.data.value">Total exacto: {{ copies.data.value.length }}</p>
       <ul class="copy-list">
         <li v-for="copy in copies.data.value" :key="copy.id">
           <div><strong>{{ copy.codigoInventario }}</strong><StatusBadge :tone="copy.estado === 'DISPONIBLE' ? 'success' : copy.estado === 'NO_DISPONIBLE' ? 'neutral' : 'warning'">{{ copy.estado.replaceAll('_', ' ') }}</StatusBadge></div>
-          <p>Condición: {{ copy.condicionFisica ?? 'Sin clasificación: requiere verificación' }} · {{ copy.habilitado ? 'Habilitado administrativamente' : 'Deshabilitado administrativamente' }}<span v-if="copy.estado === 'NO_DISPONIBLE'"> · Retenido / no prestable</span></p>
+          <p>Condición: {{ copy.condicionFisica ?? 'Desconocida: requiere verificación' }} · {{ copy.habilitado === null ? 'Habilitación administrativa desconocida' : copy.habilitado ? 'Habilitado administrativamente' : 'Deshabilitado administrativamente' }}<span v-if="copy.estado === 'NO_DISPONIBLE'"> · Retenido / no prestable</span></p>
+          <InventoryCompatibilityNotice v-if="copy.compatibility?.status !== compatibility?.status" :compatibility="copy.compatibility" />
           <button
             v-if="canManage && (copy.estado === 'DISPONIBLE' || copy.estado === 'NO_DISPONIBLE')"
             type="button"
-            :disabled="sending || disabled || (copy.estado === 'NO_DISPONIBLE' && !copy.habilitado)"
+            :disabled="sending || !canChange(copy)"
             @click="choose(copy)"
           >
             {{ copy.estado === 'DISPONIBLE' ? 'Retener' : 'Verificar rehabilitación' }}
@@ -87,17 +95,17 @@ async function state() {
     <div v-if="selected" class="panel copy-confirmation" role="group" aria-label="Confirmar cambio de disponibilidad">
       <p>¿Cambiar disponibilidad de {{ selected.codigoInventario }}?</p>
       <button type="button" :disabled="sending" @click="selected = null">Cancelar</button
-      ><button type="button" :disabled="sending" @click="state">Confirmar cambio</button>
+      ><button type="button" :disabled="sending || !canChange(selected)" @click="state">Confirmar cambio</button>
     </div>
-    <RehabilitateCopyDialog v-if="rehabilitating" :copy="rehabilitating" @close="rehabilitating = null" @changed="rehabilitated" @busy="sending = $event; emit('busy', $event)" />
+    <RehabilitateCopyDialog v-if="rehabilitating" :copy="rehabilitating" :disabled="!canChange(rehabilitating)" @close="rehabilitating = null" @changed="rehabilitated" @busy="sending = $event; emit('busy', $event)" />
     <form v-if="canCreate" class="row" @submit.prevent="add">
       <label
         >Código único del nuevo ejemplar<input
           v-model="code"
           required
           maxlength="80"
-          :disabled="sending" /></label
-      ><button class="primary" :disabled="sending || disabled || !code.trim()">Añadir ejemplar</button>
+          :disabled="sending || disabled || !inventoryActionAllowed(compatibility, 'create')" /></label
+      ><button class="primary" :disabled="sending || disabled || !code.trim() || !inventoryActionAllowed(compatibility, 'create')">Añadir ejemplar</button>
     </form>
     <p v-if="error" role="alert" class="error">{{ error }}</p>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>

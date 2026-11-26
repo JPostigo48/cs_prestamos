@@ -5,6 +5,8 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import { LoanOverdueSynchronizer } from './loan-overdue-synchronizer.js';
+import { LoanJobMonitor } from './loan-job-monitor.js';
+import { SchemaCapabilityUnavailableException } from '../../../shared/infrastructure/prisma/schema-capabilities.js';
 
 export const OVERDUE_BATCH_SIZE = 25;
 export const OVERDUE_MAX_BATCHES = 4;
@@ -12,10 +14,12 @@ export const OVERDUE_MAX_BATCHES = 4;
 @Injectable()
 export class LoanOverdueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(LoanOverdueService.name);
+  private readonly monitor = new LoanJobMonitor(this.logger);
   private timer: ReturnType<typeof setInterval> | null = null;
   private running = false;
   private stopped = false;
   private cursor: string | null = null;
+  private traversalFailed = false;
 
   constructor(private readonly synchronizer: LoanOverdueSynchronizer) {}
 
@@ -36,6 +40,9 @@ export class LoanOverdueService implements OnModuleInit, OnModuleDestroy {
     if (this.running || this.stopped) return;
     this.running = true;
     try {
+      // Before candidates: their legacy-only query cannot diagnose episode support.
+      await this.synchronizer.assertAvailable();
+      let completed = false;
       const at = new Date();
       for (
         let batch = 0;
@@ -51,22 +58,25 @@ export class LoanOverdueService implements OnModuleInit, OnModuleDestroy {
           if (this.stopped) return;
           try {
             await this.synchronizer.synchronizeLoan(row.usuarioId, row.id);
-          } catch {
-            this.logger.warn(
-              'No se pudo reevaluar un préstamo; se reintentará en el siguiente recorrido.',
-            );
+          } catch (error) {
+            if (error instanceof SchemaCapabilityUnavailableException) throw error;
+            this.traversalFailed = true;
+            this.monitor.failed(error);
           }
           this.cursor = row.id;
         }
         if (rows.length < OVERDUE_BATCH_SIZE) {
           this.cursor = null;
+          completed = true;
           break;
         }
       }
-    } catch {
-      this.logger.error(
-        'No se pudo consultar la mora pendiente; se reintentará en el siguiente ciclo.',
-      );
+      if (completed && !this.traversalFailed) this.monitor.ready();
+      // The next traversal, not an empty cursor tail, can prove recovery.
+      if (completed) this.traversalFailed = false;
+    } catch (error) {
+      if (this.cursor !== null) this.traversalFailed = true;
+      this.monitor.failed(error);
     } finally {
       this.running = false;
     }

@@ -1,7 +1,18 @@
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number) {
+  readonly code?: 'SCHEMA_CAPABILITY_UNAVAILABLE'
+  readonly operation?: string
+  readonly diagnostic?: 'SCHEMA_INCOMPLETE' | 'SCHEMA_UNKNOWN'
+
+  constructor(message: string, readonly status: number, metadata?: {
+    code: 'SCHEMA_CAPABILITY_UNAVAILABLE'
+    operation?: string
+    diagnostic?: 'SCHEMA_INCOMPLETE' | 'SCHEMA_UNKNOWN'
+  }) {
     super(message)
     this.name = 'ApiError'
+    this.code = metadata?.code
+    this.operation = metadata?.operation
+    this.diagnostic = metadata?.diagnostic
   }
 }
 
@@ -35,6 +46,22 @@ export async function apiRequest<T>(
   const payload: unknown = await response.json().catch(() => null)
   if (!response.ok) {
     if (response.status === 401 && options.token) unauthorizedHandler?.(options.token)
+    if (response.status === 503 && payload && typeof payload === 'object'
+      && 'code' in payload && payload.code === 'SCHEMA_CAPABILITY_UNAVAILABLE') {
+      // Only the stable capability envelope is projected. Never echo SQL/provider details.
+      const operation = 'operation' in payload && typeof payload.operation === 'string'
+        && payload.operation.length <= 96 && /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*){1,3}$/.test(payload.operation)
+        ? payload.operation : undefined
+      const diagnostic = 'diagnostic' in payload
+        && (payload.diagnostic === 'SCHEMA_INCOMPLETE' || payload.diagnostic === 'SCHEMA_UNKNOWN')
+        ? payload.diagnostic : undefined
+      throw new ApiError(
+        'La operación no está disponible temporalmente. Intente nuevamente más tarde.'
+          + ' [SCHEMA_CAPABILITY_UNAVAILABLE' + (operation ? ': ' + operation : '') + ']',
+        response.status,
+        { code: 'SCHEMA_CAPABILITY_UNAVAILABLE', operation, diagnostic },
+      )
+    }
     const message = payload && typeof payload === 'object' && 'message' in payload
       ? (payload as { message: unknown }).message
       : null

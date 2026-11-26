@@ -165,6 +165,7 @@ function holdInventoryBarrier(db: ReturnType<typeof inMemoryPrisma>) {
     if (held) {
       return work({
         query: async (plan) => {
+          if (plan.operation === 'metadata') return db.client.runtime().query(plan);
           expect(plan.operation).toBe('lock');
           expect(plan.text).toContain('SHARE ROW EXCLUSIVE MODE NOWAIT');
           db.calls.push(plan);
@@ -719,6 +720,7 @@ describe('cierre integral offline: doble transaccional, NO aislamiento PostgreSQ
         try {
           return await work({
             query: async (plan) => {
+              if (plan.operation === 'metadata') return db.client.runtime().query(plan);
               expect(plan.operation).toBe('lock');
               throw Object.assign(new Error('busy'), { code: '55P03' });
             },

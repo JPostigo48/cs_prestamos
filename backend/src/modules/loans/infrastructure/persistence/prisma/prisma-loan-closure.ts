@@ -3,6 +3,8 @@ import {
   LoanInventoryContentionException,
 } from '../../../../../shared/infrastructure/prisma/lock-loan-inventory.js';
 import { createHash, randomUUID } from 'node:crypto';
+import { assertLoanSchema, loanSchemaTransaction, requireLoanColumns, LOAN_OPERATION_SCHEMA } from '../../loan-schema.js';
+import { SchemaCapabilityUnavailableException, type KnownSchemaCapabilities } from '../../../../../shared/infrastructure/prisma/schema-capabilities.js';
 import { setTimeout as wait } from 'node:timers/promises';
 import {
   BadRequestException,
@@ -129,8 +131,16 @@ export class PrismaLoanClosure {
   }
 
   async readReturnPolicy(loanId: string): Promise<ReturnPolicy> {
+    const read = async (snapshot: KnownSchemaCapabilities) => {
+      requireLoanColumns(snapshot, 'incumplimientos', ['prestamoId', 'origen'], 'loans.returnPolicy');
+      requireLoanColumns(snapshot, 'ajustes_incumplimiento', [
+        'incumplimientoId', 'versionReglaId', 'severidad', 'descuentoEfectivo',
+        'duracionTotalDias', 'fechaEfectiva',
+      ], 'loans.returnPolicy');
+      return this.resolveReturnPolicy(loanId);
+    };
     try {
-      return await this.resolveReturnPolicy(loanId);
+      return await this.prisma.schemaCapabilities.read('loanEpisodes', 'loans.returnPolicy', read, read);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -192,17 +202,13 @@ export class PrismaLoanClosure {
   }
 
   async close(data: CloseLoanData): Promise<Loan> {
+    await assertLoanSchema(this.prisma, LOAN_OPERATION_SCHEMA, 'loans.close');
     const hash = closureRequestHash(data);
     // UUID canónico aunque el esquema conserve su almacenamiento textual único.
     const requestId = data.requestId.toLowerCase();
     for (let attempt = 0; ; attempt++) {
       // Solo resultados confirmados, incluso si otro escritor retiene la barrera.
-      const previous = await this.previousClosure(
-        this.prisma.client.runtime(),
-        data,
-        hash,
-        requestId,
-      );
+      const previous = await this.readCommittedClosure(data, hash, requestId);
       if (previous) return previous;
       try {
         return await this.closeTransaction(data, hash, requestId);
@@ -210,12 +216,7 @@ export class PrismaLoanClosure {
         if (!(error instanceof LoanInventoryContentionException)) throw error;
         // La transacción fallida ya terminó/retrocedió. Nunca esperar dentro de ella.
         if (attempt === 4) {
-          const committed = await this.previousClosure(
-            this.prisma.client.runtime(),
-            data,
-            hash,
-            requestId,
-          );
+          const committed = await this.readCommittedClosure(data, hash, requestId);
           if (committed) return committed;
           throw new ServiceUnavailableException(
             'Contención temporal al cerrar el préstamo; reintente con la misma clave.',
@@ -225,6 +226,15 @@ export class PrismaLoanClosure {
         await wait(50 * (attempt + 1));
       }
     }
+  }
+
+  private async readCommittedClosure(data: CloseLoanData, hash: string, requestId: string) {
+    const read = async (snapshot: KnownSchemaCapabilities) => {
+      if (LOAN_OPERATION_SCHEMA.some((bundle) => !snapshot.bundles[bundle]))
+        throw new SchemaCapabilityUnavailableException('loans.close', 'SCHEMA_INCOMPLETE');
+      return this.previousClosure(this.prisma.client.runtime(), data, hash, requestId);
+    };
+    return this.prisma.schemaCapabilities.read('loanClosure', 'loans.close', read, read);
   }
 
   private async previousClosure(
@@ -268,7 +278,7 @@ export class PrismaLoanClosure {
     requestId: string,
   ): Promise<Loan> {
     try {
-      return await this.prisma.client.transaction(async (tx) => {
+      return await loanSchemaTransaction(this.prisma, LOAN_OPERATION_SCHEMA, 'loans.close', async (tx) => {
         await lockLoanInventory(this.prisma, tx);
         // Revalidar tras adquirir la barrera: pudo confirmarse desde la lectura externa.
         const previous = await this.previousClosure(tx, data, hash, requestId);
@@ -601,6 +611,7 @@ export class PrismaLoanClosure {
           )
         )[0];
         const result: Loan = {
+          closureHistory: 'AVAILABLE',
           id: loan.id,
           userId: loan.usuarioId,
           copyId: loan.ejemplarId,

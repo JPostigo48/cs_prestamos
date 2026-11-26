@@ -838,6 +838,7 @@ it('builds native ORM SQL plans for page/count filters without connecting to Pos
   const query = vi.fn().mockResolvedValue([]);
   const prisma = {
     sql: builder.sql,
+    schemaCapabilities: inMemoryPrisma().schemaCapabilities,
     client: { runtime: () => ({ query }) },
   } as unknown as PrismaService;
   await new PrismaReservationRepository(prisma).findMany({

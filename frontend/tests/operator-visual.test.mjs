@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
 import { returnPolicy, closedLoan } from './helpers/loan-closure-fixtures.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const Operations = await loadComponent('modules/loans/pages/LoanOperationsPage')
@@ -46,7 +47,7 @@ test('cierre integral refresca activos/vencidos y reservas abiertas una sola vez
     if (url.endsWith('/return-policy')) return Response.json(returnPolicy(loan.id, []))
     if (url.endsWith('/evidence')) return Response.json([])
     if (url.endsWith('/return')) { writes++; closed = true; return Response.json(closedLoan(loan, JSON.parse(options.body))) }
-    if (url.includes('/copies/')) return Response.json({ id: loan.copyId, recursoId: 'r', codigoInventario: 'TEST-01', condicionFisica: 'APTO', habilitado: true, estado: 'PRESTADO', recurso: { id: 'r', nombre: 'Equipo' } })
+    if (url.includes('/copies/')) return Response.json({ id: loan.copyId, recursoId: 'r', codigoInventario: 'TEST-01', condicionFisica: 'APTO', habilitado: true, estado: 'PRESTADO', compatibility: compatibility(), recurso: { id: 'r', nombre: 'Equipo' } })
     return Response.json({ id: loan.userId, name: 'Titular' })
   }
   const app = mount(Operations)

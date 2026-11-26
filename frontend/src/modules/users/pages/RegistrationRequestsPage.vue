@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import {
   listRegistrationRequests,
   approveRequest,
@@ -34,24 +34,67 @@ const uncertainRequests = ref(new Set<string>())
 const failedImages = ref(new Map<string, string>())
 const pdfUrls = ref(new Map<string, string>())
 const pdfLoading = ref(new Set<string>())
+const pdfErrors = ref(new Map<string, string>())
+const pdfControllers = new Map<string, AbortController>()
+const pdfTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const pdfDeadlines = new Map<string, number>()
+let pdfGeneration = 0
+function clearPdfs() {
+  pdfGeneration++
+  for (const controller of pdfControllers.values()) controller.abort()
+  for (const timer of pdfTimers.values()) clearTimeout(timer)
+  pdfControllers.clear()
+  pdfTimers.clear()
+  pdfDeadlines.clear()
+  pdfUrls.value.clear()
+  pdfLoading.value.clear()
+  pdfErrors.value.clear()
+}
+watch(requests.data, clearPdfs, { flush: 'sync' })
+onBeforeUnmount(clearPdfs)
 async function openPdf(item: RegistrationRequest, index: number) {
   const key = `${item.id}:${index}`
-  const existing = pdfUrls.value.get(key)
-  if (existing) {
-    window.open(existing, '_blank', 'noopener,noreferrer')
+  if (pdfLoading.value.has(item.id)) return
+  const generation = pdfGeneration
+  // Storage signs for 15 minutes. Bound lifetime from BEFORE the request, not
+  // response receipt, so a slow response can never extend a link's validity.
+  const deadline = performance.now() + 14 * 60 * 1000
+  const controller = new AbortController()
+  pdfControllers.set(key, controller)
+  pdfUrls.value.delete(key)
+  pdfErrors.value.delete(key)
+  pdfLoading.value.add(item.id)
+  try {
+    const url = await getRegistrationEvidenceUrl(item.id, index, controller.signal)
+    if (generation !== pdfGeneration || controller.signal.aborted) return
+    if (performance.now() >= deadline) throw new Error('La preparación del enlace tardó demasiado. Vuelve a preparar el PDF.')
+    pdfUrls.value.set(key, url)
+    pdfDeadlines.set(key, deadline)
+    clearTimeout(pdfTimers.get(key))
+    pdfTimers.set(key, setTimeout(() => { pdfUrls.value.delete(key); pdfTimers.delete(key); pdfDeadlines.delete(key) }, Math.max(0, deadline - performance.now())))
+  } catch (cause) {
+    if (generation === pdfGeneration && !controller.signal.aborted) pdfErrors.value.set(key, errorMessage(cause))
+  } finally {
+    if (generation === pdfGeneration) { pdfLoading.value.delete(item.id); pdfControllers.delete(key) }
+  }
+}
+function consumePdf(event: MouseEvent, key: string) {
+  if (performance.now() >= (pdfDeadlines.get(key) ?? 0)) {
+    event.preventDefault()
+    pdfUrls.value.delete(key)
+    pdfErrors.value.set(key, 'El enlace venció. Vuelve a preparar el PDF.')
     return
   }
-  if (pdfLoading.value.has(key)) return
-  pdfLoading.value.add(key)
-  try {
-    const url = await getRegistrationEvidenceUrl(item.id, index)
-    pdfUrls.value.set(key, url)
-    window.open(url, '_blank', 'noopener,noreferrer')
-  } catch (cause) {
-    error.value = errorMessage(cause)
-  } finally {
-    pdfLoading.value.delete(key)
-  }
+  // Keep the href until native navigation has consumed this gesture, then discard it.
+  const generation = pdfGeneration
+  const consumed = pdfUrls.value.get(key)
+  setTimeout(() => {
+    if (generation !== pdfGeneration || pdfUrls.value.get(key) !== consumed) return
+    pdfUrls.value.delete(key)
+    clearTimeout(pdfTimers.get(key))
+    pdfTimers.delete(key)
+    pdfDeadlines.delete(key)
+  }, 0)
 }
 function imageSource(item: RegistrationRequest, index: number): string | null {
   const source = item.evidence[index]?.information
@@ -70,12 +113,14 @@ function blockers(item: RegistrationRequest): string[] {
 }
 function load(next = 1) {
   page.value = next
-  query.value = {
+  const normalized = {
     status: status.value,
     institutionalId: institutionalId.value.trim(),
     page: String(next),
     limit: '20',
   }
+  if (JSON.stringify(normalized) === JSON.stringify(query.value)) void requests.refresh()
+  else query.value = normalized
 }
 function select(item: RegistrationRequest, value: boolean) {
   if (item.status !== 'PENDIENTE') return
@@ -141,15 +186,18 @@ async function confirm() {
            <StatusBadge :tone="item.status === 'PENDIENTE' ? 'warning' : item.status === 'APROBADA' ? 'success' : 'danger'">{{ item.status }}</StatusBadge>
            <details class="request-evidence"><summary><ClipboardList :size="16" aria-hidden="true" />Revisar evidencia de vinculación</summary><ul>
             <li v-for="(_, index) in item.evidence" :key="index">
+               <template v-if="registrationEvidenceMetadata(item.evidence[index]?.information)?.kind === 'pdf'">
                <button
-                 v-if="registrationEvidenceMetadata(item.evidence[index]?.information)?.kind === 'pdf'"
                  type="button"
                  class="pdf-evidence"
-                 :disabled="pdfLoading.has(`${item.id}:${index}`)"
+                 :disabled="pdfLoading.has(item.id)"
                  @click="openPdf(item, index)"
                >
-                 {{ pdfLoading.has(`${item.id}:${index}`) ? 'Abriendo PDF…' : 'Abrir constancia PDF' }}
-               </button>
+                 {{ pdfLoading.has(item.id) ? 'Preparando PDF…' : pdfErrors.has(`${item.id}:${index}`) ? 'Reintentar abrir PDF' : 'Abrir constancia PDF' }}
+                </button>
+                <p v-if="pdfErrors.has(`${item.id}:${index}`)" role="alert">{{ pdfErrors.get(`${item.id}:${index}`) }}</p>
+                <p v-if="pdfUrls.has(`${item.id}:${index}`)" role="status"><a :href="pdfUrls.get(`${item.id}:${index}`)" target="_blank" rel="noopener noreferrer" @click="consumePdf($event, `${item.id}:${index}`)">Ver PDF en una nueva pestaña</a> · Si no se abre, permite la nueva pestaña y vuelve a preparar el enlace.</p>
+               </template>
                <img v-else-if="imageSource(item, index)" :src="imageSource(item, index)!" alt="Evidencia de vinculación presentada por el solicitante" class="max-h-64 max-w-full object-contain" @error="failedImages.set(`${item.id}:${index}`, item.evidence[index]!.information)" />
               <p v-else>La evidencia no es una imagen PNG/JPEG válida o no pudo visualizarse. Solicita una imagen corregida; no se muestra el contenido crudo.</p>
             </li>

@@ -6,6 +6,7 @@ import {
   BadRequestException,
   HttpCode,
   Get,
+  Header,
   Param,
   ParseIntPipe,
   Post,
@@ -117,6 +118,8 @@ export class RegistrationRequestsController {
   }
 
   @Get(':requestId/evidence/:evidenceIndex')
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('Pragma', 'no-cache')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRole.OPERATOR, AccessRole.ADMINISTRATOR)
   @ApiOperation({

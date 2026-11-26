@@ -8,7 +8,8 @@ import { returnInput, type ReturnPolicy, type PhysicalCondition, type Severity }
 import { useLoanClosure } from '../useLoanClosure'
 import ReturnChecklist from './ReturnChecklist.vue'
 import ClosureResult from './ClosureResult.vue'
-const props = defineProps<{ loan: Loan; copyLabel: string }>()
+import { inventoryActionAllowed, inventoryCompatibilityMessage, type InventoryCompatibility } from '../../inventory/api/compatibility-contracts'
+const props = defineProps<{ loan: Loan; copyLabel: string; compatibility?: InventoryCompatibility | null }>()
 const emit = defineEmits<{ close: []; changed: []; success: [] }>()
 const closure = useLoanClosure(props.loan.id, () => emit('success'))
 const { busy, error, notice, result, locked, pending, reconciled } = closure
@@ -20,7 +21,7 @@ const controller = new AbortController()
 onBeforeUnmount(() => controller.abort())
 const hasMissing = computed(() => Object.values(parts.value).some(v => v === false))
 const incident = computed(() => condition.value === 'DANADO' || hasMissing.value)
-const ready = computed(() => props.loan.status === 'ACTIVO' && !!policy.value && !!condition.value && policy.value.accessories.every(p => typeof parts.value[p.id] === 'boolean') &&
+const ready = computed(() => inventoryActionAllowed(props.compatibility, 'release') && props.loan.status === 'ACTIVO' && !!policy.value && !!condition.value && policy.value.accessories.every(p => typeof parts.value[p.id] === 'boolean') &&
   (!incident.value || !!description.value.trim()) && (condition.value !== 'DANADO' || !!damage.value) && (!hasMissing.value || !!missing.value))
 async function load() {
   if (busy.value || loading.value || locked.value) return
@@ -48,6 +49,7 @@ onMounted(() => { void load() })
     <div class="stack return-body" :aria-busy="busy || loading">
       <ClosureResult v-if="result" :loan="result" />
       <template v-else>
+        <p v-if="inventoryCompatibilityMessage(compatibility)" role="status">{{ inventoryCompatibilityMessage(compatibility) }} No se habilita un cierre nuevo; el servidor revalida las garantías del cierre integral.</p>
         <p v-if="loan.status !== 'ACTIVO'" role="alert">Solo los préstamos ACTIVOS pueden cerrarse con una nueva devolución.</p>
         <p v-if="loading" role="status">Consultando política histórica y evidencias…</p>
         <p v-if="loadError" class="error" role="alert">{{ loadError }} No se permite cerrar sin política histórica.</p>

@@ -2,6 +2,8 @@ import { onScopeDispose, ref, shallowRef, watch, type WatchSource } from 'vue'
 import { ApiError } from '../api/client'
 
 export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.status === 503 && error.code === 'SCHEMA_CAPABILITY_UNAVAILABLE')
+    return error.message // The API client projects only the safe capability envelope.
   if (error instanceof ApiError && error.status === 403)
     return 'Acceso denegado. Tu sesión sigue abierta; puedes volver a otra sección desde el menú.'
   if (error instanceof ApiError && (error.status === 0 || error.status >= 500))

@@ -17,7 +17,7 @@ export const activeLoan = (id = 'loan') => ({ id, userId: session().user.id, cop
 export const returnBody = (id = requestId) => ({ requestId: id, inspection: { parts: [{ accessoryId: partId, received: true }], condition: 'SANO', evidenceIds: [] } })
 export function closedLoan(loan, body) {
   const incident = 'kind' in body
-  return { ...loan, status: incident ? 'CERRADO_POR_INCIDENCIA' : 'FINALIZADO',
+  return { ...loan, closureHistory: 'AVAILABLE', status: incident ? 'CERRADO_POR_INCIDENCIA' : 'FINALIZADO',
     return: incident ? null : { returnedAt: '2026-01-02T00:00:00Z', observation: body.observation ?? null },
     closure: { id: 'closure', requestId: body.requestId, reason: incident ? body.kind : 'DEVOLUCION', effectiveAt: '2026-01-02T00:00:00Z', actorAccountId: 'account', actorUserId: session().user.id, categoryId: 'category', termsVersionId: 'terms', inspection: incident ? null : { id: 'inspection', ...body.inspection } },
     consequences: [], reward: incident ? null : { eligible: true, reason: 'PUNTUAL_Y_COMPLETO', ruleVersionId: 'reward', referencePoints: 10, fraction: .1, calculatedPoints: 1, effectivePoints: .5, previousTrust: 99.5, resultingTrust: 100 },

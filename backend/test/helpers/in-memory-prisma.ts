@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Temporal } from 'temporal-polyfill/full';
+import { SchemaCapabilities } from '../../src/shared/infrastructure/prisma/schema-capabilities.js';
+import type { SchemaCapabilityClient } from '../../src/shared/infrastructure/prisma/schema-capability-metadata.js';
+import { completeLoanSchema } from './loan-schema.js';
 
 type Row = Record<string, any>;
 type Predicate = (row: Row) => boolean;
@@ -7,7 +10,9 @@ type Predicate = (row: Row) => boolean;
 const comparable = (value: any): string | number =>
   typeof value?.epochMilliseconds === 'number'
     ? value.epochMilliseconds
-    : value instanceof Date ? value.getTime() : String(value);
+    : value instanceof Date
+      ? value.getTime()
+      : String(value);
 type Plan = {
   table: string;
   operation: string;
@@ -18,6 +23,7 @@ type Plan = {
   count?: boolean;
   order?: { key: string; direction: string }[];
   text?: string;
+  values?: unknown[];
 };
 
 /** Doble del constructor SQL y transacciones; no crea clientes ni conexiones. */
@@ -105,7 +111,27 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
   };
   const runtime = {
     query: async (plan: Plan) => {
+      if (plan.text?.includes('pg_catalog.pg_class'))
+        return [{ metadata: JSON.stringify(completeLoanSchema()) }];
       calls.push(plan);
+      // Semantic double of the registration snapshot, NOT a PostgreSQL executor.
+      if (plan.text?.includes('WITH criteria AS')) {
+        const [status, institutionalId, limit, offset] = plan.values as [
+          string | null, string | null, number, number,
+        ];
+        const matching = (tables.solicitudes_registro ?? []).filter(row =>
+          (status === null || row.estado === status) &&
+          (institutionalId === null || row.identificadorInstitucional === institutionalId),
+        );
+        matching.sort((a, b) =>
+          String(b.fechaSolicitud).localeCompare(String(a.fechaSolicitud)) ||
+          String(b.id).localeCompare(String(a.id)),
+        );
+        return [{
+          total: String(matching.length),
+          items: JSON.stringify(matching.slice(offset, offset + limit)),
+        }];
+      }
       // Registra la solicitud de bloqueo; NO simula garantías de PostgreSQL.
       if (plan.operation === 'lock') return [];
       const rows = (tables[plan.table] ??= []);
@@ -173,12 +199,12 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
                 ? ['nombre']
                 : plan.table === 'cierres_prestamo'
                   ? ['prestamoId', 'requestId']
-                : plan.table === 'inspecciones_devolucion' ||
-                    plan.table === 'devoluciones'
-                  ? ['prestamoId']
-                  : plan.table === 'cuentas_acceso'
-                    ? ['email', 'usuarioId']
-                    : [];
+                  : plan.table === 'inspecciones_devolucion' ||
+                      plan.table === 'devoluciones'
+                    ? ['prestamoId']
+                    : plan.table === 'cuentas_acceso'
+                      ? ['email', 'usuarioId']
+                      : [];
         if (
           plan.table === 'accesorios_recurso' &&
           inserted.some((data) =>
@@ -265,38 +291,47 @@ export function inMemoryPrisma(initial: Record<string, Row[]> = {}) {
       return selected.map((row) => ({ ...row }));
     },
   };
-  return {
-    sql,
-    client: {
-      raw: {
-        sql: (parts: TemplateStringsArray) => ({
-          returnsRow: () => ({
-            build: (): Plan => ({
-              table: '',
-              operation: 'lock',
-              predicates: [],
-              text: parts.join(''),
-            }),
+  const client = {
+    raw: {
+      sql: (parts: TemplateStringsArray, ...values: unknown[]) => ({
+        returnsRow: () => ({
+          build: (): Plan => ({
+            table: parts.join('').includes('WITH criteria AS') ? 'solicitudes_registro' : '',
+            operation: parts.join('').includes('WITH criteria AS') ? 'select' :
+              parts.join('').includes('pg_catalog.pg_class') ? 'metadata' : 'lock',
+            predicates: [],
+            text: parts.join(''),
+            values: values.map(value =>
+              value && typeof value === 'object' && 'kind' in value &&
+              value.kind === 'param-ref' && 'value' in value ? value.value : value,
+            ),
           }),
         }),
-      },
-      runtime: () => runtime,
-      transaction: async (work: (tx: typeof runtime) => Promise<any>) => {
-        // Copia superficial de filas: los instantes Temporal son inmutables.
-        const previous = Object.fromEntries(
-          Object.entries(tables).map(([table, rows]) => [
-            table,
-            rows.map((row) => ({ ...row })),
-          ]),
-        );
-        try {
-          return await work(runtime);
-        } catch (error) {
-          tables = previous;
-          throw error;
-        }
-      },
+      }),
     },
+    runtime: () => runtime,
+    transaction: async (work: (tx: typeof runtime) => Promise<any>) => {
+      // Copia superficial de filas: los instantes Temporal son inmutables.
+      const previous = Object.fromEntries(
+        Object.entries(tables).map(([table, rows]) => [
+          table,
+          rows.map((row) => ({ ...row })),
+        ]),
+      );
+      try {
+        return await work(runtime);
+      } catch (error) {
+        tables = previous;
+        throw error;
+      }
+    },
+  };
+  return {
+    sql,
+    client,
+    schemaCapabilities: new SchemaCapabilities(
+      client as unknown as SchemaCapabilityClient,
+    ),
     rows: (table: string) => tables[table] ?? [],
     calls,
     failAudit: () => {

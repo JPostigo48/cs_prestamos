@@ -6,12 +6,14 @@ import type {
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 import type { CategoryPolicyConfiguration } from '../../../rules/domain/category-policy.js';
 import type { CategoryDeletionPreview } from '../entities/category-deletion.js';
+import type { InventoryCompatibility } from '../entities/inventory-compatibility.js';
 import type {
   ResourceAccessoryInput,
   StoredResourceAccessory,
 } from '../entities/resource-configuration.js';
 
 export abstract class InventoryRepository {
+  abstract getCompatibility(): Promise<InventoryCompatibility>;
   abstract getCategoryPolicies(
     categoryId: string,
   ): Promise<CategoryPolicyConfiguration>;
@@ -91,7 +93,9 @@ export abstract class InventoryRepository {
   ): Promise<any>;
   abstract deleteResource(resourceId: string): Promise<unknown>;
   abstract countCopiesByResource(resourceId: string): Promise<number>;
-  abstract countAvailableCopiesByResource(resourceId: string): Promise<number>;
+  abstract countAvailableCopiesByResource(
+    resourceId: string,
+  ): Promise<number | null>;
   abstract countCopiesByResourceAndState(
     resourceId: string,
     estado: InventoryCopyStatus,

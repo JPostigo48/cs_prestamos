@@ -6,6 +6,8 @@ import { computed, ref } from 'vue'
 import { CalendarClock, BookOpen, Clock, CircleCheck, TriangleAlert } from '@lucide/vue'
 import { getSession } from '../../auth/api/auth-api'
 import { getHistory } from '../../users/api/student-api'
+import { parseLoans } from '../api/loan-contracts'
+import ClosureHistoryNotice from '../components/ClosureHistoryNotice.vue'
 import { cancelReservation, type Reservation } from '../api/reservations-api'
 import { combineHistory, getPersonalReservations, type OperationState } from '../personal-history'
 import { pendingMutation } from '../../../shared/api/mutation-guard'
@@ -15,9 +17,10 @@ import RemoteState from '../../../shared/components/RemoteState.vue'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import StatusBadge from '../../../shared/components/StatusBadge.vue'
 import { dateTime } from '../../../shared/format'
+import { inventoryActionAllowed, inventoryCompatibilityMessage } from '../../inventory/api/compatibility-contracts'
 
 const session = getSession()!
-const loans = useRemote(signal => getHistory(session.user.id, signal))
+const loans = useRemote(async signal => parseLoans(await getHistory(session.user.id, signal)))
 const reservations = useRemote(signal => getPersonalReservations(session.user.id, signal))
 const operations = computed(() => combineHistory(loans.data.value ?? [], reservations.data.value ?? []))
 const copies = useCopyDetails(() => operations.value)
@@ -42,6 +45,7 @@ function select(item: Reservation) { selected.value = item; reason.value = ''; e
 async function cancel() {
   const item = selected.value
   if (!item || sending.value || pendingMutation('cancel:' + item.id)) return
+  if (!inventoryActionAllowed(copies.value[item.copyId]?.compatibility, 'release')) return
   sending.value = true
   error.value = ''
   try {
@@ -77,12 +81,14 @@ async function cancel() {
           <p v-if="item.loan && item.reservation" class="muted">Originado en tu reserva · recogida <time :datetime="item.reservation.pickedUpAt || item.loan.startsAt">{{ dateTime(item.reservation.pickedUpAt || item.loan.startsAt) }}</time></p>
           <p v-else-if="item.loan" class="muted">Préstamo · sin reserva vinculada{{ reservations.data.value ? '' : ' en los datos disponibles' }}</p>
           <p class="operation-date"><Clock :size="14" aria-hidden="true" /> {{ item.dateLabel }} <time :datetime="item.relevantAt">{{ dateTime(item.relevantAt) }}</time></p>
-          <p v-if="item.state === 'CERRADO_POR_INCIDENCIA'">{{ item.loan?.closure?.reason === 'ROBO' ? 'Robo' : item.loan?.closure?.reason === 'PERDIDA' ? 'Pérdida' : 'Pérdida o robo' }}: cierre sin devolución real y sin recompensa.</p>
+          <ClosureHistoryNotice v-if="item.loan" :loan="item.loan" />
+          <p v-if="item.state === 'CERRADO_POR_INCIDENCIA'">{{ item.loan?.closure?.reason === 'ROBO' ? 'Robo' : item.loan?.closure?.reason === 'PERDIDA' ? 'Pérdida' : 'Pérdida o robo' }}: cierre sin devolución real.</p>
           <p v-if="item.state === 'POR_RECOGER'">Recoge antes del <time :datetime="item.reservation!.pickupDeadline">{{ dateTime(item.reservation!.pickupDeadline) }}</time>.</p>
           <p v-if="item.loan && ['ACTIVO', 'VENCIDO', 'PROGRAMADO'].includes(item.state)">{{ item.state === 'VENCIDO' ? 'Devuelve el recurso cuanto antes. Fecha límite:' : 'Devolución límite:' }} <time :datetime="item.loan.endsAt">{{ dateTime(item.loan.endsAt) }}</time></p>
           <p v-if="item.state === 'RESERVA_VENCIDA'" class="muted">El plazo de recogida terminó. <RouterLink to="/app/personal">Ver mi confianza y sanciones</RouterLink>.</p>
           <details v-if="item.reservation?.cancellationReason"><summary>Motivo de cancelación</summary><p>{{ item.reservation.cancellationReason }}</p></details>
-          <button v-if="item.state === 'POR_RECOGER' && item.reservation?.userId === session.user.id" :disabled="pendingMutation('cancel:' + item.reservation.id)" @click="select(item.reservation)">Cancelar reserva</button>
+          <p v-if="item.state === 'POR_RECOGER' && inventoryCompatibilityMessage(copies[item.copyId]?.compatibility)" role="status">{{ inventoryCompatibilityMessage(copies[item.copyId]?.compatibility) }}</p>
+          <button v-if="item.state === 'POR_RECOGER' && item.reservation?.userId === session.user.id" :disabled="pendingMutation('cancel:' + item.reservation.id) || !inventoryActionAllowed(copies[item.copyId]?.compatibility, 'release')" @click="select(item.reservation)">Cancelar reserva</button>
           <p v-if="item.reservation && pendingMutation('cancel:' + item.reservation.id)" role="status">Cancelación pendiente de verificar. No se reenviará; consulta con el personal.</p>
         </div>
       </article>
@@ -92,7 +98,7 @@ async function cancel() {
     <form class="stack" @submit.prevent="cancel"><p>Se liberará tu reserva de este recurso.</p><label>Motivo opcional<textarea v-model="reason" maxlength="500" /></label>
       <p v-if="error" role="alert" class="error">{{ error }}</p>
       <p v-if="pendingMutation('cancel:' + selected.id) && !sending" role="status">Resultado incierto. No repitas el envío; verifica el estado con el personal.</p>
-      <div class="row"><button type="button" :disabled="sending" @click="selected = null">Cerrar</button><button class="primary" :disabled="sending || pendingMutation('cancel:' + selected.id)">{{ sending ? 'Cancelando…' : 'Confirmar cancelación' }}</button></div>
+      <div class="row"><button type="button" :disabled="sending" @click="selected = null">Cerrar</button><button class="primary" :disabled="sending || pendingMutation('cancel:' + selected.id) || !inventoryActionAllowed(copies[selected.copyId]?.compatibility, 'release')">{{ sending ? 'Cancelando…' : 'Confirmar cancelación' }}</button></div>
     </form>
   </ModalDialog>
 </template>

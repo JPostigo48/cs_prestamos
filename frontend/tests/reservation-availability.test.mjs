@@ -3,13 +3,15 @@ import assert from 'node:assert/strict'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { load, loadComponent, session, testEnvironment } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
+import { compatibility } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const Detail = await loadComponent('modules/inventory/pages/ResourceDetailPage')
 const owner = session().user.id
-const copy = { id: 'copy-availability', codigoInventario: 'C-1', estado: 'DISPONIBLE', recursoId: 'resource', condicionFisica: 'APTO', habilitado: true }
+const copy = { id: 'copy-availability', codigoInventario: 'C-1', estado: 'DISPONIBLE', recursoId: 'resource', condicionFisica: 'APTO', habilitado: true, compatibility: compatibility() }
 const category = { id: 'category', nombre: 'Libros', tiempoMaximoPrestamoDias: 1, tiempoMaximoPrestamoHoras: 24 }
 const resource = { id: 'resource', categoriaId: category.id, categoria: category, nombre: 'Libro', descripcion: null, available: true,
+  activo: true, durationHours: null, compatibility: compatibility(), availableCopies: 1, totalCopies: 1, registeredStock: { libres: 1, prestados: 0, retenidos: 0, reservados: 0 },
   loanPolicy: { resourceId: 'resource', categoryId: category.id, durationHours: null, effectiveDurationHours: 24, source: 'CATEGORY' } }
 const reservation = { id: 'reservation-open', userId: owner, copyId: 'another-copy', status: 'CONFIRMADA',
   requestedAt: '2099-01-01T10:00:00Z', pickupDeadline: '2099-01-01T10:30:00Z', configurationSnapshot: null }

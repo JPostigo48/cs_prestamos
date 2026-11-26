@@ -53,21 +53,22 @@ export async function readCategoryPolicies(id: string, signal?: AbortSignal) {
     throw new ApiError('Configuración publicada no disponible de forma segura.', 0)
   return result
 }
-export async function saveCategory(id: string | null, input: CategoryInput) {
+export async function saveCategory(id: string | null, input: CategoryInput, options: { descriptiveOnly?: boolean } = {}) {
   requireAdmin()
+  if (options.descriptiveOnly && !id) throw new ApiError('La edición descriptiva requiere una categoría existente.', 400)
   if (!input.nombre.trim() || input.nombre.length > 120 || (input.descripcion?.length ?? 0) > 2000 ||
-    !Number.isInteger(input.tiempoMaximoPrestamoHoras) || input.tiempoMaximoPrestamoHoras < 1 || input.tiempoMaximoPrestamoHoras > 2147483647 ||
-    !Number.isInteger(input.tiempoMaximoPrestamoDias) || input.tiempoMaximoPrestamoDias < 1)
+    (!options.descriptiveOnly && (!Number.isInteger(input.tiempoMaximoPrestamoHoras) || input.tiempoMaximoPrestamoHoras < 1 || input.tiempoMaximoPrestamoHoras > 2147483647 ||
+    !Number.isInteger(input.tiempoMaximoPrestamoDias) || input.tiempoMaximoPrestamoDias < 1)))
     throw new ApiError('Revisa el nombre, la descripción y la duración entera positiva.', 400)
   return guardedMutation(categorySaveKey(id, input), async () => {
-    const result = await authenticatedRequest<Category>(id ? path(id) : '/inventory/categories', { method: id ? 'PATCH' : 'POST', body: input })
-    if (!result?.id || (id && result.id !== id) || !categoryMatches(result, input))
+    const result = await authenticatedRequest<Category>(id ? path(id) : '/inventory/categories', { method: id ? 'PATCH' : 'POST', body: options.descriptiveOnly ? { nombre: input.nombre, descripcion: input.descripcion } : input })
+    if (!result?.id || (id && result.id !== id) || !categoryMatches(result, input, options))
       throw new ApiError('El servidor no confirmó la categoría. Consulta su estado antes de repetir.', 0)
     return result
   })
 }
-export const categoryMatches = (category: Category, input: CategoryInput) => category.nombre === input.nombre && category.descripcion === input.descripcion &&
-  category.activo === input.activo && category.tiempoMaximoPrestamoHoras === input.tiempoMaximoPrestamoHoras && category.tiempoMaximoPrestamoDias === input.tiempoMaximoPrestamoDias
+export const categoryMatches = (category: Category, input: CategoryInput, options: { descriptiveOnly?: boolean } = {}) => category.nombre === input.nombre && category.descripcion === input.descripcion &&
+  (options.descriptiveOnly || (category.activo === input.activo && category.tiempoMaximoPrestamoHoras === input.tiempoMaximoPrestamoHoras && category.tiempoMaximoPrestamoDias === input.tiempoMaximoPrestamoDias))
 export async function setCategoryActive(id: string, activo: boolean) {
   requireAdmin()
   return guardedMutation('category-active:' + id, async () => {

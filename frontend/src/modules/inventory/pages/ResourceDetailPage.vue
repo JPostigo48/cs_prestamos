@@ -14,6 +14,9 @@ import { validLoan } from '../../loans/api/loan-contracts'
 import { getHistory } from '../../users/api/student-api'
 import { ApiError } from '../../../shared/api/client'
 import AlertHint from '../../../shared/components/AlertHint.vue'
+import { inventoryCompatibilityMessage } from '../api/compatibility-contracts'
+import InventoryCompatibilityNotice from '../components/InventoryCompatibilityNotice.vue'
+import { isCopyEligibleForLoan } from '../api/copy-contracts'
 const reserving = ref(false)
 const reservationChanged = ref(false)
 const session = getSession()!
@@ -39,11 +42,12 @@ const reservationBlockedMessage = computed(() => {
   if (currentOperation.error.value || !currentOperation.data.value) return 'No pudimos comprobar tus operaciones. Actualiza la disponibilidad para reintentar.'
   if (session.user.userType === 'ESTUDIANTE' && currentOperation.data.value.reservation) return 'Ya tienes una reserva activa.'
   if (session.user.userType === 'ESTUDIANTE' && currentOperation.data.value.loan) return 'Ya tienes un préstamo activo o pendiente de entrega.'
+  if (resource.data.value && inventoryCompatibilityMessage(resource.data.value.compatibility)) return inventoryCompatibilityMessage(resource.data.value.compatibility)
   return ''
 })
-const canReserve = computed(() => !reservationBlockedMessage.value && resource.data.value?.available !== false
+const canReserve = computed(() => !reservationBlockedMessage.value && resource.data.value?.available === true && resource.data.value.compatibility?.capabilities.verifiedAvailability === true
   && !resource.loading.value && !resource.error.value && !copies.loading.value && !copies.error.value
-  && !!copies.data.value?.some((copy) => copy.estado === 'DISPONIBLE' && copy.condicionFisica === 'APTO' && copy.habilitado))
+  && !!copies.data.value?.some(isCopyEligibleForLoan))
 async function openReservation() {
   if (!canReserve.value) return
   await currentOperation.refresh()
@@ -84,6 +88,7 @@ function closeReservation() {
     @retry="resource.refresh"
   >
     <template v-if="resource.data.value">
+      <InventoryCompatibilityNotice :compatibility="resource.data.value.compatibility" />
       <header class="resource-heading">
         <span class="resource-category">{{ resource.data.value.categoria?.nombre || 'Sin categoría disponible' }}</span>
         <h1>{{ resource.data.value.nombre }}</h1>
@@ -109,14 +114,16 @@ function closeReservation() {
       </div>
       <section class="panel stack availability-panel">
         <h2>Disponibilidad actual</h2>
-        <div v-if="copies.data.value && !copies.error.value && !copies.loading.value" class="availability-summary">
-          <strong class="available-number">{{ copies.data.value.filter((c) => c.estado === 'DISPONIBLE').length }}</strong>
+        <div v-if="resource.data.value.availableCopies !== null" class="availability-summary">
+          <strong class="available-number">{{ resource.data.value.availableCopies }}</strong>
           <p>
-          {{ copies.data.value.filter((c) => c.estado === 'DISPONIBLE').length === 1 ? 'disponible' : 'disponibles' }} de
-          {{ copies.data.value.length }} ejemplares totales</p>
+          {{ resource.data.value.availableCopies === 1 ? 'disponible' : 'disponibles' }} de
+          {{ resource.data.value.totalCopies ?? 'desconocido' }} ejemplares totales</p>
         </div>
-        <p v-else>Consulta de ejemplares necesaria para conocer el total exacto.</p>
-        <div v-if="copies.data.value && !copies.error.value && !copies.loading.value" class="availability-track" aria-hidden="true"><div :style="{ width: (copies.data.value.length ? copies.data.value.filter(c => c.estado === 'DISPONIBLE').length / copies.data.value.length * 100 : 0) + '%' }" /></div>
+        <p v-else>Disponibilidad desconocida: no se puede verificar.</p>
+        <p>Stock registrado: {{ resource.data.value.totalCopies ?? 'desconocido' }} ejemplares.</p>
+        <p v-if="resource.data.value.registeredStock">Ocupación registrada: {{ resource.data.value.registeredStock.libres }} libres, {{ resource.data.value.registeredStock.prestados }} prestados, {{ resource.data.value.registeredStock.retenidos }} retenidos y {{ resource.data.value.registeredStock.reservados }} reservados. Libre no equivale a apto para préstamo.</p>
+        <div v-if="resource.data.value.availableCopies !== null && resource.data.value.totalCopies !== null" class="availability-track" aria-hidden="true"><div :style="{ width: (resource.data.value.totalCopies ? resource.data.value.availableCopies / resource.data.value.totalCopies * 100 : 0) + '%' }" /></div>
         <div class="reservation-control">
         <button
           class="primary"
@@ -142,6 +149,7 @@ function closeReservation() {
           <ul class="copy-list">
             <li v-for="copy in copies.data.value" :key="copy.id">
               <strong>{{ copy.codigoInventario }}</strong><span class="badge">{{ copy.estado.replaceAll('_', ' ') }}</span>
+              <span>Condición: {{ copy.condicionFisica ?? 'Desconocida' }} · Habilitación: {{ copy.habilitado === null ? 'Desconocida' : copy.habilitado ? 'Sí' : 'No' }}</span>
             </li>
           </ul>
           <p v-if="copies.data.value?.length === 0">No hay ejemplares registrados.</p>

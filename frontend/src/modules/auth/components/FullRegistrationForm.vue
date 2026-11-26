@@ -7,6 +7,8 @@ import { pendingMutation } from '../../../shared/api/mutation-guard'
 import { readRegistrationEvidence } from '../registration-image'
 import type { AuthSession } from '../api/auth-api'
 import { ApiError } from '../../../shared/api/client'
+import { normalizeInstitutionalEmail, registrationErrors, isInstitutionalEmail } from '../registration-policy'
+const fieldErrors = ref<Record<string, string>>({})
 const name = ref(''),
   email = ref(''),
   password = ref(''),
@@ -42,19 +44,21 @@ async function selectImage(event: Event) {
   }
 }
 async function submit() {
-  if (sending.value || readingImage.value || uncertain.value || !version.value || !evidence.value || confirmed.value) return
+  if (sending.value || readingImage.value || uncertain.value || confirmed.value) return
+  fieldErrors.value = registrationErrors({ name: name.value, email: email.value, password: password.value, userType: userType.value, institutionalId: institutionalId.value, phone: phone.value, evidence: evidence.value ? [evidence.value] : [], termsVersionId: version.value })
+  if (Object.keys(fieldErrors.value).length) return
   sending.value = true
   error.value = ''
   try {
     const result = await requestFullRegistration({
       name: name.value.trim(),
-      email: email.value.trim(),
+      email: normalizeInstitutionalEmail(email.value),
       password: password.value,
       userType: userType.value,
-      ...(institutionalId.value.trim() ? { institutionalId: institutionalId.value.trim() } : {}),
-      ...(phone.value.trim() ? { phone: phone.value.trim() } : {}),
+      institutionalId: institutionalId.value.trim(),
+      phone: phone.value.trim(),
       evidence: [evidence.value.trim()].filter(Boolean),
-      termsVersionId: version.value,
+      termsVersionId: version.value!,
     })
     confirmed.value = result.id
     password.value = ''
@@ -70,7 +74,7 @@ async function submit() {
 }
 </script>
 <template>
-  <form class="full-registration space-y-4" @submit.prevent="submit">
+  <form class="full-registration space-y-4" novalidate @submit.prevent="submit">
     <h2 class="text-xl font-bold">Datos para tu cuenta</h2>
     <p>
       El alta queda pendiente de revisión. Al aprobarla, se creará tu cuenta de usuario.
@@ -81,41 +85,42 @@ async function submit() {
       <label
         >Nombre completo<input
           v-model="name"
+          :aria-invalid="!!fieldErrors.name" aria-describedby="registration-name-error"
           required
           minlength="2"
           maxlength="180"
           autocomplete="name"
-      /></label>
+      /><span v-if="fieldErrors.name" id="registration-name-error" role="alert">{{ fieldErrors.name }}</span></label>
       <label
-        >Correo institucional<input v-model="email" type="email" required autocomplete="username"
-      /></label>
+        >Correo institucional<input v-model="email" type="email" required maxlength="254" autocomplete="username" :aria-invalid="!!fieldErrors.email || (!!email && !isInstitutionalEmail(email))" aria-describedby="registration-email-error"
+      /><span id="registration-email-error" :role="fieldErrors.email ? 'alert' : undefined">{{ fieldErrors.email || (email && !isInstitutionalEmail(email) ? 'Usa el dominio exacto @unsa.edu.pe.' : 'Correo institucional @unsa.edu.pe.') }}</span></label>
       <div class="password-field"><label
         >Contraseña<input
           v-model="password"
           :type="passwordVisible ? 'text' : 'password'"
           id="registration-password"
-          aria-describedby="registration-password-notice"
+          :aria-invalid="!!fieldErrors.password" aria-describedby="registration-password-notice registration-password-error"
           required
            minlength="8"
            maxlength="128"
           autocomplete="new-password"
-      /></label>
+      /><span v-if="fieldErrors.password" id="registration-password-error" role="alert">{{ fieldErrors.password }}</span></label>
       <button type="button" aria-controls="registration-password" :aria-pressed="passwordVisible" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña' }}</button></div>
       <label
-        >Tipo institucional<select v-model="userType">
+        >Tipo institucional<select v-model="userType" required :aria-invalid="!!fieldErrors.userType" aria-describedby="registration-userType-error">
           <option value="ESTUDIANTE">Estudiante</option>
           <option value="DOCENTE">Profesor</option>
           <option value="ADMINISTRATIVO">Personal administrativo</option>
-        </select></label
+        </select><span v-if="fieldErrors.userType" id="registration-userType-error" role="alert">{{ fieldErrors.userType }}</span></label
       >
-      <label>Identificador institucional<input v-model="institutionalId" maxlength="80" /></label>
-      <label>Teléfono<input v-model="phone" type="tel" maxlength="20" autocomplete="tel" /></label>
+      <label>Identificador institucional<input v-model="institutionalId" required maxlength="80" :aria-invalid="!!fieldErrors.institutionalId" aria-describedby="registration-institutionalId-error" /><span v-if="fieldErrors.institutionalId" id="registration-institutionalId-error" role="alert">{{ fieldErrors.institutionalId }}</span></label>
+      <label>Teléfono<input v-model="phone" required type="tel" maxlength="20" autocomplete="tel" :aria-invalid="!!fieldErrors.phone" aria-describedby="registration-phone-error" /><span v-if="fieldErrors.phone" id="registration-phone-error" role="alert">{{ fieldErrors.phone }}</span></label>
       <p id="registration-evidence-hint" class="full-row text-sm text-slate-600">{{ userType === 'ESTUDIANTE' ? 'Estudiantes: adjunta tu carné o constancia de matrícula vigente.' : 'Adjunta un documento que acredite tu vinculación institucional.' }} PNG/JPEG hasta 60 KiB o PDF hasta 10 MiB.</p>
-      <label class="full-row">Evidencia de vinculación<input type="file" accept="image/png,image/jpeg,application/pdf" aria-describedby="registration-evidence-hint" required @change="selectImage" /></label>
+      <label class="full-row">Evidencia de vinculación<input type="file" accept="image/png,image/jpeg,application/pdf" :aria-invalid="!!fieldErrors.evidence" aria-describedby="registration-evidence-hint registration-evidence-error" required @change="selectImage" /><span v-if="fieldErrors.evidence" id="registration-evidence-error" role="alert">{{ fieldErrors.evidence }}</span></label>
       <p v-if="readingImage" class="full-row" role="status">Validando imagen…</p>
       <img v-if="evidence && !evidence.startsWith('data:application/pdf')" :src="evidence" alt="Vista previa de la evidencia seleccionada" class="full-row max-h-64 max-w-full object-contain" />
       <p v-if="evidence && evidence.startsWith('data:application/pdf')" class="full-row text-sm text-slate-600">PDF seleccionado y listo para enviar.</p>
-      <div class="full-row"><TermsPanel :key="termsGeneration" @read="version = $event" /></div>
+      <div class="full-row"><TermsPanel :key="termsGeneration" @read="version = $event" /><p v-if="fieldErrors.termsVersionId" role="alert">{{ fieldErrors.termsVersionId }}</p></div>
     </fieldset>
     <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ error }}</p>
     <p v-if="confirmed" role="status">

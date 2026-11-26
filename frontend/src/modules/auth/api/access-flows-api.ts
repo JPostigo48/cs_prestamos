@@ -1,6 +1,7 @@
 import { authenticatedRequest, sessionFromResponse, type AuthResponse, type AuthSession } from './auth-api'
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import { guardedMutation } from '../../../shared/api/mutation-guard'
+import { normalizeInstitutionalEmail, registrationErrors } from '../registration-policy'
 export interface Terms {
   id: string
   number: number
@@ -37,12 +38,15 @@ export const requestFullRegistration = (body: {
   email: string
   password: string
   userType: AuthSession['user']['userType']
-  institutionalId?: string
-  phone?: string
+  institutionalId: string
+  phone: string
   evidence: string[]
   termsVersionId: string
 }) => guardedMutation('full-registration', async () => {
-  const result = await apiRequest<{ id: string; status: 'PENDIENTE' }>('/auth/registration-requests', { method: 'POST', body })
+  const errors = registrationErrors(body)
+  if (Object.keys(errors).length) throw new ApiError(Object.values(errors).join(' '), 400)
+  const normalized = { ...body, name: body.name.trim(), email: normalizeInstitutionalEmail(body.email), institutionalId: body.institutionalId.trim(), phone: body.phone.trim() }
+  const result = await apiRequest<{ id: string; status: 'PENDIENTE' }>('/auth/registration-requests', { method: 'POST', body: normalized })
   if (!result?.id || result.status !== 'PENDIENTE') throw new ApiError('No se confirmó el alta. Consulta su estado antes de repetir.', 0)
   return result
 })

@@ -24,7 +24,7 @@ function selectLoan(loan: Loan) {
   notice.value = ''
 }
 const notice = ref('')
-const copies = useCopyDetails(() => [...(active.data.value ?? []), ...(overdue.data.value ?? [])])
+const copies = useCopyDetails(() => [...(active.data.value ?? []), ...(overdue.data.value ?? [])], { revalidateOnChange: true })
 const users = useUserDetails(() => [...(active.data.value ?? []), ...(overdue.data.value ?? [])])
 function refresh() {
   void active.refresh()
@@ -99,11 +99,12 @@ const copyLabel = (loan: Loan) =>
     v-if="selected"
     :loan="selected"
     :copy-label="copyLabel(selected)"
+    :compatibility="copies[selected.copyId]?.compatibility"
     @close="selected = null"
     @changed="refresh"
     @success="success"
   />
-  <CloseIncidentDialog v-if="incidentLoan" :loan="incidentLoan" :copy-label="copyLabel(incidentLoan)" @close="incidentLoan = null" @changed="success" />
+  <CloseIncidentDialog v-if="incidentLoan" :loan="incidentLoan" :copy-label="copyLabel(incidentLoan)" :compatibility="copies[incidentLoan.copyId]?.compatibility" @close="incidentLoan = null" @changed="success" />
   </section>
 </template>
 <style scoped>

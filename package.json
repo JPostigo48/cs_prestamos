@@ -5,6 +5,9 @@
     "back": "npm --prefix backend run start:dev",
     "db": "docker compose up -d postgres-db",
     "front": "npm --prefix frontend run serve",
+    "prisma": "npm --prefix backend run prisma:migrate",
+    "prisma:status": "npm --prefix backend run prisma:status",
+    "seed:repair-copy-conditions": "npm --prefix backend run seed:repair-copy-conditions --",
     "project:generate": "npm --prefix backend run openapi:generate && node scripts/generate-project-showcase.mjs",
     "project:check": "npm --prefix backend run openapi:check"
   }

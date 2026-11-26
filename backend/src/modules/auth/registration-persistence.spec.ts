@@ -290,7 +290,7 @@ describe('Registration and account SQL repositories, transactional in-memory har
       ...data,
       email: access.email,
       password: 'isolated-password',
-      termsVersionId: 'terms',
+      termsVersionId: '123e4567-e89b-42d3-a456-426614174003',
       evidence: [image],
     };
     const oversized = await sharp({

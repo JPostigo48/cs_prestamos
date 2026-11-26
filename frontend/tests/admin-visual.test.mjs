@@ -2,6 +2,7 @@ import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { load, loadComponent, testEnvironment, session } from './helpers/modules.mjs'
 import { mount, flush, find, findAll, event, model, text } from './helpers/renderer.mjs'
+import { compatibility, inventoryCopy, inventoryResource } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const Users = await loadComponent('modules/users/pages/UsersManagementPage')
@@ -10,7 +11,7 @@ const Appeals = await loadComponent('modules/trust/pages/AppealsPage')
 const Editor = await loadComponent('modules/inventory/components/ResourceEditorDialog')
 const Copies = await loadComponent('modules/inventory/components/CopyManager')
 const user = { id: 'admin-visual-user', name: 'Usuario confirmado', userType: 'ESTUDIANTE', institutionalId: 'TEST-001', hasCurrentAffiliation: true, trustPercentage: 90 }
-const resource = { id: 'admin-visual-resource', nombre: 'Recurso confirmado', categoriaId: 'cat', descripcion: 'Descripción real', availableCopies: 1, totalCopies: 2 }
+const resource = inventoryResource(true, { id: 'admin-visual-resource', nombre: 'Recurso confirmado', categoriaId: 'cat', descripcion: 'Descripción real', availableCopies: 1, totalCopies: 2, registeredStock: { libres: 1, prestados: 1, retenidos: 0, reservados: 0 } })
 const category = { id: 'cat', nombre: 'Electrónicos', tiempoMaximoPrestamoDias: 1, tiempoMaximoPrestamoHoras: 24 }
 beforeEach(() => { testEnvironment(); auth.saveSession(session('ADMINISTRADOR')) })
 
@@ -100,7 +101,8 @@ test('editor: artículo, ejemplares, accesorios y duración conservan guardados 
     assert.match(text(app.root), /Duración de la categoría: 1 días/)
     await event(find(app.root, 'form'), 'submit')
     assert.equal(calls.filter(c => c.options.method === 'PATCH').length, 1)
-    assert.deepEqual(JSON.parse(calls.at(-1).options.body), { nombre: resource.nombre, categoriaId: 'cat', descripcion: resource.descripcion })
+    // Guardar ahora reconsulta el detalle: verificar la escritura, no el GET posterior.
+    assert.deepEqual(JSON.parse(calls.find(c => c.options.method === 'PATCH').options.body), { nombre: resource.nombre, categoriaId: 'cat', descripcion: resource.descripcion })
     assert.ok(!calls.some(c => /accessories|loan-policy/.test(c.url) && c.options.method !== 'GET'))
     await event(find(app.root, 'button', 'Duración'), 'click')
     assert.equal(find(app.root, 'button', 'Duración').props['aria-pressed'], true)
@@ -108,14 +110,14 @@ test('editor: artículo, ejemplares, accesorios y duración conservan guardados 
 })
 
 test('ejemplares: no ofrece alterar ocupados y confirma antes de cambiar disponibilidad', async () => {
-  const calls = [], copy = { id: 'visual-copy', recursoId: resource.id, condicionFisica: 'APTO', habilitado: true, codigoInventario: 'TEST-COPY', estado: 'DISPONIBLE' }
+  const calls = [], copy = inventoryCopy(true, { id: 'visual-copy', recursoId: resource.id, codigoInventario: 'TEST-COPY' })
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options })
     if (url.endsWith('/state')) return Response.json({ ...copy, estado: 'NO_DISPONIBLE' })
     if (url.includes('/resources/')) return Response.json([copy, { ...copy, id: 'occupied-copy', estado: 'PRESTADO' }])
     return Response.json(copy)
   }
-  const app = mount(Copies, { resourceId: resource.id })
+  const app = mount(Copies, { resourceId: resource.id, compatibility: compatibility() })
   try {
     await flush()
     assert.equal(findAll(app.root, n => n.tag === 'button' && text(n).includes('Retener')).length, 1)

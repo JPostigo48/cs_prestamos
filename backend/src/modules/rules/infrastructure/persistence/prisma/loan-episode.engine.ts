@@ -1,3 +1,4 @@
+import { assertLoanSchema, LOAN_OPERATION_SCHEMA, SANCTION_OPERATION_SCHEMA } from '../../../../loans/infrastructure/loan-schema.js';
 import { randomUUID } from 'node:crypto';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Temporal } from 'temporal-polyfill/full';
@@ -93,6 +94,7 @@ export class LoanEpisodeEngine {
     data: SynchronizeLoanEpisodes,
     at: Date,
   ): Promise<LoanEpisodeResult> {
+    await assertLoanSchema(this.prisma, data.damage ? LOAN_OPERATION_SCHEMA : SANCTION_OPERATION_SCHEMA, 'episodes.synchronize', tx);
     await lockLoanInventory(this.prisma, tx);
     const effectiveAt = data.effectiveAt ?? at;
     if (

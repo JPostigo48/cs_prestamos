@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
@@ -17,7 +18,11 @@ import type {
   UpdateResourceInput,
 } from '../ports/inventory.inputs.js';
 import { InventoryRepository } from '../../domain/repositories/inventory.repository.js';
-import { validCopyVerification, type ManagedCopyUpdate } from '../../domain/entities/inventory.types.js';
+import {
+  validCopyVerification,
+  type ManagedCopyUpdate,
+  type ResourceAvailability,
+} from '../../domain/entities/inventory.types.js';
 import type { AuditActor } from '../../../../shared/application/audit-actor.js';
 import {
   normalizeAccessoryName,
@@ -266,9 +271,11 @@ export class InventoryService {
       activo: row.activo ?? true,
       descripcion: row.descripcion ?? null,
       durationHours: row.duracionPrestamoHoras ?? null,
-      available: row.available ?? false,
-      totalCopies: row.totalCopies ?? 0,
-      availableCopies: row.availableCopies ?? 0,
+      available: row.available ?? null,
+      totalCopies: row.totalCopies,
+      availableCopies: row.availableCopies ?? null,
+      compatibility: row.compatibility,
+      registeredStock: row.registeredStock,
       ...(row.categoria
         ? {
             categoria: {
@@ -295,8 +302,12 @@ export class InventoryService {
     return {
       disponibles,
       prestados,
-      noDisponibles: retenidos + libres - disponibles,
+      noDisponibles:
+        disponibles === null ? null : retenidos + libres - disponibles,
       reservados,
+      totalCopies: libres + prestados + retenidos + reservados,
+      registeredStock: { libres, prestados, retenidos, reservados },
+      compatibility: await this.repository.getCompatibility(),
     };
   }
 
@@ -319,14 +330,14 @@ export class InventoryService {
             ? { id: category.id, nombre: category.nombre }
             : null,
           available:
-            counts.disponibles > 0 &&
-            row.activo !== false &&
-            category?.activo !== false,
-          totalCopies:
-            counts.disponibles +
-            counts.prestados +
-            counts.noDisponibles +
-            counts.reservados,
+            counts.disponibles === null
+              ? null
+              : counts.disponibles > 0 &&
+                row.activo !== false &&
+                category?.activo !== false,
+          totalCopies: counts.totalCopies,
+          compatibility: counts.compatibility,
+          registeredStock: counts.registeredStock,
           availableCopies: counts.disponibles,
         });
       }),
@@ -340,7 +351,8 @@ export class InventoryService {
       codigoInventario: row.codigoInventario,
       estado: row.estado,
       condicionFisica: row.condicionFisica ?? null,
-      habilitado: row.habilitado === true,
+      habilitado: row.habilitado ?? null,
+      compatibility: row.compatibility,
     };
   }
 
@@ -570,7 +582,7 @@ export class InventoryService {
         nombre: nombre!,
         descripcion,
       });
-      return this.toResourceResponse(created[0] ?? created);
+      return (await this.mapResourceRows([created[0] ?? created]))[0]!;
     } catch (error: any) {
       if (this.isUniqueViolation(error)) {
         throw new ConflictException(
@@ -625,7 +637,13 @@ export class InventoryService {
       normalizedFilters.available === undefined
         ? await this.repository.countResources(normalizedFilters)
         : filtered.length;
-    return { data, total, page, limit };
+    return {
+      data,
+      total,
+      page,
+      limit,
+      compatibility: await this.repository.getCompatibility(),
+    };
   }
 
   async getResource(resourceId: string) {
@@ -640,14 +658,14 @@ export class InventoryService {
       ...this.toResourceResponse({
         ...resource,
         available:
-          counts.disponibles > 0 &&
-          resource.activo !== false &&
-          category?.activo !== false,
-        totalCopies:
-          counts.disponibles +
-          counts.prestados +
-          counts.noDisponibles +
-          counts.reservados,
+          counts.disponibles === null
+            ? null
+            : counts.disponibles > 0 &&
+              resource.activo !== false &&
+              category?.activo !== false,
+        totalCopies: counts.totalCopies,
+        compatibility: counts.compatibility,
+        registeredStock: counts.registeredStock,
         availableCopies: counts.disponibles,
       }),
       categoria: category
@@ -709,7 +727,7 @@ export class InventoryService {
         updateData,
       );
       if (!updated) throw new NotFoundException('Recurso no encontrado.');
-      return this.toResourceResponse(updated);
+      return (await this.mapResourceRows([updated]))[0]!;
     } catch (error: any) {
       if (this.isUniqueViolation(error)) {
         throw new ConflictException(
@@ -760,7 +778,10 @@ export class InventoryService {
         codigoInventario,
         estado: 'DISPONIBLE',
       });
-      return this.toCopyResponse(created[0] ?? created);
+      return this.toCopyResponse({
+        ...(created[0] ?? created),
+        compatibility: await this.repository.getCompatibility(),
+      });
     } catch (error: any) {
       if (this.isUniqueViolation(error)) {
         throw new ConflictException(
@@ -814,6 +835,19 @@ export class InventoryService {
 
   async getLoanAvailability(copyId: string) {
     const copy = await this.ensureCopyExists(copyId);
+    // The loans port promises boolean. Unknown is a typed denial, never false availability.
+    if (
+      !(await this.repository.getCompatibility()).capabilities
+        .verifiedAvailability
+    )
+      throw new ServiceUnavailableException({
+        statusCode: 503,
+        code: 'SCHEMA_CAPABILITY_UNAVAILABLE',
+        operation: 'inventory.loanAvailability',
+        diagnostic: 'SCHEMA_INCOMPLETE',
+        message:
+          'Actualización de inventario pendiente; disponibilidad no verificable.',
+      });
     const resource = await this.ensureResourceExists(copy.recursoId);
     const policy = await this.resolveLoanPolicy(resource);
     const category = await this.ensureCategoryExists(resource.categoriaId);
@@ -890,25 +924,28 @@ export class InventoryService {
     return this.toCopyResponse(updated);
   }
 
-  async getResourceAvailability(resourceId: string) {
+  async getResourceAvailability(
+    resourceId: string,
+  ): Promise<ResourceAvailability> {
     const resource = await this.ensureResourceExists(resourceId);
     const category = await this.ensureCategoryExists(resource.categoriaId);
     const counts = await this.getAvailabilityCounts(resourceId);
-    const totalCopies =
-      counts.disponibles +
-      counts.prestados +
-      counts.noDisponibles +
-      counts.reservados;
+    const totalCopies = counts.totalCopies;
     return {
       resourceId,
       available:
-        counts.disponibles > 0 &&
-        resource.activo !== false &&
-        category.activo !== false,
+        counts.disponibles === null
+          ? null
+          : counts.disponibles > 0 &&
+            resource.activo !== false &&
+            category.activo !== false,
       totalCopies,
       disponibles: counts.disponibles,
       prestados: counts.prestados,
       noDisponibles: counts.noDisponibles,
+      reservados: counts.reservados,
+      registeredStock: counts.registeredStock,
+      compatibility: counts.compatibility,
     };
   }
 
@@ -933,19 +970,20 @@ export class InventoryService {
               ? { id: category.id, nombre: category.nombre }
               : null,
             available:
-              counts.disponibles > 0 &&
-              row.activo !== false &&
-              category?.activo !== false,
-            totalCopies:
-              counts.disponibles +
-              counts.prestados +
-              counts.noDisponibles +
-              counts.reservados,
+              counts.disponibles === null
+                ? null
+                : counts.disponibles > 0 &&
+                  row.activo !== false &&
+                  category?.activo !== false,
+            totalCopies: counts.totalCopies,
+            compatibility: counts.compatibility,
+            registeredStock: counts.registeredStock,
             availableCopies: counts.disponibles,
           }),
           disponibles: counts.disponibles,
           prestados: counts.prestados,
           noDisponibles: counts.noDisponibles,
+          reservados: counts.reservados,
         };
       }),
     );

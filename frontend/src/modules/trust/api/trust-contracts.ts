@@ -97,7 +97,7 @@ export function validSanctionDetail(value: unknown): value is SanctionDetail {
     !Array.isArray(value.history) || !value.history.every(h => record(h) && text(h.action) && validInstant(h.occurredAt) && nullableText(h.actorAccountId) && nullableText(h.reason))) return false
   if (value.rule && (value.rule.ruleId !== value.ruleId || value.rule.id !== value.ruleVersionId)) return false
   if (value.appeals.some(a => a.sanctionId !== value.id || a.userId !== value.userId)) return false
-  if (value.current !== undefined && value.current !== null && !validCurrent(value.current)) return false
+  if (Object.hasOwn(value, 'current') && value.current !== null && !validCurrent(value.current)) return false
   const violation = value.violation
   return violation === null || (record(violation) && text(violation.id) && text(violation.userId) && text(violation.ruleId) && text(violation.ruleVersionId) && validInstant(violation.occurredAt) && typeof violation.appliedPenalty === 'number' && Number.isFinite(violation.appliedPenalty))
 }

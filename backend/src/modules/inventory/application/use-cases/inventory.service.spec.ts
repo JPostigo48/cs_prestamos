@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InventoryService } from './inventory.service.js';
+import { readyInventoryCompatibility } from '../../../../../test/helpers/inventory-schema.js';
 import {
   BadRequestException,
   ConflictException,
@@ -14,6 +15,7 @@ describe('InventoryService', () => {
 
   let service: InventoryService;
   let repository: {
+    getCompatibility: ReturnType<typeof vi.fn>;
     createCategory: ReturnType<typeof vi.fn>;
     findCategoryById: ReturnType<typeof vi.fn>;
     findAllCategories: ReturnType<typeof vi.fn>;
@@ -41,6 +43,7 @@ describe('InventoryService', () => {
 
   beforeEach(() => {
     repository = {
+      getCompatibility: vi.fn().mockResolvedValue(readyInventoryCompatibility),
       createCategory: vi.fn(),
       findCategoryById: vi.fn(),
       findAllCategories: vi.fn(),
@@ -307,7 +310,10 @@ describe('InventoryService', () => {
     ).rejects.toBe(error);
 
     repository.createCopy.mockRejectedValue({ code: '23505' });
-    repository.findResourceById.mockResolvedValue({ id: resourceId, categoriaId: categoryId });
+    repository.findResourceById.mockResolvedValue({
+      id: resourceId,
+      categoriaId: categoryId,
+    });
     await expect(
       service.createCopy(resourceId, { codigoInventario: 'LIB-001' }),
     ).rejects.toThrow(ConflictException);

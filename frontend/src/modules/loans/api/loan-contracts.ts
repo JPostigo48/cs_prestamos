@@ -66,7 +66,18 @@ export function validLoanConfiguration(v: Record<string, unknown>): boolean {
 export function validLoan(v: unknown): boolean {
   return object(v) && text(v.id) && text(v.copyId) && text(v.userId) && text(v.endsAt) &&
     ['ACTIVO', 'FINALIZADO', 'PLANIFICADO', 'CERRADO_POR_INCIDENCIA'].includes(String(v.status)) &&
+    (!Object.hasOwn(v, 'closureHistory') || v.closureHistory === 'AVAILABLE' || v.closureHistory === 'UNAVAILABLE') &&
+    (v.closureHistory !== 'UNAVAILABLE' || v.closure === null) &&
     validLoanConfiguration(v) && validClosureFields(v)
+}
+export function parseLoan(value: unknown): import('./loans-api').Loan {
+  if (!validLoan(value)) throw new ApiError('Respuesta incompatible con el préstamo.', 0)
+  const loan = value as import('./loans-api').Loan
+  return { ...loan, configurationSnapshot: loan.configurationSnapshot ?? null, returnChecklist: loan.returnChecklist ?? null }
+}
+export function parseLoans(value: unknown): import('./loans-api').Loan[] {
+  if (!Array.isArray(value)) throw new ApiError('Respuesta incompatible con la lista de préstamos.', 0)
+  return value.map(parseLoan)
 }
 export function pagination(query: Record<string, string>) {
   const page = Number(query.page ?? 1), limit = Number(query.limit ?? 20)

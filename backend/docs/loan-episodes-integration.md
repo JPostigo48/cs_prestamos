@@ -4,6 +4,8 @@
 
 Implementación del contexto de reglas/confianza, basada en [requisitos](../../docs/requirements/README.md), [acumulación y cierre](../../docs/requirements/terms-and-conditions.md) y [arquitectura de publicaciones](../../docs/architecture/public-terms.md). La entrega final incluye cierre HTTP, automatización, reevaluación transaccional de elegibilidad y rehabilitación; las secciones de integración del motor describen sus responsabilidades internas, no funcionalidades pendientes.
 
+Estado vigente: [compatibilidad segura](#compatibilidad-segura--contrato-vigente) y [verificación final](#verificación-final-de-compatibilidad). Los inventarios de archivos, generaciones y conteos anteriores se conservan como evidencia de sus respectivas entregas, no como operaciones repetidas en este cierre.
+
 ## Firmas para conectar
 
 El motor se exporta como proveedor del [módulo de reglas](../src/modules/rules/rules.module.ts). Puede inyectarse o construirse con el servicio de persistencia existente. No abre transacciones ni captura el reloj.
@@ -191,3 +193,98 @@ La evidencia correctiva vigente se registra en la [verificación H1–H4](../../
 - [test/sanction-cancellation.offline.spec.ts](../test/sanction-cancellation.offline.spec.ts)
 - [test/trust-contracts.spec.ts](../test/trust-contracts.spec.ts)
 - [vitest.config.offline.ts](../vitest.config.offline.ts)
+
+## Compatibilidad segura · contrato vigente
+
+Cierre documental del 25/11/2026 (Lima). Fuentes actuales: [contrato inventario backend](../src/modules/inventory/SCHEMA-COMPATIBILITY.md), [contrato préstamos backend](../src/modules/loans/SCHEMA-COMPATIBILITY.md), [inventario cliente](../../frontend/src/modules/inventory/CLIENT-CONTRACT.md), [préstamos/confianza cliente](../../frontend/src/modules/loans/CLIENT-CONTRACT.md) y [API compartida](../../frontend/src/shared/api/SCHEMA-CLIENT-CONTRACT.md). Se revisó implementación real; no se regeneraron OpenAPI ni sus copias, ORM o catálogo DB.
+
+### Bundles y operaciones concretas
+
+La [declaración física](../src/shared/infrastructure/prisma/schema-capability-bundles.ts:16) exige tipos y nulabilidad exactos de columnas, no solo su nombre. El [evaluador](../src/shared/infrastructure/prisma/schema-capabilities.ts:97) comprueba restricciones de la tabla correcta: CHECK validado y expresión reconocida, PK/UNIQUE validadas y no diferidas con columnas exactas, FK validada/no diferida hacia id del destino public, borrado restrictivo y actualización en cascada. No se usa el ledger como prueba de capacidad.
+
+| Bundle | Requisitos concretos |
+| --- | --- |
+| [copyPhysicalState](../src/shared/infrastructure/prisma/schema-capability-bundles.ts:184) | Tabla ejemplares, condicionFisica text nullable y habilitado boolean no nullable; CHECK físico validado con APTO, DANADO, INCOMPLETO, DANADO_E_INCOMPLETO, PERDIDO y ROBADO. |
+| [loanEpisodes](../src/shared/infrastructure/prisma/schema-capability-bundles.ts:189) | Columnas nuevas de incumplimientos (categoriaId, origen, prestamoId, termsVersionId), todas las columnas declaradas de ajustes_incumplimiento; CHECK de origen MORA/DANO/PERDIDA; tres CHECKs semánticos de contexto, efecto/importes/duración y conservación/rangos de saldos; PK de ajustes; UNIQUE episodio por préstamo/origen y ajuste por episodio/severidad/versión; FK de episodio a categoría/préstamo/términos y de ajuste a episodio/versión de regla. |
+| [loanClosure](../src/shared/infrastructure/prisma/schema-capability-bundles.ts:185) | Todas las columnas declaradas de cierres_prestamo, PK, UNIQUE por prestamoId y requestId, FK a préstamo; columna estado text no nullable de prestamos y CHECK que incluye CERRADO_POR_INCIDENCIA junto a PLANIFICADO/ACTIVO/FINALIZADO. |
+| [loanPolicyEpisodes](../src/shared/infrastructure/prisma/schema-capability-bundles.ts:198) | Unión de los tres anteriores, no interruptor global obligatorio para toda operación. |
+
+La [selección de dependencias](../src/modules/loans/infrastructure/loan-schema.ts:10) y sus llamadores usan estas operaciones exactas:
+
+| Operación informada | Bundles exigidos para escribir |
+| --- | --- |
+| [reservations.create / pickup / cancel / expire](../src/modules/loans/infrastructure/persistence/prisma/prisma-reservation.repository.ts:199) | copyPhysicalState + loanEpisodes; no loanClosure |
+| [loans.synchronizeOverdue](../src/modules/loans/infrastructure/loan-overdue-synchronizer.ts:31) | copyPhysicalState + loanEpisodes |
+| [loans.close](../src/modules/loans/infrastructure/persistence/prisma/prisma-loan-closure.ts:204) | copyPhysicalState + loanEpisodes + loanClosure, también para replay integral |
+| [episodes.synchronize](../src/modules/rules/infrastructure/persistence/prisma/loan-episode.engine.ts:97) | Con daño: los tres; sin daño: copyPhysicalState + loanEpisodes |
+| [sanctions.suspend / lift](../src/modules/rules/infrastructure/persistence/prisma/prisma-sanction.repository.ts:406), [violations.register](../src/modules/rules/infrastructure/persistence/prisma/prisma-violation.repository.ts:42) | copyPhysicalState + loanEpisodes |
+| [appeals.create / resolve](../src/modules/rules/infrastructure/persistence/prisma/prisma-appeal.repository.ts:45) | Solo loanEpisodes; no exige inventario físico ni cierres |
+| [reservations.releaseForSanction](../src/modules/rules/infrastructure/persistence/prisma/prisma-sanction.repository.ts:615) | copyPhysicalState, dentro de la transacción coordinadora |
+| [inventory.createCategory / activateCategory / createResource / activateResource / createCopy / updateCopy / markCopyAsLoaned](../src/modules/inventory/infrastructure/persistence/prisma/prisma-inventory.repository.ts:121) | copyPhysicalState; incluye reasignación/activación, gestión física, retención/baja y rehabilitación. El código descriptivo exclusivo usa inventory.updateCopyDescription, sin exigir bundle completo. |
+
+No se bloquea mora por una tabla de cierres que no utiliza ni apelación por habilitación física. Una operación anidada puede identificar al coordinador interno que detectó el problema. Se comprueba antes de escribir (también antes de bloqueos implementados como actualizaciones neutras) y se revalida con runtime transaccional fresco, sin caché externa. Ausencia de objeto durante escritura causa rollback y 503, nunca reintento por esquema, omisión de consecuencias o devolución básica.
+
+### Matriz de lectura y degradación segura
+
+| Capacidad | Viejo conocido | Parcial conocido | Full conocido |
+| --- | --- | --- | --- |
+| Inventario público y ejemplares | Lee catálogo/ocupación/stock; campos físicos ausentes nulos y disponibilidad no verificable | Proyecta únicamente columnas físicas presentes; disponibilidad sigue nula si faltan restricciones | Disponibilidad verificable solo con bundle físico completo, permisos y aptitud reales; clasificación legada nula no se convierte en APTO |
+| Descriptivos/observaciones | Conserva ediciones descriptivas soportadas | Igual, sin guardar parte descriptiva de una petición mixta rechazada | Controles normales |
+| Circulación/altas/rehabilitación | 503 | 503 si falta alguno de sus bundles | Continúa reglas/autorización/transacciones normales |
+| [Préstamos e historial](../src/modules/loans/infrastructure/persistence/prisma/prisma-loan.repository.ts:73) | Conserva préstamo/devolución/inspección antiguas sin consultar cierres ausentes; closureHistory UNAVAILABLE | Con columnas acreditadas prestamoId y resultado de cierres_prestamo, lee resultado original y marca AVAILABLE aunque el bundle de escritura esté incompleto | Restaura cierre, consecuencias, recompensa y ejemplar persistidos; AVAILABLE |
+| [loans.returnPolicy](../src/modules/loans/infrastructure/persistence/prisma/prisma-loan-closure.ts:133) | 503 si faltan columnas necesarias | Requiere incumplimientos.prestamoId/origen y ajustes: incumplimientoId, versionReglaId, severidad, descuentoEfectivo, duracionTotalDias, fechaEfectiva. Restricciones de escritura ausentes por sí solas no bloquean lectura | Política histórica acreditada, sin catálogo vigente como fallback |
+| [sanctions.readDetail](../src/modules/rules/infrastructure/persistence/prisma/prisma-sanction.repository.ts:233) | 503 si faltan columnas proyectadas/usadas | Requiere ajustes: id, incumplimientoId, versionReglaId, severidad, efecto, nominalObjetivo, incrementoNominal, descuentoEfectivo, saldoAnterior, saldoPosterior, duracionTotalDias, fechaEfectiva, createdAt. No exige CHECKs/UNIQUE/FK de escritura para leer | Detalle inicial más episodio/ajustes actuales, sin sumar dos veces el primero |
+
+Viejo/parcial/full son estados por dependencia, no por despliegue. Metadata desconocida **no** habilita degradación: responde 503 antes de aparentar ausencia de cierre/episodio o disponibilidad cero. Lecturas antiguas de reglas, incumplimientos y apelaciones ajenas a estos objetos no cambian. [Recuperación compartida](../src/shared/infrastructure/prisma/schema-capabilities.ts:230): una repetición solo por SQLSTATE 42P01/42703, con invalidación y reconstrucción fuera de transacciones fallidas; red, permisos y SQL ajeno no prueban esquema faltante.
+
+### Metadata, nulos y cuerpo HTTP
+
+El [contrato de inventario](../src/modules/inventory/domain/entities/inventory-compatibility.ts:2) tiene exactamente status, message, capabilities y actions. [Su proyección](../src/modules/inventory/infrastructure/persistence/prisma/prisma-inventory.repository.ts:62) marca READY/message nulo solo con bundle físico completo; de lo contrario UPDATE_PENDING y «Actualización de inventario pendiente. La disponibilidad no se puede verificar y las operaciones de circulación están deshabilitadas.».
+
+Las capacidades physicalCondition/administrativeEnablement acreditan cada columna; verifiedAvailability acredita bundle completo. descriptiveEdits siempre es verdadero; create/activate/release/rehabilitate/manageCopy solo cuando está completo. **No son permisos ni contienen reason**. Campos físicos ausentes/incompatibles son nulos; habilitado falso solo si se leyó falso. available, availableCopies, disponibles y noDisponibles son nulos sin disponibilidad verificable, incluso con stock cero o inactividad. registeredStock contiene libres/prestados/retenidos/reservados por ocupación, totalCopies suma los cuatro; no se usa stock libre como cantidad prestable. Filtros true/false excluyen desconocidos; la consulta sin filtro los mantiene.
+
+En [préstamos](../src/modules/loans/domain/entities/loan.ts:35), solo AVAILABLE + cierre nulo acredita que no se encontró cierre integral (no excluye devolución antigua). UNAVAILABLE y omisión legacy significan historial no acreditado. En [sanciones cliente](../../frontend/src/modules/trust/api/trust-contracts.ts:89), episodio omitido es desconocido, nulo explícito es ausencia de episodio, objeto presente se valida íntegro; no se inventan ajustes ni saldos. La política exige gravedades actual/proyectada presentes, aunque puedan ser nulas.
+
+La [excepción compartida real](../src/shared/infrastructure/prisma/schema-capabilities.ts:36) devuelve HTTP 503 y, por ejemplo:
+
+```json
+{
+  "statusCode": 503,
+  "code": "SCHEMA_CAPABILITY_UNAVAILABLE",
+  "operation": "loans.close",
+  "diagnostic": "SCHEMA_INCOMPLETE",
+  "message": "Operación bloqueada por una actualización pendiente del sistema. Solicite al administrador completar la actualización y vuelva a intentarlo."
+}
+```
+
+Metadata desconocida cambia el diagnóstico y el mensaje. Cuerpo exacto para la misma operación:
+
+```json
+{
+  "statusCode": 503,
+  "code": "SCHEMA_CAPABILITY_UNAVAILABLE",
+  "operation": "loans.close",
+  "diagnostic": "SCHEMA_UNKNOWN",
+  "message": "No se pudo verificar la disponibilidad de esta operación. Vuelva a intentarlo; si persiste, contacte al administrador."
+}
+```
+
+La operación es la operación concreta del llamador. **No hay reason ni error en estos cuerpos**, ni SQL, tablas sensibles o secretos. Red o permisos no prueban una actualización pendiente. Otros 503, incluidos fallos de política histórica no resoluble, no se convierten automáticamente a este contrato. El diagnóstico interno METADATA_UNAVAILABLE del snapshot desconocido no se expone como diagnóstico HTTP.
+
+El [cliente compartido](../../frontend/src/shared/api/client.ts:26) conserva API y 401; solo proyecta el código exacto con HTTP 503, operación válida de puntos (2–4 segmentos, máximo 96 caracteres) y los dos diagnósticos admitidos. Construye mensaje público seguro más código/operación, sin copiar texto arbitrario o SQL. La única excepción en [errorMessage()](../../frontend/src/shared/composables/useRemote.ts:4) muestra ese mensaje ya saneado; no altera filtros, cargas, cancelación ni reintentos. El [flujo integral](../../frontend/src/modules/loans/useLoanClosure.ts:7) conserva cuerpo/intención/UUID y concilia solo con historial acreditado; no sustituye el cierre por una escritura básica.
+
+### Jobs y límites operativos
+
+El [proveedor](../src/shared/infrastructure/prisma/schema-capabilities.ts:173) cachea metadata conocida 30 segundos; desconocida no queda cacheada y el runtime transaccional evita la caché. Los jobs verifican capacidades antes de candidatos, reintentan por ciclos de un minuto y conservan cursor/exclusión local. El [monitor](../src/modules/loans/infrastructure/loan-job-monitor.ts:5) registra pausa, recordatorio como máximo cada 15 minutos y recuperación tras recorrido correcto. El fallo de un recorrido persiste entre ticks: cola vacía tras unidades fallidas no acredita recuperación; requiere recorrido posterior sin fallos. No registra SQL, URLs o titulares.
+
+### Verificación final de compatibilidad
+
+Comandos completos, listado de archivos por grupos, hashes y límites en el [cierre de desarrollo existente](../../docs/development/loan-integration-verification.md#compatibilidad-segura--cierre-del-25112026). Corridas actuales separadas, **sin sumarlas ni añadir las anteriores**:
+
+- [Configuración loans-offline](../vitest.config.loans-offline.ts): **18 suites, 476/476**; incluye proveedor 69 y compatibilidad préstamos 39. Se volvió a ejecutar, no se atribuye simplemente el resultado anterior.
+- [Configuración offline](../vitest.config.offline.ts) con pool vmThreads y selección inventario/rehabilitación/módulo inventario: **6 suites, 193/193**, complementarias; compatibilidad 55, rehabilitación 43, servicio 46, repositorio 21, CRUD 7, controlador 21.
+- [Selección focal frontend](../../frontend/tests/compatibility-review.test.mjs): **269/269**, incluyendo [errores API](../../frontend/tests/schema-api-errors.test.mjs), [rehabilitación](../../frontend/tests/copy-rehabilitation.test.mjs), [cierre](../../frontend/tests/loan-closure.test.mjs), contratos y consumidores. La selección exacta está en el comando del informe enlazado.
+- [Tipos backend](../package.json) y [frontend](../../frontend/package.json): salida 0, sin emisión/incremental ni diagnósticos. Build backend mediante CLI Nest instalado: salida 0 **sin texto de salida**, sin iniciar aplicación. [Build frontend seguro](../../frontend/src/shared/api/SCHEMA-CLIENT-CONTRACT.md:35): salida 0, **2144 módulos**, rendering chunks, construido en **4.54 s**, carga de archivos de entorno y escritura desactivadas; tipos comprobados por separado.
+- [Global frontend actual](../../frontend/tests/): **459 pruebas, 449 aprobadas, 10 fallidas**, 0 omitidas/canceladas, salida 1. No está aprobada. Los diez casos coinciden con los registrados en la [revisión previa](../../docs/compatibility-review-verification.md#comparación-histórica-de-los-diez-fallos): imagen (1), correcciones finales (2), fase 3 (6), política de acceso (1). La evidencia histórica es **53/63 focales, 10 fallidas** en 5d910793c0701e236ae68bae35000bc0358a233a; no se repitió aquí ni se afirma una suite global histórica. Avisos y errores asíncronos del arnés no se silenciaron.
+
+En este cierre solo se editaron este documento y el informe de desarrollo existente. Los cambios de integración recibidos y artefactos existentes se conservaron, con hashes en el informe. Control final: diff sin errores de whitespace, índice vacío, exclusiones sin cambios, rutas locales de los 47 enlaces nuevos comprobadas; cinco artefactos con tamaño/SHA-256 idénticos al preflight. Sin modificaciones de auth/users/arranque, entorno, migraciones, seeds, dependencias o Git mutante; sin generadores OpenAPI/copias, servicios ni DB. La migración sigue preparada, **no aplicada**. Dobles/AST y Vue en memoria no certifican aislamiento, bloqueos, concurrencia DDL/PostgreSQL real, rendimiento, navegador/CSS ni despliegue. Los diez fallos globales siguen abiertos; no se debilitó ninguna prueba para aprobar.

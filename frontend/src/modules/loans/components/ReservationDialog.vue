@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import type { Copy } from '../../inventory/api/inventory-api'
+import { isCopyEligibleForLoan } from '../../inventory/api/copy-contracts'
+import { inventoryCompatibilityMessage } from '../../inventory/api/compatibility-contracts'
 import { cancelReservation, createReservation, type Reservation } from '../api/reservations-api'
 import ModalDialog from '../../../shared/components/ModalDialog.vue'
 import { errorMessage } from '../../../shared/composables/useRemote'
@@ -21,6 +23,8 @@ const copyId = ref(''),
   result = ref<Reservation | null>(null)
 const cancelling = ref(false), cancellationReason = ref(''), humanConfirmation = ref(false)
 const settings = useRemote(getReservationSettings)
+const eligibleCopies = computed(() => props.copies.filter(isCopyEligibleForLoan))
+const compatibilityNotice = computed(() => props.copies.map(c => inventoryCompatibilityMessage(c.compatibility)).find(Boolean) || '')
 const now = ref(Date.now())
 const timer = setInterval(() => { now.value = Date.now() }, 1000)
 onBeforeUnmount(() => clearInterval(timer))
@@ -52,7 +56,7 @@ async function submit() {
     uncertain.value ||
     result.value ||
     !settings.data.value || settings.loading.value || validation.value ||
-    !props.copies.some((c) => c.id === copyId.value && c.estado === 'DISPONIBLE')
+    !eligibleCopies.value.some((c) => c.id === copyId.value)
   )
     return
   sending.value = true
@@ -76,7 +80,7 @@ async function submit() {
           >Ejemplar disponible<select v-model="copyId" required :disabled="sending || uncertain">
             <option value="">Seleccionar ejemplar</option>
             <option
-              v-for="copy in copies.filter((c) => c.estado === 'DISPONIBLE')"
+            v-for="copy in eligibleCopies"
               :key="copy.id"
               :value="copy.id"
             >
@@ -84,6 +88,8 @@ async function submit() {
             </option>
           </select></label
         >
+        <p v-if="compatibilityNotice" role="status">{{ compatibilityNotice }}</p>
+        <p v-if="!eligibleCopies.length" role="status">No hay ejemplares con aptitud y disponibilidad verificadas para reservar.</p>
         <div class="reservation-time">
           <label>Fecha<input v-model="selectedDate" type="date" required :disabled="sending || uncertain" /></label>
           <label>Hora<input v-model="selectedTime" type="time" required :disabled="sending || uncertain" /></label>
@@ -120,7 +126,7 @@ async function submit() {
         ><button
           v-if="!result"
           class="primary"
-          :disabled="sending || uncertain || !copyId || !settings.data.value || settings.loading.value || !!validation"
+          :disabled="sending || uncertain || !eligibleCopies.some(c => c.id === copyId) || !settings.data.value || settings.loading.value || !!validation"
         >
           Confirmar reserva</button
         ><RouterLink to="/app/terms">Mis términos</RouterLink>

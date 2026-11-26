@@ -5,8 +5,8 @@ export interface FullRegistrationInput {
   email: string;
   password: string;
   userType: UserType;
-  institutionalId?: string;
-  phone?: string;
+  institutionalId: string;
+  phone: string;
   evidence: string[];
   termsVersionId: string;
 }

@@ -26,6 +26,7 @@ describe('automatización de mora local y acotada, sin DB', () => {
 
   function job() {
     const synchronizer = {
+      assertAvailable: vi.fn().mockResolvedValue(undefined),
       candidates: vi.fn().mockResolvedValue([]),
       synchronizeLoan: vi.fn().mockResolvedValue(undefined),
     };
@@ -117,6 +118,69 @@ describe('automatización de mora local y acotada, sin DB', () => {
     expect(JSON.stringify(warning.mock.calls)).not.toContain('SQL PRIVADO');
     await service.synchronize();
     expect(synchronizer.synchronizeLoan).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([100, 102])('%i fallos persisten entre ticks y la cola vacía no anuncia recuperación', async total => {
+    const { service, synchronizer } = job();
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const rows = Array.from({ length: total }, (_, n) => ({ id: String(n).padStart(4, '0'), usuarioId: 'user' }));
+    synchronizer.candidates.mockImplementation((_at, limit, cursor) => Promise.resolve(rows.filter(r => !cursor || r.id > cursor).slice(0, limit)));
+    synchronizer.synchronizeLoan.mockRejectedValue(new Error('SQL PRIVADO'));
+    for (let tick = 0; tick < 8; tick++) {
+      await service.synchronize();
+      await vi.advanceTimersByTimeAsync(60_000);
+    }
+    expect(synchronizer.synchronizeLoan).toHaveBeenCalledTimes(total * 4);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(log).not.toHaveBeenCalled();
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('SQL PRIVADO');
+    await vi.advanceTimersByTimeAsync(15 * 60_000);
+    await service.synchronize();
+    expect(warn).toHaveBeenCalledTimes(2);
+    synchronizer.synchronizeLoan.mockResolvedValue(undefined);
+    // Still finishing the failed traversal: success in its tail is insufficient.
+    await service.synchronize();
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(log).toHaveBeenCalledTimes(1);
+    await service.synchronize(); await service.synchronize();
+    expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifica causas distintas dentro y entre páginas y conserva el fallo hasta completar el recorrido', async () => {
+    const { service, synchronizer } = job();
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const rows = Array.from({ length: 101 }, (_, n) => ({ id: String(n).padStart(4, '0'), usuarioId: 'user' }));
+    synchronizer.candidates.mockImplementation((_at, limit, cursor) => Promise.resolve(rows.filter(r => !cursor || r.id > cursor).slice(0, limit)));
+    const codes: Record<string, string> = { '0000': '42501', '0001': 'ECONNRESET', '0100': '42601' };
+    synchronizer.synchronizeLoan.mockImplementation(async (_user, id) => {
+      if (codes[id]) throw Object.assign(new Error('SQL PRIVADO'), { code: codes[id] });
+    });
+    await service.synchronize();
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(warn).toHaveBeenCalledTimes(3);
+    expect(warn.mock.calls.map(call => call[0])).toEqual([
+      expect.stringContaining('PERMISSION_DENIED'),
+      expect.stringContaining('CONNECTION_UNAVAILABLE'),
+      expect.stringContaining('SQL_FAILURE'),
+    ]);
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(warn).toHaveBeenCalledTimes(3);
+    synchronizer.synchronizeLoan.mockResolvedValue(undefined);
+    await service.synchronize(); // Cola limpia del recorrido fallido.
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(log).not.toHaveBeenCalled();
+    await service.synchronize();
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('SQL PRIVADO');
   });
 
   it('libera la exclusión tras fallo de consulta y detiene lotes tras destruir', async () => {

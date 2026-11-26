@@ -97,6 +97,7 @@ export function restoreClosedLoan(value: unknown): Loan {
   const loan = value as Loan;
   return {
     ...loan,
+    closureHistory: 'AVAILABLE',
     startsAt: new Date(loan.startsAt),
     endsAt: new Date(loan.endsAt),
     return: loan.return

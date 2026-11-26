@@ -81,15 +81,25 @@ export async function rejectRequest(id: string, rejectionReason: string) {
 export async function getRegistrationEvidenceUrl(
   requestId: string,
   evidenceIndex: number,
+  signal?: AbortSignal,
 ) {
   const result = await authenticatedRequest<{ url: string }>(
     '/users/registration-requests/' +
       encodeURIComponent(requestId) +
       '/evidence/' +
       evidenceIndex,
+    { signal },
   )
-  if (!result?.url) throw new ApiError('No se pudo abrir la evidencia.', 0)
-  return result.url
+  try {
+    const url = new URL(result?.url)
+    const prefix = '/storage/v1/object/sign/'
+    const parts = decodeURIComponent(url.pathname.slice(prefix.length)).split('/')
+    if (url.protocol !== 'https:' || url.username || url.password || url.hash
+      || !url.pathname.startsWith(prefix) || parts.length !== 3 || !parts[0]
+      || parts[1] !== 'registration-evidence' || !/^[a-f\d-]{36}\.pdf$/i.test(parts[2]!)
+      || !url.searchParams.get('token')) throw new Error('invalid')
+    return url.href
+  } catch { throw new ApiError('No se recibió un enlace firmado seguro para la evidencia. Vuelve a intentarlo.', 422) }
 }
 export async function createAccount(body: { userId: string; email: string; password: string }) {
   const result = await authenticatedRequest<SafeAccount>('/auth/accounts', {

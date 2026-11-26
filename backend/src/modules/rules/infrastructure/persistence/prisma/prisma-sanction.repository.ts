@@ -3,6 +3,8 @@ import { lockPublishedLoanPolicy } from '../../../../../shared/infrastructure/pr
 import { copyTrustAllowed } from '../../../../loans/infrastructure/integration/loan-trust-access.js';
 import { releaseReservedCopy } from '../../../../loans/infrastructure/integration/release-reserved-copy.js';
 import { hasEffectiveUserRestriction } from './effective-user-restriction.js';
+import { assertLoanSchema, loanSchemaTransaction, requireLoanColumns, SANCTION_OPERATION_SCHEMA } from '../../../../loans/infrastructure/loan-schema.js';
+import type { KnownSchemaCapabilities } from '../../../../../shared/infrastructure/prisma/schema-capabilities.js';
 import {
   BadRequestException,
   ConflictException,
@@ -229,7 +231,15 @@ export class PrismaSanctionRepository implements SanctionRepository {
   }
 
   async findDetail(id: string): Promise<SanctionDetail | null> {
-    return this.detail(id, this.runtime());
+    const read = async (snapshot: KnownSchemaCapabilities) => {
+      requireLoanColumns(snapshot, 'ajustes_incumplimiento', [
+        'id', 'incumplimientoId', 'versionReglaId', 'severidad', 'efecto',
+        'nominalObjetivo', 'incrementoNominal', 'descuentoEfectivo', 'saldoAnterior',
+        'saldoPosterior', 'duracionTotalDias', 'fechaEfectiva', 'createdAt',
+      ], 'sanctions.readDetail');
+      return this.detail(id, this.runtime());
+    };
+    return this.prisma.schemaCapabilities.read('loanEpisodes', 'sanctions.readDetail', read, read);
   }
   private async detail(
     id: string,
@@ -394,7 +404,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
   }
 
   async suspend(data: SuspendUserData): Promise<SanctionDetail> {
-    return this.prisma.client.transaction(async (tx) => {
+    return loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'sanctions.suspend', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       const user = await this.lockUser(data.userId, tx);
       const fingerprint = JSON.stringify({
@@ -603,6 +613,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
     reason: string,
     now: Date,
   ) {
+    await assertLoanSchema(this.prisma, ['copyPhysicalState'], 'reservations.releaseForSanction', tx);
     await lockLoanInventory(this.prisma, tx);
     const suspended = await hasEffectiveUserRestriction(
       this.prisma,
@@ -681,7 +692,7 @@ export class PrismaSanctionRepository implements SanctionRepository {
     resolution: string,
     actor: AuditActor,
   ): Promise<SanctionDetail> {
-    return this.prisma.client.transaction(async (tx) => {
+    return loanSchemaTransaction(this.prisma, SANCTION_OPERATION_SCHEMA, 'sanctions.lift', async (tx) => {
       await lockLoanInventory(this.prisma, tx);
       const initial = (
         await tx.query(

@@ -1,3 +1,5 @@
+import type { InventoryCompatibility } from './inventory-compatibility.js';
+
 export type InventoryCopyStatus =
   'DISPONIBLE' | 'RESERVADO' | 'PRESTADO' | 'NO_DISPONIBLE';
 
@@ -69,9 +71,9 @@ export type InventoryResource = {
   categoriaId: string;
   nombre: string;
   descripcion?: string | null;
-  available?: boolean;
+  available?: boolean | null;
   totalCopies?: number;
-  availableCopies?: number;
+  availableCopies?: number | null;
   category?: InventoryCategory;
   createdAt?: Date;
   updatedAt?: Date;
@@ -83,7 +85,7 @@ export type InventoryCopy = {
   codigoInventario: string;
   estado: InventoryCopyStatus;
   condicionFisica: PhysicalCondition | null;
-  habilitado: boolean;
+  habilitado: boolean | null;
   recurso?: InventoryResource;
   observaciones?: InventoryObservation[];
   createdAt?: Date;
@@ -100,9 +102,17 @@ export type InventoryObservation = {
 
 export type ResourceAvailability = {
   resourceId: string;
-  available: boolean;
+  available: boolean | null;
   totalCopies: number;
-  disponibles: number;
+  disponibles: number | null;
   prestados: number;
-  noDisponibles: number;
+  noDisponibles: number | null;
+  reservados: number;
+  registeredStock: {
+    libres: number;
+    prestados: number;
+    retenidos: number;
+    reservados: number;
+  };
+  compatibility: InventoryCompatibility;
 };

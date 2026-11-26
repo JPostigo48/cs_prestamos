@@ -6,6 +6,7 @@ import { load, loadComponent, testEnvironment, session } from './helpers/modules
 import { mount, flush, find, findAll, text, event, model } from './helpers/renderer.mjs'
 import { sanction as detailedSanction, rule, ruleId } from './helpers/trust-fixtures.mjs'
 import { activeLoan, returnPolicy, returnBody, closedLoan, requestId, partId } from './helpers/loan-closure-fixtures.mjs'
+import { compatibility, inventoryCopy, inventoryResource } from './helpers/inventory-compatibility-fixtures.mjs'
 
 const auth = await load('modules/auth/api/auth-api')
 const client = await load('shared/api/client')
@@ -112,7 +113,7 @@ test('I3: alta A incierta no bloquea B; ausencia no libera A y evidencia exacta 
 test('I3: ejemplares con códigos distintos son independientes y lectura positiva reconcilia', async () => {
   globalThis.fetch = async () => Response.json(null, { status: 503 })
   await assert.rejects(inventory.createCopy('i3-resource', 'A'))
-  globalThis.fetch = async () => Response.json({ id: 'B', recursoId: 'i3-resource', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'B' })
+  globalThis.fetch = async () => Response.json(inventoryCopy(true, { id: 'B', recursoId: 'i3-resource', codigoInventario: 'B' }))
   await inventory.createCopy('i3-resource', 'B')
   globalThis.fetch = async () => Response.json([])
   await inventory.getCopies('i3-resource'); assert.equal(guard.pendingMutation(inventory.copyIntent('i3-resource', 'A')), true)
@@ -130,7 +131,7 @@ test('I4: montaje POST confirmado + F14 404 + confirmación humana cancela ID/ow
     if (options.method === 'DELETE') { assert.equal(url, '/api/loans/reservations/i4-reservation-real'); return Response.json({ ...confirmed, status: 'CANCELADA' }) }
     return Response.json(null, { status: 404 })
   }
-  const mounted = mount(component, { copies: [{ id: 'i4-copy', estado: 'DISPONIBLE', condicionFisica: 'APTO', habilitado: true, codigoInventario: 'REAL' }], resourceName: 'Real' })
+  const mounted = mount(component, { copies: [inventoryCopy(true, { id: 'i4-copy', codigoInventario: 'REAL' })], resourceName: 'Real' })
   try {
     await model(find(mounted.root, 'select'), 'i4-copy')
     const { limaParts } = await load('modules/system/reservation-time')
@@ -289,7 +290,7 @@ test('I5: diálogo muestra proyección histórica read-only y no envía fecha ed
     const result = closedLoan(loan, body); result.closure.actorUserId = 'owner'
     return Response.json(result)
   }
-  const mounted = mount(component, { loan, copyLabel: 'Ejemplar real' })
+  const mounted = mount(component, { loan, copyLabel: 'Ejemplar real', compatibility: compatibility() })
   try {
     await flush()
     assert.match(text(mounted.root), /Tardanza AUTOMÁTICA/)
@@ -307,7 +308,7 @@ test('I1: diálogo devolución 401 libera dueño original al relogin', async () 
   const loan = { id: 'i1-mounted-return', userId: 'owner', copyId: 'copy', status: 'ACTIVO', startsAt: new Date(Date.now() - 10000).toISOString(), endsAt: new Date(Date.now() + 60000).toISOString() }
   auth.saveSession({ ...account('owner'), user: { ...account('owner').user, role: 'OPERADOR' } })
   globalThis.fetch = async url => Response.json(url.endsWith('/return-policy') ? returnPolicy(loan.id, []) : [])
-  const mounted = mount(component, { loan, copyLabel: 'Real' })
+  const mounted = mount(component, { loan, copyLabel: 'Real', compatibility: compatibility() })
   try {
     await flush()
     await model(find(mounted.root, 'input'), 'SANO')
@@ -328,7 +329,7 @@ test('I6: enlaces montados y router real conservan filtros al ir y volver en amb
     let href = find(mounted.root, 'a').props.href
     assert.ok(href.includes('origin=' + (management ? 'management' : 'catalog')))
     mounted.unmount(); await flush(); await router.push(href)
-    globalThis.fetch = async url => Response.json(url.endsWith('/copies') ? [] : { id: 'r1', nombre: 'Recurso real' })
+    globalThis.fetch = async url => Response.json(url.endsWith('/copies') ? [] : url.endsWith('/accessories') ? { items: [] } : url.includes('/loans/user/') ? [] : url.includes('/loans/reservations?') ? { items: [], total: 0, page: 1, limit: 1 } : inventoryResource(true, { id: 'r1', nombre: 'Recurso real' }))
     mounted = mount(Detail, {}, [router])
     try {
       await flush()
